@@ -3,7 +3,7 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2020, PgPool Global Development Group
+ * Portions Copyright (c) 2003-2022, PgPool Global Development Group
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -27,7 +27,6 @@
 #include "utils/elog.h"
 #include "parser.h"
 #include "extensible.h"
-#include "pool_string.h"
 #include "pg_list.h"
 #include "parsenodes.h"
 #include "pg_class.h"
@@ -36,167 +35,167 @@
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
-void		_outNode(String * str, void *obj);
+void		_outNode(StringInfo str, void *obj);
 
-static void _outList(String * str, List *node);
-static void _outIdList(String * str, List *node);
-static void _outAlias(String * str, Alias *node);
-static void _outRangeVar(String * str, RangeVar *node);
-static void _outVar(String * str, Var *node);
-static void _outConst(String * str, Const *node);
-static void _outParam(String * str, Param *node);
-static void _outAggref(String * str, Aggref *node);
-static void _outGroupingFunc(String * str, GroupingFunc *node);
-static void _outSubscriptingRef(String * str, SubscriptingRef *node);
-static void _outFuncExpr(String * str, FuncExpr *node);
-static void _outNamedArgExpr(String * str, NamedArgExpr *node);
-static void _outOpExpr(String * str, OpExpr *node);
-static void _outDistinctExpr(String * str, DistinctExpr *node);
-static void _outScalarArrayOpExpr(String * str, ScalarArrayOpExpr *node);
-static void _outBoolExpr(String * str, BoolExpr *node);
-static void _outSubLink(String * str, SubLink *node);
-static void _outSubPlan(String * str, SubPlan *node);
-static void _outFieldSelect(String * str, FieldSelect *node);
-static void _outFieldStore(String * str, FieldStore *node);
-static void _outRelabelType(String * str, RelabelType *node);
-static void _outConvertRowtypeExpr(String * str, ConvertRowtypeExpr *node);
-static void _outCaseExpr(String * str, CaseExpr *node);
-static void _outCaseWhen(String * str, CaseWhen *node);
-static void _outCaseTestExpr(String * str, CaseTestExpr *node);
-static void _outArrayExpr(String * str, ArrayExpr *node);
-static void _outRowExpr(String * str, RowExpr *node);
-static void _outCoalesceExpr(String * str, CoalesceExpr *node);
-static void _outMinMaxExpr(String * str, MinMaxExpr *node);
-static void _outNullIfExpr(String * str, NullIfExpr *node);
-static void _outNullTest(String * str, NullTest *node);
-static void _outBooleanTest(String * str, BooleanTest *node);
-static void _outCoerceToDomain(String * str, CoerceToDomain *node);
-static void _outCoerceToDomainValue(String * str, CoerceToDomainValue *node);
-static void _outSetToDefault(String * str, SetToDefault *node);
-static void _outCurrentOfExpr(String * str, CurrentOfExpr *node);
-static void _outInferenceElem(String * str, InferenceElem *node);
-static void _outTargetEntry(String * str, TargetEntry *node);
-static void _outRangeTblRef(String * str, RangeTblRef *node);
-static void _outJoinExpr(String * str, JoinExpr *node);
-static void _outFromExpr(String * str, FromExpr *node);
-static void _outCreateStmt(String * str, CreateStmt *node);
-static void _outCreateTableAsStmt(String * str, CreateTableAsStmt *node);
-static void _outCreateForeignTableStmt(String * str, CreateForeignTableStmt *node);
-static void _outImportForeignSchemaStmt(String * str, ImportForeignSchemaStmt *node);
-static void _outIndexStmt(String * str, IndexStmt *node);
-static void _outNotifyStmt(String * str, NotifyStmt *node);
-static void _outDeclareCursorStmt(String * str, DeclareCursorStmt *node);
-static void _outSelectStmt(String * str, SelectStmt *node);
-static void _outFuncCall(String * str, FuncCall *node);
-static void _outDefElem(String * str, DefElem *node);
-static void _outLockingClause(String * str, LockingClause *node);
-static void _outReturnStmt(String * str, ReturnStmt *node);
-static void _outPLAssignStmt(String * str, PLAssignStmt *node);
-static void _outColumnDef(String * str, ColumnDef *node);
-static void _outTypeName(String * str, TypeName *node);
-static void _outTypeCast(String * str, TypeCast *node);
-static void _outIndexElem(String * str, IndexElem *node);
-static void _outGroupingSet(String * str, GroupingSet *node);
-static void _outWithClause(String * str, WithClause *node);
-static void _outCTESearchClause(String * str, CTESearchClause *node);
-static void _outCTECycleClause(String * str, CTECycleClause *node);
-static void _outCommonTableExpr(String * str, CommonTableExpr *node);
-static void _outSetOperationStmt(String * str, SetOperationStmt *node);
-static void _outTableSampleClause(String * str, TableSampleClause *node);
-static void _outAExpr(String * str, A_Expr *node);
-static void _outValue(String * str, Value *value);
-static void _outColumnRef(String * str, ColumnRef *node);
-static void _outParamRef(String * str, ParamRef *node);
-static void _outAConst(String * str, A_Const *node);
-static void _outA_Indices(String * str, A_Indices *node);
-static void _outA_Indirection(String * str, A_Indirection *node);
-static void _outResTarget(String * str, ResTarget *node);
-static void _outMultiAssignRef(String * str, MultiAssignRef *node);
-static void _outA_ArrayExpr(String * str, A_ArrayExpr *node);
-static void _outWindowDef(String * str, WindowDef *node);
-static void _outConstraint(String * str, Constraint *node);
+static void _outList(StringInfo str, List *node);
+static void _outIdList(StringInfo str, List *node);
+static void _outAlias(StringInfo str, Alias *node);
+static void _outRangeVar(StringInfo str, RangeVar *node);
+static void _outVar(StringInfo str, Var *node);
+static void _outConst(StringInfo str, Const *node);
+static void _outParam(StringInfo str, Param *node);
+static void _outAggref(StringInfo str, Aggref *node);
+static void _outGroupingFunc(StringInfo str, GroupingFunc *node);
+static void _outSubscriptingRef(StringInfo str, SubscriptingRef *node);
+static void _outFuncExpr(StringInfo str, FuncExpr *node);
+static void _outNamedArgExpr(StringInfo str, NamedArgExpr *node);
+static void _outOpExpr(StringInfo str, OpExpr *node);
+static void _outDistinctExpr(StringInfo str, DistinctExpr *node);
+static void _outScalarArrayOpExpr(StringInfo str, ScalarArrayOpExpr *node);
+static void _outBoolExpr(StringInfo str, BoolExpr *node);
+static void _outSubLink(StringInfo str, SubLink *node);
+static void _outSubPlan(StringInfo str, SubPlan *node);
+static void _outFieldSelect(StringInfo str, FieldSelect *node);
+static void _outFieldStore(StringInfo str, FieldStore *node);
+static void _outRelabelType(StringInfo str, RelabelType *node);
+static void _outConvertRowtypeExpr(StringInfo str, ConvertRowtypeExpr *node);
+static void _outCaseExpr(StringInfo str, CaseExpr *node);
+static void _outCaseWhen(StringInfo str, CaseWhen *node);
+static void _outCaseTestExpr(StringInfo str, CaseTestExpr *node);
+static void _outArrayExpr(StringInfo str, ArrayExpr *node);
+static void _outRowExpr(StringInfo str, RowExpr *node);
+static void _outCoalesceExpr(StringInfo str, CoalesceExpr *node);
+static void _outMinMaxExpr(StringInfo str, MinMaxExpr *node);
+static void _outNullIfExpr(StringInfo str, NullIfExpr *node);
+static void _outNullTest(StringInfo str, NullTest *node);
+static void _outBooleanTest(StringInfo str, BooleanTest *node);
+static void _outCoerceToDomain(StringInfo str, CoerceToDomain *node);
+static void _outCoerceToDomainValue(StringInfo str, CoerceToDomainValue *node);
+static void _outSetToDefault(StringInfo str, SetToDefault *node);
+static void _outCurrentOfExpr(StringInfo str, CurrentOfExpr *node);
+static void _outInferenceElem(StringInfo str, InferenceElem *node);
+static void _outTargetEntry(StringInfo str, TargetEntry *node);
+static void _outRangeTblRef(StringInfo str, RangeTblRef *node);
+static void _outJoinExpr(StringInfo str, JoinExpr *node);
+static void _outFromExpr(StringInfo str, FromExpr *node);
+static void _outCreateStmt(StringInfo str, CreateStmt *node);
+static void _outCreateTableAsStmt(StringInfo str, CreateTableAsStmt *node);
+static void _outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node);
+static void _outImportForeignSchemaStmt(StringInfo str, ImportForeignSchemaStmt *node);
+static void _outIndexStmt(StringInfo str, IndexStmt *node);
+static void _outNotifyStmt(StringInfo str, NotifyStmt *node);
+static void _outDeclareCursorStmt(StringInfo str, DeclareCursorStmt *node);
+static void _outSelectStmt(StringInfo str, SelectStmt *node);
+static void _outFuncCall(StringInfo str, FuncCall *node);
+static void _outDefElem(StringInfo str, DefElem *node);
+static void _outLockingClause(StringInfo str, LockingClause *node);
+static void _outReturnStmt(StringInfo str, ReturnStmt *node);
+static void _outPLAssignStmt(StringInfo str, PLAssignStmt *node);
+static void _outColumnDef(StringInfo str, ColumnDef *node);
+static void _outTypeName(StringInfo str, TypeName *node);
+static void _outTypeCast(StringInfo str, TypeCast *node);
+static void _outIndexElem(StringInfo str, IndexElem *node);
+static void _outGroupingSet(StringInfo str, GroupingSet *node);
+static void _outWithClause(StringInfo str, WithClause *node);
+static void _outCTESearchClause(StringInfo str, CTESearchClause *node);
+static void _outCTECycleClause(StringInfo str, CTECycleClause *node);
+static void _outCommonTableExpr(StringInfo str, CommonTableExpr *node);
+static void _outSetOperationStmt(StringInfo str, SetOperationStmt *node);
+static void _outTableSampleClause(StringInfo str, TableSampleClause *node);
+static void _outAExpr(StringInfo str, A_Expr *node);
+static void _outValue(StringInfo str, Value *value);
+static void _outColumnRef(StringInfo str, ColumnRef *node);
+static void _outParamRef(StringInfo str, ParamRef *node);
+static void _outAConst(StringInfo str, A_Const *node);
+static void _outA_Indices(StringInfo str, A_Indices *node);
+static void _outA_Indirection(StringInfo str, A_Indirection *node);
+static void _outResTarget(StringInfo str, ResTarget *node);
+static void _outMultiAssignRef(StringInfo str, MultiAssignRef *node);
+static void _outA_ArrayExpr(StringInfo str, A_ArrayExpr *node);
+static void _outWindowDef(StringInfo str, WindowDef *node);
+static void _outConstraint(StringInfo str, Constraint *node);
 
-static void _outSortBy(String * str, SortBy *node);
-static void _outInsertStmt(String * str, InsertStmt *node);
-static void _outSetClause(String * str, List *node);
-static void _outUpdateStmt(String * str, UpdateStmt *node);
-static void _outDeleteStmt(String * str, DeleteStmt *node);
-static void _outTransactionStmt(String * str, TransactionStmt *node);
-static void _outTruncateStmt(String * str, TruncateStmt *node);
-static void _outVacuumStmt(String * str, VacuumStmt *node);
-static void _outExplainStmt(String * str, ExplainStmt *node);
-static void _outClusterStmt(String * str, ClusterStmt *node);
-static void _outCheckPointStmt(String * str, CheckPointStmt *node);
-static void _outClosePortalStmt(String * str, ClosePortalStmt *node);
-static void _outListenStmt(String * str, ListenStmt *node);
-static void _outUnlistenStmt(String * str, UnlistenStmt *node);
-static void _outLoadStmt(String * str, LoadStmt *node);
-static void _outCopyStmt(String * str, CopyStmt *node);
-static void _outDeallocateStmt(String * str, DeallocateStmt *node);
-static void _outRenameStmt(String * str, RenameStmt *node);
-static void _outCreateRoleStmt(String * str, CreateRoleStmt *node);
-static void _outAlterRoleStmt(String * str, AlterRoleStmt *node);
-static void _outDropRoleStmt(String * str, DropRoleStmt *node);
-static void _outCreateSchemaStmt(String * str, CreateSchemaStmt *node);
-static void _outVariableSetStmt(String * str, VariableSetStmt *node);
-static void _outVariableShowStmt(String * str, VariableShowStmt *node);
-static void _outConstraintsSetStmt(String * str, ConstraintsSetStmt *node);
-static void _outAlterTableStmt(String * str, AlterTableStmt *node);
-static void _outCreateSeqStmt(String * str, CreateSeqStmt *node);
-static void _outAlterSeqStmt(String * str, AlterSeqStmt *node);
-static void _outCreatePLangStmt(String * str, CreatePLangStmt *node);
-static void _outCreateTableSpaceStmt(String * str, CreateTableSpaceStmt *node);
-static void _outDropTableSpaceStmt(String * str, DropTableSpaceStmt *node);
-static void _outCreateTrigStmt(String * str, CreateTrigStmt *node);
-static void _outDefineStmt(String * str, DefineStmt *node);
-static void _outCreateOpClassStmt(String * str, CreateOpClassStmt *node);
-static void _outDropStmt(String * str, DropStmt *node);
-static void _outFetchStmt(String * str, FetchStmt *node);
-static void _outGrantStmt(String * str, GrantStmt *node);
-static void _outGrantRoleStmt(String * str, GrantRoleStmt *node);
-static void _outCreateFunctionStmt(String * str, CreateFunctionStmt *node);
-static void _outAlterFunctionStmt(String * str, AlterFunctionStmt *node);
-static void _outCreateCastStmt(String * str, CreateCastStmt *node);
-static void _outReindexStmt(String * str, ReindexStmt *node);
-static void _outRuleStmt(String * str, RuleStmt *node);
-static void _outViewStmt(String * str, ViewStmt *node);
-static void _outCreatedbStmt(String * str, CreatedbStmt *node);
-static void _outAlterDatabaseStmt(String * str, AlterDatabaseStmt *node);
-static void _outAlterDatabaseSetStmt(String * str, AlterDatabaseSetStmt *node);
-static void _outDropdbStmt(String * str, DropdbStmt *node);
-static void _outCreateDomainStmt(String * str, CreateDomainStmt *node);
-static void _outAlterDomainStmt(String * str, AlterDomainStmt *node);
-static void _outCreateConversionStmt(String * str, CreateConversionStmt *node);
-static void _outPrepareStmt(String * str, PrepareStmt *node);
-static void _outExecuteStmt(String * str, ExecuteStmt *node);
-static void _outLockStmt(String * str, LockStmt *node);
-static void _outCommentStmt(String * str, CommentStmt *node);
-static void _outDiscardStmt(String * str, DiscardStmt *node);
-static void _outCreateOpFamilyStmt(String * str, CreateOpFamilyStmt *node);
-static void _outAlterOpFamilyStmt(String * str, AlterOpFamilyStmt *node);
-static void _outCreateEnumStmt(String * str, CreateEnumStmt *node);
-static void _outDropOwnedStmt(String * str, DropOwnedStmt *node);
-static void _outReassignOwnedStmt(String * str, ReassignOwnedStmt *node);
-static void _outAlterTSDictionaryStmt(String * str, AlterTSDictionaryStmt *node);
-static void _outAlterTSConfigurationStmt(String * str, AlterTSConfigurationStmt *node);
-static void _outXmlExpr(String * str, XmlExpr *node);
-static void _outXmlSerialize(String * str, XmlSerialize *node);
+static void _outSortBy(StringInfo str, SortBy *node);
+static void _outInsertStmt(StringInfo str, InsertStmt *node);
+static void _outSetClause(StringInfo str, List *node);
+static void _outUpdateStmt(StringInfo str, UpdateStmt *node);
+static void _outDeleteStmt(StringInfo str, DeleteStmt *node);
+static void _outTransactionStmt(StringInfo str, TransactionStmt *node);
+static void _outTruncateStmt(StringInfo str, TruncateStmt *node);
+static void _outVacuumStmt(StringInfo str, VacuumStmt *node);
+static void _outExplainStmt(StringInfo str, ExplainStmt *node);
+static void _outClusterStmt(StringInfo str, ClusterStmt *node);
+static void _outCheckPointStmt(StringInfo str, CheckPointStmt *node);
+static void _outClosePortalStmt(StringInfo str, ClosePortalStmt *node);
+static void _outListenStmt(StringInfo str, ListenStmt *node);
+static void _outUnlistenStmt(StringInfo str, UnlistenStmt *node);
+static void _outLoadStmt(StringInfo str, LoadStmt *node);
+static void _outCopyStmt(StringInfo str, CopyStmt *node);
+static void _outDeallocateStmt(StringInfo str, DeallocateStmt *node);
+static void _outRenameStmt(StringInfo str, RenameStmt *node);
+static void _outCreateRoleStmt(StringInfo str, CreateRoleStmt *node);
+static void _outAlterRoleStmt(StringInfo str, AlterRoleStmt *node);
+static void _outDropRoleStmt(StringInfo str, DropRoleStmt *node);
+static void _outCreateSchemaStmt(StringInfo str, CreateSchemaStmt *node);
+static void _outVariableSetStmt(StringInfo str, VariableSetStmt *node);
+static void _outVariableShowStmt(StringInfo str, VariableShowStmt *node);
+static void _outConstraintsSetStmt(StringInfo str, ConstraintsSetStmt *node);
+static void _outAlterTableStmt(StringInfo str, AlterTableStmt *node);
+static void _outCreateSeqStmt(StringInfo str, CreateSeqStmt *node);
+static void _outAlterSeqStmt(StringInfo str, AlterSeqStmt *node);
+static void _outCreatePLangStmt(StringInfo str, CreatePLangStmt *node);
+static void _outCreateTableSpaceStmt(StringInfo str, CreateTableSpaceStmt *node);
+static void _outDropTableSpaceStmt(StringInfo str, DropTableSpaceStmt *node);
+static void _outCreateTrigStmt(StringInfo str, CreateTrigStmt *node);
+static void _outDefineStmt(StringInfo str, DefineStmt *node);
+static void _outCreateOpClassStmt(StringInfo str, CreateOpClassStmt *node);
+static void _outDropStmt(StringInfo str, DropStmt *node);
+static void _outFetchStmt(StringInfo str, FetchStmt *node);
+static void _outGrantStmt(StringInfo str, GrantStmt *node);
+static void _outGrantRoleStmt(StringInfo str, GrantRoleStmt *node);
+static void _outCreateFunctionStmt(StringInfo str, CreateFunctionStmt *node);
+static void _outAlterFunctionStmt(StringInfo str, AlterFunctionStmt *node);
+static void _outCreateCastStmt(StringInfo str, CreateCastStmt *node);
+static void _outReindexStmt(StringInfo str, ReindexStmt *node);
+static void _outRuleStmt(StringInfo str, RuleStmt *node);
+static void _outViewStmt(StringInfo str, ViewStmt *node);
+static void _outCreatedbStmt(StringInfo str, CreatedbStmt *node);
+static void _outAlterDatabaseStmt(StringInfo str, AlterDatabaseStmt *node);
+static void _outAlterDatabaseSetStmt(StringInfo str, AlterDatabaseSetStmt *node);
+static void _outDropdbStmt(StringInfo str, DropdbStmt *node);
+static void _outCreateDomainStmt(StringInfo str, CreateDomainStmt *node);
+static void _outAlterDomainStmt(StringInfo str, AlterDomainStmt *node);
+static void _outCreateConversionStmt(StringInfo str, CreateConversionStmt *node);
+static void _outPrepareStmt(StringInfo str, PrepareStmt *node);
+static void _outExecuteStmt(StringInfo str, ExecuteStmt *node);
+static void _outLockStmt(StringInfo str, LockStmt *node);
+static void _outCommentStmt(StringInfo str, CommentStmt *node);
+static void _outDiscardStmt(StringInfo str, DiscardStmt *node);
+static void _outCreateOpFamilyStmt(StringInfo str, CreateOpFamilyStmt *node);
+static void _outAlterOpFamilyStmt(StringInfo str, AlterOpFamilyStmt *node);
+static void _outCreateEnumStmt(StringInfo str, CreateEnumStmt *node);
+static void _outDropOwnedStmt(StringInfo str, DropOwnedStmt *node);
+static void _outReassignOwnedStmt(StringInfo str, ReassignOwnedStmt *node);
+static void _outAlterTSDictionaryStmt(StringInfo str, AlterTSDictionaryStmt *node);
+static void _outAlterTSConfigurationStmt(StringInfo str, AlterTSConfigurationStmt *node);
+static void _outXmlExpr(StringInfo str, XmlExpr *node);
+static void _outXmlSerialize(StringInfo str, XmlSerialize *node);
 
-static void _outFuncName(String * str, List *func_name);
-static void _outSetRest(String * str, VariableSetStmt *node);
-static void _outSetTransactionModeList(String * str, List *list);
-static void _outAlterTableCmd(String * str, AlterTableCmd *node);
-static void _outOptSeqList(String * str, List *options);
-static void _outObjectWithArgs(String * str, ObjectWithArgs *node);
-static void _outFunctionParameter(String * str, FunctionParameter *node);
-static void _outPrivilegeList(String * str, List *list);
-static void _outFuncOptList(String * str, List *list);
-static void _outCreatedbOptList(String * str, List *options);
-static void _outOperatorArgTypes(String * str, List *args);
-static void _outRangeFunction(String * str, RangeFunction *node);
-static void _outRangeTableSample(String * str, RangeTableSample *node);
-static void _outWithDefinition(String * str, List *def_list);
-static void _outOnConflictClause(String * str, OnConflictClause *node);
+static void _outFuncName(StringInfo str, List *func_name);
+static void _outSetRest(StringInfo str, VariableSetStmt *node);
+static void _outSetTransactionModeList(StringInfo str, List *list);
+static void _outAlterTableCmd(StringInfo str, AlterTableCmd *node);
+static void _outOptSeqList(StringInfo str, List *options);
+static void _outObjectWithArgs(StringInfo str, ObjectWithArgs *node);
+static void _outFunctionParameter(StringInfo str, FunctionParameter *node);
+static void _outPrivilegeList(StringInfo str, List *list);
+static void _outFuncOptList(StringInfo str, List *list);
+static void _outCreatedbOptList(StringInfo str, List *options);
+static void _outOperatorArgTypes(StringInfo str, List *args);
+static void _outRangeFunction(StringInfo str, RangeFunction *node);
+static void _outRangeTableSample(StringInfo str, RangeTableSample *node);
+static void _outWithDefinition(StringInfo str, List *def_list);
+static void _outOnConflictClause(StringInfo str, OnConflictClause *node);
 
 
 /*
@@ -269,7 +268,7 @@ escape_string(char *str)
 }
 
 static void
-_outIdList(String * str, List *node)
+_outIdList(StringInfo str, List *node)
 {
 	ListCell   *lc;
 	char		first = 0;
@@ -281,16 +280,16 @@ _outIdList(String * str, List *node)
 		if (first == 0)
 			first = 1;
 		else
-			string_append_char(str, ", ");
+			appendStringInfoString(str, ", ");
 
-		string_append_char(str, "\"");
-		string_append_char(str, v->val.str);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, v->val.str);
+		appendStringInfoString(str, "\"");
 	}
 }
 
 static void
-_outListWith(String * str, List *node, char *op)
+_outListWith(StringInfo str, List *node, char *op)
 {
 	ListCell   *lc;
 	char		first = 0;
@@ -302,14 +301,14 @@ _outListWith(String * str, List *node, char *op)
 		else
 		{
 			if (lfirst(lc) != NIL && !IsA(lfirst(lc), A_Indices))
-				string_append_char(str, op);
+				appendStringInfoString(str, op);
 		}
 		_outNode(str, lfirst(lc));
 	}
 }
 
 static void
-_outList(String * str, List *node)
+_outList(StringInfo str, List *node)
 {
 	_outListWith(str, node, ",");
 }
@@ -332,143 +331,143 @@ outToken(StringInfo str, const char *s)
 #endif
 
 static void
-_outAlias(String * str, Alias *node)
+_outAlias(StringInfo str, Alias *node)
 {
-	string_append_char(str, " AS \"");
-	string_append_char(str, node->aliasname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, " AS \"");
+	appendStringInfoString(str, node->aliasname);
+	appendStringInfoString(str, "\"");
 
 	if (node->colnames)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outNode(str, node->colnames);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 }
 
 static void
-_outRangeVar(String * str, RangeVar *node)
+_outRangeVar(StringInfo str, RangeVar *node)
 {
 	if (node->catalogname)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->catalogname);
-		string_append_char(str, "\".");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->catalogname);
+		appendStringInfoString(str, "\".");
 	}
 
 	if (node->schemaname)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->schemaname);
-		string_append_char(str, "\".");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->schemaname);
+		appendStringInfoString(str, "\".");
 	}
 
-	string_append_char(str, "\"");
-	string_append_char(str, node->relname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "\"");
+	appendStringInfoString(str, node->relname);
+	appendStringInfoString(str, "\"");
 
 	if (node->alias)
 		_outNode(str, node->alias);
 }
 
 static void
-_outVar(String * str, Var *node)
+_outVar(StringInfo str, Var *node)
 {
 
 }
 
 static void
-_outConst(String * str, Const *node)
+_outConst(StringInfo str, Const *node)
 {
 
 }
 
 static void
-_outParam(String * str, Param *node)
+_outParam(StringInfo str, Param *node)
 {
 
 }
 
 static void
-_outAggref(String * str, Aggref *node)
+_outAggref(StringInfo str, Aggref *node)
 {
 
 }
 
 static void
-_outGroupingFunc(String * str, GroupingFunc *node)
+_outGroupingFunc(StringInfo str, GroupingFunc *node)
 {
-	string_append_char(str, "GROUPING (");
+	appendStringInfoString(str, "GROUPING (");
 	_outNode(str, node->args);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 
 }
 
 static void
-_outSubscriptingRef(String * str, SubscriptingRef *node)
+_outSubscriptingRef(StringInfo str, SubscriptingRef *node)
 {
 
 }
 
 static void
-_outFuncExpr(String * str, FuncExpr *node)
+_outFuncExpr(StringInfo str, FuncExpr *node)
 {
 
 }
 
 static void
-_outNamedArgExpr(String * str, NamedArgExpr *node)
+_outNamedArgExpr(StringInfo str, NamedArgExpr *node)
 {
-	string_append_char(str, node->name);
-	string_append_char(str, " := ");
+	appendStringInfoString(str, node->name);
+	appendStringInfoString(str, " := ");
 	_outNode(str, node->arg);
 }
 
 static void
-_outOpExpr(String * str, OpExpr *node)
+_outOpExpr(StringInfo str, OpExpr *node)
 {
 
 }
 
 static void
-_outDistinctExpr(String * str, DistinctExpr *node)
+_outDistinctExpr(StringInfo str, DistinctExpr *node)
 {
 
 }
 
 static void
-_outScalarArrayOpExpr(String * str, ScalarArrayOpExpr *node)
+_outScalarArrayOpExpr(StringInfo str, ScalarArrayOpExpr *node)
 {
 
 }
 
 static void
-_outBoolExpr(String * str, BoolExpr *node)
+_outBoolExpr(StringInfo str, BoolExpr *node)
 {
 	switch (node->boolop)
 	{
 		case AND_EXPR:
-			string_append_char(str, " (");
+			appendStringInfoString(str, " (");
 			_outListWith(str, node->args, " AND ");
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case OR_EXPR:
-			string_append_char(str, " (");
+			appendStringInfoString(str, " (");
 			_outListWith(str, node->args, " OR ");
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case NOT_EXPR:
-			string_append_char(str, " (NOT ");
+			appendStringInfoString(str, " (NOT ");
 			_outList(str, node->args);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 	}
 }
 
 static void
-_outSubLink(String * str, SubLink *node)
+_outSubLink(StringInfo str, SubLink *node)
 {
 	_outNode(str, node->testexpr);
 
@@ -483,21 +482,21 @@ _outSubLink(String * str, SubLink *node)
 		Value	   *v = linitial(node->operName);
 
 		if (strcmp(v->val.str, "=") == 0)
-			string_append_char(str, " IN ");
+			appendStringInfoString(str, " IN ");
 		else
 		{
-			string_append_char(str, v->val.str);
+			appendStringInfoString(str, v->val.str);
 		}
 	}
 
 	switch (node->subLinkType)
 	{
 		case EXISTS_SUBLINK:
-			string_append_char(str, " EXISTS ");
+			appendStringInfoString(str, " EXISTS ");
 			break;
 
 		case ARRAY_SUBLINK:
-			string_append_char(str, " ARRAY ");
+			appendStringInfoString(str, " ARRAY ");
 			break;
 
 		case ANY_SUBLINK:
@@ -507,14 +506,14 @@ _outSubLink(String * str, SubLink *node)
 
 				if (strcmp(v->val.str, "=") != 0)
 				{
-					string_append_char(str, v->val.str);
-					string_append_char(str, " ANY ");
+					appendStringInfoString(str, v->val.str);
+					appendStringInfoString(str, " ANY ");
 				}
 			}
 			break;
 
 		case ALL_SUBLINK:
-			string_append_char(str, " ALL ");
+			appendStringInfoString(str, " ALL ");
 			break;
 
 		default:
@@ -524,48 +523,48 @@ _outSubLink(String * str, SubLink *node)
 
 	if (node->subselect)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outNode(str, node->subselect);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 }
 
 static void
-_outSubPlan(String * str, SubPlan *node)
+_outSubPlan(StringInfo str, SubPlan *node)
 {
 
 }
 
 static void
-_outFieldSelect(String * str, FieldSelect *node)
+_outFieldSelect(StringInfo str, FieldSelect *node)
 {
 
 }
 
 static void
-_outFieldStore(String * str, FieldStore *node)
+_outFieldStore(StringInfo str, FieldStore *node)
 {
 
 }
 
 static void
-_outRelabelType(String * str, RelabelType *node)
+_outRelabelType(StringInfo str, RelabelType *node)
 {
 
 }
 
 static void
-_outConvertRowtypeExpr(String * str, ConvertRowtypeExpr *node)
+_outConvertRowtypeExpr(StringInfo str, ConvertRowtypeExpr *node)
 {
 
 }
 
 static void
-_outCaseExpr(String * str, CaseExpr *node)
+_outCaseExpr(StringInfo str, CaseExpr *node)
 {
 	ListCell   *lc;
 
-	string_append_char(str, "CASE ");
+	appendStringInfoString(str, "CASE ");
 	if (node->arg)
 		_outNode(str, node->arg);
 
@@ -576,198 +575,198 @@ _outCaseExpr(String * str, CaseExpr *node)
 
 	if (node->defresult)
 	{
-		string_append_char(str, " ELSE ");
+		appendStringInfoString(str, " ELSE ");
 		_outNode(str, node->defresult);
 	}
 
-	string_append_char(str, " END");
+	appendStringInfoString(str, " END");
 }
 
 static void
-_outCaseWhen(String * str, CaseWhen *node)
+_outCaseWhen(StringInfo str, CaseWhen *node)
 {
-	string_append_char(str, " WHEN ");
+	appendStringInfoString(str, " WHEN ");
 	_outNode(str, node->expr);
-	string_append_char(str, " THEN ");
+	appendStringInfoString(str, " THEN ");
 	_outNode(str, node->result);
 }
 
 static void
-_outCaseTestExpr(String * str, CaseTestExpr *node)
+_outCaseTestExpr(StringInfo str, CaseTestExpr *node)
 {
 
 }
 
 static void
-_outArrayExpr(String * str, ArrayExpr *node)
+_outArrayExpr(StringInfo str, ArrayExpr *node)
 {
-	string_append_char(str, "[");
+	appendStringInfoString(str, "[");
 	_outNode(str, node->elements);
-	string_append_char(str, "]");
+	appendStringInfoString(str, "]");
 }
 
 static void
-_outRowExpr(String * str, RowExpr *node)
+_outRowExpr(StringInfo str, RowExpr *node)
 {
 	if (node->row_format == COERCE_EXPLICIT_CAST)
-		string_append_char(str, "ROW (");
+		appendStringInfoString(str, "ROW (");
 	else
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 
 	if (node->args != NIL)
 		_outNode(str, node->args);
 
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outCoalesceExpr(String * str, CoalesceExpr *node)
+_outCoalesceExpr(StringInfo str, CoalesceExpr *node)
 {
-	string_append_char(str, "COALESCE (");
+	appendStringInfoString(str, "COALESCE (");
 	_outNode(str, node->args);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outMinMaxExpr(String * str, MinMaxExpr *node)
+_outMinMaxExpr(StringInfo str, MinMaxExpr *node)
 {
 	if (node->op == IS_GREATEST)
 	{
-		string_append_char(str, "GREATEST (");
+		appendStringInfoString(str, "GREATEST (");
 		_outNode(str, node->args);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 	else if (node->op == IS_LEAST)
 	{
-		string_append_char(str, "LEAST (");
+		appendStringInfoString(str, "LEAST (");
 		_outNode(str, node->args);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 }
 
 static void
-_outNullIfExpr(String * str, NullIfExpr *node)
+_outNullIfExpr(StringInfo str, NullIfExpr *node)
 {
 
 }
 
 static void
-_outNullTest(String * str, NullTest *node)
+_outNullTest(StringInfo str, NullTest *node)
 {
 	_outNode(str, node->arg);
 	if (node->nulltesttype == IS_NOT_NULL)
-		string_append_char(str, " IS NOT NULL");
+		appendStringInfoString(str, " IS NOT NULL");
 	else
-		string_append_char(str, " IS NULL");
+		appendStringInfoString(str, " IS NULL");
 }
 
 static void
-_outBooleanTest(String * str, BooleanTest *node)
+_outBooleanTest(StringInfo str, BooleanTest *node)
 {
 	_outNode(str, node->arg);
 
 	switch (node->booltesttype)
 	{
 		case IS_TRUE:
-			string_append_char(str, " IS TRUE");
+			appendStringInfoString(str, " IS TRUE");
 			break;
 
 		case IS_NOT_TRUE:
-			string_append_char(str, " IS NOT TRUE");
+			appendStringInfoString(str, " IS NOT TRUE");
 			break;
 
 		case IS_FALSE:
-			string_append_char(str, " IS FALSE");
+			appendStringInfoString(str, " IS FALSE");
 			break;
 
 		case IS_NOT_FALSE:
-			string_append_char(str, " IS NOT FALSE");
+			appendStringInfoString(str, " IS NOT FALSE");
 			break;
 
 		case IS_UNKNOWN:
-			string_append_char(str, " IS UNKNOWN");
+			appendStringInfoString(str, " IS UNKNOWN");
 			break;
 
 		case IS_NOT_UNKNOWN:
-			string_append_char(str, " IS NOT UNKNOWN");
+			appendStringInfoString(str, " IS NOT UNKNOWN");
 			break;
 	}
 }
 
 static void
-_outCoerceToDomain(String * str, CoerceToDomain *node)
+_outCoerceToDomain(StringInfo str, CoerceToDomain *node)
 {
 
 }
 
 static void
-_outCoerceToDomainValue(String * str, CoerceToDomainValue *node)
+_outCoerceToDomainValue(StringInfo str, CoerceToDomainValue *node)
 {
 
 }
 
 static void
-_outSetToDefault(String * str, SetToDefault *node)
+_outSetToDefault(StringInfo str, SetToDefault *node)
 {
-	string_append_char(str, "DEFAULT");
+	appendStringInfoString(str, "DEFAULT");
 }
 
 static void
-_outCurrentOfExpr(String * str, CurrentOfExpr *node)
+_outCurrentOfExpr(StringInfo str, CurrentOfExpr *node)
 {
-	string_append_char(str, "CURRENT OF ");
+	appendStringInfoString(str, "CURRENT OF ");
 	if (node->cursor_name == NULL)
 	{
 		char		n[10];
 
 		snprintf(n, sizeof(n), "$%d", node->cursor_param);
-		string_append_char(str, n);
+		appendStringInfoString(str, n);
 	}
 	else
-		string_append_char(str, node->cursor_name);
+		appendStringInfoString(str, node->cursor_name);
 }
 
 static void
-_outInferenceElem(String * str, InferenceElem *node)
+_outInferenceElem(StringInfo str, InferenceElem *node)
 {
 
 }
 
 static void
-_outTargetEntry(String * str, TargetEntry *node)
+_outTargetEntry(StringInfo str, TargetEntry *node)
 {
 
 }
 
 static void
-_outRangeTblRef(String * str, RangeTblRef *node)
+_outRangeTblRef(StringInfo str, RangeTblRef *node)
 {
 
 }
 
 static void
-_outJoinExpr(String * str, JoinExpr *node)
+_outJoinExpr(StringInfo str, JoinExpr *node)
 {
 	_outNode(str, node->larg);
 
 	if (node->isNatural == TRUE)
-		string_append_char(str, " NATURAL");
+		appendStringInfoString(str, " NATURAL");
 
 	if (node->jointype == JOIN_INNER)
 	{
 		if (node->usingClause == NIL && node->quals == NULL && !node->isNatural)
-			string_append_char(str, " CROSS JOIN ");
+			appendStringInfoString(str, " CROSS JOIN ");
 		else
-			string_append_char(str, " JOIN ");
+			appendStringInfoString(str, " JOIN ");
 	}
 	else if (node->jointype == JOIN_INNER)
-		string_append_char(str, " JOIN ");
+		appendStringInfoString(str, " JOIN ");
 	else if (node->jointype == JOIN_LEFT)
-		string_append_char(str, " LEFT OUTER JOIN ");
+		appendStringInfoString(str, " LEFT OUTER JOIN ");
 	else if (node->jointype == JOIN_FULL)
-		string_append_char(str, " FULL OUTER JOIN ");
+		appendStringInfoString(str, " FULL OUTER JOIN ");
 	else if (node->jointype == JOIN_RIGHT)
-		string_append_char(str, " RIGHT OUTER JOIN ");
+		appendStringInfoString(str, " RIGHT OUTER JOIN ");
 
 	_outNode(str, node->rarg);
 
@@ -776,7 +775,7 @@ _outJoinExpr(String * str, JoinExpr *node)
 		ListCell   *lc;
 		char		comma = 0;
 
-		string_append_char(str, " USING(");
+		appendStringInfoString(str, " USING(");
 
 		foreach(lc, node->usingClause)
 		{
@@ -785,15 +784,15 @@ _outJoinExpr(String * str, JoinExpr *node)
 			if (comma == 0)
 				comma = 1;
 			else
-				string_append_char(str, ",");
+				appendStringInfoString(str, ",");
 
 			value = lfirst(lc);
-			string_append_char(str, "\"");
-			string_append_char(str, value->val.str);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, "\"");
 		}
 
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 
 		if (node->join_using_alias)
 			_outAlias(str, node->join_using_alias);
@@ -802,19 +801,19 @@ _outJoinExpr(String * str, JoinExpr *node)
 
 	if (node->quals)
 	{
-		string_append_char(str, " ON ");
+		appendStringInfoString(str, " ON ");
 		_outNode(str, node->quals);
 	}
 }
 
 static void
-_outFromExpr(String * str, FromExpr *node)
+_outFromExpr(StringInfo str, FromExpr *node)
 {
 
 }
 
 static void
-_outOnConflictExpr(String * str, const OnConflictExpr *node)
+_outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
 {
 
 }
@@ -849,22 +848,22 @@ _outExtensibleNode(StringInfo str, const ExtensibleNode *node)
  *****************************************************************************/
 
 static void
-_outCreateStmt(String * str, CreateStmt *node)
+_outCreateStmt(StringInfo str, CreateStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 	if (node->relation->relpersistence == RELPERSISTENCE_TEMP)
-		string_append_char(str, "TEMP ");
-	string_append_char(str, "TABLE ");
+		appendStringInfoString(str, "TEMP ");
+	appendStringInfoString(str, "TABLE ");
 	_outNode(str, node->relation);
-	string_append_char(str, " (");
+	appendStringInfoString(str, " (");
 	_outNode(str, node->tableElts);
-	string_append_char(str, ") ");
+	appendStringInfoString(str, ") ");
 
 	if (node->inhRelations != NIL)
 	{
-		string_append_char(str, "INHERITS (");
+		appendStringInfoString(str, "INHERITS (");
 		_outNode(str, node->inhRelations);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 
 	if (node->options)
@@ -873,15 +872,15 @@ _outCreateStmt(String * str, CreateStmt *node)
 	switch (node->oncommit)
 	{
 		case ONCOMMIT_DROP:
-			string_append_char(str, " ON COMMIT DROP");
+			appendStringInfoString(str, " ON COMMIT DROP");
 			break;
 
 		case ONCOMMIT_DELETE_ROWS:
-			string_append_char(str, " ON COMMIT DELETE ROWS");
+			appendStringInfoString(str, " ON COMMIT DELETE ROWS");
 			break;
 
 		case ONCOMMIT_PRESERVE_ROWS:
-			string_append_char(str, " ON COMMIT PRESERVE ROWS");
+			appendStringInfoString(str, " ON COMMIT PRESERVE ROWS");
 			break;
 
 		default:
@@ -890,26 +889,26 @@ _outCreateStmt(String * str, CreateStmt *node)
 
 	if (node->tablespacename)
 	{
-		string_append_char(str, " TABLESPACE \"");
-		string_append_char(str, node->tablespacename);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, " TABLESPACE \"");
+		appendStringInfoString(str, node->tablespacename);
+		appendStringInfoString(str, "\"");
 	}
 }
 
 static void
-_outCreateTableAsStmt(String * str, CreateTableAsStmt *node)
+_outCreateTableAsStmt(StringInfo str, CreateTableAsStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 	if (node->into->rel->relpersistence == RELPERSISTENCE_TEMP)
-		string_append_char(str, "TEMP ");
-	string_append_char(str, "TABLE ");
+		appendStringInfoString(str, "TEMP ");
+	appendStringInfoString(str, "TABLE ");
 	_outNode(str, node->into->rel);
 
 	if (node->into->colNames)
 	{
-		string_append_char(str, " (");
+		appendStringInfoString(str, " (");
 		_outIdList(str, node->into->colNames);
-		string_append_char(str, ") ");
+		appendStringInfoString(str, ") ");
 	}
 
 	if (node->into->options)
@@ -918,15 +917,15 @@ _outCreateTableAsStmt(String * str, CreateTableAsStmt *node)
 	switch (node->into->onCommit)
 	{
 		case ONCOMMIT_DROP:
-			string_append_char(str, " ON COMMIT DROP");
+			appendStringInfoString(str, " ON COMMIT DROP");
 			break;
 
 		case ONCOMMIT_DELETE_ROWS:
-			string_append_char(str, " ON COMMIT DELETE ROWS");
+			appendStringInfoString(str, " ON COMMIT DELETE ROWS");
 			break;
 
 		case ONCOMMIT_PRESERVE_ROWS:
-			string_append_char(str, " ON COMMIT PRESERVE ROWS");
+			appendStringInfoString(str, " ON COMMIT PRESERVE ROWS");
 			break;
 
 		default:
@@ -935,149 +934,149 @@ _outCreateTableAsStmt(String * str, CreateTableAsStmt *node)
 
 	if (node->into->tableSpaceName)
 	{
-		string_append_char(str, " TABLESPACE \"");
-		string_append_char(str, node->into->tableSpaceName);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, " TABLESPACE \"");
+		appendStringInfoString(str, node->into->tableSpaceName);
+		appendStringInfoString(str, "\"");
 	}
 
 	if (node->query)
 	{
-		string_append_char(str, " AS");
+		appendStringInfoString(str, " AS");
 		_outSelectStmt(str, (SelectStmt *) node->query);
 	}
 }
 
 static void
-_outCreateForeignTableStmt(String * str, CreateForeignTableStmt *node)
+_outCreateForeignTableStmt(StringInfo str, CreateForeignTableStmt *node)
 {
 
 }
 
 static void
-_outImportForeignSchemaStmt(String * str, ImportForeignSchemaStmt *node)
+_outImportForeignSchemaStmt(StringInfo str, ImportForeignSchemaStmt *node)
 {
 
 }
 
 static void
-_outIndexStmt(String * str, IndexStmt *node)
+_outIndexStmt(StringInfo str, IndexStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 
 	if (node->unique == TRUE)
-		string_append_char(str, "UNIQUE ");
+		appendStringInfoString(str, "UNIQUE ");
 
 	if (node->concurrent == true)
-		string_append_char(str, "INDEX CONCURRENTLY ");
+		appendStringInfoString(str, "INDEX CONCURRENTLY ");
 	else
-		string_append_char(str, "INDEX ");
+		appendStringInfoString(str, "INDEX ");
 	if (node->idxname)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->idxname);
-		string_append_char(str, "\" ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->idxname);
+		appendStringInfoString(str, "\" ");
 	}
-	string_append_char(str, "ON ");
+	appendStringInfoString(str, "ON ");
 	_outNode(str, node->relation);
 
 	if (strcmp(node->accessMethod, DEFAULT_INDEX_TYPE))
 	{
-		string_append_char(str, " USING ");
-		string_append_char(str, node->accessMethod);
+		appendStringInfoString(str, " USING ");
+		appendStringInfoString(str, node->accessMethod);
 	}
 
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 	_outNode(str, node->indexParams);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 
 	if (node->tableSpace)
 	{
-		string_append_char(str, " TABLESPACE \"");
-		string_append_char(str, node->tableSpace);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, " TABLESPACE \"");
+		appendStringInfoString(str, node->tableSpace);
+		appendStringInfoString(str, "\"");
 	}
 
 	if (node->whereClause)
 	{
-		string_append_char(str, " WHERE ");
+		appendStringInfoString(str, " WHERE ");
 		_outNode(str, node->whereClause);
 	}
 }
 
 static void
-_outCreateStatsStmt(String * str, CreateStatsStmt *node)
+_outCreateStatsStmt(StringInfo str, CreateStatsStmt *node)
 {
 }
 
 static void
-_outAlterStatsStmt(String * str, const AlterStatsStmt *node)
+_outAlterStatsStmt(StringInfo str, const AlterStatsStmt *node)
 {
 }
 
 static void
-_outNotifyStmt(String * str, NotifyStmt *node)
+_outNotifyStmt(StringInfo str, NotifyStmt *node)
 {
-	string_append_char(str, "NOTIFY ");
-	string_append_char(str, "\"");
-	string_append_char(str, node->conditionname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "NOTIFY ");
+	appendStringInfoString(str, "\"");
+	appendStringInfoString(str, node->conditionname);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outDeclareCursorStmt(String * str, DeclareCursorStmt *node)
+_outDeclareCursorStmt(StringInfo str, DeclareCursorStmt *node)
 {
-	string_append_char(str, "DECLARE \"");
-	string_append_char(str, node->portalname);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "DECLARE \"");
+	appendStringInfoString(str, node->portalname);
+	appendStringInfoString(str, "\" ");
 
 	if (node->options & CURSOR_OPT_SCROLL)
-		string_append_char(str, "SCROLL ");
+		appendStringInfoString(str, "SCROLL ");
 	if (node->options & CURSOR_OPT_BINARY)
-		string_append_char(str, "BINARY ");
+		appendStringInfoString(str, "BINARY ");
 	if (node->options & CURSOR_OPT_INSENSITIVE)
-		string_append_char(str, "INSENSITIVE ");
+		appendStringInfoString(str, "INSENSITIVE ");
 
-	string_append_char(str, "CURSOR ");
+	appendStringInfoString(str, "CURSOR ");
 	if (node->options & CURSOR_OPT_HOLD)
-		string_append_char(str, "WITH HOLD ");
-	string_append_char(str, "FOR");
+		appendStringInfoString(str, "WITH HOLD ");
+	appendStringInfoString(str, "FOR");
 	_outNode(str, node->query);
 }
 
 static void
-_outSelectStmt(String * str, SelectStmt *node)
+_outSelectStmt(StringInfo str, SelectStmt *node)
 {
 	if (node->larg)				/* SETOP */
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outNode(str, node->larg);
-		string_append_char(str, ") ");
+		appendStringInfoString(str, ") ");
 
 		switch (node->op)
 		{
 			case SETOP_UNION:
-				string_append_char(str, " UNION ");
+				appendStringInfoString(str, " UNION ");
 				break;
 
 			case SETOP_INTERSECT:
-				string_append_char(str, " INTERSECT ");
+				appendStringInfoString(str, " INTERSECT ");
 				break;
 
 			case SETOP_EXCEPT:
-				string_append_char(str, " EXCEPT ");
+				appendStringInfoString(str, " EXCEPT ");
 
 			default:
 				break;
 		}
 
 		if (node->all)
-			string_append_char(str, "ALL ");
+			appendStringInfoString(str, "ALL ");
 
 		if (node->rarg)
 		{
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			_outNode(str, node->rarg);
-			string_append_char(str, ") ");
+			appendStringInfoString(str, ") ");
 		}
 	}
 	else if (node->valuesLists) /* VALUES ... */
@@ -1085,17 +1084,17 @@ _outSelectStmt(String * str, SelectStmt *node)
 		ListCell   *lc;
 		int			comma = 0;
 
-		string_append_char(str, " VALUES");
+		appendStringInfoString(str, " VALUES");
 		foreach(lc, node->valuesLists)
 		{
 			if (comma == 0)
 				comma = 1;
 			else
-				string_append_char(str, ",");
+				appendStringInfoString(str, ",");
 
-			string_append_char(str, " (");
+			appendStringInfoString(str, " (");
 			_outNode(str, lfirst(lc));
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 		}
 	}
 	else
@@ -1105,17 +1104,17 @@ _outSelectStmt(String * str, SelectStmt *node)
 			IntoClause *into = (IntoClause *) node->intoClause;
 			RangeVar   *rel = (RangeVar *) into->rel;
 
-			string_append_char(str, "CREATE ");
+			appendStringInfoString(str, "CREATE ");
 			if (rel->relpersistence == RELPERSISTENCE_TEMP)
-				string_append_char(str, "TEMP ");
-			string_append_char(str, "TABLE ");
+				appendStringInfoString(str, "TEMP ");
+			appendStringInfoString(str, "TABLE ");
 			_outNode(str, into->rel);
 
 			if (into->colNames)
 			{
-				string_append_char(str, " (");
+				appendStringInfoString(str, " (");
 				_outNode(str, into->colNames);
-				string_append_char(str, ") ");
+				appendStringInfoString(str, ") ");
 			}
 
 			if (into->options)
@@ -1124,37 +1123,37 @@ _outSelectStmt(String * str, SelectStmt *node)
 			switch (into->onCommit)
 			{
 				case ONCOMMIT_DROP:
-					string_append_char(str, " ON COMMIT DROP");
+					appendStringInfoString(str, " ON COMMIT DROP");
 					break;
 
 				case ONCOMMIT_DELETE_ROWS:
-					string_append_char(str, " ON COMMIT DELETE ROWS");
+					appendStringInfoString(str, " ON COMMIT DELETE ROWS");
 					break;
 
 				case ONCOMMIT_PRESERVE_ROWS:
-					string_append_char(str, " ON COMMIT PRESERVE ROWS");
+					appendStringInfoString(str, " ON COMMIT PRESERVE ROWS");
 					break;
 
 				default:
 					break;
 			}
 
-			string_append_char(str, " AS");
+			appendStringInfoString(str, " AS");
 		}
 
 		if (node->withClause)
 			_outWithClause(str, node->withClause);
 
-		string_append_char(str, " SELECT ");
+		appendStringInfoString(str, " SELECT ");
 
 		if (node->distinctClause)
 		{
-			string_append_char(str, "DISTINCT ");
+			appendStringInfoString(str, "DISTINCT ");
 			if (lfirst(list_head(node->distinctClause)) != NIL)
 			{
-				string_append_char(str, "ON (");
+				appendStringInfoString(str, "ON (");
 				_outNode(str, node->distinctClause);
-				string_append_char(str, " ) ");
+				appendStringInfoString(str, " ) ");
 			}
 		}
 
@@ -1162,58 +1161,58 @@ _outSelectStmt(String * str, SelectStmt *node)
 
 		if (node->fromClause)
 		{
-			string_append_char(str, " FROM ");
+			appendStringInfoString(str, " FROM ");
 			_outNode(str, node->fromClause);
 		}
 
 		if (node->whereClause)
 		{
-			string_append_char(str, " WHERE ");
+			appendStringInfoString(str, " WHERE ");
 			_outNode(str, node->whereClause);
 		}
 
 		if (node->groupClause)
 		{
-			string_append_char(str, " GROUP BY ");
+			appendStringInfoString(str, " GROUP BY ");
 
 			if (node->groupDistinct)
-				string_append_char(str, "DISTINCT ");
+				appendStringInfoString(str, "DISTINCT ");
 
 			_outNode(str, node->groupClause);
 		}
 
 		if (node->havingClause)
 		{
-			string_append_char(str, " HAVING ");
+			appendStringInfoString(str, " HAVING ");
 			_outNode(str, node->havingClause);
 		}
 
 		if (node->windowClause)
 		{
-			string_append_char(str, " WINDOW ");
+			appendStringInfoString(str, " WINDOW ");
 			_outNode(str, node->windowClause);
 		}
 	}
 
 	if (node->sortClause)
 	{
-		string_append_char(str, " ORDER BY ");
+		appendStringInfoString(str, " ORDER BY ");
 		_outNode(str, node->sortClause);
 	}
 
 	if (node->limitOffset)
 	{
-		string_append_char(str, " OFFSET ");
+		appendStringInfoString(str, " OFFSET ");
 		_outNode(str, node->limitOffset);
 	}
 
 	if (node->limitCount)
 	{
-		string_append_char(str, " LIMIT ");
+		appendStringInfoString(str, " LIMIT ");
 		if (IsA(node->limitCount, A_Const) &&
 			((A_Const *) node->limitCount)->val.type == T_Null)
 		{
-			string_append_char(str, "ALL ");
+			appendStringInfoString(str, "ALL ");
 		}
 		else
 		{
@@ -1225,7 +1224,7 @@ _outSelectStmt(String * str, SelectStmt *node)
 }
 
 static void
-_outFuncCall(String * str, FuncCall *node)
+_outFuncCall(StringInfo str, FuncCall *node)
 {
 	char	   *funcname;
 
@@ -1239,35 +1238,35 @@ _outFuncCall(String * str, FuncCall *node)
 		strcmp(funcname, "current_role") == 0)
 		return;
 
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 
 	if (node->func_variadic == TRUE)
-		string_append_char(str, "VARIADIC ");
+		appendStringInfoString(str, "VARIADIC ");
 
 	if (node->agg_distinct == TRUE)
-		string_append_char(str, "DISTINCT ");
+		appendStringInfoString(str, "DISTINCT ");
 
 	if (node->agg_star == TRUE)
-		string_append_char(str, "*");
+		appendStringInfoString(str, "*");
 	else
 		_outNode(str, node->args);
 
 	if (node->agg_order != NIL)
 	{
-		string_append_char(str, " ORDER BY ");
+		appendStringInfoString(str, " ORDER BY ");
 		_outNode(str, node->agg_order);
 	}
 
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 
 	if (node->over)
 	{
-		string_append_char(str, " OVER ");
+		appendStringInfoString(str, " OVER ");
 		if (node->over->name)
 		{
-			string_append_char(str, "\"");
-			string_append_char(str, node->over->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, node->over->name);
+			appendStringInfoString(str, "\"");
 		}
 		else
 			_outWindowDef(str, node->over);
@@ -1275,13 +1274,13 @@ _outFuncCall(String * str, FuncCall *node)
 }
 
 static void
-_outDefElem(String * str, DefElem *node)
+_outDefElem(StringInfo str, DefElem *node)
 {
 
 }
 
 static void
-_outLockingClause(String * str, LockingClause *node)
+_outLockingClause(StringInfo str, LockingClause *node)
 {
 	if (node == NULL)
 		return;
@@ -1289,16 +1288,16 @@ _outLockingClause(String * str, LockingClause *node)
 	switch (node->strength)
 	{
 		case LCS_FORKEYSHARE:
-			string_append_char(str, " FOR KEY SHARE");
+			appendStringInfoString(str, " FOR KEY SHARE");
 			break;
 		case LCS_FORSHARE:
-			string_append_char(str, " FOR SHARE");
+			appendStringInfoString(str, " FOR SHARE");
 			break;
 		case LCS_FORNOKEYUPDATE:
-			string_append_char(str, " FOR NO KEY UPDATE");
+			appendStringInfoString(str, " FOR NO KEY UPDATE");
 			break;
 		case LCS_FORUPDATE:
-			string_append_char(str, " FOR UPDATE");
+			appendStringInfoString(str, " FOR UPDATE");
 			break;
 		case LCS_NONE:
 			break;
@@ -1306,17 +1305,17 @@ _outLockingClause(String * str, LockingClause *node)
 
 	if (node->lockedRels)
 	{
-		string_append_char(str, " OF ");
+		appendStringInfoString(str, " OF ");
 		_outNode(str, node->lockedRels);
 	}
 
 	switch (node->waitPolicy)
 	{
 		case LockWaitError:
-			string_append_char(str, " NOWAIT");
+			appendStringInfoString(str, " NOWAIT");
 			break;
 		case LockWaitSkip:
-			string_append_char(str, " SKIP LOCKED");
+			appendStringInfoString(str, " SKIP LOCKED");
 			break;
 		case LockWaitBlock:
 			break;
@@ -1324,32 +1323,32 @@ _outLockingClause(String * str, LockingClause *node)
 }
 
 static void
-_outTriggerTransition(String * str, TriggerTransition *node)
+_outTriggerTransition(StringInfo str, TriggerTransition *node)
 {
 }
 
 static void
-_outReturnStmt(String * str, ReturnStmt *node)
+_outReturnStmt(StringInfo str, ReturnStmt *node)
 {
 }
 
 static void
-_outPLAssignStmt(String * str, PLAssignStmt *node)
+_outPLAssignStmt(StringInfo str, PLAssignStmt *node)
 {
 }
 
 static void
-_outColumnDef(String * str, ColumnDef *node)
+_outColumnDef(StringInfo str, ColumnDef *node)
 {
-	string_append_char(str, "\"");
-	string_append_char(str, node->colname);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "\"");
+	appendStringInfoString(str, node->colname);
+	appendStringInfoString(str, "\" ");
 	_outNode(str, node->typeName);
 	_outNode(str, node->constraints);
 }
 
 static void
-_outTypeName(String * str, TypeName *node)
+_outTypeName(StringInfo str, TypeName *node)
 {
 
 	/*
@@ -1361,7 +1360,7 @@ _outTypeName(String * str, TypeName *node)
 	if (list_length(node->names) == 2 &&
 		strcmp("pg_catalog", strVal(linitial(node->names))) == 0)
 	{
-		string_append_char(str, strVal(lsecond(node->names)));
+		appendStringInfoString(str, strVal(lsecond(node->names)));
 
 		if (strcmp("interval", strVal(lsecond(node->names))) == 0)
 		{
@@ -1378,41 +1377,41 @@ _outTypeName(String * str, TypeName *node)
 				if ((INTERVAL_MASK(SECOND) & mask) &&
 					list_length(node->typmods) == 2)
 				{
-					string_append_char(str, "(");
+					appendStringInfoString(str, "(");
 					_outAConst(str, lsecond(node->typmods));
-					string_append_char(str, ")");
+					appendStringInfoString(str, ")");
 				}
 
 				/* optional fields */
 				if (mask == INTERVAL_MASK(YEAR))
-					string_append_char(str, " YEAR");
+					appendStringInfoString(str, " YEAR");
 				else if (mask == INTERVAL_MASK(MONTH))
-					string_append_char(str, " MONTH");
+					appendStringInfoString(str, " MONTH");
 				else if (mask == INTERVAL_MASK(DAY))
-					string_append_char(str, " DAY");
+					appendStringInfoString(str, " DAY");
 				else if (mask == INTERVAL_MASK(HOUR))
-					string_append_char(str, " HOUR");
+					appendStringInfoString(str, " HOUR");
 				else if (mask == INTERVAL_MASK(MINUTE))
-					string_append_char(str, " MINUTE");
+					appendStringInfoString(str, " MINUTE");
 				else if (mask == INTERVAL_MASK(SECOND))
-					string_append_char(str, " SECOND");
+					appendStringInfoString(str, " SECOND");
 				else if (mask == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
-					string_append_char(str, " YEAR TO MONTH");
+					appendStringInfoString(str, " YEAR TO MONTH");
 				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)))
-					string_append_char(str, " DAY TO HOUR");
+					appendStringInfoString(str, " DAY TO HOUR");
 				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
 								  INTERVAL_MASK(MINUTE)))
-					string_append_char(str, " DAY TO MINUTE");
+					appendStringInfoString(str, " DAY TO MINUTE");
 				else if (mask == (INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) |
 								  INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
-					string_append_char(str, " DAY TO SECOND");
+					appendStringInfoString(str, " DAY TO SECOND");
 				else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE)))
-					string_append_char(str, " HOUR TO MINUTE");
+					appendStringInfoString(str, " HOUR TO MINUTE");
 				else if (mask == (INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) |
 								  INTERVAL_MASK(SECOND)))
-					string_append_char(str, " HOUR TO SECOND");
+					appendStringInfoString(str, " HOUR TO SECOND");
 				else if (mask == (INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND)))
-					string_append_char(str, " MINUTE TO SECOND");
+					appendStringInfoString(str, " MINUTE TO SECOND");
 			}
 
 			return;
@@ -1431,24 +1430,24 @@ _outTypeName(String * str, TypeName *node)
 			if (dot == 0)
 				dot = 1;
 			else
-				string_append_char(str, ".");
+				appendStringInfoString(str, ".");
 			if (node->typemod < 0)
 			{
-				string_append_char(str, "\"");
-				string_append_char(str, typename);
-				string_append_char(str, "\"");
+				appendStringInfoString(str, "\"");
+				appendStringInfoString(str, typename);
+				appendStringInfoString(str, "\"");
 			}
 			else
-				string_append_char(str, typename);
+				appendStringInfoString(str, typename);
 		}
 	}
 
 	/* precisions */
 	if (node->typmods)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outList(str, node->typmods);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 
 	if (node->arrayBounds != NIL)
@@ -1458,147 +1457,147 @@ _outTypeName(String * str, TypeName *node)
 		foreach(lc, node->arrayBounds)
 		{
 			if (intVal(lfirst(lc)) == -1)
-				string_append_char(str, "[]");
+				appendStringInfoString(str, "[]");
 			else
 			{
-				string_append_char(str, "[");
+				appendStringInfoString(str, "[");
 				_outNode(str, lfirst(lc));
-				string_append_char(str, "]");
+				appendStringInfoString(str, "]");
 			}
 		}
 	}
 }
 
 static void
-_outTypeCast(String * str, TypeCast *node)
+_outTypeCast(StringInfo str, TypeCast *node)
 {
 	_outNode(str, node->arg);
-	string_append_char(str, "::");
+	appendStringInfoString(str, "::");
 	_outNode(str, node->typeName);
 
 }
 
 static void
-_outCollateClause(String * str, const CollateClause *node)
+_outCollateClause(StringInfo str, const CollateClause *node)
 {
 	if (node->arg)
 		_outNode(str, node->arg);
-	string_append_char(str, " COLLATE ");
-	string_append_char(str, "\"");
-	string_append_char(str, ((Value *) linitial(node->collname))->val.str);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, " COLLATE ");
+	appendStringInfoString(str, "\"");
+	appendStringInfoString(str, ((Value *) linitial(node->collname))->val.str);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outIndexElem(String * str, IndexElem *node)
+_outIndexElem(StringInfo str, IndexElem *node)
 {
 	if (node->name)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->name);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->name);
+		appendStringInfoString(str, "\"");
 		if (node->opclass != NIL)
 			_outNode(str, node->opclass);
 	}
 	else
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outNode(str, node->expr);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 		if (node->opclass != NIL)
 			_outNode(str, node->opclass);
 	}
 }
 
 static void
-_outGroupingSet(String * str, GroupingSet *node)
+_outGroupingSet(StringInfo str, GroupingSet *node)
 {
 	switch (node->kind)
 	{
 		case GROUPING_SET_EMPTY:
-			string_append_char(str, " (");
+			appendStringInfoString(str, " (");
 			break;
 		case GROUPING_SET_ROLLUP:
-			string_append_char(str, " ROLLUP (");
+			appendStringInfoString(str, " ROLLUP (");
 			_outNode(str, node->content);
 			break;
 		case GROUPING_SET_CUBE:
-			string_append_char(str, " CUBE (");
+			appendStringInfoString(str, " CUBE (");
 			_outNode(str, node->content);
 			break;
 		case GROUPING_SET_SETS:
-			string_append_char(str, " GROUPING SETS (");
+			appendStringInfoString(str, " GROUPING SETS (");
 			_outNode(str, node->content);
 			break;
 		default:
 			break;
 	}
 
-	string_append_char(str, " )");
+	appendStringInfoString(str, " )");
 
 }
 
 static void
-_outWithClause(String * str, WithClause *node)
+_outWithClause(StringInfo str, WithClause *node)
 {
-	string_append_char(str, " WITH ");
+	appendStringInfoString(str, " WITH ");
 	if (node->recursive)
-		string_append_char(str, "RECURSIVE ");
+		appendStringInfoString(str, "RECURSIVE ");
 
 	_outList(str, node->ctes);
 }
 
 static void
-_outCTESearchClause(String * str, CTESearchClause *node)
+_outCTESearchClause(StringInfo str, CTESearchClause *node)
 {
 }
 
 static void
-_outCTECycleClause(String * str, CTECycleClause *node)
+_outCTECycleClause(StringInfo str, CTECycleClause *node)
 {
 }
 
 static void
-_outCommonTableExpr(String * str, CommonTableExpr *node)
+_outCommonTableExpr(StringInfo str, CommonTableExpr *node)
 {
-	string_append_char(str, "\"");
-	string_append_char(str, node->ctename);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "\"");
+	appendStringInfoString(str, node->ctename);
+	appendStringInfoString(str, "\" ");
 
 	if (node->aliascolnames)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outIdList(str, node->aliascolnames);
-		string_append_char(str, ") ");
+		appendStringInfoString(str, ") ");
 	}
 
-	string_append_char(str, "AS ");
+	appendStringInfoString(str, "AS ");
 
 	if (node->ctematerialized & CTEMaterializeAlways)
-		string_append_char(str, "MATERIALIZED ");
+		appendStringInfoString(str, "MATERIALIZED ");
 	else if (node->ctematerialized & CTEMaterializeNever)
-		string_append_char(str, "NOT MATERIALIZED ");
+		appendStringInfoString(str, "NOT MATERIALIZED ");
 
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 	_outNode(str, node->ctequery);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outSetOperationStmt(String * str, SetOperationStmt *node)
+_outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 {
 
 }
 
 
 static void
-_outTableSampleClause(String * str, TableSampleClause *node)
+_outTableSampleClause(StringInfo str, TableSampleClause *node)
 {
 
 }
 
 static void
-_outAExpr(String * str, A_Expr *node)
+_outAExpr(StringInfo str, A_Expr *node)
 {
 	Value	   *v;
 
@@ -1609,80 +1608,80 @@ _outAExpr(String * str, A_Expr *node)
 			{
 				Value	   *op = (Value *) lfirst(list_head(node->name));
 
-				string_append_char(str, " (");
+				appendStringInfoString(str, " (");
 				_outNode(str, node->lexpr);
-				string_append_char(str, op->val.str);
+				appendStringInfoString(str, op->val.str);
 				_outNode(str, node->rexpr);
-				string_append_char(str, " )");
+				appendStringInfoString(str, " )");
 			}
 			break;
 
 		case AEXPR_OP_ANY:
 			_outNode(str, node->lexpr);
 			v = linitial(node->name);
-			string_append_char(str, v->val.str);
-			string_append_char(str, "ANY(");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "ANY(");
 			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case AEXPR_OP_ALL:
 			_outNode(str, node->lexpr);
 			v = linitial(node->name);
-			string_append_char(str, v->val.str);
-			string_append_char(str, "ALL(");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "ALL(");
 			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case AEXPR_DISTINCT:
-			string_append_char(str, " (");
+			appendStringInfoString(str, " (");
 			_outNode(str, node->lexpr);
-			string_append_char(str, " IS DISTINCT FROM ");
+			appendStringInfoString(str, " IS DISTINCT FROM ");
 			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case AEXPR_NOT_DISTINCT:
-			string_append_char(str, " (");
+			appendStringInfoString(str, " (");
 			_outNode(str, node->lexpr);
-			string_append_char(str, " IS NOT DISTINCT FROM ");
+			appendStringInfoString(str, " IS NOT DISTINCT FROM ");
 			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case AEXPR_NULLIF:
-			string_append_char(str, " NULLIF(");
+			appendStringInfoString(str, " NULLIF(");
 			_outNode(str, node->lexpr);
-			string_append_char(str, ", ");
+			appendStringInfoString(str, ", ");
 			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case AEXPR_IN:
 			_outNode(str, node->lexpr);
 			v = (Value *) lfirst(list_head(node->name));
 			if (v->val.str[0] == '=')
-				string_append_char(str, " IN (");
+				appendStringInfoString(str, " IN (");
 			else
-				string_append_char(str, " NOT IN (");
+				appendStringInfoString(str, " NOT IN (");
 			_outNode(str, node->rexpr);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case AEXPR_LIKE:
 			_outNode(str, node->lexpr);
 			v = (Value *) lfirst(list_head(node->name));
 			if (!strcmp(v->val.str, "~~"))
-				string_append_char(str, " LIKE ");
+				appendStringInfoString(str, " LIKE ");
 			else
-				string_append_char(str, " NOT LIKE ");
+				appendStringInfoString(str, " NOT LIKE ");
 			if (IsA(node->rexpr, FuncCall))
 			{
 				FuncCall   *rexpr = (FuncCall *) node->rexpr;
 
 				_outNode(str, linitial(rexpr->args));
-				string_append_char(str, " ESCAPE ");
+				appendStringInfoString(str, " ESCAPE ");
 				_outNode(str, lsecond(rexpr->args));
 			}
 			else
@@ -1693,15 +1692,15 @@ _outAExpr(String * str, A_Expr *node)
 			_outNode(str, node->lexpr);
 			v = (Value *) lfirst(list_head(node->name));
 			if (!strcmp(v->val.str, "~~*"))
-				string_append_char(str, " ILIKE ");
+				appendStringInfoString(str, " ILIKE ");
 			else
-				string_append_char(str, " NOT ILIKE ");
+				appendStringInfoString(str, " NOT ILIKE ");
 			if (IsA(node->rexpr, FuncCall))
 			{
 				FuncCall   *rexpr = (FuncCall *) node->rexpr;
 
 				_outNode(str, linitial(rexpr->args));
-				string_append_char(str, " ESCAPE ");
+				appendStringInfoString(str, " ESCAPE ");
 				_outNode(str, lsecond(rexpr->args));
 			}
 			else
@@ -1712,15 +1711,15 @@ _outAExpr(String * str, A_Expr *node)
 			_outNode(str, node->lexpr);
 			v = (Value *) lfirst(list_head(node->name));
 			if (!strcmp(v->val.str, "~"))
-				string_append_char(str, " SIMILAR TO ");
+				appendStringInfoString(str, " SIMILAR TO ");
 			else
-				string_append_char(str, " NOT SIMILAR TO ");
+				appendStringInfoString(str, " NOT SIMILAR TO ");
 			if (IsA(node->rexpr, FuncCall))
 			{
 				FuncCall   *rexpr = (FuncCall *) node->rexpr;
 
 				_outNode(str, linitial(rexpr->args));
-				string_append_char(str, " ESCAPE ");
+				appendStringInfoString(str, " ESCAPE ");
 				_outNode(str, lsecond(rexpr->args));
 			}
 			else
@@ -1729,33 +1728,33 @@ _outAExpr(String * str, A_Expr *node)
 
 		case AEXPR_BETWEEN:
 			_outNode(str, node->lexpr);
-			string_append_char(str, " BETWEEN ");
+			appendStringInfoString(str, " BETWEEN ");
 			_outNode(str, linitial((List *) node->rexpr));
-			string_append_char(str, " AND ");
+			appendStringInfoString(str, " AND ");
 			_outNode(str, lsecond((List *) node->rexpr));
 			break;
 
 		case AEXPR_NOT_BETWEEN:
 			_outNode(str, node->lexpr);
-			string_append_char(str, " NOT BETWEEN ");
+			appendStringInfoString(str, " NOT BETWEEN ");
 			_outNode(str, linitial((List *) node->rexpr));
-			string_append_char(str, " AND ");
+			appendStringInfoString(str, " AND ");
 			_outNode(str, lsecond((List *) node->rexpr));
 			break;
 
 		case AEXPR_BETWEEN_SYM:
 			_outNode(str, node->lexpr);
-			string_append_char(str, " BETWEEN SYMMETRIC ");
+			appendStringInfoString(str, " BETWEEN SYMMETRIC ");
 			_outNode(str, linitial((List *) node->rexpr));
-			string_append_char(str, " AND ");
+			appendStringInfoString(str, " AND ");
 			_outNode(str, lsecond((List *) node->rexpr));
 			break;
 
 		case AEXPR_NOT_BETWEEN_SYM:
 			_outNode(str, node->lexpr);
-			string_append_char(str, " NOT BETWEEN SYMMETRIC ");
+			appendStringInfoString(str, " NOT BETWEEN SYMMETRIC ");
 			_outNode(str, linitial((List *) node->rexpr));
-			string_append_char(str, " AND ");
+			appendStringInfoString(str, " AND ");
 			_outNode(str, lsecond((List *) node->rexpr));
 			break;
 
@@ -1769,12 +1768,12 @@ _outAExpr(String * str, A_Expr *node)
  */
 
 static void
-_outRawStmt(String * str, const RawStmt *node)
+_outRawStmt(StringInfo str, const RawStmt *node)
 {
 }
 
 static void
-_outValue(String * str, Value *value)
+_outValue(StringInfo str, Value *value)
 {
 	char		buf[16];
 	char		*p;
@@ -1783,23 +1782,23 @@ _outValue(String * str, Value *value)
 	{
 		case T_Integer:
 			sprintf(buf, "%d", value->val.ival);
-			string_append_char(str, buf);
+			appendStringInfoString(str, buf);
 			break;
 
 		case T_Float:
-			string_append_char(str, value->val.str);
+			appendStringInfoString(str, value->val.str);
 			break;
 
 		case T_String:
-			string_append_char(str, "'");
+			appendStringInfoString(str, "'");
 			p = escape_string(value->val.str);
-			string_append_char(str, p);
+			appendStringInfoString(str, p);
 			pfree(p);
-			string_append_char(str, "'");
+			appendStringInfoString(str, "'");
 			break;
 
 		case T_Null:
-			string_append_char(str, "NULL");
+			appendStringInfoString(str, "NULL");
 			break;
 
 		default:
@@ -1808,7 +1807,7 @@ _outValue(String * str, Value *value)
 }
 
 static void
-_outColumnRef(String * str, ColumnRef *node)
+_outColumnRef(StringInfo str, ColumnRef *node)
 {
 	ListCell   *c;
 	char		first = 0;
@@ -1824,36 +1823,36 @@ _outColumnRef(String * str, ColumnRef *node)
 			if (first == 0)
 				first = 1;
 			else
-				string_append_char(str, ".");
+				appendStringInfoString(str, ".");
 
-			string_append_char(str, "\"");
-			string_append_char(str, v->val.str);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "\"");
 		}
 		else if (IsA(n, A_Star))
 		{
 			if (first == 0)
 				first = 1;
 			else
-				string_append_char(str, ".");
+				appendStringInfoString(str, ".");
 
-			string_append_char(str, "*");
+			appendStringInfoString(str, "*");
 		}
 	}
 }
 
 static void
-_outParamRef(String * str, ParamRef *node)
+_outParamRef(StringInfo str, ParamRef *node)
 {
 	char		buf[16];
 
 	snprintf(buf, 16, "%d", node->number);
-	string_append_char(str, "$");
-	string_append_char(str, buf);
+	appendStringInfoString(str, "$");
+	appendStringInfoString(str, buf);
 }
 
 static void
-_outAConst(String * str, A_Const *node)
+_outAConst(StringInfo str, A_Const *node)
 {
 	char		buf[16];
 	char		*p;
@@ -1862,23 +1861,23 @@ _outAConst(String * str, A_Const *node)
 	{
 		case T_Integer:
 			sprintf(buf, "%d", node->val.val.ival);
-			string_append_char(str, buf);
+			appendStringInfoString(str, buf);
 			break;
 
 		case T_Float:
-			string_append_char(str, node->val.val.str);
+			appendStringInfoString(str, node->val.val.str);
 			break;
 
 		case T_String:
-			string_append_char(str, "'");
+			appendStringInfoString(str, "'");
 			p = escape_string(node->val.val.str);
-			string_append_char(str, p);
+			appendStringInfoString(str, p);
 			pfree(p);
-			string_append_char(str, "'");
+			appendStringInfoString(str, "'");
 			break;
 
 		case T_Null:
-			string_append_char(str, "NULL");
+			appendStringInfoString(str, "NULL");
 			break;
 
 		default:
@@ -1887,20 +1886,20 @@ _outAConst(String * str, A_Const *node)
 }
 
 static void
-_outA_Indices(String * str, A_Indices *node)
+_outA_Indices(StringInfo str, A_Indices *node)
 {
-	string_append_char(str, "[");
+	appendStringInfoString(str, "[");
 	if (node->lidx)
 	{
 		_outNode(str, node->lidx);
-		string_append_char(str, ":");
+		appendStringInfoString(str, ":");
 	}
 	_outNode(str, node->uidx);
-	string_append_char(str, "]");
+	appendStringInfoString(str, "]");
 }
 
 static void
-_outA_Indirection(String * str, A_Indirection *node)
+_outA_Indirection(StringInfo str, A_Indirection *node)
 {
 	ListCell   *lc;
 
@@ -1912,9 +1911,9 @@ _outA_Indirection(String * str, A_Indirection *node)
 		else
 		{
 			/* "(ARRAY[1])[1]" */
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			_outNode(str, node->arg);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 		}
 
 		foreach(lc, node->indirection)
@@ -1923,13 +1922,13 @@ _outA_Indirection(String * str, A_Indirection *node)
 
 			if (IsA(ind, A_Star))
 				/* foo.* */
-				string_append_char(str, ".*");
+				appendStringInfoString(str, ".*");
 			else if (IsA(ind, String))
 			{
 				/* foo.bar */
-				string_append_char(str, ".\"");
-				string_append_char(str, strVal(ind));
-				string_append_char(str, "\"");
+				appendStringInfoString(str, ".\"");
+				appendStringInfoString(str, strVal(ind));
+				appendStringInfoString(str, "\"");
 			}
 			else
 				/* foo[1] (A_Indices) */
@@ -1939,21 +1938,21 @@ _outA_Indirection(String * str, A_Indirection *node)
 }
 
 static void
-_outA_ArrayExpr(String * str, A_ArrayExpr *node)
+_outA_ArrayExpr(StringInfo str, A_ArrayExpr *node)
 {
-	string_append_char(str, "ARRAY [");
+	appendStringInfoString(str, "ARRAY [");
 	_outNode(str, node->elements);
-	string_append_char(str, "]");
+	appendStringInfoString(str, "]");
 }
 
 static void
-_outResTarget(String * str, ResTarget *node)
+_outResTarget(StringInfo str, ResTarget *node)
 {
 	if (node->indirection != NIL)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->name);
-		string_append_char(str, "\"=");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->name);
+		appendStringInfoString(str, "\"=");
 		_outNode(str, node->val);
 	}
 	else
@@ -1962,146 +1961,146 @@ _outResTarget(String * str, ResTarget *node)
 
 		if (node->name)
 		{
-			string_append_char(str, " AS ");
-			string_append_char(str, "\"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\" ");
+			appendStringInfoString(str, " AS ");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\" ");
 		}
 	}
 }
 
 
 static void
-_outMultiAssignRef(String * str, MultiAssignRef *node)
+_outMultiAssignRef(StringInfo str, MultiAssignRef *node)
 {
 	_outNode(str, node->source);
 }
 
 static void
-_outWindowDef(String * str, WindowDef *node)
+_outWindowDef(StringInfo str, WindowDef *node)
 {
 	if (node->name)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->name);
-		string_append_char(str, "\" AS ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->name);
+		appendStringInfoString(str, "\" AS ");
 	}
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 
 	if (node->refname)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->refname);
-		string_append_char(str, "\" ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->refname);
+		appendStringInfoString(str, "\" ");
 	}
 
 	if (node->partitionClause)
 	{
-		string_append_char(str, " PARTITION BY ");
+		appendStringInfoString(str, " PARTITION BY ");
 		_outNode(str, node->partitionClause);
 	}
 
 	if (node->orderClause)
 	{
-		string_append_char(str, " ORDER BY ");
+		appendStringInfoString(str, " ORDER BY ");
 		_outNode(str, node->orderClause);
 	}
 
 	if (node->frameOptions != FRAMEOPTION_DEFAULTS)
 	{
 		if (node->frameOptions & FRAMEOPTION_RANGE)
-			string_append_char(str, " RANGE");
+			appendStringInfoString(str, " RANGE");
 		else if (node->frameOptions & FRAMEOPTION_ROWS)
-			string_append_char(str, " ROWS");
+			appendStringInfoString(str, " ROWS");
 		else if (node->frameOptions & FRAMEOPTION_GROUPS)
-			string_append_char(str, " GROUPS");
+			appendStringInfoString(str, " GROUPS");
 
 		if (node->frameOptions & FRAMEOPTION_BETWEEN)
-			string_append_char(str, " BETWEEN");
+			appendStringInfoString(str, " BETWEEN");
 
 		if (node->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
-			string_append_char(str, " UNBOUNDED PRECEDING");
+			appendStringInfoString(str, " UNBOUNDED PRECEDING");
 		else if (node->frameOptions & FRAMEOPTION_START_UNBOUNDED_FOLLOWING)
-			string_append_char(str, " UNBOUNDED FOLLOWING");
+			appendStringInfoString(str, " UNBOUNDED FOLLOWING");
 		else if (node->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
-			string_append_char(str, " UNBOUNDED CURRENT ROW");
+			appendStringInfoString(str, " UNBOUNDED CURRENT ROW");
 		else if (node->frameOptions & FRAMEOPTION_START_OFFSET_PRECEDING)
 		{
-			string_append_char(str, " ");
+			appendStringInfoString(str, " ");
 			_outNode(str, node->startOffset);
-			string_append_char(str, " PRECEDING");
+			appendStringInfoString(str, " PRECEDING");
 		}
 		else if (node->frameOptions & FRAMEOPTION_START_OFFSET_FOLLOWING)
 		{
-			string_append_char(str, " ");
+			appendStringInfoString(str, " ");
 			_outNode(str, node->startOffset);
-			string_append_char(str, " FOLLOWING");
+			appendStringInfoString(str, " FOLLOWING");
 		}
 
 		if (node->frameOptions & FRAMEOPTION_BETWEEN)
 		{
-			string_append_char(str, " AND");
+			appendStringInfoString(str, " AND");
 			if (node->frameOptions & FRAMEOPTION_END_UNBOUNDED_PRECEDING)
-				string_append_char(str, " UNBOUNDED PRECEDING");
+				appendStringInfoString(str, " UNBOUNDED PRECEDING");
 			else if (node->frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
-				string_append_char(str, " UNBOUNDED FOLLOWING");
+				appendStringInfoString(str, " UNBOUNDED FOLLOWING");
 			else if (node->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
-				string_append_char(str, " UNBOUNDED CURRENT ROW");
+				appendStringInfoString(str, " UNBOUNDED CURRENT ROW");
 			else if (node->frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
 			{
-				string_append_char(str, " ");
+				appendStringInfoString(str, " ");
 				_outNode(str, node->endOffset);
-				string_append_char(str, " PRECEDING");
+				appendStringInfoString(str, " PRECEDING");
 			}
 			else if (node->frameOptions & FRAMEOPTION_END_OFFSET_FOLLOWING)
 			{
-				string_append_char(str, " ");
+				appendStringInfoString(str, " ");
 				_outNode(str, node->endOffset);
-				string_append_char(str, " FOLLOWING");
+				appendStringInfoString(str, " FOLLOWING");
 			}
 		}
 
 		if (node->frameOptions & FRAMEOPTION_EXCLUDE_CURRENT_ROW)
 		{
-			string_append_char(str, " EXCLUDE CURRENT ROW");
+			appendStringInfoString(str, " EXCLUDE CURRENT ROW");
 		}
 		else if (node->frameOptions & FRAMEOPTION_EXCLUDE_GROUP)
 		{
-			string_append_char(str, " EXCLUDE GROUP");
+			appendStringInfoString(str, " EXCLUDE GROUP");
 		}
 		else if (node->frameOptions & FRAMEOPTION_EXCLUDE_TIES)
 		{
-			string_append_char(str, " EXCLUDE TIES");
+			appendStringInfoString(str, " EXCLUDE TIES");
 		}
 	}
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outConstraint(String * str, Constraint *node)
+_outConstraint(StringInfo str, Constraint *node)
 {
 	if (node->conname)
 	{
-		string_append_char(str, "CONSTRAINT \"");
-		string_append_char(str, node->conname);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, "CONSTRAINT \"");
+		appendStringInfoString(str, node->conname);
+		appendStringInfoString(str, "\"");
 	}
 
 	switch (node->contype)
 	{
 		case CONSTR_CHECK:
-			string_append_char(str, " CHECK (");
+			appendStringInfoString(str, " CHECK (");
 			_outNode(str, node->raw_expr);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case CONSTR_UNIQUE:
-			string_append_char(str, " UNIQUE");
+			appendStringInfoString(str, " UNIQUE");
 			if (node->keys)
 			{
-				string_append_char(str, "(");
+				appendStringInfoString(str, "(");
 				_outIdList(str, node->keys);
-				string_append_char(str, ")");
+				appendStringInfoString(str, ")");
 			}
 
 			if (node->options)
@@ -2111,57 +2110,57 @@ _outConstraint(String * str, Constraint *node)
 
 			if (node->indexspace)
 			{
-				string_append_char(str, " USING INDEX TABLESPACE \"");
-				string_append_char(str, node->indexspace);
-				string_append_char(str, "\"");
+				appendStringInfoString(str, " USING INDEX TABLESPACE \"");
+				appendStringInfoString(str, node->indexspace);
+				appendStringInfoString(str, "\"");
 			}
 			break;
 
 		case CONSTR_PRIMARY:
-			string_append_char(str, " PRIMARY KEY");
+			appendStringInfoString(str, " PRIMARY KEY");
 			if (node->keys)
 			{
-				string_append_char(str, "(");
+				appendStringInfoString(str, "(");
 				_outIdList(str, node->keys);
-				string_append_char(str, ")");
+				appendStringInfoString(str, ")");
 			}
 			if (node->options)
 				;
 
 			if (node->indexspace)
 			{
-				string_append_char(str, " USING INDEX TABLESPACE \"");
-				string_append_char(str, node->indexspace);
-				string_append_char(str, "\"");
+				appendStringInfoString(str, " USING INDEX TABLESPACE \"");
+				appendStringInfoString(str, node->indexspace);
+				appendStringInfoString(str, "\"");
 			}
 			break;
 
 		case CONSTR_FOREIGN:
 			if (node->fk_attrs != NIL)
 			{
-				string_append_char(str, " FOREIGN KEY(");
+				appendStringInfoString(str, " FOREIGN KEY(");
 				_outIdList(str, node->fk_attrs);
-				string_append_char(str, ")");
+				appendStringInfoString(str, ")");
 			}
 
-			string_append_char(str, " REFERENCES ");
+			appendStringInfoString(str, " REFERENCES ");
 			_outNode(str, node->pktable);
 
 			if (node->pk_attrs != NIL)
 			{
-				string_append_char(str, "(");
+				appendStringInfoString(str, "(");
 				_outIdList(str, node->pk_attrs);
-				string_append_char(str, ")");
+				appendStringInfoString(str, ")");
 			}
 
 			switch (node->fk_matchtype)
 			{
 				case FKCONSTR_MATCH_FULL:
-					string_append_char(str, " MATCH FULL");
+					appendStringInfoString(str, " MATCH FULL");
 					break;
 
 				case FKCONSTR_MATCH_PARTIAL:
-					string_append_char(str, " MATCH PARTIAL");
+					appendStringInfoString(str, " MATCH PARTIAL");
 					break;
 
 				default:
@@ -2171,19 +2170,19 @@ _outConstraint(String * str, Constraint *node)
 			switch (node->fk_upd_action)
 			{
 				case FKCONSTR_ACTION_RESTRICT:
-					string_append_char(str, " ON UPDATE RESTRICT");
+					appendStringInfoString(str, " ON UPDATE RESTRICT");
 					break;
 
 				case FKCONSTR_ACTION_CASCADE:
-					string_append_char(str, " ON UPDATE CASCADE");
+					appendStringInfoString(str, " ON UPDATE CASCADE");
 					break;
 
 				case FKCONSTR_ACTION_SETNULL:
-					string_append_char(str, " ON UPDATE SET NULL");
+					appendStringInfoString(str, " ON UPDATE SET NULL");
 					break;
 
 				case FKCONSTR_ACTION_SETDEFAULT:
-					string_append_char(str, " ON UPDATE SET DEFAULT");
+					appendStringInfoString(str, " ON UPDATE SET DEFAULT");
 					break;
 
 				default:
@@ -2193,19 +2192,19 @@ _outConstraint(String * str, Constraint *node)
 			switch (node->fk_del_action)
 			{
 				case FKCONSTR_ACTION_RESTRICT:
-					string_append_char(str, " ON DELETE RESTRICT");
+					appendStringInfoString(str, " ON DELETE RESTRICT");
 					break;
 
 				case FKCONSTR_ACTION_CASCADE:
-					string_append_char(str, " ON DELETE CASCADE");
+					appendStringInfoString(str, " ON DELETE CASCADE");
 					break;
 
 				case FKCONSTR_ACTION_SETNULL:
-					string_append_char(str, " ON DELETE SET NULL");
+					appendStringInfoString(str, " ON DELETE SET NULL");
 					break;
 
 				case FKCONSTR_ACTION_SETDEFAULT:
-					string_append_char(str, " ON DELETE SET DEFAULT");
+					appendStringInfoString(str, " ON DELETE SET DEFAULT");
 					break;
 
 				default:
@@ -2213,22 +2212,22 @@ _outConstraint(String * str, Constraint *node)
 			}
 
 			if (node->deferrable)
-				string_append_char(str, " DEFERRABLE");
+				appendStringInfoString(str, " DEFERRABLE");
 
 			if (node->initdeferred)
-				string_append_char(str, " INITIALLY DEFERRED");
+				appendStringInfoString(str, " INITIALLY DEFERRED");
 			break;
 
 		case CONSTR_NOTNULL:
-			string_append_char(str, " NOT NULL");
+			appendStringInfoString(str, " NOT NULL");
 			break;
 
 		case CONSTR_NULL:
-			string_append_char(str, " NULL");
+			appendStringInfoString(str, " NULL");
 			break;
 
 		case CONSTR_DEFAULT:
-			string_append_char(str, "DEFAULT ");
+			appendStringInfoString(str, "DEFAULT ");
 			_outNode(str, node->raw_expr);
 			break;
 
@@ -2239,42 +2238,42 @@ _outConstraint(String * str, Constraint *node)
 
 
 static void
-_outSortBy(String * str, SortBy *node)
+_outSortBy(StringInfo str, SortBy *node)
 {
 	_outNode(str, node->node);
 
 	if (node->sortby_dir == SORTBY_USING)
 	{
-		string_append_char(str, " USING ");
+		appendStringInfoString(str, " USING ");
 		_outNode(str, node->useOp);
 	}
 	else if (node->sortby_dir == SORTBY_DESC)
-		string_append_char(str, " DESC ");
+		appendStringInfoString(str, " DESC ");
 
 	if (node->sortby_nulls == SORTBY_NULLS_FIRST)
-		string_append_char(str, " NULLS FIRST ");
+		appendStringInfoString(str, " NULLS FIRST ");
 	else if (node->sortby_nulls == SORTBY_NULLS_LAST)
-		string_append_char(str, " NULLS LAST ");
+		appendStringInfoString(str, " NULLS LAST ");
 }
 
 static void
-_outInsertStmt(String * str, InsertStmt *node)
+_outInsertStmt(StringInfo str, InsertStmt *node)
 {
 	if (node->withClause)
 		_outWithClause(str, node->withClause);
 
-	string_append_char(str, "INSERT INTO ");
+	appendStringInfoString(str, "INSERT INTO ");
 	_outNode(str, node->relation);
 
 	if (node->cols == NIL && node->selectStmt == NULL)
-		string_append_char(str, " DEFAULT VALUES");
+		appendStringInfoString(str, " DEFAULT VALUES");
 
 	if (node->cols)
 	{
 		char		comma = 0;
 		ListCell   *lc;
 
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 
 		foreach(lc, node->cols)
 		{
@@ -2284,11 +2283,11 @@ _outInsertStmt(String * str, InsertStmt *node)
 			if (comma == 0)
 				comma = 1;
 			else
-				string_append_char(str, ", ");
+				appendStringInfoString(str, ", ");
 
-			string_append_char(str, "\"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 
 			foreach(lc_ind, node->indirection)
 			{
@@ -2297,16 +2296,16 @@ _outInsertStmt(String * str, InsertStmt *node)
 				if (IsA(ind, String))
 				{
 					/* foo.bar */
-					string_append_char(str, ".\"");
-					string_append_char(str, strVal(ind));
-					string_append_char(str, "\"");
+					appendStringInfoString(str, ".\"");
+					appendStringInfoString(str, strVal(ind));
+					appendStringInfoString(str, "\"");
 				}
 				else
 					/* foo[1] (A_Indices) */
 					_outNode(str, ind);
 			}
 		}
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 
 	if (node->selectStmt)
@@ -2321,24 +2320,24 @@ _outInsertStmt(String * str, InsertStmt *node)
 
 	if (node->returningList)
 	{
-		string_append_char(str, " RETURNING ");
+		appendStringInfoString(str, " RETURNING ");
 		_outNode(str, node->returningList);
 	}
 }
 
 static void
-_outSetClause(String * str, List *node)
+_outSetClause(StringInfo str, List *node)
 {
 	ListCell   *lc;
 	char		comma = 0;
 
 	ResTarget  *first = linitial(node);
 
-	string_append_char(str, " SET ");
+	appendStringInfoString(str, " SET ");
 
 	if (IsA(first->val, MultiAssignRef))
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		foreach(lc, node)
 		{
 			ResTarget  *node = lfirst(lc);
@@ -2347,11 +2346,11 @@ _outSetClause(String * str, List *node)
 			if (comma == 0)
 				comma = 1;
 			else
-				string_append_char(str, ", ");
+				appendStringInfoString(str, ", ");
 
-			string_append_char(str, "\"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 
 			foreach(lc_ind, node->indirection)
 			{
@@ -2359,16 +2358,16 @@ _outSetClause(String * str, List *node)
 
 				if (IsA(ind, String))
 				{
-					string_append_char(str, ".\"");
-					string_append_char(str, strVal(ind));
-					string_append_char(str, "\"");
+					appendStringInfoString(str, ".\"");
+					appendStringInfoString(str, strVal(ind));
+					appendStringInfoString(str, "\"");
 				}
 				else
 					/* foo[1] (A_Indices) */
 					_outNode(str, ind);
 			}
 		}
-		string_append_char(str, ") = ");
+		appendStringInfoString(str, ") = ");
 
 		_outNode(str, first->val);
 
@@ -2383,11 +2382,11 @@ _outSetClause(String * str, List *node)
 			if (comma == 0)
 				comma = 1;
 			else
-				string_append_char(str, ", ");
+				appendStringInfoString(str, ", ");
 
-			string_append_char(str, "\"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 
 			foreach(lc_ind, node->indirection)
 			{
@@ -2395,28 +2394,28 @@ _outSetClause(String * str, List *node)
 
 				if (IsA(ind, String))
 				{
-					string_append_char(str, ".\"");
-					string_append_char(str, strVal(ind));
-					string_append_char(str, "\"");
+					appendStringInfoString(str, ".\"");
+					appendStringInfoString(str, strVal(ind));
+					appendStringInfoString(str, "\"");
 				}
 				else
 					/* foo[1] (A_Indices) */
 					_outNode(str, ind);
 			}
 
-			string_append_char(str, " = ");
+			appendStringInfoString(str, " = ");
 			_outNode(str, node->val);
 		}
 	}
 }
 
 static void
-_outUpdateStmt(String * str, UpdateStmt *node)
+_outUpdateStmt(StringInfo str, UpdateStmt *node)
 {
 	if (node->withClause)
 		_outWithClause(str, node->withClause);
 
-	string_append_char(str, "UPDATE ");
+	appendStringInfoString(str, "UPDATE ");
 
 	_outNode(str, node->relation);
 
@@ -2424,95 +2423,95 @@ _outUpdateStmt(String * str, UpdateStmt *node)
 
 	if (node->fromClause)
 	{
-		string_append_char(str, " FROM ");
+		appendStringInfoString(str, " FROM ");
 		_outNode(str, node->fromClause);
 	}
 
 	if (node->whereClause)
 	{
-		string_append_char(str, " WHERE ");
+		appendStringInfoString(str, " WHERE ");
 		_outNode(str, node->whereClause);
 	}
 
 	if (node->returningList)
 	{
-		string_append_char(str, " RETURNING ");
+		appendStringInfoString(str, " RETURNING ");
 		_outNode(str, node->returningList);
 	}
 }
 
 static void
-_outDeleteStmt(String * str, DeleteStmt *node)
+_outDeleteStmt(StringInfo str, DeleteStmt *node)
 {
 	if (node->withClause)
 		_outWithClause(str, node->withClause);
 
-	string_append_char(str, "DELETE FROM ");
+	appendStringInfoString(str, "DELETE FROM ");
 
 	_outNode(str, node->relation);
 
 	if (node->usingClause)
 	{
-		string_append_char(str, " USING ");
+		appendStringInfoString(str, " USING ");
 		_outNode(str, node->usingClause);
 	}
 
 	if (node->whereClause)
 	{
-		string_append_char(str, " WHERE ");
+		appendStringInfoString(str, " WHERE ");
 		_outNode(str, node->whereClause);
 	}
 
 	if (node->returningList)
 	{
-		string_append_char(str, " RETURNING ");
+		appendStringInfoString(str, " RETURNING ");
 		_outNode(str, node->returningList);
 	}
 }
 
 static void
-_outTransactionStmt(String * str, TransactionStmt *node)
+_outTransactionStmt(StringInfo str, TransactionStmt *node)
 {
 	switch (node->kind)
 	{
 		case TRANS_STMT_BEGIN:
-			string_append_char(str, "BEGIN ");
+			appendStringInfoString(str, "BEGIN ");
 			break;
 
 		case TRANS_STMT_START:
-			string_append_char(str, "START TRANSACTION ");
+			appendStringInfoString(str, "START TRANSACTION ");
 			break;
 
 		case TRANS_STMT_COMMIT:
-			string_append_char(str, "COMMIT ");
+			appendStringInfoString(str, "COMMIT ");
 			break;
 
 		case TRANS_STMT_ROLLBACK:
-			string_append_char(str, "ABORT ");
+			appendStringInfoString(str, "ABORT ");
 			break;
 
 		case TRANS_STMT_SAVEPOINT:
-			string_append_char(str, "SAVEPOINT ");
+			appendStringInfoString(str, "SAVEPOINT ");
 			break;
 
 		case TRANS_STMT_RELEASE:
-			string_append_char(str, "RELEASE ");
+			appendStringInfoString(str, "RELEASE ");
 			break;
 
 		case TRANS_STMT_ROLLBACK_TO:
-			string_append_char(str, "ROLLBACK TO ");
+			appendStringInfoString(str, "ROLLBACK TO ");
 			break;
 
 		case TRANS_STMT_PREPARE:
-			string_append_char(str, "PREPARE TRANSACTION ");
+			appendStringInfoString(str, "PREPARE TRANSACTION ");
 			break;
 
 		case TRANS_STMT_COMMIT_PREPARED:
-			string_append_char(str, "COMMIT PREPARED ");
+			appendStringInfoString(str, "COMMIT PREPARED ");
 			break;
 
 		case TRANS_STMT_ROLLBACK_PREPARED:
-			string_append_char(str, "ROLLBACK PREPARED ");
+			appendStringInfoString(str, "ROLLBACK PREPARED ");
 			break;
 
 		default:
@@ -2523,46 +2522,46 @@ _outTransactionStmt(String * str, TransactionStmt *node)
 		_outSetTransactionModeList(str, node->options);
 
 	if (node->gid)
-		string_append_char(str, node->gid);
+		appendStringInfoString(str, node->gid);
 }
 
 
 static void
-_outTruncateStmt(String * str, TruncateStmt *node)
+_outTruncateStmt(StringInfo str, TruncateStmt *node)
 {
-	string_append_char(str, "TRUNCATE ");
+	appendStringInfoString(str, "TRUNCATE ");
 	_outNode(str, node->relations);
 }
 
 static void
-_outVacuumStmt(String * str, VacuumStmt *node)
+_outVacuumStmt(StringInfo str, VacuumStmt *node)
 {
 
 	VacuumParams params;
 	params.options = node->is_vacuumcmd ? VACOPT_VACUUM : VACOPT_ANALYZE;
 
 	if (params.options & VACOPT_VACUUM)
-		string_append_char(str, "VACUUM ");
+		appendStringInfoString(str, "VACUUM ");
 	else
-		string_append_char(str, "ANALYZE ");
+		appendStringInfoString(str, "ANALYZE ");
 
 	if (params.options & VACOPT_FULL)
-		string_append_char(str, "FULL ");
+		appendStringInfoString(str, "FULL ");
 
 	if (params.options & VACOPT_FREEZE)
-		string_append_char(str, "FREEZE ");
+		appendStringInfoString(str, "FREEZE ");
 
 	if (params.options & VACOPT_VERBOSE)
-		string_append_char(str, "VERBOSE ");
+		appendStringInfoString(str, "VERBOSE ");
 
 	if (params.options & VACOPT_VACUUM && params.options & VACOPT_ANALYZE)
-		string_append_char(str, "ANALYZE ");
+		appendStringInfoString(str, "ANALYZE ");
 
 	if (params.options & VACOPT_DISABLE_PAGE_SKIPPING)
-		string_append_char(str, "DISABLE_PAGE_SKIPPING ");
+		appendStringInfoString(str, "DISABLE_PAGE_SKIPPING ");
 
 	if (params.options & VACOPT_SKIP_LOCKED)
-		string_append_char(str, "SKIP_LOCKED ");
+		appendStringInfoString(str, "SKIP_LOCKED ");
 
 	ListCell   *lc;
 	foreach(lc, node->rels)
@@ -2572,19 +2571,19 @@ _outVacuumStmt(String * str, VacuumStmt *node)
 		_outNode(str, vrel->relation);
 		if (vrel->va_cols)
 		{
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			_outIdList(str, vrel->va_cols);
-			string_append_char(str, ") ");
+			appendStringInfoString(str, ") ");
 		}
 	}
 }
 
 static void
-_outExplainStmt(String * str, ExplainStmt *node)
+_outExplainStmt(StringInfo str, ExplainStmt *node)
 {
 	ListCell   *lc;
 
-	string_append_char(str, "EXPLAIN ");
+	appendStringInfoString(str, "EXPLAIN ");
 
 	if (server_version_num < 90000)
 	{
@@ -2593,29 +2592,29 @@ _outExplainStmt(String * str, ExplainStmt *node)
 			DefElem    *opt = (DefElem *) lfirst(lc);
 
 			if (strcmp(opt->defname, "analyze") == 0)
-				string_append_char(str, "ANALYZE ");
+				appendStringInfoString(str, "ANALYZE ");
 			else if (strcmp(opt->defname, "verbose") == 0)
-				string_append_char(str, "VERBOSE ");
+				appendStringInfoString(str, "VERBOSE ");
 		}
 	}
 	else
 	{
 		if (node->options)
 		{
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			foreach(lc, node->options)
 			{
 				DefElem    *opt = (DefElem *) lfirst(lc);
 
 				if (list_head(node->options) != lc)
-					string_append_char(str, ", ");
+					appendStringInfoString(str, ", ");
 
-				string_append_char(str, opt->defname);
-				string_append_char(str, " ");
+				appendStringInfoString(str, opt->defname);
+				appendStringInfoString(str, " ");
 				if (opt->arg)
 					_outValue(str, (Value *) opt->arg);
 			}
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 		}
 	}
 
@@ -2623,102 +2622,102 @@ _outExplainStmt(String * str, ExplainStmt *node)
 }
 
 static void
-_outClusterStmt(String * str, ClusterStmt *node)
+_outClusterStmt(StringInfo str, ClusterStmt *node)
 {
-	string_append_char(str, "CLUSTER ");
+	appendStringInfoString(str, "CLUSTER ");
 
 	if (node->indexname)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->indexname);
-		string_append_char(str, "\" ON ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->indexname);
+		appendStringInfoString(str, "\" ON ");
 	}
 	if (node->relation)
 		_outNode(str, node->relation);
 }
 
 static void
-_outCheckPointStmt(String * str, CheckPointStmt *node)
+_outCheckPointStmt(StringInfo str, CheckPointStmt *node)
 {
-	string_append_char(str, "CHECKPOINT");
+	appendStringInfoString(str, "CHECKPOINT");
 }
 
 static void
-_outClosePortalStmt(String * str, ClosePortalStmt *node)
+_outClosePortalStmt(StringInfo str, ClosePortalStmt *node)
 {
-	string_append_char(str, "CLOSE ");
-	string_append_char(str, "\"");
-	string_append_char(str, node->portalname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "CLOSE ");
+	appendStringInfoString(str, "\"");
+	appendStringInfoString(str, node->portalname);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outListenStmt(String * str, ListenStmt *node)
+_outListenStmt(StringInfo str, ListenStmt *node)
 {
-	string_append_char(str, "LISTEN ");
-	string_append_char(str, "\"");
-	string_append_char(str, node->conditionname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "LISTEN ");
+	appendStringInfoString(str, "\"");
+	appendStringInfoString(str, node->conditionname);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outUnlistenStmt(String * str, UnlistenStmt *node)
+_outUnlistenStmt(StringInfo str, UnlistenStmt *node)
 {
-	string_append_char(str, "UNLISTEN ");
+	appendStringInfoString(str, "UNLISTEN ");
 	if (node->conditionname == NULL)
-		string_append_char(str, "*");
+		appendStringInfoString(str, "*");
 	else
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->conditionname);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->conditionname);
+		appendStringInfoString(str, "\"");
 	}
 }
 
 static void
-_outLoadStmt(String * str, LoadStmt *node)
+_outLoadStmt(StringInfo str, LoadStmt *node)
 {
-	string_append_char(str, "LOAD '");
-	string_append_char(str, node->filename);
-	string_append_char(str, "'");
+	appendStringInfoString(str, "LOAD '");
+	appendStringInfoString(str, node->filename);
+	appendStringInfoString(str, "'");
 }
 
 static void
-_outCopyStmt(String * str, CopyStmt *node)
+_outCopyStmt(StringInfo str, CopyStmt *node)
 {
 	ListCell   *lc;
 
-	string_append_char(str, "COPY ");
+	appendStringInfoString(str, "COPY ");
 
 	if (node->query)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outNode(str, node->query);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 
 	_outNode(str, node->relation);
 
 	if (node->attlist)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outIdList(str, node->attlist);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 
 	if (node->is_from == TRUE)
-		string_append_char(str, " FROM ");
+		appendStringInfoString(str, " FROM ");
 	else
-		string_append_char(str, " TO ");
+		appendStringInfoString(str, " TO ");
 
 	if (node->filename)
 	{
-		string_append_char(str, "'");
-		string_append_char(str, node->filename);
-		string_append_char(str, "' ");
+		appendStringInfoString(str, "'");
+		appendStringInfoString(str, node->filename);
+		appendStringInfoString(str, "' ");
 	}
 	else
-		string_append_char(str, node->is_from == TRUE ? "STDIN " : "STDOUT ");
+		appendStringInfoString(str, node->is_from == TRUE ? "STDIN " : "STDOUT ");
 
 	if (server_version_num < 90000)
 	{
@@ -2733,46 +2732,46 @@ _outCopyStmt(String * str, CopyStmt *node)
 				if (strcmp(fmt, "text") == 0)
 					;
 				else if (strcmp(fmt, "binary") == 0)
-					string_append_char(str, "BINARY ");
+					appendStringInfoString(str, "BINARY ");
 				else if (strcmp(fmt, "csv") == 0)
-					string_append_char(str, "CSV ");
+					appendStringInfoString(str, "CSV ");
 			}
 			else if (strcmp(e->defname, "oids") == 0)
-				string_append_char(str, "OIDS ");
+				appendStringInfoString(str, "OIDS ");
 			else if (strcmp(e->defname, "delimiter") == 0)
 			{
-				string_append_char(str, "DELIMITERS ");
+				appendStringInfoString(str, "DELIMITERS ");
 				_outValue(str, (Value *) e->arg);
-				string_append_char(str, " ");
+				appendStringInfoString(str, " ");
 			}
 			else if (strcmp(e->defname, "null") == 0)
 			{
-				string_append_char(str, "NULL ");
+				appendStringInfoString(str, "NULL ");
 				_outValue(str, (Value *) e->arg);
-				string_append_char(str, " ");
+				appendStringInfoString(str, " ");
 			}
 			else if (strcmp(e->defname, "header") == 0)
-				string_append_char(str, "HEADER ");
+				appendStringInfoString(str, "HEADER ");
 			else if (strcmp(e->defname, "quote") == 0)
 			{
-				string_append_char(str, "QUOTE ");
+				appendStringInfoString(str, "QUOTE ");
 				_outValue(str, (Value *) e->arg);
-				string_append_char(str, " ");
+				appendStringInfoString(str, " ");
 			}
 			else if (strcmp(e->defname, "escape") == 0)
 			{
-				string_append_char(str, "ESCAPE ");
+				appendStringInfoString(str, "ESCAPE ");
 				_outValue(str, (Value *) e->arg);
-				string_append_char(str, " ");
+				appendStringInfoString(str, " ");
 			}
 			else if (strcmp(e->defname, "force_quote") == 0)
 			{
-				string_append_char(str, "FORCE QUOTE ");
+				appendStringInfoString(str, "FORCE QUOTE ");
 				_outIdList(str, (List *) e->arg);
 			}
 			else if (strcmp(e->defname, "force_not_null") == 0)
 			{
-				string_append_char(str, "FORCE NOT NULL ");
+				appendStringInfoString(str, "FORCE NOT NULL ");
 				_outIdList(str, (List *) e->arg);
 			}
 		}
@@ -2782,17 +2781,17 @@ _outCopyStmt(String * str, CopyStmt *node)
 		/* version_num >= 90000 */
 		if (node->options)
 		{
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 
 			foreach(lc, node->options)
 			{
 				DefElem    *e = lfirst(lc);
 
 				if (list_head(node->options) != lc)
-					string_append_char(str, ", ");
+					appendStringInfoString(str, ", ");
 
-				string_append_char(str, e->defname);
-				string_append_char(str, " ");
+				appendStringInfoString(str, e->defname);
+				appendStringInfoString(str, " ");
 
 				if (strcmp(e->defname, "format") == 0
 					|| strcmp(e->defname, "oids") == 0
@@ -2804,78 +2803,78 @@ _outCopyStmt(String * str, CopyStmt *node)
 					_outValue(str, (Value *) e->arg);
 				else if (strcmp(e->defname, "force_not_null") == 0)
 				{
-					string_append_char(str, "(");
+					appendStringInfoString(str, "(");
 					_outIdList(str, (List *) e->arg);
-					string_append_char(str, ")");
+					appendStringInfoString(str, ")");
 				}
 				else if (strcmp(e->defname, "force_quote") == 0)
 				{
 					if (IsA(e->arg, A_Star))
-						string_append_char(str, "*");
+						appendStringInfoString(str, "*");
 					else if (IsA(e->arg, List))
 					{
-						string_append_char(str, "(");
+						appendStringInfoString(str, "(");
 						_outIdList(str, (List *) e->arg);
-						string_append_char(str, ")");
+						appendStringInfoString(str, ")");
 					}
 				}
 			}
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 		}
 	}
 
 	if (node->whereClause)
 	{
-		string_append_char(str, " WHERE ");
+		appendStringInfoString(str, " WHERE ");
 		_outNode(str, node->whereClause);
 	}
 }
 
 static void
-_outDeallocateStmt(String * str, DeallocateStmt *node)
+_outDeallocateStmt(StringInfo str, DeallocateStmt *node)
 {
-	string_append_char(str, "DEALLOCATE \"");
-	string_append_char(str, node->name);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "DEALLOCATE \"");
+	appendStringInfoString(str, node->name);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outRenameStmt(String * str, RenameStmt *node)
+_outRenameStmt(StringInfo str, RenameStmt *node)
 {
 	ListCell   *lc;
 	char		comma = 0;
 
-	string_append_char(str, "ALTER ");
+	appendStringInfoString(str, "ALTER ");
 
 	switch (node->renameType)
 	{
 		case OBJECT_AGGREGATE:
-			string_append_char(str, "AGGREGATE ");
+			appendStringInfoString(str, "AGGREGATE ");
 			_outNode(str, node->object);
-			string_append_char(str, " (");
-			string_append_char(str, ") RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " (");
+			appendStringInfoString(str, ") RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_CONVERSION:
-			string_append_char(str, "CONVERSION ");
+			appendStringInfoString(str, "CONVERSION ");
 			_outNode(str, node->object);
-			string_append_char(str, " RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_DATABASE:
-			string_append_char(str, "DATABASE \"");
-			string_append_char(str, node->subname);
-			string_append_char(str, "\" RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "DATABASE \"");
+			appendStringInfoString(str, node->subname);
+			appendStringInfoString(str, "\" RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_FUNCTION:
-			string_append_char(str, "FUNCTION ");
+			appendStringInfoString(str, "FUNCTION ");
 
 			foreach(lc, castNode(List, node->object))
 			{
@@ -2888,98 +2887,98 @@ _outRenameStmt(String * str, RenameStmt *node)
 					if (comma == 0)
 						comma = 1;
 					else
-						string_append_char(str, ".");
-					string_append_char(str, "\"");
-					string_append_char(str, value->val.str);
-					string_append_char(str, "\"");
+						appendStringInfoString(str, ".");
+					appendStringInfoString(str, "\"");
+					appendStringInfoString(str, value->val.str);
+					appendStringInfoString(str, "\"");
 				}
 				else
 					_outNode(str, n);
 			}
 
-			string_append_char(str, "(");
-			string_append_char(str, ")");
-			string_append_char(str, " RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "(");
+			appendStringInfoString(str, ")");
+			appendStringInfoString(str, " RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_ROLE:
-			string_append_char(str, "ROLE \"");
-			string_append_char(str, node->subname);
-			string_append_char(str, "\" RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "ROLE \"");
+			appendStringInfoString(str, node->subname);
+			appendStringInfoString(str, "\" RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_LANGUAGE:
-			string_append_char(str, "LANGUAGE \"");
-			string_append_char(str, node->subname);
-			string_append_char(str, "\" RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "LANGUAGE \"");
+			appendStringInfoString(str, node->subname);
+			appendStringInfoString(str, "\" RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_OPCLASS:
-			string_append_char(str, "OPERATOR CLASS ");
+			appendStringInfoString(str, "OPERATOR CLASS ");
 			_outNode(str, node->object);
-			string_append_char(str, " USING ");
-			string_append_char(str, node->subname);
-			string_append_char(str, " RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " USING ");
+			appendStringInfoString(str, node->subname);
+			appendStringInfoString(str, " RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_SCHEMA:
-			string_append_char(str, "SCHEMA \"");
-			string_append_char(str, node->subname);
-			string_append_char(str, "\" RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "SCHEMA \"");
+			appendStringInfoString(str, node->subname);
+			appendStringInfoString(str, "\" RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TABLE:
-			string_append_char(str, "TABLE ");
+			appendStringInfoString(str, "TABLE ");
 			_outNode(str, node->relation);
-			string_append_char(str, " RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_INDEX:
-			string_append_char(str, "INDEX ");
+			appendStringInfoString(str, "INDEX ");
 			_outNode(str, node->relation);
-			string_append_char(str, " RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_COLUMN:
-			string_append_char(str, "TABLE ");
+			appendStringInfoString(str, "TABLE ");
 			_outNode(str, node->relation);
-			string_append_char(str, " RENAME \"");
-			string_append_char(str, node->subname);
-			string_append_char(str, "\" TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " RENAME \"");
+			appendStringInfoString(str, node->subname);
+			appendStringInfoString(str, "\" TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TRIGGER:
-			string_append_char(str, "TRIGGER \"");
-			string_append_char(str, node->subname);
-			string_append_char(str, "\" ON ");
+			appendStringInfoString(str, "TRIGGER \"");
+			appendStringInfoString(str, node->subname);
+			appendStringInfoString(str, "\" ON ");
 			_outNode(str, node->relation);
-			string_append_char(str, " RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TABLESPACE:
-			string_append_char(str, "TABLESPACE \"");
-			string_append_char(str, node->subname);
-			string_append_char(str, "\" RENAME TO \"");
-			string_append_char(str, node->newname);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "TABLESPACE \"");
+			appendStringInfoString(str, node->subname);
+			appendStringInfoString(str, "\" RENAME TO \"");
+			appendStringInfoString(str, node->newname);
+			appendStringInfoString(str, "\"");
 			break;
 
 		default:
@@ -2988,7 +2987,7 @@ _outRenameStmt(String * str, RenameStmt *node)
 }
 
 static void
-_outOptRoleList(String * str, List *options)
+_outOptRoleList(StringInfo str, List *options)
 {
 	ListCell   *lc;
 
@@ -3000,142 +2999,142 @@ _outOptRoleList(String * str, List *options)
 		if (strcmp(elem->defname, "password") == 0)
 		{
 			if (value == NULL)
-				string_append_char(str, " PASSWORD NULL");
+				appendStringInfoString(str, " PASSWORD NULL");
 			else
 			{
-				string_append_char(str, " PASSWORD '");
-				string_append_char(str, value->val.str);
-				string_append_char(str, "'");
+				appendStringInfoString(str, " PASSWORD '");
+				appendStringInfoString(str, value->val.str);
+				appendStringInfoString(str, "'");
 			}
 		}
 		else if (strcmp(elem->defname, "encryptedPassword") == 0)
 		{
-			string_append_char(str, " ENCRYPTED PASSWORD '");
-			string_append_char(str, value->val.str);
-			string_append_char(str, "'");
+			appendStringInfoString(str, " ENCRYPTED PASSWORD '");
+			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, "'");
 		}
 		else if (strcmp(elem->defname, "unencryptedPassword") == 0)
 		{
-			string_append_char(str, " UNENCRYPTED PASSWORD '");
-			string_append_char(str, value->val.str);
-			string_append_char(str, "'");
+			appendStringInfoString(str, " UNENCRYPTED PASSWORD '");
+			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, "'");
 		}
 		else if (strcmp(elem->defname, "superuser") == 0)
 		{
 			if (value->val.ival == TRUE)
-				string_append_char(str, " SUPERUSER");
+				appendStringInfoString(str, " SUPERUSER");
 			else
-				string_append_char(str, " NOSUPERUSER");
+				appendStringInfoString(str, " NOSUPERUSER");
 		}
 		else if (strcmp(elem->defname, "inherit") == 0)
 		{
 			if (value->val.ival == TRUE)
-				string_append_char(str, " INHERIT");
+				appendStringInfoString(str, " INHERIT");
 			else
-				string_append_char(str, " NOINHERIT");
+				appendStringInfoString(str, " NOINHERIT");
 		}
 		else if (strcmp(elem->defname, "createdb") == 0)
 		{
 			if (value->val.ival == TRUE)
-				string_append_char(str, " CREATEDB");
+				appendStringInfoString(str, " CREATEDB");
 			else
-				string_append_char(str, " NOCREATEDB");
+				appendStringInfoString(str, " NOCREATEDB");
 		}
 		else if (strcmp(elem->defname, "createrole") == 0)
 		{
 			if (value->val.ival == TRUE)
-				string_append_char(str, " CREATEROLE");
+				appendStringInfoString(str, " CREATEROLE");
 			else
-				string_append_char(str, " NOCREATEROLE");
+				appendStringInfoString(str, " NOCREATEROLE");
 		}
 		else if (strcmp(elem->defname, "canlogin") == 0)
 		{
 			if (value->val.ival == TRUE)
-				string_append_char(str, " LOGIN");
+				appendStringInfoString(str, " LOGIN");
 			else
-				string_append_char(str, " NOLOGIN");
+				appendStringInfoString(str, " NOLOGIN");
 		}
 		else if (strcmp(elem->defname, "connectionlimit") == 0)
 		{
 			char		buf[16];
 
-			string_append_char(str, " CONNECTION LIMIT ");
+			appendStringInfoString(str, " CONNECTION LIMIT ");
 			snprintf(buf, 16, "%d", value->val.ival);
-			string_append_char(str, buf);
+			appendStringInfoString(str, buf);
 		}
 		else if (strcmp(elem->defname, "validUntil") == 0)
 		{
-			string_append_char(str, " VALID UNTIL '");
-			string_append_char(str, value->val.str);
-			string_append_char(str, "'");
+			appendStringInfoString(str, " VALID UNTIL '");
+			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, "'");
 		}
 		else if (strcmp(elem->defname, "rolemembers") == 0)
 		{
-			string_append_char(str, " ROLE ");
+			appendStringInfoString(str, " ROLE ");
 			_outIdList(str, (List *) elem->arg);
 		}
 		else if (strcmp(elem->defname, "sysid") == 0)
 		{
 			char		buf[16];
 
-			string_append_char(str, " SYSID ");
+			appendStringInfoString(str, " SYSID ");
 			snprintf(buf, 16, "%d", value->val.ival);
-			string_append_char(str, buf);
+			appendStringInfoString(str, buf);
 		}
 		else if (strcmp(elem->defname, "adminmembers") == 0)
 		{
-			string_append_char(str, " ADMIN ");
+			appendStringInfoString(str, " ADMIN ");
 			_outIdList(str, (List *) elem->arg);
 		}
 		else if (strcmp(elem->defname, "addroleto") == 0)
 		{
-			string_append_char(str, " IN ROLE ");
+			appendStringInfoString(str, " IN ROLE ");
 			_outIdList(str, (List *) elem->arg);
 		}
 	}
 }
 
 static void
-_outCreateRoleStmt(String * str, CreateRoleStmt *node)
+_outCreateRoleStmt(StringInfo str, CreateRoleStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 	switch (node->stmt_type)
 	{
 		case ROLESTMT_ROLE:
-			string_append_char(str, "ROLE \"");
+			appendStringInfoString(str, "ROLE \"");
 			break;
 
 		case ROLESTMT_USER:
-			string_append_char(str, "USER \"");
+			appendStringInfoString(str, "USER \"");
 			break;
 
 		case ROLESTMT_GROUP:
-			string_append_char(str, "GROUP \"");
+			appendStringInfoString(str, "GROUP \"");
 			break;
 	}
 	_outNode(str, node->role);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "\"");
 
 	_outOptRoleList(str, node->options);
 }
 
 static void
-_outAlterRoleStmt(String * str, AlterRoleStmt *node)
+_outAlterRoleStmt(StringInfo str, AlterRoleStmt *node)
 {
-	string_append_char(str, "ALTER ROLE \"");
+	appendStringInfoString(str, "ALTER ROLE \"");
 	_outNode(str, node->role);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "\"");
 
 	if (node->options)
 		_outOptRoleList(str, node->options);
 }
 
 static void
-_outAlterRoleSetStmt(String * str, AlterRoleSetStmt *node)
+_outAlterRoleSetStmt(StringInfo str, AlterRoleSetStmt *node)
 {
-	string_append_char(str, "ALTER ROLE \"");
+	appendStringInfoString(str, "ALTER ROLE \"");
 	_outNode(str, node->role);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "\" ");
 
 	if (node->setstmt)
 	{
@@ -3143,13 +3142,13 @@ _outAlterRoleSetStmt(String * str, AlterRoleSetStmt *node)
 	}
 }
 static void
-_outRoleSpec(String * str, RoleSpec *node)
+_outRoleSpec(StringInfo str, RoleSpec *node)
 {
-	string_append_char(str, node->rolename);
+	appendStringInfoString(str, node->rolename);
 }
 
 static void
-_outSetTransactionModeList(String * str, List *list)
+_outSetTransactionModeList(StringInfo str, List *list)
 {
 	ListCell   *lc;
 	char		comma = 0;
@@ -3161,64 +3160,64 @@ _outSetTransactionModeList(String * str, List *list)
 		if (comma == 0)
 			comma = 1;
 		else
-			string_append_char(str, ",");
+			appendStringInfoString(str, ",");
 
 		if (strcmp(elem->defname, "transaction_isolation") == 0)
 		{
 			A_Const    *v = (A_Const *) elem->arg;
 
-			string_append_char(str, " ISOLATION LEVEL ");
-			string_append_char(str, v->val.val.str);
+			appendStringInfoString(str, " ISOLATION LEVEL ");
+			appendStringInfoString(str, v->val.val.str);
 		}
 		else if (strcmp(elem->defname, "transaction_read_only") == 0)
 		{
 			A_Const    *n = (A_Const *) elem->arg;
 
 			if (n->val.val.ival == TRUE)
-				string_append_char(str, "READ ONLY ");
+				appendStringInfoString(str, "READ ONLY ");
 			else
-				string_append_char(str, "READ WRITE ");
+				appendStringInfoString(str, "READ WRITE ");
 		}
 	}
 }
 
 
 static void
-_outSetRest(String * str, VariableSetStmt *node)
+_outSetRest(StringInfo str, VariableSetStmt *node)
 {
 	if (strcmp(node->name, "timezone") == 0)
 	{
-		string_append_char(str, "TIME ZONE ");
+		appendStringInfoString(str, "TIME ZONE ");
 		if (node->kind != VAR_RESET)
 			_outNode(str, node->args);
 	}
 	else if (strcmp(node->name, "TRANSACTION") == 0)
 	{
-		string_append_char(str, "TRANSACTION ");
+		appendStringInfoString(str, "TRANSACTION ");
 		_outSetTransactionModeList(str, node->args);
 	}
 	else if (strcmp(node->name, "SESSION CHARACTERISTICS") == 0)
 	{
-		string_append_char(str, "SESSION CHARACTERISTICS AS TRANSACTION ");
+		appendStringInfoString(str, "SESSION CHARACTERISTICS AS TRANSACTION ");
 		_outSetTransactionModeList(str, node->args);
 	}
 	else if (strcmp(node->name, "role") == 0)
 	{
-		string_append_char(str, "ROLE ");
+		appendStringInfoString(str, "ROLE ");
 		if (node->kind != VAR_RESET)
 			_outNode(str, node->args);
 	}
 	else if (strcmp(node->name, "session_authorization") == 0)
 	{
-		string_append_char(str, "SESSION AUTHORIZATION ");
+		appendStringInfoString(str, "SESSION AUTHORIZATION ");
 		if (node->args == NIL && node->kind != VAR_RESET)
-			string_append_char(str, "DEFAULT");
+			appendStringInfoString(str, "DEFAULT");
 		else
 			_outNode(str, node->args);
 	}
 	else if (strcmp(node->name, "transaction_isolation") == 0)
 	{
-		string_append_char(str, "TRANSACTION ISOLATION LEVEL");
+		appendStringInfoString(str, "TRANSACTION ISOLATION LEVEL");
 		if (node->kind != VAR_RESET)
 			_outSetTransactionModeList(str, node->args);
 	}
@@ -3226,24 +3225,24 @@ _outSetRest(String * str, VariableSetStmt *node)
 	{
 		A_Const    *v = linitial(node->args);
 
-		string_append_char(str, "XML OPTION ");
-		string_append_char(str, v->val.val.str);
+		appendStringInfoString(str, "XML OPTION ");
+		appendStringInfoString(str, v->val.val.str);
 	}
 	else
 	{
-		string_append_char(str, node->name);
+		appendStringInfoString(str, node->name);
 		if (node->kind != VAR_RESET)
 		{
 			if (node->kind == VAR_SET_CURRENT)
 			{
-				string_append_char(str, " FROM CURRENT");
+				appendStringInfoString(str, " FROM CURRENT");
 			}
 			else
 			{
-				string_append_char(str, " TO ");
+				appendStringInfoString(str, " TO ");
 				if (node->args == NULL)
 				{
-					string_append_char(str, "DEFAULT");
+					appendStringInfoString(str, "DEFAULT");
 				}
 				else
 					_outNode(str, node->args);
@@ -3253,178 +3252,178 @@ _outSetRest(String * str, VariableSetStmt *node)
 }
 
 static void
-_outDropRoleStmt(String * str, DropRoleStmt *node)
+_outDropRoleStmt(StringInfo str, DropRoleStmt *node)
 {
-	string_append_char(str, "DROP ROLE ");
+	appendStringInfoString(str, "DROP ROLE ");
 	if (node->missing_ok == TRUE)
-		string_append_char(str, "IF EXISTS ");
+		appendStringInfoString(str, "IF EXISTS ");
 	_outIdList(str, node->roles);
 }
 
 static void
-_outCreateSchemaStmt(String * str, CreateSchemaStmt *node)
+_outCreateSchemaStmt(StringInfo str, CreateSchemaStmt *node)
 {
-	string_append_char(str, "CREATE SCHEMA \"");
-	string_append_char(str, node->schemaname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "CREATE SCHEMA \"");
+	appendStringInfoString(str, node->schemaname);
+	appendStringInfoString(str, "\"");
 	if (node->authrole)
 	{
-		string_append_char(str, "AUTHORIZATION \"");
+		appendStringInfoString(str, "AUTHORIZATION \"");
 		_outNode(str, node->authrole);
-		string_append_char(str, "\" ");
+		appendStringInfoString(str, "\" ");
 	}
 	_outNode(str, node->schemaElts);
 }
 
 static void
-_outVariableSetStmt(String * str, VariableSetStmt *node)
+_outVariableSetStmt(StringInfo str, VariableSetStmt *node)
 {
 	if (node->kind == VAR_RESET_ALL)
 	{
-		string_append_char(str, "RESET ALL");
+		appendStringInfoString(str, "RESET ALL");
 		return;
 	}
 
 	if (node->kind == VAR_RESET)
-		string_append_char(str, "RESET ");
+		appendStringInfoString(str, "RESET ");
 	else
-		string_append_char(str, "SET ");
+		appendStringInfoString(str, "SET ");
 
 	if (node->is_local)
-		string_append_char(str, "LOCAL ");
+		appendStringInfoString(str, "LOCAL ");
 
 	_outSetRest(str, node);
 }
 
 static void
-_outVariableShowStmt(String * str, VariableShowStmt *node)
+_outVariableShowStmt(StringInfo str, VariableShowStmt *node)
 {
 	if (strcmp(node->name, "timezone") == 0)
-		string_append_char(str, "SHOW TIME ZONE");
+		appendStringInfoString(str, "SHOW TIME ZONE");
 	else if (strcmp(node->name, "transaction_isolation") == 0)
-		string_append_char(str, "SHOW TRANSACTION ISOLATION LEVEL");
+		appendStringInfoString(str, "SHOW TRANSACTION ISOLATION LEVEL");
 	else if (strcmp(node->name, "session_authorization") == 0)
-		string_append_char(str, "SHOW SESSION AUTHORIZATION");
+		appendStringInfoString(str, "SHOW SESSION AUTHORIZATION");
 	else if (strcmp(node->name, "all") == 0)
-		string_append_char(str, "SHOW ALL");
+		appendStringInfoString(str, "SHOW ALL");
 	else
 	{
-		string_append_char(str, "SHOW ");
-		string_append_char(str, node->name);
+		appendStringInfoString(str, "SHOW ");
+		appendStringInfoString(str, node->name);
 	}
 }
 
 static void
-_outConstraintsSetStmt(String * str, ConstraintsSetStmt *node)
+_outConstraintsSetStmt(StringInfo str, ConstraintsSetStmt *node)
 {
-	string_append_char(str, "SET CONSTRAINTS ");
+	appendStringInfoString(str, "SET CONSTRAINTS ");
 
 	if (node->constraints == NIL)
-		string_append_char(str, "ALL");
+		appendStringInfoString(str, "ALL");
 	else
 		_outNode(str, node->constraints);
 
-	string_append_char(str, node->deferred == TRUE ? " DEFERRED" : " IMMEDIATE");
+	appendStringInfoString(str, node->deferred == TRUE ? " DEFERRED" : " IMMEDIATE");
 }
 
 static void
-_outAlterTableCmd(String * str, AlterTableCmd *node)
+_outAlterTableCmd(StringInfo str, AlterTableCmd *node)
 {
 	char		buf[16];
 
 	switch (node->subtype)
 	{
 		case AT_AddColumn:
-			string_append_char(str, "ADD ");
+			appendStringInfoString(str, "ADD ");
 			_outNode(str, node->def);
 			break;
 
 		case AT_ColumnDefault:
-			string_append_char(str, "ALTER \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\" ");
+			appendStringInfoString(str, "ALTER \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\" ");
 			if (node->def == NULL)
-				string_append_char(str, "DROP DEFAULT");
+				appendStringInfoString(str, "DROP DEFAULT");
 			else
 			{
-				string_append_char(str, "SET DEFAULT ");
+				appendStringInfoString(str, "SET DEFAULT ");
 				_outNode(str, node->def);
 			}
 			break;
 
 		case AT_DropNotNull:
-			string_append_char(str, "ALTER \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\" DROP NOT NULL");
+			appendStringInfoString(str, "ALTER \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\" DROP NOT NULL");
 			break;
 
 		case AT_SetNotNull:
-			string_append_char(str, "ALTER \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\" SET NOT NULL");
+			appendStringInfoString(str, "ALTER \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\" SET NOT NULL");
 			break;
 
 		case AT_SetStatistics:
-			string_append_char(str, "ALTER \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\" SET STATISTICS ");
+			appendStringInfoString(str, "ALTER \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\" SET STATISTICS ");
 			snprintf(buf, 16, "%d", ((Value *) node->def)->val.ival);
-			string_append_char(str, buf);
+			appendStringInfoString(str, buf);
 			break;
 
 		case AT_SetStorage:
-			string_append_char(str, "ALTER \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\" SET STORAGE ");
-			string_append_char(str, ((Value *) node->def)->val.str);
+			appendStringInfoString(str, "ALTER \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\" SET STORAGE ");
+			appendStringInfoString(str, ((Value *) node->def)->val.str);
 			break;
 
 		case AT_DropColumn:
-			string_append_char(str, "DROP \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\" ");
+			appendStringInfoString(str, "DROP \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\" ");
 			if (node->behavior == DROP_CASCADE)
-				string_append_char(str, "CASCADE");
+				appendStringInfoString(str, "CASCADE");
 			break;
 
 		case AT_AlterColumnType:
-			string_append_char(str, "ALTER \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\" TYPE ");
+			appendStringInfoString(str, "ALTER \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\" TYPE ");
 			_outNode(str, node->def);
 			break;
 
 		case AT_AddConstraint:
-			string_append_char(str, "ADD ");
+			appendStringInfoString(str, "ADD ");
 			_outNode(str, node->def);
 			break;
 
 		case AT_DropConstraint:
-			string_append_char(str, "DROP CONSTRAINT \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "DROP CONSTRAINT \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 			if (node->behavior == DROP_CASCADE)
-				string_append_char(str, " CASCADE");
+				appendStringInfoString(str, " CASCADE");
 			break;
 
 		case AT_DropOids:
-			string_append_char(str, "SET WITHOUT OIDS");
+			appendStringInfoString(str, "SET WITHOUT OIDS");
 			break;
 
 		case AT_ClusterOn:
-			string_append_char(str, "CLUSTER ON \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "CLUSTER ON \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case AT_DropCluster:
-			string_append_char(str, "SET WITHOUT CLUSTER");
+			appendStringInfoString(str, "SET WITHOUT CLUSTER");
 			break;
 
 		case AT_EnableTrig:
-			string_append_char(str, "ENABLE TRIGGER \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "ENABLE TRIGGER \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case AT_EnableAlwaysTrig:
@@ -3436,25 +3435,25 @@ _outAlterTableCmd(String * str, AlterTableCmd *node)
 			break;
 
 		case AT_EnableTrigAll:
-			string_append_char(str, "ENABLE TRIGGER ALL");
+			appendStringInfoString(str, "ENABLE TRIGGER ALL");
 			break;
 
 		case AT_EnableTrigUser:
-			string_append_char(str, "ENABLE TRIGGER USER");
+			appendStringInfoString(str, "ENABLE TRIGGER USER");
 			break;
 
 		case AT_DisableTrig:
-			string_append_char(str, "DISABLE TRIGGER \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "DISABLE TRIGGER \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case AT_DisableTrigAll:
-			string_append_char(str, "DISABLE TRIGGER ALL");
+			appendStringInfoString(str, "DISABLE TRIGGER ALL");
 			break;
 
 		case AT_DisableTrigUser:
-			string_append_char(str, "DISABLE TRIGGER USER");
+			appendStringInfoString(str, "DISABLE TRIGGER USER");
 			break;
 
 		case AT_EnableRule:
@@ -3478,15 +3477,15 @@ _outAlterTableCmd(String * str, AlterTableCmd *node)
 			break;
 
 		case AT_ChangeOwner:
-			string_append_char(str, "OWNER TO \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "OWNER TO \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case AT_SetTableSpace:
-			string_append_char(str, "SET TABLESPACE \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "SET TABLESPACE \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case AT_SetRelOptions:
@@ -3503,20 +3502,20 @@ _outAlterTableCmd(String * str, AlterTableCmd *node)
 }
 
 static void
-_outAlterTableStmt(String * str, AlterTableStmt *node)
+_outAlterTableStmt(StringInfo str, AlterTableStmt *node)
 {
 	if (node->objtype == OBJECT_TABLE)
-		string_append_char(str, "ALTER TABLE ");
+		appendStringInfoString(str, "ALTER TABLE ");
 	else
-		string_append_char(str, "ALTER INDEX ");
+		appendStringInfoString(str, "ALTER INDEX ");
 
 	_outNode(str, node->relation);
-	string_append_char(str, " ");
+	appendStringInfoString(str, " ");
 	_outNode(str, node->cmds);
 }
 
 static void
-_outOptSeqList(String * str, List *options)
+_outOptSeqList(StringInfo str, List *options)
 {
 	ListCell   *lc;
 
@@ -3529,81 +3528,81 @@ _outOptSeqList(String * str, List *options)
 		if (strcmp(e->defname, "cycle") == 0)
 		{
 			if (v->val.ival == TRUE)
-				string_append_char(str, " CYCLE");
+				appendStringInfoString(str, " CYCLE");
 			else
-				string_append_char(str, " NO CYCLE");
+				appendStringInfoString(str, " NO CYCLE");
 		}
 		else if (strcmp(e->defname, "minvalue") == 0 && !v)
-			string_append_char(str, " NO MINVALUE");
+			appendStringInfoString(str, " NO MINVALUE");
 		else if (strcmp(e->defname, "maxvalue") == 0 && !v)
-			string_append_char(str, " NO MAXVALUE");
+			appendStringInfoString(str, " NO MAXVALUE");
 		else if (strcmp(e->defname, "owned_by") == 0)
 		{
-			string_append_char(str, " OWNED BY ");
+			appendStringInfoString(str, " OWNED BY ");
 			_outIdList(str, (List *) e->arg);
 		}
 		else
 		{
 			if (strcmp(e->defname, "cache") == 0)
-				string_append_char(str, " CACHE ");
+				appendStringInfoString(str, " CACHE ");
 			else if (strcmp(e->defname, "increment") == 0)
-				string_append_char(str, " INCREMENT ");
+				appendStringInfoString(str, " INCREMENT ");
 			else if (strcmp(e->defname, "maxvalue") == 0 && v)
-				string_append_char(str, " MAXVALUE ");
+				appendStringInfoString(str, " MAXVALUE ");
 			else if (strcmp(e->defname, "minvalue") == 0 && v)
-				string_append_char(str, " MINVALUE ");
+				appendStringInfoString(str, " MINVALUE ");
 			else if (strcmp(e->defname, "start") == 0)
-				string_append_char(str, " START ");
+				appendStringInfoString(str, " START ");
 			else if (strcmp(e->defname, "restart") == 0)
-				string_append_char(str, " RESTART ");
+				appendStringInfoString(str, " RESTART ");
 
 			if (IsA(e->arg, String))
-				string_append_char(str, v->val.str);
+				appendStringInfoString(str, v->val.str);
 			else
 			{
 				snprintf(buf, 16, "%d", v->val.ival);
-				string_append_char(str, buf);
+				appendStringInfoString(str, buf);
 			}
 		}
 	}
 }
 
 static void
-_outCreateSeqStmt(String * str, CreateSeqStmt *node)
+_outCreateSeqStmt(StringInfo str, CreateSeqStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 	if (node->sequence->relpersistence == RELPERSISTENCE_TEMP)
-		string_append_char(str, "TEMP ");
-	string_append_char(str, "SEQUENCE ");
+		appendStringInfoString(str, "TEMP ");
+	appendStringInfoString(str, "SEQUENCE ");
 	_outNode(str, node->sequence);
 
 	_outOptSeqList(str, node->options);
 }
 
 static void
-_outAlterSeqStmt(String * str, AlterSeqStmt *node)
+_outAlterSeqStmt(StringInfo str, AlterSeqStmt *node)
 {
-	string_append_char(str, "ALTER SEQUENCE ");
+	appendStringInfoString(str, "ALTER SEQUENCE ");
 	_outNode(str, node->sequence);
 	_outOptSeqList(str, node->options);
 }
 
 static void
-_outCreatePLangStmt(String * str, CreatePLangStmt *node)
+_outCreatePLangStmt(StringInfo str, CreatePLangStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 	if (node->pltrusted == true)
-		string_append_char(str, "TRUSTED ");
-	string_append_char(str, "LANGUAGE \"");
-	string_append_char(str, node->plname);
-	string_append_char(str, "\"");
+		appendStringInfoString(str, "TRUSTED ");
+	appendStringInfoString(str, "LANGUAGE \"");
+	appendStringInfoString(str, node->plname);
+	appendStringInfoString(str, "\"");
 
 	if (node->plhandler != NIL)
 	{
 		ListCell   *lc;
 		char		dot = 0;
 
-		string_append_char(str, " HANDLER ");
+		appendStringInfoString(str, " HANDLER ");
 		foreach(lc, node->plhandler)
 		{
 			Value	   *v = lfirst(lc);
@@ -3611,11 +3610,11 @@ _outCreatePLangStmt(String * str, CreatePLangStmt *node)
 			if (dot == 0)
 				dot = 1;
 			else
-				string_append_char(str, ".");
+				appendStringInfoString(str, ".");
 
-			string_append_char(str, "\"");
-			string_append_char(str, v->val.str);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "\"");
 		}
 	}
 
@@ -3624,7 +3623,7 @@ _outCreatePLangStmt(String * str, CreatePLangStmt *node)
 		ListCell   *lc;
 		char		dot = 0;
 
-		string_append_char(str, " VALIDATOR ");
+		appendStringInfoString(str, " VALIDATOR ");
 		foreach(lc, node->plvalidator)
 		{
 			Value	   *v = lfirst(lc);
@@ -3632,45 +3631,45 @@ _outCreatePLangStmt(String * str, CreatePLangStmt *node)
 			if (dot == 0)
 				dot = 1;
 			else
-				string_append_char(str, ".");
+				appendStringInfoString(str, ".");
 
-			string_append_char(str, "\"");
-			string_append_char(str, v->val.str);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "\"");
 		}
 	}
 }
 
 
 static void
-_outCreateTableSpaceStmt(String * str, CreateTableSpaceStmt *node)
+_outCreateTableSpaceStmt(StringInfo str, CreateTableSpaceStmt *node)
 {
-	string_append_char(str, "CREATE TABLESPACE \"");
-	string_append_char(str, node->tablespacename);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "CREATE TABLESPACE \"");
+	appendStringInfoString(str, node->tablespacename);
+	appendStringInfoString(str, "\" ");
 
 	if (node->owner)
 	{
-		string_append_char(str, "OWNER \"");
+		appendStringInfoString(str, "OWNER \"");
 		_outNode(str, node->owner);
-		string_append_char(str, "\" ");
+		appendStringInfoString(str, "\" ");
 	}
 
-	string_append_char(str, "LOCATION '");
-	string_append_char(str, node->location);
-	string_append_char(str, "'");
+	appendStringInfoString(str, "LOCATION '");
+	appendStringInfoString(str, node->location);
+	appendStringInfoString(str, "'");
 }
 
 static void
-_outDropTableSpaceStmt(String * str, DropTableSpaceStmt *node)
+_outDropTableSpaceStmt(StringInfo str, DropTableSpaceStmt *node)
 {
-	string_append_char(str, "DROP TABLESPACE \"");
-	string_append_char(str, node->tablespacename);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "DROP TABLESPACE \"");
+	appendStringInfoString(str, node->tablespacename);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outFuncName(String * str, List *func_name)
+_outFuncName(StringInfo str, List *func_name)
 {
 	ListCell   *lc;
 	Value	   *v;
@@ -3686,13 +3685,13 @@ _outFuncName(String * str, List *func_name)
 		if (dot == 0)
 			dot = 1;
 		else
-			string_append_char(str, ".");
+			appendStringInfoString(str, ".");
 
 		if (IsA(v, String))
 		{
-			string_append_char(str, "\"");
-			string_append_char(str, v->val.str);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "\"");
 		}
 		else
 		{
@@ -3702,78 +3701,78 @@ _outFuncName(String * str, List *func_name)
 }
 
 static void
-_outCreateTrigStmt(String * str, CreateTrigStmt *node)
+_outCreateTrigStmt(StringInfo str, CreateTrigStmt *node)
 {
 	bool		has_events = false;
 
 	if (node->isconstraint == TRUE)
-		string_append_char(str, "CREATE CONSTRAINT TRIGGER \"");
+		appendStringInfoString(str, "CREATE CONSTRAINT TRIGGER \"");
 	else
-		string_append_char(str, "CREATE TRIGGER \"");
-	string_append_char(str, node->trigname);
-	string_append_char(str, "\" ");
+		appendStringInfoString(str, "CREATE TRIGGER \"");
+	appendStringInfoString(str, node->trigname);
+	appendStringInfoString(str, "\" ");
 
 	if (TRIGGER_FOR_BEFORE(node->timing))
-		string_append_char(str, "BEFORE ");
+		appendStringInfoString(str, "BEFORE ");
 	if (TRIGGER_FOR_AFTER(node->timing))
-		string_append_char(str, "AFTER ");
+		appendStringInfoString(str, "AFTER ");
 
 	if (node->events & TRIGGER_TYPE_INSERT)
 	{
-		string_append_char(str, "INSERT ");
+		appendStringInfoString(str, "INSERT ");
 		has_events = true;
 	}
 	if (node->events & TRIGGER_TYPE_DELETE)
 	{
 		if (has_events)
-			string_append_char(str, "OR ");
-		string_append_char(str, "DELETE ");
+			appendStringInfoString(str, "OR ");
+		appendStringInfoString(str, "DELETE ");
 		has_events = true;
 	}
 	if (node->events & TRIGGER_TYPE_UPDATE)
 	{
 		if (has_events)
-			string_append_char(str, "OR ");
-		string_append_char(str, "UPDATE ");
+			appendStringInfoString(str, "OR ");
+		appendStringInfoString(str, "UPDATE ");
 		has_events = true;
 	}
 	if (node->events & TRIGGER_TYPE_TRUNCATE)
 	{
 		if (has_events)
-			string_append_char(str, "OR ");
-		string_append_char(str, "TRUNCATE ");
+			appendStringInfoString(str, "OR ");
+		appendStringInfoString(str, "TRUNCATE ");
 		has_events = true;
 	}
 
-	string_append_char(str, "ON ");
+	appendStringInfoString(str, "ON ");
 	_outNode(str, node->relation);
 
 	if (node->constrrel)
 	{
-		string_append_char(str, " FROM ");
+		appendStringInfoString(str, " FROM ");
 		_outNode(str, node->constrrel);
 	}
 
 	if (node->deferrable)
-		string_append_char(str, " DEFERRABLE");
+		appendStringInfoString(str, " DEFERRABLE");
 	if (node->initdeferred)
-		string_append_char(str, " INITIALLY DEFERRED");
+		appendStringInfoString(str, " INITIALLY DEFERRED");
 
 	if (node->row == TRUE)
-		string_append_char(str, " FOR EACH ROW ");
+		appendStringInfoString(str, " FOR EACH ROW ");
 	else
-		string_append_char(str, " FOR EACH STATEMENT ");
+		appendStringInfoString(str, " FOR EACH STATEMENT ");
 
-	string_append_char(str, "EXECUTE PROCEDURE ");
+	appendStringInfoString(str, "EXECUTE PROCEDURE ");
 
 	_outFuncName(str, node->funcname);
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 	_outNode(str, node->args);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outDefinition(String * str, List *definition)
+_outDefinition(StringInfo str, List *definition)
 {
 	ListCell   *lc;
 	char		comma = 0;
@@ -3781,7 +3780,7 @@ _outDefinition(String * str, List *definition)
 	if (definition == NIL)
 		return;
 
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 	foreach(lc, definition)
 	{
 		DefElem    *e = lfirst(lc);
@@ -3789,23 +3788,23 @@ _outDefinition(String * str, List *definition)
 		if (comma == 0)
 			comma = 1;
 		else
-			string_append_char(str, ", ");
+			appendStringInfoString(str, ", ");
 
-		string_append_char(str, "\"");
-		string_append_char(str, e->defname);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, e->defname);
+		appendStringInfoString(str, "\"");
 
 		if (e->arg)
 		{
-			string_append_char(str, "=");
+			appendStringInfoString(str, "=");
 			_outNode(str, e->arg);
 		}
 	}
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outDefineStmt(String * str, DefineStmt *node)
+_outDefineStmt(StringInfo str, DefineStmt *node)
 {
 	ListCell   *lc;
 	char		dot = 0;
@@ -3813,14 +3812,14 @@ _outDefineStmt(String * str, DefineStmt *node)
 	switch (node->kind)
 	{
 		case OBJECT_AGGREGATE:
-			string_append_char(str, "CREATE AGGREGATE ");
+			appendStringInfoString(str, "CREATE AGGREGATE ");
 			_outFuncName(str, node->defnames);
-			string_append_char(str, " ");
+			appendStringInfoString(str, " ");
 			_outDefinition(str, node->definition);
 			break;
 
 		case OBJECT_OPERATOR:
-			string_append_char(str, "CREATE OPERATOR ");
+			appendStringInfoString(str, "CREATE OPERATOR ");
 
 			foreach(lc, node->defnames)
 			{
@@ -3829,42 +3828,42 @@ _outDefineStmt(String * str, DefineStmt *node)
 				if (dot == 0)
 					dot = 1;
 				else
-					string_append_char(str, ".");
+					appendStringInfoString(str, ".");
 
-				string_append_char(str, v->val.str);
+				appendStringInfoString(str, v->val.str);
 			}
 
-			string_append_char(str, " ");
+			appendStringInfoString(str, " ");
 			_outDefinition(str, node->definition);
 			break;
 
 		case OBJECT_TYPE:
-			string_append_char(str, "CREATE TYPE");
+			appendStringInfoString(str, "CREATE TYPE");
 			_outFuncName(str, node->defnames);
-			string_append_char(str, " ");
+			appendStringInfoString(str, " ");
 			_outDefinition(str, node->definition);
 			break;
 
 		case OBJECT_TSPARSER:
-			string_append_char(str, "CREATE TEXT SEARCH PARSER ");
+			appendStringInfoString(str, "CREATE TEXT SEARCH PARSER ");
 			_outIdList(str, node->defnames);
 			_outDefinition(str, node->definition);
 			break;
 
 		case OBJECT_TSDICTIONARY:
-			string_append_char(str, "CREATE TEXT SEARCH DICTIONARY ");
+			appendStringInfoString(str, "CREATE TEXT SEARCH DICTIONARY ");
 			_outIdList(str, node->defnames);
 			_outDefinition(str, node->definition);
 			break;
 
 		case OBJECT_TSTEMPLATE:
-			string_append_char(str, "CREATE TEXT SEARCH TEMPLATE ");
+			appendStringInfoString(str, "CREATE TEXT SEARCH TEMPLATE ");
 			_outIdList(str, node->defnames);
 			_outDefinition(str, node->definition);
 			break;
 
 		case OBJECT_TSCONFIGURATION:
-			string_append_char(str, "CREATE TEXT SEARCH CONFIGURATION ");
+			appendStringInfoString(str, "CREATE TEXT SEARCH CONFIGURATION ");
 			_outIdList(str, node->defnames);
 			_outDefinition(str, node->definition);
 			break;
@@ -3875,7 +3874,7 @@ _outDefineStmt(String * str, DefineStmt *node)
 }
 
 static void
-_outOperatorName(String * str, List *list)
+_outOperatorName(StringInfo str, List *list)
 {
 	char		dot = 0;
 	ListCell   *lc;
@@ -3887,51 +3886,51 @@ _outOperatorName(String * str, List *list)
 		if (dot == 0)
 			dot = 1;
 		else
-			string_append_char(str, ".");
+			appendStringInfoString(str, ".");
 
-		string_append_char(str, v->val.str);
+		appendStringInfoString(str, v->val.str);
 	}
 }
 
 static void
-_outCreateOpClassItem(String * str, CreateOpClassItem *node)
+_outCreateOpClassItem(StringInfo str, CreateOpClassItem *node)
 {
 	char		buf[16];
 
 	switch (node->itemtype)
 	{
 		case OPCLASS_ITEM_OPERATOR:
-			string_append_char(str, "OPERATOR ");
+			appendStringInfoString(str, "OPERATOR ");
 			snprintf(buf, 16, "%d", node->number);
-			string_append_char(str, buf);
-			string_append_char(str, " ");
+			appendStringInfoString(str, buf);
+			appendStringInfoString(str, " ");
 			_outOperatorName(str, node->name->objname);
 
 			if (node->name->objname != NIL)
 			{
-				string_append_char(str, "(");
+				appendStringInfoString(str, "(");
 				_outNode(str, node->name->objname);
-				string_append_char(str, ")");
+				appendStringInfoString(str, ")");
 			}
 
 			/*
-			 * if (node->recheck == TRUE) string_append_char(str, " RECHECK");
+			 * if (node->recheck == TRUE) appendStringInfoString(str, " RECHECK");
 			 */
 			break;
 
 		case OPCLASS_ITEM_FUNCTION:
-			string_append_char(str, "FUNCTION ");
+			appendStringInfoString(str, "FUNCTION ");
 			snprintf(buf, 16, "%d", node->number);
-			string_append_char(str, buf);
-			string_append_char(str, " ");
+			appendStringInfoString(str, buf);
+			appendStringInfoString(str, " ");
 			_outFuncName(str, node->name->objname);
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			_outNode(str, node->name->objname);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case OPCLASS_ITEM_STORAGETYPE:
-			string_append_char(str, "STORAGE ");
+			appendStringInfoString(str, "STORAGE ");
 			_outNode(str, node->storedtype);
 			break;
 
@@ -3942,19 +3941,19 @@ _outCreateOpClassItem(String * str, CreateOpClassItem *node)
 }
 
 static void
-_outCreateOpClassStmt(String * str, CreateOpClassStmt *node)
+_outCreateOpClassStmt(StringInfo str, CreateOpClassStmt *node)
 {
-	string_append_char(str, "CREATE OPERATOR CLASS ");
+	appendStringInfoString(str, "CREATE OPERATOR CLASS ");
 	_outFuncName(str, node->opclassname);
 
 	if (node->isDefault == TRUE)
-		string_append_char(str, " DEFAULT");
+		appendStringInfoString(str, " DEFAULT");
 
-	string_append_char(str, " FOR TYPE ");
+	appendStringInfoString(str, " FOR TYPE ");
 	_outNode(str, node->datatype);
-	string_append_char(str, " USING ");
-	string_append_char(str, node->amname);
-	string_append_char(str, " AS ");
+	appendStringInfoString(str, " USING ");
+	appendStringInfoString(str, node->amname);
+	appendStringInfoString(str, " AS ");
 	_outNode(str, node->items);
 }
 
@@ -3970,180 +3969,180 @@ _outCreateOpClassStmt(String * str, CreateOpClassStmt *node)
  */
 
 static void
-add_function_like_objs(String * str, DropStmt *node)
+add_function_like_objs(StringInfo str, DropStmt *node)
 {
 	ListCell   *lc;
 	char		comma = 0;
 
 	if (node->concurrent)
-		string_append_char(str, "CONCURRENTLY ");
+		appendStringInfoString(str, "CONCURRENTLY ");
 	if (node->missing_ok)
-		string_append_char(str, "IF EXISTS ");
+		appendStringInfoString(str, "IF EXISTS ");
 
 	foreach(lc, node->objects)
 	{
 		if (comma == 0)
 			comma = 1;
 		else
-			string_append_char(str, ", ");
+			appendStringInfoString(str, ", ");
 		_outFuncName(str, lfirst(lc));
 	}
 }
 
 static void
-_outDropStmt(String * str, DropStmt *node)
+_outDropStmt(StringInfo str, DropStmt *node)
 {
 	List	   *objname;
 	char		*p;
 	char		*p1;
 	List		*l;
 
-	string_append_char(str, "DROP ");
+	appendStringInfoString(str, "DROP ");
 	switch (node->removeType)
 	{
 		case OBJECT_TABLE:
-			string_append_char(str, "TABLE ");
+			appendStringInfoString(str, "TABLE ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_SEQUENCE:
-			string_append_char(str, "SEQUENCE ");
+			appendStringInfoString(str, "SEQUENCE ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_VIEW:
-			string_append_char(str, "VIEW ");
+			appendStringInfoString(str, "VIEW ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_INDEX:
-			string_append_char(str, "INDEX ");
+			appendStringInfoString(str, "INDEX ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_FOREIGN_TABLE:
-			string_append_char(str, "FOREIGN TABLE ");
+			appendStringInfoString(str, "FOREIGN TABLE ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_FDW:
-			string_append_char(str, "FOREIGN DATA WRAPPER ");
+			appendStringInfoString(str, "FOREIGN DATA WRAPPER ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_TYPE:
-			string_append_char(str, "TYPE ");
+			appendStringInfoString(str, "TYPE ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_DOMAIN:
-			string_append_char(str, "DOMAIN ");
+			appendStringInfoString(str, "DOMAIN ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_COLLATION:
-			string_append_char(str, "COLLATION ");
+			appendStringInfoString(str, "COLLATION ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_CONVERSION:
-			string_append_char(str, "CONVERSION ");
+			appendStringInfoString(str, "CONVERSION ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_SCHEMA:
-			string_append_char(str, "SCHEMA ");
+			appendStringInfoString(str, "SCHEMA ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_EXTENSION:
-			string_append_char(str, "EXTENSION ");
+			appendStringInfoString(str, "EXTENSION ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_TSPARSER:
-			string_append_char(str, "TEXT SEARCH PARSER ");
+			appendStringInfoString(str, "TEXT SEARCH PARSER ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_TSDICTIONARY:
-			string_append_char(str, "TEXT SEARCH DICTIONARY ");
+			appendStringInfoString(str, "TEXT SEARCH DICTIONARY ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_TSTEMPLATE:
-			string_append_char(str, "TEXT SEARCH TEMPLATE ");
+			appendStringInfoString(str, "TEXT SEARCH TEMPLATE ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_TSCONFIGURATION:
-			string_append_char(str, "TEXT SEARCH CONFIGURATION ");
+			appendStringInfoString(str, "TEXT SEARCH CONFIGURATION ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_LANGUAGE:
-			string_append_char(str, "PROCEDURAL LANGUAGE ");
+			appendStringInfoString(str, "PROCEDURAL LANGUAGE ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_RULE:
-			string_append_char(str, "DROP RULE ");
+			appendStringInfoString(str, "DROP RULE ");
 			if (node->missing_ok)
-				string_append_char(str, "IF EXISTS ");
+				appendStringInfoString(str, "IF EXISTS ");
 			objname = lfirst(list_head(node->objects));
-			string_append_char(str, strVal(llast(objname)));
-			string_append_char(str, " ON ");
+			appendStringInfoString(str, strVal(llast(objname)));
+			appendStringInfoString(str, " ON ");
 			l = list_truncate(list_copy(objname),
 							  list_length(objname) - 1);
 			p = NameListToString(l);
-			string_append_char(str, p);
+			appendStringInfoString(str, p);
 			pfree(p);
 			list_free(l);
 			break;
 
 		case OBJECT_OPERATOR:
-			string_append_char(str, "OPERATOR ");
+			appendStringInfoString(str, "OPERATOR ");
 			add_function_like_objs(str, node);
 			break;
 
 		case OBJECT_OPCLASS:
-			string_append_char(str, "DROP OPERATOR CLASS ");
+			appendStringInfoString(str, "DROP OPERATOR CLASS ");
 			if (node->missing_ok)
-				string_append_char(str, "IF EXISTS ");
+				appendStringInfoString(str, "IF EXISTS ");
 			objname = lfirst(list_head(node->objects));
-			string_append_char(str, strVal(llast(objname)));
-			string_append_char(str, " USING ");
-			string_append_char(str, "'");
+			appendStringInfoString(str, strVal(llast(objname)));
+			appendStringInfoString(str, " USING ");
+			appendStringInfoString(str, "'");
 			l = list_truncate(list_copy(objname),
 							  list_length(objname) - 1);
 			p = NameListToString(l);
 			p1 = escape_string(p);
-			string_append_char(str, p1);
+			appendStringInfoString(str, p1);
 			pfree(p1);
 			pfree(p);
 			list_free(l);
-			string_append_char(str, "'");
+			appendStringInfoString(str, "'");
 			break;
 
 		case OBJECT_CAST:
-			string_append_char(str, "DROP CAST ");
+			appendStringInfoString(str, "DROP CAST ");
 			if (node->missing_ok)
-				string_append_char(str, "IF EXISTS ");
-			string_append_char(str, "(");
+				appendStringInfoString(str, "IF EXISTS ");
+			appendStringInfoString(str, "(");
 			objname = linitial(node->objects);
 			_outNode(str, linitial(objname));
-			string_append_char(str, " AS ");
+			appendStringInfoString(str, " AS ");
 			_outNode(str, linitial(objname));
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case OBJECT_OPFAMILY:
-			string_append_char(str, "OPERATOR FAMILY ");
+			appendStringInfoString(str, "OPERATOR FAMILY ");
 			if (node->missing_ok)
-				string_append_char(str, "IF EXISTS ");
+				appendStringInfoString(str, "IF EXISTS ");
 			objname = linitial(node->objects);
 			_outIdList(str, objname);
-			string_append_char(str, " USING ");
+			appendStringInfoString(str, " USING ");
 			_outIdList(str, objname);
 			break;
 
@@ -4152,78 +4151,78 @@ _outDropStmt(String * str, DropStmt *node)
 	}
 
 	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
+		appendStringInfoString(str, " CASCADE");
 }
 
 static void
-_outFetchStmt(String * str, FetchStmt *node)
+_outFetchStmt(StringInfo str, FetchStmt *node)
 {
 	char		buf[16];
 
 	snprintf(buf, 16, "%ld", node->howMany);
 
 	if (node->ismove == TRUE)
-		string_append_char(str, "MOVE ");
+		appendStringInfoString(str, "MOVE ");
 	else
-		string_append_char(str, "FETCH ");
+		appendStringInfoString(str, "FETCH ");
 
 	switch (node->direction)
 	{
 		case FETCH_FORWARD:
-			string_append_char(str, "FORWARD ");
+			appendStringInfoString(str, "FORWARD ");
 			if (node->howMany == FETCH_ALL)
-				string_append_char(str, "ALL ");
+				appendStringInfoString(str, "ALL ");
 			else
 			{
-				string_append_char(str, buf);
-				string_append_char(str, " ");
+				appendStringInfoString(str, buf);
+				appendStringInfoString(str, " ");
 			}
 			break;
 
 		case FETCH_BACKWARD:
-			string_append_char(str, "BACKWARD ");
+			appendStringInfoString(str, "BACKWARD ");
 			if (node->howMany == FETCH_ALL)
-				string_append_char(str, "ALL ");
+				appendStringInfoString(str, "ALL ");
 			else
 			{
-				string_append_char(str, buf);
-				string_append_char(str, " ");
+				appendStringInfoString(str, buf);
+				appendStringInfoString(str, " ");
 			}
 			break;
 
 		case FETCH_ABSOLUTE:
 			if (node->howMany == 1)
-				string_append_char(str, "FIRST ");
+				appendStringInfoString(str, "FIRST ");
 			else if (node->howMany == -1)
-				string_append_char(str, "LAST ");
+				appendStringInfoString(str, "LAST ");
 			else
 			{
-				string_append_char(str, "ABSOLUTE ");
-				string_append_char(str, buf);
-				string_append_char(str, " ");
+				appendStringInfoString(str, "ABSOLUTE ");
+				appendStringInfoString(str, buf);
+				appendStringInfoString(str, " ");
 			}
 			break;
 
 		case FETCH_RELATIVE:
-			string_append_char(str, "RELATIVE ");
-			string_append_char(str, buf);
-			string_append_char(str, " ");
+			appendStringInfoString(str, "RELATIVE ");
+			appendStringInfoString(str, buf);
+			appendStringInfoString(str, " ");
 			break;
 	}
 
-	string_append_char(str, "IN \"");
-	string_append_char(str, node->portalname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "IN \"");
+	appendStringInfoString(str, node->portalname);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outPrivilegeList(String * str, List *list)
+_outPrivilegeList(StringInfo str, List *list)
 {
 	ListCell   *lc;
 	char		comma = 0;
 
 	if (list == NIL)
-		string_append_char(str, "ALL");
+		appendStringInfoString(str, "ALL");
 	else
 	{
 		foreach(lc, list)
@@ -4233,24 +4232,24 @@ _outPrivilegeList(String * str, List *list)
 			if (comma == 0)
 				comma = 1;
 			else
-				string_append_char(str, ", ");
+				appendStringInfoString(str, ", ");
 
-			string_append_char(str, v->val.str);
+			appendStringInfoString(str, v->val.str);
 		}
 	}
 }
 
 static void
-_outFunctionParameter(String * str, FunctionParameter *node)
+_outFunctionParameter(StringInfo str, FunctionParameter *node)
 {
 	switch (node->mode)
 	{
 		case FUNC_PARAM_OUT:
-			string_append_char(str, "OUT ");
+			appendStringInfoString(str, "OUT ");
 			break;
 
 		case FUNC_PARAM_INOUT:
-			string_append_char(str, "INOUT ");
+			appendStringInfoString(str, "INOUT ");
 			break;
 
 		default:
@@ -4260,38 +4259,38 @@ _outFunctionParameter(String * str, FunctionParameter *node)
 	/* function name */
 	if (node->name)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, node->name);
-		string_append_char(str, "\" ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->name);
+		appendStringInfoString(str, "\" ");
 	}
 
 	_outNode(str, node->argType);
 }
 
 static void
-_outObjectWithArgs(String * str, ObjectWithArgs *node)
+_outObjectWithArgs(StringInfo str, ObjectWithArgs *node)
 {
 	_outFuncName(str, node->objname);
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 	_outNode(str, node->objargs);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outGrantStmt(String * str, GrantStmt *node)
+_outGrantStmt(StringInfo str, GrantStmt *node)
 {
 	if (node->is_grant == true)
-		string_append_char(str, "GRANT ");
+		appendStringInfoString(str, "GRANT ");
 	else
 	{
-		string_append_char(str, "REVOKE ");
+		appendStringInfoString(str, "REVOKE ");
 		if (node->grant_option == true)
-			string_append_char(str, "GRANT OPTION FOR ");
+			appendStringInfoString(str, "GRANT OPTION FOR ");
 	}
 
 	_outPrivilegeList(str, node->privileges);
 
-	string_append_char(str, " ON ");
+	appendStringInfoString(str, " ON ");
 
 	switch (node->objtype)
 	{
@@ -4300,42 +4299,42 @@ _outGrantStmt(String * str, GrantStmt *node)
 			break;
 
 		case OBJECT_SEQUENCE:
-			string_append_char(str, "SEQUENCE ");
+			appendStringInfoString(str, "SEQUENCE ");
 			_outNode(str, node->objects);
 			break;
 
 		case OBJECT_FUNCTION:
-			string_append_char(str, "FUNCTION ");
+			appendStringInfoString(str, "FUNCTION ");
 			_outNode(str, node->objects);
 			break;
 
 		case OBJECT_DATABASE:
-			string_append_char(str, "DATABASE ");
+			appendStringInfoString(str, "DATABASE ");
 			_outIdList(str, node->objects);
 			break;
 
 		case OBJECT_LANGUAGE:
-			string_append_char(str, "LANGUAGE ");
+			appendStringInfoString(str, "LANGUAGE ");
 			_outIdList(str, node->objects);
 			break;
 
 		case OBJECT_SCHEMA:
-			string_append_char(str, "SCHEMA ");
+			appendStringInfoString(str, "SCHEMA ");
 			_outIdList(str, node->objects);
 			break;
 
 		case OBJECT_TABLESPACE:
-			string_append_char(str, "TABLESPACE ");
+			appendStringInfoString(str, "TABLESPACE ");
 			_outIdList(str, node->objects);
 			break;
 
 		case OBJECT_FDW:
-			string_append_char(str, "FOREIGN DATA WRAPPER ");
+			appendStringInfoString(str, "FOREIGN DATA WRAPPER ");
 			_outIdList(str, node->objects);
 			break;
 
 		case OBJECT_FOREIGN_SERVER:
-			string_append_char(str, "FOREIGN SERVER ");
+			appendStringInfoString(str, "FOREIGN SERVER ");
 			_outIdList(str, node->objects);
 			break;
 
@@ -4384,52 +4383,52 @@ _outGrantStmt(String * str, GrantStmt *node)
 	}
 
 	if (node->is_grant == true)
-		string_append_char(str, " TO ");
+		appendStringInfoString(str, " TO ");
 	else
-		string_append_char(str, " FROM ");
+		appendStringInfoString(str, " FROM ");
 	_outNode(str, node->grantees);
 
 	if (node->is_grant == true && node->grant_option == TRUE)
-		string_append_char(str, " WITH GRANT OPTION");
+		appendStringInfoString(str, " WITH GRANT OPTION");
 
 	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
+		appendStringInfoString(str, " CASCADE");
 }
 
 static void
-_outGrantRoleStmt(String * str, GrantRoleStmt *node)
+_outGrantRoleStmt(StringInfo str, GrantRoleStmt *node)
 {
 	if (node->is_grant == true)
-		string_append_char(str, "GRANT ");
+		appendStringInfoString(str, "GRANT ");
 	else
 	{
-		string_append_char(str, "REVOKE ");
+		appendStringInfoString(str, "REVOKE ");
 		if (node->admin_opt == true)
-			string_append_char(str, "ADMIN OPTION FOR ");
+			appendStringInfoString(str, "ADMIN OPTION FOR ");
 	}
 
 	_outIdList(str, node->granted_roles);
 
-	string_append_char(str, node->is_grant == true ? " TO " : " FROM ");
+	appendStringInfoString(str, node->is_grant == true ? " TO " : " FROM ");
 
 	_outIdList(str, node->grantee_roles);
 
 	if (node->admin_opt == true && node->is_grant == true)
-		string_append_char(str, "  WITH ADMIN OPTION");
+		appendStringInfoString(str, "  WITH ADMIN OPTION");
 
 	if (node->grantor != NULL)
 	{
-		string_append_char(str, " GRANTED BY \"");
+		appendStringInfoString(str, " GRANTED BY \"");
 		_outNode(str, node->grantor);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, "\"");
 	}
 
 	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
+		appendStringInfoString(str, " CASCADE");
 }
 
 static void
-_outFuncOptList(String * str, List *list)
+_outFuncOptList(StringInfo str, List *list)
 {
 	ListCell   *lc;
 
@@ -4441,59 +4440,59 @@ _outFuncOptList(String * str, List *list)
 		if (strcmp(e->defname, "strict") == 0)
 		{
 			if (v->val.ival == TRUE)
-				string_append_char(str, " STRICT");
+				appendStringInfoString(str, " STRICT");
 			else
-				string_append_char(str, " CALLED ON NULL INPUT");
+				appendStringInfoString(str, " CALLED ON NULL INPUT");
 		}
 		else if (strcmp(e->defname, "volatility") == 0)
 		{
 			char	   *s = v->val.str;
 
 			if (strcmp(s, "immutable") == 0)
-				string_append_char(str, " IMMUTABLE");
+				appendStringInfoString(str, " IMMUTABLE");
 			else if (strcmp(s, "stable") == 0)
-				string_append_char(str, " STABLE");
+				appendStringInfoString(str, " STABLE");
 			else if (strcmp(s, "volatile") == 0)
-				string_append_char(str, " VOLATILE");
+				appendStringInfoString(str, " VOLATILE");
 		}
 		else if (strcmp(e->defname, "security") == 0)
 		{
 			if (v->val.ival == TRUE)
-				string_append_char(str, " SECURITY DEFINER");
+				appendStringInfoString(str, " SECURITY DEFINER");
 			else
-				string_append_char(str, " SECURITY INVOKER");
+				appendStringInfoString(str, " SECURITY INVOKER");
 		}
 		else if (strcmp(e->defname, "as") == 0)
 		{
-			string_append_char(str, " AS ");
+			appendStringInfoString(str, " AS ");
 			_outNode(str, e->arg);
 		}
 		else if (strcmp(e->defname, "language") == 0)
 		{
-			string_append_char(str, " LANGUAGE '");
-			string_append_char(str, v->val.str);
-			string_append_char(str, "'");
+			appendStringInfoString(str, " LANGUAGE '");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "'");
 		}
 	}
 }
 
 static void
-_outCreateFunctionStmt(String * str, CreateFunctionStmt *node)
+_outCreateFunctionStmt(StringInfo str, CreateFunctionStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 	if (node->replace == true)
-		string_append_char(str, "OR REPLACE ");
-	string_append_char(str, "FUNCTION ");
+		appendStringInfoString(str, "OR REPLACE ");
+	appendStringInfoString(str, "FUNCTION ");
 
 	_outFuncName(str, node->funcname);
 
-	string_append_char(str, " (");
+	appendStringInfoString(str, " (");
 	_outNode(str, node->parameters);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 
 	if (node->returnType)
 	{
-		string_append_char(str, " RETURNS ");
+		appendStringInfoString(str, " RETURNS ");
 		_outNode(str, node->returnType);
 	}
 
@@ -4501,32 +4500,32 @@ _outCreateFunctionStmt(String * str, CreateFunctionStmt *node)
 }
 
 static void
-_outAlterFunctionStmt(String * str, AlterFunctionStmt *node)
+_outAlterFunctionStmt(StringInfo str, AlterFunctionStmt *node)
 {
-	string_append_char(str, "ALTER FUNCTION ");
+	appendStringInfoString(str, "ALTER FUNCTION ");
 	_outNode(str, node->func);
 	_outFuncOptList(str, node->actions);
 }
 
 
 static void
-_outCreateCastStmt(String * str, CreateCastStmt *node)
+_outCreateCastStmt(StringInfo str, CreateCastStmt *node)
 {
-	string_append_char(str, "CREATE CAST (");
+	appendStringInfoString(str, "CREATE CAST (");
 	_outNode(str, node->sourcetype);
-	string_append_char(str, " AS ");
+	appendStringInfoString(str, " AS ");
 	_outNode(str, node->targettype);
-	string_append_char(str, ") WITH FUNCTION ");
+	appendStringInfoString(str, ") WITH FUNCTION ");
 	_outNode(str, node->func);
 
 	switch (node->context)
 	{
 		case COERCION_IMPLICIT:
-			string_append_char(str, " AS IMPLICIT");
+			appendStringInfoString(str, " AS IMPLICIT");
 			break;
 
 		case COERCION_ASSIGNMENT:
-			string_append_char(str, " AS ASSIGNMENT");
+			appendStringInfoString(str, " AS ASSIGNMENT");
 			break;
 
 		default:
@@ -4535,26 +4534,26 @@ _outCreateCastStmt(String * str, CreateCastStmt *node)
 }
 
 static void
-_outReindexStmt(String * str, ReindexStmt *node)
+_outReindexStmt(StringInfo str, ReindexStmt *node)
 {
-	string_append_char(str, "REINDEX ");
+	appendStringInfoString(str, "REINDEX ");
 
 	switch (node->kind)
 	{
 		case REINDEX_OBJECT_SYSTEM:
-			string_append_char(str, "SYSTEM ");
+			appendStringInfoString(str, "SYSTEM ");
 			break;
 
 		case REINDEX_OBJECT_DATABASE:
-			string_append_char(str, "DATABASE ");
+			appendStringInfoString(str, "DATABASE ");
 			break;
 
 		case REINDEX_OBJECT_INDEX:
-			string_append_char(str, "INDEX ");
+			appendStringInfoString(str, "INDEX ");
 			break;
 
 		case REINDEX_OBJECT_TABLE:
-			string_append_char(str, "TABLE ");
+			appendStringInfoString(str, "TABLE ");
 			break;
 
 		default:
@@ -4566,73 +4565,73 @@ _outReindexStmt(String * str, ReindexStmt *node)
 
 	if (node->name)
 	{
-		string_append_char(str, "\"");
-		string_append_char(str, (char *) node->name);
-		string_append_char(str, "\"");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, (char *) node->name);
+		appendStringInfoString(str, "\"");
 	}
 }
 
 static void
-_outAlterObjectSchemaStmt(String * str, AlterObjectSchemaStmt *node)
+_outAlterObjectSchemaStmt(StringInfo str, AlterObjectSchemaStmt *node)
 {
-	string_append_char(str, "ALTER ");
+	appendStringInfoString(str, "ALTER ");
 
 	ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
 
 	switch (node->objectType)
 	{
 		case OBJECT_AGGREGATE:
-			string_append_char(str, "AGGREGATE ");
+			appendStringInfoString(str, "AGGREGATE ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			if (lfirst(list_head(owa->objargs)) == NULL)
-				string_append_char(str, "*");
+				appendStringInfoString(str, "*");
 			else
 				_outNode(str, lfirst(list_head(owa->objargs)));
-			string_append_char(str, ") SET SCHEME \"");
-			string_append_char(str, node->newschema);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, ") SET SCHEME \"");
+			appendStringInfoString(str, node->newschema);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_DOMAIN:
-			string_append_char(str, "DOMAIN ");
+			appendStringInfoString(str, "DOMAIN ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, " SET SCHEMA \"");
-			string_append_char(str, node->newschema);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " SET SCHEMA \"");
+			appendStringInfoString(str, node->newschema);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_FUNCTION:
-			string_append_char(str, "FUNCTION ");
+			appendStringInfoString(str, "FUNCTION ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, "(");
-			string_append_char(str, ") SET SCHEMA \"");
-			string_append_char(str, node->newschema);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "(");
+			appendStringInfoString(str, ") SET SCHEMA \"");
+			appendStringInfoString(str, node->newschema);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_SEQUENCE:
-			string_append_char(str, "SEQUENCE ");
+			appendStringInfoString(str, "SEQUENCE ");
 			_outNode(str, node->relation);
-			string_append_char(str, " SET SCHEMA \"");
-			string_append_char(str, node->newschema);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " SET SCHEMA \"");
+			appendStringInfoString(str, node->newschema);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TABLE:
-			string_append_char(str, "TABLE ");
+			appendStringInfoString(str, "TABLE ");
 			_outNode(str, node->relation);
-			string_append_char(str, " SET SCHEMA \"");
-			string_append_char(str, node->newschema);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " SET SCHEMA \"");
+			appendStringInfoString(str, node->newschema);
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TYPE:
-			string_append_char(str, "TYPE ");
+			appendStringInfoString(str, "TYPE ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, " SET SCHEMA \"");
-			string_append_char(str, node->newschema);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " SET SCHEMA \"");
+			appendStringInfoString(str, node->newschema);
+			appendStringInfoString(str, "\"");
 			break;
 
 		default:
@@ -4641,152 +4640,152 @@ _outAlterObjectSchemaStmt(String * str, AlterObjectSchemaStmt *node)
 }
 
 static void
-_outAlterOwnerStmt(String * str, AlterOwnerStmt *node)
+_outAlterOwnerStmt(StringInfo str, AlterOwnerStmt *node)
 {
-	string_append_char(str, "ALTER ");
+	appendStringInfoString(str, "ALTER ");
 
 	ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
 
 	switch (node->objectType)
 	{
 		case OBJECT_AGGREGATE:
-			string_append_char(str, "AGGREGATE ");
+			appendStringInfoString(str, "AGGREGATE ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			if (lfirst(list_head(owa->objargs)) == NULL)
-				string_append_char(str, "*");
+				appendStringInfoString(str, "*");
 			else
 				_outNode(str, lfirst(list_head(owa->objargs)));
-			string_append_char(str, ") OWNER TO \"");
+			appendStringInfoString(str, ") OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_CONVERSION:
-			string_append_char(str, "CONVERSION \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "CONVERSION \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_DATABASE:
-			string_append_char(str, "DATABASE \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "DATABASE \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_DOMAIN:
-			string_append_char(str, "DOMAIN \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "DOMAIN \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_FUNCTION:
-			string_append_char(str, "FUNCTION ");
+			appendStringInfoString(str, "FUNCTION ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			_outNode(str, owa->objargs);
-			string_append_char(str, ") OWNER TO \"");
+			appendStringInfoString(str, ") OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_LANGUAGE:
-			string_append_char(str, "LANGUAGE \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "LANGUAGE \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_OPERATOR:
-			string_append_char(str, "OPERATOR ");
+			appendStringInfoString(str, "OPERATOR ");
 			_outOperatorName(str, owa->objname);
-			string_append_char(str, "(");
-			string_append_char(str, ") OWNER TO \"");
+			appendStringInfoString(str, "(");
+			appendStringInfoString(str, ") OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_OPCLASS:
-			string_append_char(str, "OPERATOR CLASS ");
+			appendStringInfoString(str, "OPERATOR CLASS ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, " USING ");
-			string_append_char(str, strVal(linitial(owa->objargs)));
-			string_append_char(str, " OWNER TO \"");
+			appendStringInfoString(str, " USING ");
+			appendStringInfoString(str, strVal(linitial(owa->objargs)));
+			appendStringInfoString(str, " OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_OPFAMILY:
-			string_append_char(str, "OPERATOR FAMILY ");
+			appendStringInfoString(str, "OPERATOR FAMILY ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, " USING ");
-			string_append_char(str, strVal(linitial(owa->objargs)));
-			string_append_char(str, " OWNER TO \"");
+			appendStringInfoString(str, " USING ");
+			appendStringInfoString(str, strVal(linitial(owa->objargs)));
+			appendStringInfoString(str, " OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_SCHEMA:
-			string_append_char(str, "SCHEMA \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "SCHEMA \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TYPE:
-			string_append_char(str, "TYPE \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "TYPE \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TABLESPACE:
-			string_append_char(str, "TABLESPACE \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "TABLESPACE \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TSDICTIONARY:
-			string_append_char(str, "TEXT SEARCH DICTIONARY \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "TEXT SEARCH DICTIONARY \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_TSCONFIGURATION:
-			string_append_char(str, "TEXT SEARCH CONFIGURATION \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "TEXT SEARCH CONFIGURATION \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_FDW:
-			string_append_char(str, "FOREIGN DATA WRAPPER \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "FOREIGN DATA WRAPPER \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		case OBJECT_FOREIGN_SERVER:
-			string_append_char(str, "SERVER \"");
-			string_append_char(str, strVal(linitial(owa->objname)));
-			string_append_char(str, "\" OWNER TO \"");
+			appendStringInfoString(str, "SERVER \"");
+			appendStringInfoString(str, strVal(linitial(owa->objname)));
+			appendStringInfoString(str, "\" OWNER TO \"");
 			_outNode(str, node->newowner);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, "\"");
 			break;
 
 		default:
@@ -4795,53 +4794,53 @@ _outAlterOwnerStmt(String * str, AlterOwnerStmt *node)
 }
 
 static void
-_outRuleStmt(String * str, RuleStmt *node)
+_outRuleStmt(StringInfo str, RuleStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 	if (node->replace)
-		string_append_char(str, "OR REPLACE ");
-	string_append_char(str, "RULE \"");
-	string_append_char(str, node->rulename);
-	string_append_char(str, "\" AS ON ");
+		appendStringInfoString(str, "OR REPLACE ");
+	appendStringInfoString(str, "RULE \"");
+	appendStringInfoString(str, node->rulename);
+	appendStringInfoString(str, "\" AS ON ");
 
 	switch (node->event)
 	{
 		case CMD_SELECT:
-			string_append_char(str, "SELECT");
+			appendStringInfoString(str, "SELECT");
 			break;
 
 		case CMD_UPDATE:
-			string_append_char(str, "UPDATE");
+			appendStringInfoString(str, "UPDATE");
 			break;
 
 		case CMD_DELETE:
-			string_append_char(str, "DELETE");
+			appendStringInfoString(str, "DELETE");
 			break;
 
 		case CMD_INSERT:
-			string_append_char(str, "INSERT");
+			appendStringInfoString(str, "INSERT");
 			break;
 
 		default:
 			break;
 	}
 
-	string_append_char(str, " TO ");
+	appendStringInfoString(str, " TO ");
 	_outNode(str, node->relation);
 
 	if (node->whereClause)
 	{
-		string_append_char(str, " WHERE ");
+		appendStringInfoString(str, " WHERE ");
 		_outNode(str, node->whereClause);
 	}
 
-	string_append_char(str, " DO ");
+	appendStringInfoString(str, " DO ");
 
 	if (node->instead)
-		string_append_char(str, "INSTEAD ");
+		appendStringInfoString(str, "INSTEAD ");
 
 	if (node->actions == NIL)
-		string_append_char(str, "NOTHING");
+		appendStringInfoString(str, "NOTHING");
 	else if (list_length(node->actions) == 1)
 		_outNode(str, linitial(node->actions));
 	else
@@ -4849,49 +4848,49 @@ _outRuleStmt(String * str, RuleStmt *node)
 		ListCell   *lc;
 		char		semi = 0;
 
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 
 		foreach(lc, node->actions)
 		{
 			if (semi == 0)
 				semi = 1;
 			else
-				string_append_char(str, ";");
+				appendStringInfoString(str, ";");
 
 			_outNode(str, lfirst(lc));
 		}
 
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 }
 
 static void
-_outViewStmt(String * str, ViewStmt *node)
+_outViewStmt(StringInfo str, ViewStmt *node)
 {
 	if (node->replace)
-		string_append_char(str, "CREATE OR REPLACE ");
+		appendStringInfoString(str, "CREATE OR REPLACE ");
 	else
-		string_append_char(str, "CREATE ");
+		appendStringInfoString(str, "CREATE ");
 
 	if (node->view->relpersistence == RELPERSISTENCE_TEMP)
-		string_append_char(str, "TEMP ");
+		appendStringInfoString(str, "TEMP ");
 
-	string_append_char(str, "VIEW ");
+	appendStringInfoString(str, "VIEW ");
 	_outNode(str, node->view);
 
 	if (node->aliases)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outIdList(str, node->aliases);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 
-	string_append_char(str, " AS");
+	appendStringInfoString(str, " AS");
 	_outNode(str, node->query);
 }
 
 static void
-_outCreatedbOptList(String * str, List *options)
+_outCreatedbOptList(StringInfo str, List *options)
 {
 	ListCell   *lc;
 
@@ -4902,101 +4901,101 @@ _outCreatedbOptList(String * str, List *options)
 
 		/* keyword */
 		if (strcmp(e->defname, "template") == 0)
-			string_append_char(str, " TEMPLATE ");
+			appendStringInfoString(str, " TEMPLATE ");
 		else if (strcmp(e->defname, "location") == 0)
 		{
-			string_append_char(str, " LOCATION ");
+			appendStringInfoString(str, " LOCATION ");
 		}
 		else if (strcmp(e->defname, "tablespace") == 0)
-			string_append_char(str, " TABLESPACE ");
+			appendStringInfoString(str, " TABLESPACE ");
 		else if (strcmp(e->defname, "encoding") == 0)
 		{
-			string_append_char(str, " ENCODING ");
+			appendStringInfoString(str, " ENCODING ");
 		}
 		else if (strcmp(e->defname, "owner") == 0)
-			string_append_char(str, " OWNER ");
+			appendStringInfoString(str, " OWNER ");
 		else if (strcmp(e->defname, "connectionlimit") == 0)
-			string_append_char(str, " CONNECTION LIMIT ");
+			appendStringInfoString(str, " CONNECTION LIMIT ");
 
 		/* value */
 		if (v == NULL)
-			string_append_char(str, "DEFAULT");
+			appendStringInfoString(str, "DEFAULT");
 		else if (IsA((Node *) v, String))
 		{
-			string_append_char(str, "'");
-			string_append_char(str, v->val.str);
-			string_append_char(str, "'");
+			appendStringInfoString(str, "'");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "'");
 		}
 		else
 		{
 			char		buf[16];
 
 			snprintf(buf, sizeof(buf), "%d", v->val.ival);
-			string_append_char(str, buf);
+			appendStringInfoString(str, buf);
 		}
 	}
 }
 
 static void
-_outCreatedbStmt(String * str, CreatedbStmt *node)
+_outCreatedbStmt(StringInfo str, CreatedbStmt *node)
 {
-	string_append_char(str, "CREATE DATABASE \"");
-	string_append_char(str, node->dbname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "CREATE DATABASE \"");
+	appendStringInfoString(str, node->dbname);
+	appendStringInfoString(str, "\"");
 
 	_outCreatedbOptList(str, node->options);
 }
 
 static void
-_outAlterDatabaseStmt(String * str, AlterDatabaseStmt *node)
+_outAlterDatabaseStmt(StringInfo str, AlterDatabaseStmt *node)
 {
-	string_append_char(str, "ALTER DATABASE \"");
-	string_append_char(str, node->dbname);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "ALTER DATABASE \"");
+	appendStringInfoString(str, node->dbname);
+	appendStringInfoString(str, "\" ");
 
 	_outCreatedbOptList(str, node->options);
 }
 
 static void
-_outAlterDatabaseSetStmt(String * str, AlterDatabaseSetStmt *node)
+_outAlterDatabaseSetStmt(StringInfo str, AlterDatabaseSetStmt *node)
 {
-	string_append_char(str, "ALTER DATABASE \"");
-	string_append_char(str, node->dbname);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "ALTER DATABASE \"");
+	appendStringInfoString(str, node->dbname);
+	appendStringInfoString(str, "\" ");
 
 	_outNode(str, node->setstmt);
 }
 
 static void
-_outDropdbStmt(String * str, DropdbStmt *node)
+_outDropdbStmt(StringInfo str, DropdbStmt *node)
 {
-	string_append_char(str, "DROP DATABASE \"");
-	string_append_char(str, node->dbname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "DROP DATABASE \"");
+	appendStringInfoString(str, node->dbname);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outCreateDomainStmt(String * str, CreateDomainStmt *node)
+_outCreateDomainStmt(StringInfo str, CreateDomainStmt *node)
 {
 	ListCell   *lc;
 
-	string_append_char(str, "CREATE DOMAIN ");
+	appendStringInfoString(str, "CREATE DOMAIN ");
 	_outFuncName(str, node->domainname);
-	string_append_char(str, " ");
+	appendStringInfoString(str, " ");
 	_outNode(str, node->typeName);
 
 
 	foreach(lc, node->constraints)
 	{
-		string_append_char(str, " ");
+		appendStringInfoString(str, " ");
 		_outNode(str, lfirst(lc));
 	}
 }
 
 static void
-_outAlterDomainStmt(String * str, AlterDomainStmt *node)
+_outAlterDomainStmt(StringInfo str, AlterDomainStmt *node)
 {
-	string_append_char(str, "ALTER DOMAIN ");
+	appendStringInfoString(str, "ALTER DOMAIN ");
 	_outFuncName(str, node->typeName);
 
 	switch (node->subtype)
@@ -5004,138 +5003,138 @@ _outAlterDomainStmt(String * str, AlterDomainStmt *node)
 		case 'T':
 			if (node->def)
 			{
-				string_append_char(str, " SET DEFAULT ");
+				appendStringInfoString(str, " SET DEFAULT ");
 				_outNode(str, node->def);
 			}
 			else
-				string_append_char(str, " DROP DEFAULT");
+				appendStringInfoString(str, " DROP DEFAULT");
 			break;
 
 		case 'N':
-			string_append_char(str, " DROP NOT NULL");
+			appendStringInfoString(str, " DROP NOT NULL");
 			break;
 
 		case 'O':
-			string_append_char(str, " SET NOT NULL");
+			appendStringInfoString(str, " SET NOT NULL");
 			break;
 
 		case 'C':
-			string_append_char(str, " ADD ");
+			appendStringInfoString(str, " ADD ");
 			_outNode(str, node->def);
 			break;
 
 		case 'X':
-			string_append_char(str, " DROP CONSTRAINT \"");
-			string_append_char(str, node->name);
-			string_append_char(str, "\"");
+			appendStringInfoString(str, " DROP CONSTRAINT \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 			if (node->behavior == DROP_CASCADE)
-				string_append_char(str, " CASCADE");
+				appendStringInfoString(str, " CASCADE");
 			break;
 	}
 }
 
 static void
-_outCreateConversionStmt(String * str, CreateConversionStmt *node)
+_outCreateConversionStmt(StringInfo str, CreateConversionStmt *node)
 {
-	string_append_char(str, "CREATE ");
+	appendStringInfoString(str, "CREATE ");
 
 	if (node->def == TRUE)
-		string_append_char(str, "DEFAULT ");
+		appendStringInfoString(str, "DEFAULT ");
 
-	string_append_char(str, "CONVERSION ");
+	appendStringInfoString(str, "CONVERSION ");
 
 	_outFuncName(str, node->conversion_name);
 
-	string_append_char(str, " FOR '");
-	string_append_char(str, node->for_encoding_name);
-	string_append_char(str, "' TO '");
-	string_append_char(str, node->to_encoding_name);
-	string_append_char(str, " FROM ");
+	appendStringInfoString(str, " FOR '");
+	appendStringInfoString(str, node->for_encoding_name);
+	appendStringInfoString(str, "' TO '");
+	appendStringInfoString(str, node->to_encoding_name);
+	appendStringInfoString(str, " FROM ");
 	_outFuncName(str, node->func_name);
 }
 
 static void
-_outPrepareStmt(String * str, PrepareStmt *node)
+_outPrepareStmt(StringInfo str, PrepareStmt *node)
 {
-	string_append_char(str, "PREPARE \"");
-	string_append_char(str, node->name);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "PREPARE \"");
+	appendStringInfoString(str, node->name);
+	appendStringInfoString(str, "\" ");
 
 	if (node->argtypes != NIL)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outNode(str, node->argtypes);
-		string_append_char(str, ") ");
+		appendStringInfoString(str, ") ");
 	}
 
-	string_append_char(str, "AS ");
+	appendStringInfoString(str, "AS ");
 	_outNode(str, node->query);
 }
 
 static void
-_outExecuteStmt(String * str, ExecuteStmt *node)
+_outExecuteStmt(StringInfo str, ExecuteStmt *node)
 {
-	string_append_char(str, "EXECUTE \"");
-	string_append_char(str, node->name);
-	string_append_char(str, "\" ");
+	appendStringInfoString(str, "EXECUTE \"");
+	appendStringInfoString(str, node->name);
+	appendStringInfoString(str, "\" ");
 
 	if (node->params != NIL)
 	{
-		string_append_char(str, "(");
+		appendStringInfoString(str, "(");
 		_outNode(str, node->params);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 }
 
 static void
-_outLockStmt(String * str, LockStmt *node)
+_outLockStmt(StringInfo str, LockStmt *node)
 {
-	string_append_char(str, "LOCK TABLE ");
+	appendStringInfoString(str, "LOCK TABLE ");
 	_outNode(str, node->relations);
 
-	string_append_char(str, " IN ");
+	appendStringInfoString(str, " IN ");
 	switch (node->mode)
 	{
 		case AccessShareLock:
-			string_append_char(str, "ACCESS SHARE ");
+			appendStringInfoString(str, "ACCESS SHARE ");
 			break;
 
 		case RowShareLock:
-			string_append_char(str, "ROW SHARE ");
+			appendStringInfoString(str, "ROW SHARE ");
 			break;
 
 		case RowExclusiveLock:
-			string_append_char(str, "ROW EXCLUSIVE ");
+			appendStringInfoString(str, "ROW EXCLUSIVE ");
 			break;
 
 		case ShareUpdateExclusiveLock:
-			string_append_char(str, "SHARE UPDATE EXCLUSIVE ");
+			appendStringInfoString(str, "SHARE UPDATE EXCLUSIVE ");
 			break;
 
 		case ShareLock:
-			string_append_char(str, "SHARE ");
+			appendStringInfoString(str, "SHARE ");
 			break;
 
 		case ShareRowExclusiveLock:
-			string_append_char(str, "SHARE ROW EXCLUSIVE ");
+			appendStringInfoString(str, "SHARE ROW EXCLUSIVE ");
 			break;
 
 		case ExclusiveLock:
-			string_append_char(str, "EXCLUSIVE ");
+			appendStringInfoString(str, "EXCLUSIVE ");
 			break;
 
 		case AccessExclusiveLock:
-			string_append_char(str, "ACCESS EXCLUSIVE ");
+			appendStringInfoString(str, "ACCESS EXCLUSIVE ");
 			break;
 	}
-	string_append_char(str, "MODE");
+	appendStringInfoString(str, "MODE");
 
 	if (node->nowait == TRUE)
-		string_append_char(str, " NOWAIT");
+		appendStringInfoString(str, " NOWAIT");
 }
 
 static void
-_outOperatorArgTypes(String * str, List *args)
+_outOperatorArgTypes(StringInfo str, List *args)
 {
 	TypeName   *left,
 			   *right;
@@ -5146,111 +5145,111 @@ _outOperatorArgTypes(String * str, List *args)
 	if (left)
 		_outNode(str, left);
 	else
-		string_append_char(str, "NONE");
-	string_append_char(str, ", ");
+		appendStringInfoString(str, "NONE");
+	appendStringInfoString(str, ", ");
 	if (right)
 		_outNode(str, right);
 	else
-		string_append_char(str, "NONE");
+		appendStringInfoString(str, "NONE");
 }
 
 static void
-_outCommentStmt(String * str, CommentStmt *node)
+_outCommentStmt(StringInfo str, CommentStmt *node)
 {
 	TypeName   *t;
 	Value	   *v;
 	char		buf[16];
 
-	string_append_char(str, "COMMENT ON ");
+	appendStringInfoString(str, "COMMENT ON ");
 
 	ObjectWithArgs *owa = castNode(ObjectWithArgs, node);
 
 	switch (node->objtype)
 	{
 		case OBJECT_AGGREGATE:
-			string_append_char(str, "AGGREGATE ");
+			appendStringInfoString(str, "AGGREGATE ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 
 			t = linitial(owa->objargs);
 			if (t)
 				_outNode(str, t);
 			else
-				string_append_char(str, "*");
-			string_append_char(str, ")");
+				appendStringInfoString(str, "*");
+			appendStringInfoString(str, ")");
 			break;
 
 		case OBJECT_FUNCTION:
-			string_append_char(str, "FUNCTION ");
+			appendStringInfoString(str, "FUNCTION ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			_outNode(str, owa->objargs);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case OBJECT_OPERATOR:
-			string_append_char(str, "OPERATOR ");
+			appendStringInfoString(str, "OPERATOR ");
 			_outOperatorName(str, owa->objname);
-			string_append_char(str, "(");
+			appendStringInfoString(str, "(");
 			_outOperatorArgTypes(str, owa->objargs);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case OBJECT_TABCONSTRAINT:
 		case OBJECT_DOMCONSTRAINT:
-			string_append_char(str, "CONSTRAINT \"");
+			appendStringInfoString(str, "CONSTRAINT \"");
 			v = lsecond(owa->objname);
-			string_append_char(str, v->val.str);
-			string_append_char(str, "\" ON ");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "\" ON ");
 			_outFuncName(str, linitial(owa->objargs));
 			break;
 
 		case OBJECT_RULE:
-			string_append_char(str, "RULE \"");
+			appendStringInfoString(str, "RULE \"");
 			v = lsecond(owa->objname);
-			string_append_char(str, v->val.str);
-			string_append_char(str, "\" ON ");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "\" ON ");
 			_outFuncName(str, linitial(owa->objargs));
 			break;
 
 		case OBJECT_TRIGGER:
-			string_append_char(str, "TRIGGER \"");
+			appendStringInfoString(str, "TRIGGER \"");
 			v = lsecond(owa->objname);
-			string_append_char(str, v->val.str);
-			string_append_char(str, "\" ON ");
+			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, "\" ON ");
 			_outFuncName(str, linitial(owa->objargs));
 			break;
 
 		case OBJECT_OPCLASS:
-			string_append_char(str, "OPERATOR CLASS ");
+			appendStringInfoString(str, "OPERATOR CLASS ");
 			_outFuncName(str, owa->objname);
-			string_append_char(str, " USING ");
+			appendStringInfoString(str, " USING ");
 			v = linitial(owa->objargs);
-			string_append_char(str, v->val.str);
+			appendStringInfoString(str, v->val.str);
 			break;
 
 		case OBJECT_LARGEOBJECT:
-			string_append_char(str, "LARGE OBJECT ");
+			appendStringInfoString(str, "LARGE OBJECT ");
 			v = linitial(owa->objname);
 			if (IsA(v, String))
-				string_append_char(str, v->val.str);
+				appendStringInfoString(str, v->val.str);
 			else if (IsA(v, Integer))
 			{
 				snprintf(buf, 16, "%d", v->val.ival);
-				string_append_char(str, buf);
+				appendStringInfoString(str, buf);
 			}
 			break;
 
 		case OBJECT_CAST:
-			string_append_char(str, "CAST (");
+			appendStringInfoString(str, "CAST (");
 			_outNode(str, linitial(owa->objname));
-			string_append_char(str, " AS ");
+			appendStringInfoString(str, " AS ");
 			_outNode(str, linitial(owa->objargs));
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case OBJECT_LANGUAGE:
-			string_append_char(str, "LANGUAGE ");
+			appendStringInfoString(str, "LANGUAGE ");
 			_outFuncName(str, owa->objname);
 			break;
 
@@ -5258,31 +5257,31 @@ _outCommentStmt(String * str, CommentStmt *node)
 			switch (node->objtype)
 			{
 				case OBJECT_COLUMN:
-					string_append_char(str, "COLUMN ");
+					appendStringInfoString(str, "COLUMN ");
 					break;
 				case OBJECT_DATABASE:
-					string_append_char(str, "DATABASE ");
+					appendStringInfoString(str, "DATABASE ");
 					break;
 				case OBJECT_SCHEMA:
-					string_append_char(str, "SCHEMA ");
+					appendStringInfoString(str, "SCHEMA ");
 					break;
 				case OBJECT_INDEX:
-					string_append_char(str, "INDEX ");
+					appendStringInfoString(str, "INDEX ");
 					break;
 				case OBJECT_SEQUENCE:
-					string_append_char(str, "SEQUENCE ");
+					appendStringInfoString(str, "SEQUENCE ");
 					break;
 				case OBJECT_TABLE:
-					string_append_char(str, "TABLE ");
+					appendStringInfoString(str, "TABLE ");
 					break;
 				case OBJECT_DOMAIN:
-					string_append_char(str, "DOMAIN ");
+					appendStringInfoString(str, "DOMAIN ");
 					break;
 				case OBJECT_TYPE:
-					string_append_char(str, "TYPE ");
+					appendStringInfoString(str, "TYPE ");
 					break;
 				case OBJECT_VIEW:
-					string_append_char(str, "VIEW ");
+					appendStringInfoString(str, "VIEW ");
 					break;
 				default:
 					break;
@@ -5291,30 +5290,30 @@ _outCommentStmt(String * str, CommentStmt *node)
 			break;
 	}
 
-	string_append_char(str, " IS ");
+	appendStringInfoString(str, " IS ");
 	if (node->comment)
 	{
-		string_append_char(str, "'");
-		string_append_char(str, node->comment);
-		string_append_char(str, "'");
+		appendStringInfoString(str, "'");
+		appendStringInfoString(str, node->comment);
+		appendStringInfoString(str, "'");
 	}
 	else
-		string_append_char(str, "NULL");
+		appendStringInfoString(str, "NULL");
 }
 
 static void
-_outRangeSubselect(String * str, RangeSubselect *node)
+_outRangeSubselect(StringInfo str, RangeSubselect *node)
 {
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 	_outNode(str, node->subquery);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 
 	_outNode(str, node->alias);
 }
 
 /*TODO*/
 static void
-_outRangeFunction(String * str, RangeFunction *node)
+_outRangeFunction(StringInfo str, RangeFunction *node)
 {
 	_outNode(str, node->functions);
 	//TODO
@@ -5325,55 +5324,55 @@ _outRangeFunction(String * str, RangeFunction *node)
 
 	if (node->coldeflist)
 	{
-		string_append_char(str, " (");
+		appendStringInfoString(str, " (");
 		_outNode(str, node->coldeflist);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 }
 
 static void
-_outRangeTableSample(String * str, RangeTableSample *node)
+_outRangeTableSample(StringInfo str, RangeTableSample *node)
 {
 	_outNode(str, node->relation);
-	string_append_char(str, " TABLESAMPLE ");
+	appendStringInfoString(str, " TABLESAMPLE ");
 	_outFuncName(str, node->method);
-	string_append_char(str, " (");
+	appendStringInfoString(str, " (");
 	_outNode(str, node->args);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 
 	if (node->repeatable)
 	{
-		string_append_char(str, " REPEATABLE (");
+		appendStringInfoString(str, " REPEATABLE (");
 		_outNode(str, node->repeatable);
-		string_append_char(str, ")");
+		appendStringInfoString(str, ")");
 	}
 }
 
 static void
-_outRangeTableFunc(String * str, RangeTableFunc *node)
+_outRangeTableFunc(StringInfo str, RangeTableFunc *node)
 {
 }
 
 static void
-_outRangeTableFuncCol(String * str, RangeTableFuncCol *node)
+_outRangeTableFuncCol(StringInfo str, RangeTableFuncCol *node)
 {
 }
 
 static void
-_outDiscardStmt(String * str, DiscardStmt *node)
+_outDiscardStmt(StringInfo str, DiscardStmt *node)
 {
 	switch (node->target)
 	{
 		case DISCARD_ALL:
-			string_append_char(str, "DISCARD ALL");
+			appendStringInfoString(str, "DISCARD ALL");
 			break;
 
 		case DISCARD_TEMP:
-			string_append_char(str, "DISCARD TEMP");
+			appendStringInfoString(str, "DISCARD TEMP");
 			break;
 
 		case DISCARD_PLANS:
-			string_append_char(str, "DISCARD PLANS");
+			appendStringInfoString(str, "DISCARD PLANS");
 			break;
 
 		default:
@@ -5382,106 +5381,106 @@ _outDiscardStmt(String * str, DiscardStmt *node)
 }
 
 static void
-_outCreateOpFamilyStmt(String * str, CreateOpFamilyStmt *node)
+_outCreateOpFamilyStmt(StringInfo str, CreateOpFamilyStmt *node)
 {
-	string_append_char(str, "CREATE OPERATOR FAMILY ");
+	appendStringInfoString(str, "CREATE OPERATOR FAMILY ");
 	_outIdList(str, node->opfamilyname);
-	string_append_char(str, " USING \"");
-	string_append_char(str, node->amname);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, " USING \"");
+	appendStringInfoString(str, node->amname);
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outAlterOpFamilyStmt(String * str, AlterOpFamilyStmt *node)
+_outAlterOpFamilyStmt(StringInfo str, AlterOpFamilyStmt *node)
 {
 }
 
 static void
-_outCreateEnumStmt(String * str, CreateEnumStmt *node)
+_outCreateEnumStmt(StringInfo str, CreateEnumStmt *node)
 {
-	string_append_char(str, "CREATE TYPE ");
+	appendStringInfoString(str, "CREATE TYPE ");
 	_outIdList(str, node->typeName);
-	string_append_char(str, " AS ENUM (");
+	appendStringInfoString(str, " AS ENUM (");
 	_outNode(str, node->vals);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outDropOwnedStmt(String * str, DropOwnedStmt *node)
+_outDropOwnedStmt(StringInfo str, DropOwnedStmt *node)
 {
-	string_append_char(str, "DROP OWNED BY ");
+	appendStringInfoString(str, "DROP OWNED BY ");
 	_outIdList(str, node->roles);
 	if (node->behavior == DROP_CASCADE)
-		string_append_char(str, " CASCADE");
+		appendStringInfoString(str, " CASCADE");
 }
 
 static void
-_outReassignOwnedStmt(String * str, ReassignOwnedStmt *node)
+_outReassignOwnedStmt(StringInfo str, ReassignOwnedStmt *node)
 {
-	string_append_char(str, "REASSIGN OWNED BY ");
+	appendStringInfoString(str, "REASSIGN OWNED BY ");
 	_outIdList(str, node->roles);
-	string_append_char(str, " TO \"");
+	appendStringInfoString(str, " TO \"");
 	_outNode(str, node->newrole);
-	string_append_char(str, "\"");
+	appendStringInfoString(str, "\"");
 }
 
 static void
-_outAlterTSDictionaryStmt(String * str, AlterTSDictionaryStmt *node)
+_outAlterTSDictionaryStmt(StringInfo str, AlterTSDictionaryStmt *node)
 {
-	string_append_char(str, "ALTER TEXT SEARCH DICTIONARY ");
+	appendStringInfoString(str, "ALTER TEXT SEARCH DICTIONARY ");
 	_outIdList(str, node->dictname);
-	string_append_char(str, "(");
+	appendStringInfoString(str, "(");
 	_outNode(str, node->options);
-	string_append_char(str, ")");
+	appendStringInfoString(str, ")");
 }
 
 static void
-_outAlterTSConfigurationStmt(String * str, AlterTSConfigurationStmt *node)
+_outAlterTSConfigurationStmt(StringInfo str, AlterTSConfigurationStmt *node)
 {
-	string_append_char(str, "ALTER TEXT SEARCH CONFIGURATION ");
+	appendStringInfoString(str, "ALTER TEXT SEARCH CONFIGURATION ");
 	_outIdList(str, node->cfgname);
 	if (node->override == false && node->replace == false)
 	{
-		string_append_char(str, "ADD MAPPING FOR ");
+		appendStringInfoString(str, "ADD MAPPING FOR ");
 		_outIdList(str, node->tokentype);
-		string_append_char(str, " WITH ");
+		appendStringInfoString(str, " WITH ");
 		_outIdList(str, node->dicts);
 	}
 	else if (node->override == true && node->replace == false)
 	{
-		string_append_char(str, "ALTER MAPPING FOR ");
+		appendStringInfoString(str, "ALTER MAPPING FOR ");
 		_outIdList(str, node->tokentype);
-		string_append_char(str, " WITH ");
+		appendStringInfoString(str, " WITH ");
 		_outIdList(str, node->dicts);
 	}
 	else if (node->override == false && node->replace == true)
 	{
 		if (node->tokentype == NIL)
-			string_append_char(str, "ALTER MAPPING ");
+			appendStringInfoString(str, "ALTER MAPPING ");
 		else
 		{
-			string_append_char(str, "ALTER MAPPING FOR ");
+			appendStringInfoString(str, "ALTER MAPPING FOR ");
 			_outIdList(str, node->tokentype);
 		}
-		string_append_char(str, "REPLACE ");
+		appendStringInfoString(str, "REPLACE ");
 		_outNode(str, linitial(node->dicts));
-		string_append_char(str, " WITH ");
+		appendStringInfoString(str, " WITH ");
 		_outNode(str, lsecond(node->dicts));
 	}
 	else if (node->missing_ok == false)
 	{
-		string_append_char(str, " DROP MAPPING FOR ");
+		appendStringInfoString(str, " DROP MAPPING FOR ");
 		_outIdList(str, node->tokentype);
 	}
 	else if (node->missing_ok == true)
 	{
-		string_append_char(str, " DROP MAPPING IF EXISTS FOR ");
+		appendStringInfoString(str, " DROP MAPPING IF EXISTS FOR ");
 		_outIdList(str, node->tokentype);
 	}
 }
 
 static void
-_outXmlExpr(String * str, XmlExpr *node)
+_outXmlExpr(StringInfo str, XmlExpr *node)
 {
 	A_Const    *n;
 
@@ -5489,48 +5488,48 @@ _outXmlExpr(String * str, XmlExpr *node)
 	{
 		case IS_DOCUMENT:
 			_outNode(str, node->args);
-			string_append_char(str, " IS DOCUMENT");
+			appendStringInfoString(str, " IS DOCUMENT");
 			break;
 
 		case IS_XMLCONCAT:
-			string_append_char(str, "XMLCONCAT (");
+			appendStringInfoString(str, "XMLCONCAT (");
 			_outNode(str, node->args);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case IS_XMLELEMENT:
-			string_append_char(str, "XMLELEMENT (");
+			appendStringInfoString(str, "XMLELEMENT (");
 			if (node->name)
 			{
-				string_append_char(str, "NAME \"");
-				string_append_char(str, node->name);
-				string_append_char(str, "\"");
+				appendStringInfoString(str, "NAME \"");
+				appendStringInfoString(str, node->name);
+				appendStringInfoString(str, "\"");
 				if (node->named_args != NIL)
 				{
-					string_append_char(str, ",");
+					appendStringInfoString(str, ",");
 					_outIdList(str, node->named_args);
 				}
 			}
 			if (node->args != NIL)
 			{
-				string_append_char(str, ",");
+				appendStringInfoString(str, ",");
 				_outNode(str, node->args);
 			}
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case IS_XMLFOREST:
-			string_append_char(str, "XMLFOREST (");
+			appendStringInfoString(str, "XMLFOREST (");
 			_outNode(str, node->named_args);
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 		case IS_XMLPARSE:
-			string_append_char(str, "XMLPARSE (");
+			appendStringInfoString(str, "XMLPARSE (");
 			if (node->xmloption == XMLOPTION_DOCUMENT)
-				string_append_char(str, "DOCUMENT ");
+				appendStringInfoString(str, "DOCUMENT ");
 			else
-				string_append_char(str, "CONTENT ");
+				appendStringInfoString(str, "CONTENT ");
 
 			_outNode(str, linitial(node->args));
 			n = lsecond(node->args);
@@ -5538,10 +5537,10 @@ _outXmlExpr(String * str, XmlExpr *node)
 				Node	   *arg = ((TypeCast *) n)->arg;
 
 				if (((A_Const *) arg)->val.val.str[0] == 't')
-					string_append_char(str, " PRESERVE WHITESPACE");
+					appendStringInfoString(str, " PRESERVE WHITESPACE");
 			}
 
-			string_append_char(str, ")");
+			appendStringInfoString(str, ")");
 			break;
 
 
@@ -5551,13 +5550,13 @@ _outXmlExpr(String * str, XmlExpr *node)
 }
 
 static void
-_outXmlSerialize(String * str, XmlSerialize *node)
+_outXmlSerialize(StringInfo str, XmlSerialize *node)
 {
 
 }
 
 static void
-_outWithDefinition(String * str, List *def_list)
+_outWithDefinition(StringInfo str, List *def_list)
 {
 	int			oid = 0;
 
@@ -5571,9 +5570,9 @@ _outWithDefinition(String * str, List *def_list)
 			Value	   *v = (Value *) elem->arg;
 
 			if (v->val.ival == 1)
-				string_append_char(str, " WITH OIDS ");
+				appendStringInfoString(str, " WITH OIDS ");
 			else
-				string_append_char(str, " WITHOUT OIDS ");
+				appendStringInfoString(str, " WITHOUT OIDS ");
 			oid = 1;
 		}
 	}
@@ -5581,44 +5580,44 @@ _outWithDefinition(String * str, List *def_list)
 	if (oid == 1)
 		return;
 
-	string_append_char(str, " WITH ");
+	appendStringInfoString(str, " WITH ");
 	_outDefinition(str, def_list);
 }
 
 static void
-_outOnConflictClause(String * str, OnConflictClause *node)
+_outOnConflictClause(StringInfo str, OnConflictClause *node)
 {
-	string_append_char(str, " ON CONFLICT ");
+	appendStringInfoString(str, " ON CONFLICT ");
 
 	if (node->infer)
 	{
 		if (node->infer->indexElems != NIL)
 		{
-			string_append_char(str, " ( ");
+			appendStringInfoString(str, " ( ");
 			_outList(str, node->infer->indexElems);
-			string_append_char(str, " ) ");
+			appendStringInfoString(str, " ) ");
 
 			if (node->infer->whereClause)
 			{
-				string_append_char(str, " WHERE ");
+				appendStringInfoString(str, " WHERE ");
 				_outNode(str, node->infer->whereClause);
 			}
 		}
 		else
 		{
-			string_append_char(str, " ON CONSTRAINT ");
-			string_append_char(str, node->infer->conname);
+			appendStringInfoString(str, " ON CONSTRAINT ");
+			appendStringInfoString(str, node->infer->conname);
 		}
 	}
 
 	switch (node->action)
 	{
 		case ONCONFLICT_UPDATE:
-			string_append_char(str, " DO UPDATE ");
+			appendStringInfoString(str, " DO UPDATE ");
 			break;
 
 		case ONCONFLICT_NOTHING:
-			string_append_char(str, " DO NOTHING ");
+			appendStringInfoString(str, " DO NOTHING ");
 			break;
 
 		default:
@@ -5632,28 +5631,28 @@ _outOnConflictClause(String * str, OnConflictClause *node)
 
 	if (node->whereClause)
 	{
-		string_append_char(str, " WHERE ");
+		appendStringInfoString(str, " WHERE ");
 		_outNode(str, node->whereClause);
 	}
 }
 
 static void
-_outPartitionElem(String * str, PartitionElem *node)
+_outPartitionElem(StringInfo str, PartitionElem *node)
 {
 }
 
 static void
-_outPartitionSpec(String * str, PartitionSpec *node)
+_outPartitionSpec(StringInfo str, PartitionSpec *node)
 {
 }
 
 static void
-_outPartitionBoundSpec(String * str, PartitionBoundSpec *node)
+_outPartitionBoundSpec(StringInfo str, PartitionBoundSpec *node)
 {
 }
 
 static void
-_outPartitionRangeDatum(String * str, PartitionRangeDatum *node)
+_outPartitionRangeDatum(StringInfo str, PartitionRangeDatum *node)
 {
 }
 
@@ -5662,7 +5661,7 @@ _outPartitionRangeDatum(String * str, PartitionRangeDatum *node)
  *	  converts a Node into ascii string and append it to 'str'
  */
 void
-_outNode(String * str, void *obj)
+_outNode(StringInfo str, void *obj)
 {
 	/* Guard against stack overflow due to overly complex expressions */
 	/*
@@ -6320,16 +6319,9 @@ _outNode(String * str, void *obj)
 char *
 nodeToString(const void *obj)
 {
-	String	   *str;
-	char	   *p;
+	StringInfoData	   str;
 
-	str = init_string("");
-	_outNode(str, (void *) obj);
-	p = palloc(str->len + 1);
-	memcpy(p, str->data, str->len);
-	*(p + str->len) = '\0';
-
-	free_string(str);
-
-	return p;
+	initStringInfo(&str);
+	_outNode(&str, (void *) obj);
+	return str.data;
 }

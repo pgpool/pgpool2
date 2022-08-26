@@ -52,7 +52,6 @@
 #include "context/pool_process_context.h"
 #include "protocol/pool_process_query.h"
 #include "protocol/pool_pg_utils.h"
-#include "parser/pool_string.h"
 #include "auth/pool_passwd.h"
 #include "auth/pool_hba.h"
 #include "query_cache/pool_memqcache.h"
@@ -2182,9 +2181,8 @@ trigger_failover_command(int node, const char *command_line,
 						 int old_main_node, int new_main_node, int old_primary)
 {
 	int			r = 0;
-	String	   *exec_cmd;
-	char		port_buf[6];
-	char		buf[2];
+	StringInfoData	   exec_cmd_data;
+	StringInfo	   exec_cmd = &exec_cmd_data;
 	BackendInfo *info;
 	BackendInfo *newmain;
 	BackendInfo *oldprimary;
@@ -2200,8 +2198,7 @@ trigger_failover_command(int node, const char *command_line,
 	if (!info)
 		return -1;
 
-	buf[1] = '\0';
-	exec_cmd = init_string("");
+	initStringInfo(exec_cmd);
 
 	while (*command_line)
 	{
@@ -2214,91 +2211,80 @@ trigger_failover_command(int node, const char *command_line,
 				switch (val)
 				{
 					case 'p':	/* failed node port */
-						snprintf(port_buf, sizeof(port_buf), "%d", info->backend_port);
-						string_append_char(exec_cmd, port_buf);
+						appendStringInfo(exec_cmd, " %d", info->backend_port);
 						break;
 
 					case 'D':	/* failed node database directory */
-						string_append_char(exec_cmd, info->backend_data_directory);
+						appendStringInfoString(exec_cmd, info->backend_data_directory);
 						break;
 
 					case 'd':	/* failed node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", node);
-						string_append_char(exec_cmd, port_buf);
+						appendStringInfo(exec_cmd, " %d", node);
 						break;
 
 					case 'h':	/* failed host name */
-						string_append_char(exec_cmd, info->backend_hostname);
+						appendStringInfoString(exec_cmd, info->backend_hostname);
 						break;
 
 					case 'H':	/* new main host name */
 						newmain = pool_get_node_info(new_main_node);
 						if (newmain)
-							string_append_char(exec_cmd, newmain->backend_hostname);
+							appendStringInfoString(exec_cmd, newmain->backend_hostname);
 						else
 							/* no valid new main */
-							string_append_char(exec_cmd, "\"\"");
+							appendStringInfoString(exec_cmd, "\"\"");
 						break;
 
 					case 'm':	/* new main node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", new_main_node);
-						string_append_char(exec_cmd, port_buf);
+						appendStringInfo(exec_cmd, " %d", new_main_node);
 						break;
 
 					case 'r':	/* new main node port */
 						newmain = pool_get_node_info(new_main_node);
 						if (newmain)
-						{
-							snprintf(port_buf, sizeof(port_buf), "%d", newmain->backend_port);
-							string_append_char(exec_cmd, port_buf);
-						}
+							appendStringInfo(exec_cmd, "%d", newmain->backend_port);
 						else
 							/* no valid new main node */
-							string_append_char(exec_cmd, "\"\"");
+							appendStringInfoString(exec_cmd, "\"\"");
 						break;
 
 					case 'R':	/* new main database directory */
 						newmain = pool_get_node_info(new_main_node);
 						if (newmain)
-							string_append_char(exec_cmd, newmain->backend_data_directory);
+							appendStringInfoString(exec_cmd, newmain->backend_data_directory);
 						else
 							/* no valid new main */
-							string_append_char(exec_cmd, "\"\"");
+							appendStringInfoString(exec_cmd, "\"\"");
 						break;
 
 					case 'M':	/* old main node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", old_main_node);
-						string_append_char(exec_cmd, port_buf);
+						appendStringInfo(exec_cmd, "%d", old_main_node);
 						break;
 
 					case 'P':	/* old primary node id */
-						snprintf(port_buf, sizeof(port_buf), "%d", old_primary);
-						string_append_char(exec_cmd, port_buf);
+						appendStringInfo(exec_cmd, "%d", old_primary);
 						break;
 
 					case 'N':	/* old primary host name */
 						oldprimary = pool_get_node_info(old_primary);
 						if (oldprimary)
-							string_append_char(exec_cmd, oldprimary->backend_hostname);
+							appendStringInfoString(exec_cmd, oldprimary->backend_hostname);
 						else
 							/* no valid old primary */
-							string_append_char(exec_cmd, "\"\"");
+							appendStringInfoString(exec_cmd, "\"\"");
 						break;
 
 					case 'S':	/* old primary port */
 						oldprimary = pool_get_node_info(old_primary);
 						if (oldprimary)
-						{
-							snprintf(port_buf, sizeof(port_buf), "%d", oldprimary->backend_port);
-							string_append_char(exec_cmd, port_buf);
-						}
+							appendStringInfo(exec_cmd, "%d", oldprimary->backend_port);
 						else
 							/* no valid old primary */
-							string_append_char(exec_cmd, "\"\"");
+							appendStringInfoString(exec_cmd, "\"\"");
 						break;
 
 					case '%':	/* escape */
-						string_append_char(exec_cmd, "%");
+						appendStringInfoString(exec_cmd, "%");
 						break;
 
 					default:	/* ignore */
@@ -2308,10 +2294,8 @@ trigger_failover_command(int node, const char *command_line,
 			}
 		}
 		else
-		{
-			buf[0] = *command_line;
-			string_append_char(exec_cmd, buf);
-		}
+			appendStringInfoChar(exec_cmd, *command_line);
+
 		command_line++;
 	}
 
@@ -2322,7 +2306,7 @@ trigger_failover_command(int node, const char *command_line,
 		r = system(exec_cmd->data);
 	}
 
-	free_string(exec_cmd);
+	pfree(exec_cmd->data);
 
 	return r;
 }

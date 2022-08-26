@@ -623,4 +623,6 @@ extern void list_sort(List *list, list_sort_comparator cmp);
 extern int	list_int_cmp(const ListCell *p1, const ListCell *p2);
 extern int	list_oid_cmp(const ListCell *p1, const ListCell *p2);
 
+extern char *NameListToString(List *names);
+
 #endif							/* PG_LIST_H */

@@ -62,7 +62,6 @@
 #include "context/pool_session_context.h"
 #include "context/pool_query_context.h"
 #include "query_cache/pool_memqcache.h"
-#include "parser/pool_string.h"
 #include "auth/pool_hba.h"
 
 #ifndef FD_SETSIZE
@@ -3697,16 +3696,16 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 	if (degenerate_node_num)
 	{
 		int			retcode = 2;
-		String	   *msg = init_string("kind mismatch among backends. ");
+		StringInfoData	msg;
 
-		string_append_char(msg, "Possible last query was: \"");
-		string_append_char(msg, query_string_buffer);
-		string_append_char(msg, "\" kind details are:");
+		initStringInfo(&msg);
+		appendStringInfoString(&msg, "kind mismatch among backends. ");
+		appendStringInfoString(&msg, "Possible last query was: \"");
+		appendStringInfoString(&msg, query_string_buffer);
+		appendStringInfoString(&msg, "\" kind details are:");
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
-			char		buf[32];
-
 			if (kind_list[i])
 			{
 
@@ -3714,19 +3713,16 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 				{
 					char	   *m;
 
-					snprintf(buf, sizeof(buf), " %d[%c: ", i, kind_list[i]);
-					string_append_char(msg, buf);
+					appendStringInfo(&msg, "%d[%c: ", i, kind_list[i]);
 
 					if (pool_extract_error_message(false, CONNECTION(backend, i), MAJOR(backend), true, &m) == 1)
 					{
-						string_append_char(msg, m);
-						string_append_char(msg, "]");
+						appendStringInfoString(&msg, m);
+						appendStringInfoString(&msg, "]");
 						pfree(m);
 					}
 					else
-					{
-						string_append_char(msg, "unknown message]");
-					}
+						appendStringInfoString(&msg, "unknown message]");
 
 					/*
 					 * If the error was caused by DEALLOCATE then print
@@ -3756,9 +3752,9 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 								{
 									if (sent_msg->query_context->original_query)
 									{
-										string_append_char(msg, "[");
-										string_append_char(msg, sent_msg->query_context->original_query);
-										string_append_char(msg, "]");
+										appendStringInfoString(&msg, "[");
+										appendStringInfoString(&msg, sent_msg->query_context->original_query);
+										appendStringInfoString(&msg, "]");
 									}
 								}
 							}
@@ -3767,10 +3763,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 					}
 				}
 				else
-				{
-					snprintf(buf, sizeof(buf), " %d[%c]", i, kind_list[i]);
-					string_append_char(msg, buf);
-				}
+					appendStringInfo(&msg, " %d[%c]", i, kind_list[i]);
 			}
 		}
 
@@ -3782,7 +3775,7 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		ereport(FATAL,
 				(return_code(retcode),
 				 errmsg("failed to read kind from backend"),
-				 errdetail("%s", msg->data),
+				 errdetail("%s", msg.data),
 				 errhint("check data consistency among db nodes")));
 
 	}

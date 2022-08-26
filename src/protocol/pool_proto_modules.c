@@ -48,7 +48,6 @@
 #include "protocol/pool_process_query.h"
 #include "protocol/pool_pg_utils.h"
 #include "pool_config.h"
-#include "parser/pool_string.h"
 #include "context/pool_session_context.h"
 #include "context/pool_query_context.h"
 #include "utils/elog.h"
@@ -1967,40 +1966,37 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 		{
 			int		   *victim_nodes;
 			int			number_of_nodes;
-			char		msgbuf[128];
 
 			victim_nodes = find_victim_nodes(session_context->ntuples, NUM_BACKENDS,
 											 MAIN_NODE_ID, &number_of_nodes);
 			if (victim_nodes)
 			{
 				int			i;
-				String	   *msg;
+				StringInfoData	   msg;
 
-				msg = init_string("ReadyForQuery: Degenerate backends:");
+				initStringInfo(&msg);
+				appendStringInfoString(&msg, "ReadyForQuery: Degenerate backends:");
 
 				for (i = 0; i < number_of_nodes; i++)
-				{
-					snprintf(msgbuf, sizeof(msgbuf), " %d", victim_nodes[i]);
-					string_append_char(msg, msgbuf);
-				}
+					appendStringInfo(&msg, " %d", victim_nodes[i]);
+
 				ereport(LOG,
 						(errmsg("processing ready for query message"),
-						 errdetail("%s", msg->data)));
+						 errdetail("%s", msg.data)));
 
-				free_string(msg);
+				pfree(msg.data);
 
-				msg = init_string("ReadyForQuery: Number of affected tuples are:");
+				initStringInfo(&msg);
+				appendStringInfoString(&msg, "ReadyForQuery: Number of affected tuples are:");
 
 				for (i = 0; i < NUM_BACKENDS; i++)
-				{
-					snprintf(msgbuf, sizeof(msgbuf), " %d", session_context->ntuples[i]);
-					string_append_char(msg, msgbuf);
-				}
+					appendStringInfo(&msg, " %d", session_context->ntuples[i]);
+
 				ereport(LOG,
 						(errmsg("processing ready for query message"),
-						 errdetail("%s", msg->data)));
+						 errdetail("%s", msg.data)));
 
-				free_string(msg);
+				pfree(msg.data);
 
 				degenerate_backend_set(victim_nodes, number_of_nodes, REQ_DETAIL_CONFIRMED | REQ_DETAIL_SWITCHOVER);
 				child_exit(POOL_EXIT_AND_RESTART);
@@ -3528,10 +3524,6 @@ generate_error_message(char *prefix, int specific_error, char *query)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
-	session_context = pool_get_session_context(true);
-	if (!session_context)
-		return;
-
 	static char *error_messages[] = {
 		"received deadlock error message from main node. query: %s",
 		"received serialization failure error message from main node. query: %s",
@@ -3539,7 +3531,11 @@ generate_error_message(char *prefix, int specific_error, char *query)
 		"received query cancel error message from main node. query: %s"
 	};
 
-	String	   *msg;
+	StringInfoData	   msg;
+
+	session_context = pool_get_session_context(true);
+	if (!session_context)
+		return;
 
 	if (specific_error < 1 || specific_error > sizeof(error_messages) / sizeof(char *))
 	{
@@ -3550,11 +3546,13 @@ generate_error_message(char *prefix, int specific_error, char *query)
 
 	specific_error--;
 
-	msg = init_string(prefix);
-	string_append_char(msg, error_messages[specific_error]);
+	initStringInfo(&msg);
+
+	appendStringInfoString(&msg, error_messages[specific_error]);
 	ereport(LOG,
-			(errmsg(msg->data, query)));
-	free_string(msg);
+			(errmsg(msg.data, query)));
+
+	pfree(msg.data);
 }
 
 /*

@@ -13,7 +13,6 @@ libsql_parser_a_SOURCES  = \
 	nodes.c \
 	outfuncs.c \
 	parser.c \
-	pool_string.c \
 	scansup.c \
 	stringinfo.c \
 	value.c \

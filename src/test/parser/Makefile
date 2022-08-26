@@ -3,7 +3,7 @@
 PROGRAM=parser-test
 PGPOOL_SRC=../../../src/parser
 PARSER_INCLUDES=../../../src/include/parser
-PARSER_OBJS=gram.o parser.o pool_string.o list.o makefuncs.o value.o nodes.o pool_memory.o main.o keywords.o outfuncs.o copyfuncs.o kwlookup.o scansup.o wchar.o
+PARSER_OBJS=gram.o parser.o list.o makefuncs.o value.o nodes.o pool_memory.o main.o keywords.o outfuncs.o copyfuncs.o kwlookup.o scansup.o wchar.o
 
 #ENABLE_GCOV=1
 
@@ -48,9 +48,6 @@ else
 	mv -f gram.tab.c gram.c
 	mv -f gram.tab.h gram.h
 endif
-
-pool_string.o : $(PGPOOL_SRC)/pool_string.c $(PARSER_INCLUDES)/pool_string.h
-	gcc $(CFLAGS) $<
 
 parser.o : $(PGPOOL_SRC)/parser.c
 	gcc $(CFLAGS) $<
