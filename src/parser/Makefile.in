@@ -106,7 +106,7 @@ libsql_parser_a_AR = $(AR) $(ARFLAGS)
 libsql_parser_a_LIBADD =
 am__libsql_parser_a_SOURCES_DIST = copyfuncs.c gram.y gram_minimal.y \
 	keywords.c kwlookup.c list.c makefuncs.c nodes.c outfuncs.c \
-	parser.c pool_string.c scansup.c stringinfo.c value.c \
+	parser.c scansup.c stringinfo.c value.c \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
 	$(top_srcdir)/src/utils/error/elog.c wchar.c scan.c snprintf.c
@@ -115,8 +115,8 @@ am__dirstamp = $(am__leading_dot)dirstamp
 am_libsql_parser_a_OBJECTS = copyfuncs.$(OBJEXT) gram.$(OBJEXT) \
 	gram_minimal.$(OBJEXT) keywords.$(OBJEXT) kwlookup.$(OBJEXT) \
 	list.$(OBJEXT) makefuncs.$(OBJEXT) nodes.$(OBJEXT) \
-	outfuncs.$(OBJEXT) parser.$(OBJEXT) pool_string.$(OBJEXT) \
-	scansup.$(OBJEXT) stringinfo.$(OBJEXT) value.$(OBJEXT) \
+	outfuncs.$(OBJEXT) parser.$(OBJEXT) scansup.$(OBJEXT) \
+	stringinfo.$(OBJEXT) value.$(OBJEXT) \
 	$(top_srcdir)/src/utils/mmgr/mcxt.$(OBJEXT) \
 	$(top_srcdir)/src/utils/mmgr/aset.$(OBJEXT) \
 	$(top_srcdir)/src/utils/error/elog.$(OBJEXT) wchar.$(OBJEXT) \
@@ -341,7 +341,7 @@ AM_CPPFLAGS = -D_GNU_SOURCE -I $(parser_incdir) -I @PGSQL_INCLUDE_DIR@
 noinst_LIBRARIES = libsql-parser.a
 libsql_parser_a_SOURCES = copyfuncs.c gram.y gram_minimal.y keywords.c \
 	kwlookup.c list.c makefuncs.c nodes.c outfuncs.c parser.c \
-	pool_string.c scansup.c stringinfo.c value.c \
+	scansup.c stringinfo.c value.c \
 	$(top_srcdir)/src/utils/mmgr/mcxt.c \
 	$(top_srcdir)/src/utils/mmgr/aset.c \
 	$(top_srcdir)/src/utils/error/elog.c wchar.c scan.c \
