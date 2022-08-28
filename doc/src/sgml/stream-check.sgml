@@ -51,6 +51,10 @@
      Specifies the <productname>PostgreSQL</> user name to perform streaming replication check.
      The user must exist on all the <productname>PostgreSQL</> backends.
     </para>
+    <para>
+     If <link linkend="runtime-ssl">SSL</link> is enabled, the
+     streaming replication check process may use SSL connection.
+    </para> 
     <note>
      <para>
       <varname>sr_check_user</varname>> and <xref linkend="guc-sr-check-password">
