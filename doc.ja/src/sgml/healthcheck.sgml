@@ -16,6 +16,15 @@
   -->
   <productname>Pgpool-II</productname>はサーバやネットワークの障害を検知するために、設定されたバックエンドに定期的に接続を試みます。
   この障害チェックの手続きを「ヘルスチェック」と言います。
+ </para>
+ <para>
+  <!--
+  If <link linkend="runtime-ssl">SSL</link> is enabled, health check
+  process may use SSL connection.
+  -->
+  <link linkend="runtime-ssl">SSL</link>が有効なら、ヘルスチェックプロセスはSSL接続を使うかもしれません。
+ </para> 
+ <para>
   障害が検知されると、<productname>Pgpool-II</productname>は設定に基づいてフェイルオーバや縮退運転を試みます。
   <caution>
    <para>
