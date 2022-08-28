@@ -52,6 +52,10 @@
      The user must have LOGIN privilege and exist on all the
      <productname>PostgreSQL</> backends.
     </para>
+    <para>
+     If <link linkend="runtime-ssl">SSL</link> is enabled, the
+     streaming replication check process may use SSL connection.
+    </para> 
     <note>
      <para>
       <xref linkend="guc-sr-check-user"> and <xref
