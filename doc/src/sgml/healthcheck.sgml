@@ -7,6 +7,12 @@
   <productname>Pgpool-II</productname> periodically connects to the configured
   PostgreSQL backends to detect any error on the servers or networks.
   This error check procedure is called "health check".
+ </para>
+ <para>
+  If <link linkend="runtime-ssl">SSL</link> is enabled, health check
+  process may use SSL connection.
+ </para> 
+ <para>
   If an error is detected, <productname>Pgpool-II</productname> performs failover
   or degeneration depending on the configurations.
   <caution>

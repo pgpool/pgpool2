@@ -80,6 +80,13 @@
      ストリーミングレプリケーションのチェックを行う<productname>PostgreSQL</>ユーザ名を指定します。
      このユーザはLOGIN権限を持ち、すべてのバックエンドに存在しなければなりません。
     </para>
+    <para>
+     <!--
+     If <link linkend="runtime-ssl">SSL</link> is enabled, the
+     streaming replication check process may use SSL connection.
+     -->
+     <link linkend="runtime-ssl">SSL</link>が有効なら、ストリーミングレプリケーションチェックプロセスはSSL接続を使うかもしれません。
+    </para> 
     <note>
      <para>
       <xref linkend="guc-sr-check-user">と<xref
