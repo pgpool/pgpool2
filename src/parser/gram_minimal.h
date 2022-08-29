@@ -1022,7 +1022,7 @@ extern int minimal_base_yydebug;
 
 union YYSTYPE
 {
-#line 249 "gram_minimal.y" /* yacc.c:1909  */
+#line 248 "gram_minimal.y" /* yacc.c:1909  */
 
 	core_YYSTYPE		core_yystype;
 	/* these fields must match core_YYSTYPE: */

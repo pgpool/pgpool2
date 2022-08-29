@@ -1022,7 +1022,7 @@ extern int base_yydebug;
 
 union YYSTYPE
 {
-#line 249 "gram.y" /* yacc.c:1909  */
+#line 248 "gram.y" /* yacc.c:1909  */
 
 	core_YYSTYPE		core_yystype;
 	/* these fields must match core_YYSTYPE: */
