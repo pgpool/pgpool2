@@ -22,7 +22,11 @@ do
 	source ./bashrc.ports
 	dir=`pwd`
 	UNIX_SOCK_PATH1=/tmp
-	UNIX_SOCK_PATH2=$dir/run
+	if [ -d $HOME/tmp ];then
+	    UNIX_SOCK_PATH2=$HOME/tmp
+	else
+	    UNIX_SOCK_PATH2=$HOME
+	fi
 	UNIX_SOCK_FILE=.s.PGSQL.$PGPOOL_PORT
 	UNIX_SOCK_GROUP=wheel
 	USER=`whoami`
