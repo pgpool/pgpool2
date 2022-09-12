@@ -115,6 +115,8 @@ typedef struct User1SignalSlot
 
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
 
+#define UNIXSOCK_PATH_BUFLEN sizeof(((struct sockaddr_un *) NULL)->sun_path)
+
 static void signal_user1_to_parent_with_reason(User1SignalReason reason);
 
 static void FileUnlink(int code, Datum path);
@@ -233,6 +235,7 @@ int
 PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 {
 	int			i;
+	char		unix_domain_socket_path[UNIXSOCK_PATH_BUFLEN + 1024];
 
 	sigjmp_buf	local_sigjmp_buf;
 
@@ -258,13 +261,34 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	on_system_exit(system_will_go_down, (Datum) NULL);
 
 	/* set unix domain socket path for connections to pgpool */
-	snprintf(un_addr.sun_path, sizeof(un_addr.sun_path), "%s/.s.PGSQL.%d",
+	memset(unix_domain_socket_path, 0, sizeof(unix_domain_socket_path));
+	snprintf(unix_domain_socket_path, sizeof(unix_domain_socket_path), "%s/.s.PGSQL.%d",
 			 pool_config->socket_dir,
 			 pool_config->port);
+	if (strlen(unix_domain_socket_path) >= UNIXSOCK_PATH_BUFLEN)
+	{
+		ereport(FATAL,
+			   (errmsg("could not create Unix-domain sockets"),
+				errdetail("Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
+				unix_domain_socket_path,
+				(int) (UNIXSOCK_PATH_BUFLEN - 1))));
+	}
+	snprintf(un_addr.sun_path, sizeof(un_addr.sun_path), "%s",unix_domain_socket_path);
+
 	/* set unix domain socket path for pgpool PCP communication */
-	snprintf(pcp_un_addr.sun_path, sizeof(pcp_un_addr.sun_path), "%s/.s.PGSQL.%d",
+	memset(unix_domain_socket_path, 0, sizeof(unix_domain_socket_path));
+	snprintf(unix_domain_socket_path, sizeof(unix_domain_socket_path), "%s/.s.PGSQL.%d",
 			 pool_config->pcp_socket_dir,
 			 pool_config->pcp_port);
+	if (strlen(unix_domain_socket_path) >= UNIXSOCK_PATH_BUFLEN)
+	{
+		ereport(FATAL,
+			   (errmsg("could not create PCP Unix-domain sockets"),
+				errdetail("PCP Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
+				unix_domain_socket_path,
+				(int) (UNIXSOCK_PATH_BUFLEN - 1))));
+	}
+	snprintf(pcp_un_addr.sun_path, sizeof(pcp_un_addr.sun_path), "%s",unix_domain_socket_path);
 
 	/* set up signal handlers */
 	pool_signal(SIGPIPE, SIG_IGN);
