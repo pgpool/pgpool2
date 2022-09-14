@@ -464,11 +464,6 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		on_proc_exit(FileUnlink, (Datum) un_addrs[i].sun_path);
 	}
 
-	fds = malloc(sizeof(int) * (num_unix_fds + 1));
-	if (fds == NULL)
-		ereport(FATAL,
-			   (errmsg("failed to allocate memory in startup process")));
-
 	/* copy unix domain sockets */
 	memcpy(fds, unix_fds, sizeof(int) * num_unix_fds);
 	fds[num_unix_fds] = -1;
