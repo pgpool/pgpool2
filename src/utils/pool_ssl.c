@@ -242,9 +242,25 @@ retry:
 			break;
 
 		case SSL_ERROR_SSL:
-		case SSL_ERROR_ZERO_RETURN:
 			perror_ssl("SSL_read");
 			n = -1;
+			break;
+		case SSL_ERROR_ZERO_RETURN:
+			/* SSL manual says:
+			 * -------------------------------------------------------------
+			 * The TLS/SSL peer has closed the connection for
+			 * writing by sending the close_notify alert. No more data can be
+			 * read. Note that SSL_ERROR_ZERO_RETURN does not necessarily
+			 * indicate that the underlying transport has been closed.
+			 * -------------------------------------------------------------
+			 * We don't want to trigger failover but it is also possible that
+			 * the connectoon has been closed. So returns 0 to ask pool_read()
+			 * to close connection to frontend.
+			 */
+			ereport(WARNING,
+					(errmsg("ssl read: SSL_ERROR_ZERO_RETURN")));
+			perror_ssl("SSL_read");
+			n = 0;
 			break;
 		default:
 			ereport(WARNING,
