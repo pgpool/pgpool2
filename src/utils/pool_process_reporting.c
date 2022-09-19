@@ -1848,7 +1848,7 @@ cache_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	 * Get raw cache stat data
 	 */
 	POOL_SETMASK2(&BlockSig, &oldmask);
-	pool_shmem_lock();
+	pool_shmem_lock(POOL_MEMQ_SHARED_LOCK);
 
 	PG_TRY();
 	{

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2021	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -229,6 +229,18 @@ typedef struct
 	POOL_HEADER_ELEMENT elements[1];	/* actual hash elements follows */
 }			POOL_HASH_HEADER;
 
+typedef enum
+{
+	POOL_MEMQ_SHARED_LOCK = 0,
+	POOL_MEMQ_EXCLUSIVE_LOCK,
+} POOL_MEMQ_LOCK_TYPE;
+
+/*
+ * File descriptor used for locking in query cache.
+ * Inherited to child process.
+ */
+extern int memq_lock_fd;
+
 extern int	pool_hash_init(int nelements);
 extern size_t pool_hash_size(int nelements);
 extern POOL_CACHEID * pool_hash_search(POOL_QUERY_HASH * key);
@@ -281,7 +293,7 @@ extern POOL_TEMP_QUERY_CACHE * pool_get_current_cache(void);
 extern void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache);
 extern void pool_discard_current_temp_query_cache(void);
 
-extern void pool_shmem_lock(void);
+extern void pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type);
 extern void pool_shmem_unlock(void);
 extern bool pool_is_shmem_lock(void);
 

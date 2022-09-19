@@ -743,7 +743,7 @@ pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
 	*foundp = false;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
-	pool_shmem_lock();
+	pool_shmem_lock(POOL_MEMQ_SHARED_LOCK);
 
 	PG_TRY();
 	{
@@ -2091,7 +2091,7 @@ pool_clear_memory_cache(void)
 	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
-	pool_shmem_lock();
+	pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 
 	PG_TRY();
 	{
@@ -2946,11 +2946,19 @@ pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
  * Acquire lock: XXX giant lock
  */
 void
-pool_shmem_lock(void)
+pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 {
 	if (pool_is_shmem_cache() && !is_shmem_locked)
 	{
+#ifdef NOT_USED
 		pool_semaphore_lock(SHM_CACHE_SEM);
+#endif
+		if (flock(memq_lock_fd, type == POOL_MEMQ_EXCLUSIVE_LOCK? LOCK_EX : LOCK_SH))
+		{
+			ereport(FATAL,
+					(errmsg("Failed to lock file for query cache"),
+					 errdetail("%m")));
+		}
 		is_shmem_locked = true;
 	}
 }
@@ -2963,7 +2971,15 @@ pool_shmem_unlock(void)
 {
 	if (pool_is_shmem_cache() && is_shmem_locked)
 	{
+#ifdef NOT_USED
 		pool_semaphore_unlock(SHM_CACHE_SEM);
+#endif
+		if (flock(memq_lock_fd, LOCK_UN))
+		{
+			ereport(FATAL,
+					(errmsg("Failed to unlock file for query cache"),
+					 errdetail("%m")));
+		}
 		is_shmem_locked = false;
 	}
 }
@@ -3526,7 +3542,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 				 */
 				/* Register to memcached or shmem */
 				POOL_SETMASK2(&BlockSig, &oldmask);
-				pool_shmem_lock();
+				pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 
 				cache_buffer = pool_get_current_cache_buffer(&len);
 				if (cache_buffer)
@@ -3620,7 +3636,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 		int			num_caches;
 
 		POOL_SETMASK2(&BlockSig, &oldmask);
-		pool_shmem_lock();
+		pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 
 		/* Invalidate query cache */
 		if (pool_config->memqcache_auto_cache_invalidation)
@@ -3684,7 +3700,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 				if (num_oids > 0 && pool_config->memqcache_auto_cache_invalidation)
 				{
 					POOL_SETMASK2(&BlockSig, &oldmask);
-					pool_shmem_lock();
+					pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 					pool_invalidate_query_cache(num_oids, oids, true, 0);
 					pool_shmem_unlock();
 					POOL_SETMASK(&oldmask);
@@ -3724,7 +3740,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 
 			if (num_oids > 0 && pool_config->memqcache_auto_cache_invalidation)
 			{
-				pool_shmem_lock();
+				pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 				pool_invalidate_query_cache(num_oids, oids, true, dboid);
 				pool_discard_oid_maps_by_db(dboid);
 				pool_shmem_unlock();
@@ -3753,7 +3769,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 				if (state == 'I')
 				{
 					POOL_SETMASK2(&BlockSig, &oldmask);
-					pool_shmem_lock();
+					pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 					pool_invalidate_query_cache(num_oids, oids, true, 0);
 					pool_shmem_unlock();
 					POOL_SETMASK(&oldmask);
@@ -4556,7 +4572,7 @@ InvalidateQueryCache(int tableoid, int dboid)
 	pool_sigset_t oldmask;
 
 	POOL_SETMASK2(&BlockSig, &oldmask);
-	pool_shmem_lock();
+	pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 
 	/* Invalidate query cache */
 	pool_invalidate_query_cache(1, &tableoid, true, dboid);
