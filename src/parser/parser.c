@@ -10,8 +10,8 @@
  * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 2003-2021, PgPool Global Development Group
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2022, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

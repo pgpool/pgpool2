@@ -4,8 +4,8 @@
  *	  creator functions for various nodes. The functions here are for the
  *	  most frequently created nodes.
  *
- * Portions Copyright (c) 2003-2021, PgPool Global Development Group
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2022, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -64,7 +64,7 @@ makeSimpleA_Expr(A_Expr_Kind kind, char *name,
  *	  creates a Var node
  */
 Var *
-makeVar(Index varno,
+makeVar(int varno,
 		AttrNumber varattno,
 		Oid vartype,
 		int32 vartypmod,
@@ -86,7 +86,7 @@ makeVar(Index varno,
 	 * them, but just initialize them to the given varno/varattno.  This
 	 * reduces code clutter and chance of error for most callers.
 	 */
-	var->varnosyn = varno;
+	var->varnosyn = (Index) varno;
 	var->varattnosyn = varattno;
 
 	/* Likewise, we just set location to "unknown" here */
@@ -102,7 +102,7 @@ makeVar(Index varno,
  *		TargetEntry
  */
 Var *
-makeVarFromTargetEntry(Index varno,
+makeVarFromTargetEntry(int varno,
 					   TargetEntry *tle)
 {
 	return makeVar(varno,
@@ -133,7 +133,7 @@ makeVarFromTargetEntry(Index varno,
  */
 Var *
 makeWholeRowVar(RangeTblEntry *rte,
-				Index varno,
+				int varno,
 				Index varlevelsup,
 				bool allowScalar)
 {

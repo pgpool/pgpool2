@@ -279,15 +279,15 @@ static bool
 isStringConst(Node *node, const char *str)
 {
 	A_Const    *a_const;
-	Value		val;
 
 	if (!IsA(node, A_Const))
 		return false;
 
 	a_const = (A_Const *) node;
-	val = a_const->val;
 
-	if (val.type == T_String && val.val.str && strcmp(str, val.val.str) == 0)
+	if (IsA(&a_const->val, String) &&
+		a_const->val.sval.sval &&
+		strcmp(str, a_const->val.sval.sval) == 0)
 		return true;
 
 	return false;
@@ -803,7 +803,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 
 	/* init context */
 	ctx.ts_const = makeNode(A_Const);
-	ctx.ts_const->val.type = T_String;
+	ctx.ts_const->val.sval.type = T_String;
 	ctx.rewrite_to_params = rewrite_to_params;
 	ctx.backend = backend;
 	ctx.num_params = 0;
@@ -904,6 +904,36 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 								   rewrite_timestamp_walker, (void *) &ctx);
 
 		rewrite = ctx.rewrite;
+
+	}
+	else if (IsA(stmt, MergeStmt))
+	{
+		MergeStmt *m_stmt = (MergeStmt *) stmt;
+		ListCell   *temp;
+
+		/* USING data_source */
+		raw_expression_tree_walker(
+								   (Node *) m_stmt->sourceRelation,
+								   rewrite_timestamp_walker, (void *) &ctx);
+
+		/* ON join_condition */
+		raw_expression_tree_walker(
+								   (Node *) m_stmt->joinCondition,
+								   rewrite_timestamp_walker, (void *) &ctx);
+
+		foreach(temp, m_stmt->mergeWhenClauses)
+		{
+			raw_expression_tree_walker(
+				lfirst(temp),
+				rewrite_timestamp_walker, (void *) &ctx);
+		}
+
+		raw_expression_tree_walker(
+								   (Node *) m_stmt->withClause,
+								   rewrite_timestamp_walker, (void *) &ctx);
+
+		rewrite = ctx.rewrite;
+
 
 	}
 	else if (IsA(stmt, ExecuteStmt))
@@ -1026,7 +1056,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 			return NULL;
 		}
 
-		ctx.ts_const->val.val.str = timestamp;
+		ctx.ts_const->val.sval.sval = timestamp;
 	}
 	rewrite_query = nodeToString(node);
 
@@ -1243,8 +1273,8 @@ makeStringConstFromQuery(POOL_CONNECTION_POOL * backend, char *expression)
 	free_select_result(res);
 
 	con = makeNode(A_Const);
-	con->val.type = T_String;
-	con->val.val.str = str;
+	con->val.sval.type = T_String;
+	con->val.sval.sval = str;
 	return con;
 }
 
@@ -1356,7 +1386,6 @@ raw_expression_tree_walker(Node *node,
 		case T_Float:
 		case T_String:
 		case T_BitString:
-		case T_Null:
 		case T_ParamRef:
 		case T_A_Const:
 		case T_A_Star:
@@ -1454,6 +1483,28 @@ raw_expression_tree_walker(Node *node,
 			foreach(temp, (List *) node)
 			{
 				if (walker((Node *) lfirst(temp), context))
+					return true;
+			}
+			break;
+		case T_MergeWhenClause:
+			{
+				MergeWhenClause *mergeWhenClause = (MergeWhenClause *) node;
+
+				if (walker(mergeWhenClause->condition, context))
+					return true;
+				if (walker(mergeWhenClause->targetList, context))
+					return true;
+				if (walker(mergeWhenClause->values, context))
+					return true;
+			}
+			break;
+		case T_MergeAction:
+			{
+				MergeAction *action = (MergeAction *) node;
+
+				if (walker(action->targetList, context))
+					return true;
+				if (walker(action->qual, context))
 					return true;
 			}
 			break;

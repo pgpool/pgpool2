@@ -4,8 +4,8 @@
  *	  prototypes for the creator functions of various nodes
  *
  *
- * Portions Copyright (c) 2003-2021, PgPool Global Development Group
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2022, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/makefuncs.h
@@ -24,18 +24,18 @@ extern A_Expr *makeA_Expr(A_Expr_Kind kind, List *name,
 extern A_Expr *makeSimpleA_Expr(A_Expr_Kind kind, char *name,
 								Node *lexpr, Node *rexpr, int location);
 
-extern Var *makeVar(Index varno,
+extern Var *makeVar(int varno,
 					AttrNumber varattno,
 					Oid vartype,
 					int32 vartypmod,
 					Oid varcollid,
 					Index varlevelsup);
 
-extern Var *makeVarFromTargetEntry(Index varno,
+extern Var *makeVarFromTargetEntry(int varno,
 								   TargetEntry *tle);
 
 extern Var *makeWholeRowVar(RangeTblEntry *rte,
-							Index varno,
+							int varno,
 							Index varlevelsup,
 							bool allowScalar);
 

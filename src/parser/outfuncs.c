@@ -4,7 +4,7 @@
  *	  Output functions for Postgres tree nodes.
  *
  * Portions Copyright (c) 2003-2022, PgPool Global Development Group
- * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,6 +22,7 @@
  */
 #include <string.h>
 #include <limits.h>
+#include <ctype.h>
 #include "pool_type.h"
 #include "utils/palloc.h"
 #include "utils/elog.h"
@@ -100,13 +101,14 @@ static void _outWithClause(StringInfo str, WithClause *node);
 static void _outCTESearchClause(StringInfo str, CTESearchClause *node);
 static void _outCTECycleClause(StringInfo str, CTECycleClause *node);
 static void _outCommonTableExpr(StringInfo str, CommonTableExpr *node);
+static void _outMergeWhenClauses(StringInfo str, List *node);
+static void _outMergeAction(StringInfo str, MergeAction *node);
 static void _outSetOperationStmt(StringInfo str, SetOperationStmt *node);
 static void _outTableSampleClause(StringInfo str, TableSampleClause *node);
-static void _outAExpr(StringInfo str, A_Expr *node);
-static void _outValue(StringInfo str, Value *value);
+static void _outA_Expr(StringInfo str, A_Expr *node);
 static void _outColumnRef(StringInfo str, ColumnRef *node);
 static void _outParamRef(StringInfo str, ParamRef *node);
-static void _outAConst(StringInfo str, A_Const *node);
+static void _outA_Const(StringInfo str, A_Const *node);
 static void _outA_Indices(StringInfo str, A_Indices *node);
 static void _outA_Indirection(StringInfo str, A_Indirection *node);
 static void _outResTarget(StringInfo str, ResTarget *node);
@@ -120,6 +122,7 @@ static void _outInsertStmt(StringInfo str, InsertStmt *node);
 static void _outSetClause(StringInfo str, List *node);
 static void _outUpdateStmt(StringInfo str, UpdateStmt *node);
 static void _outDeleteStmt(StringInfo str, DeleteStmt *node);
+static void _outMergeStmt(StringInfo str, MergeStmt *node);
 static void _outTransactionStmt(StringInfo str, TransactionStmt *node);
 static void _outTruncateStmt(StringInfo str, TruncateStmt *node);
 static void _outVacuumStmt(StringInfo str, VacuumStmt *node);
@@ -267,6 +270,7 @@ escape_string(char *str)
 	return es;
 }
 
+/* Assuming that node is a list of String */
 static void
 _outIdList(StringInfo str, List *node)
 {
@@ -275,15 +279,13 @@ _outIdList(StringInfo str, List *node)
 
 	foreach(lc, node)
 	{
-		Value	   *v = lfirst(lc);
-
 		if (first == 0)
 			first = 1;
 		else
 			appendStringInfoString(str, ", ");
 
 		appendStringInfoString(str, "\"");
-		appendStringInfoString(str, v->val.str);
+		appendStringInfoString(str, strVal(lfirst(lc)));
 		appendStringInfoString(str, "\"");
 	}
 }
@@ -321,14 +323,38 @@ _outList(StringInfo str, List *node)
  *
  *****************************************************************************/
 
-#ifdef NOT_USED_IN_PGPOOL
 /* for use by extensions which define extensible nodes */
 void
 outToken(StringInfo str, const char *s)
 {
-	_outToken(str, s);
+	if (s == NULL || *s == '\0')
+	{
+		appendStringInfoString(str, "<>");
+		return;
+	}
+
+	/*
+	 * Look for characters or patterns that are treated specially by read.c
+	 * (either in pg_strtok() or in nodeRead()), and therefore need a
+	 * protective backslash.
+	 */
+	/* These characters only need to be quoted at the start of the string */
+	if (*s == '<' ||
+		*s == '"' ||
+		isdigit((unsigned char) *s) ||
+		((*s == '+' || *s == '-') &&
+		 (isdigit((unsigned char) s[1]) || s[1] == '.')))
+		appendStringInfoChar(str, '\\');
+	while (*s)
+	{
+		/* These chars must be backslashed anywhere in the string */
+		if (*s == ' ' || *s == '\n' || *s == '\t' ||
+			*s == '(' || *s == ')' || *s == '{' || *s == '}' ||
+			*s == '\\')
+			appendStringInfoChar(str, '\\');
+		appendStringInfoChar(str, *s++);
+	}
 }
-#endif
 
 static void
 _outAlias(StringInfo str, Alias *node)
@@ -479,13 +505,13 @@ _outSubLink(StringInfo str, SubLink *node)
 
 	if (node->operName != NIL)
 	{
-		Value	   *v = linitial(node->operName);
+		String	   *v = linitial(node->operName);
 
-		if (strcmp(v->val.str, "=") == 0)
+		if (strcmp(strVal(v), "=") == 0)
 			appendStringInfoString(str, " IN ");
 		else
 		{
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, strVal(v));
 		}
 	}
 
@@ -502,11 +528,11 @@ _outSubLink(StringInfo str, SubLink *node)
 		case ANY_SUBLINK:
 			if (node->operName != NIL)
 			{
-				Value	   *v = linitial(node->operName);
+				String	   *v = linitial(node->operName);
 
-				if (strcmp(v->val.str, "=") != 0)
+				if (strcmp(strVal(v), "=") != 0)
 				{
-					appendStringInfoString(str, v->val.str);
+					appendStringInfoString(str, strVal(v));
 					appendStringInfoString(str, " ANY ");
 				}
 			}
@@ -668,27 +694,27 @@ _outBooleanTest(StringInfo str, BooleanTest *node)
 	switch (node->booltesttype)
 	{
 		case IS_TRUE:
-			appendStringInfoString(str, " IS TRUE");
+			appendStringInfoString(str, " IS TRUE ");
 			break;
 
 		case IS_NOT_TRUE:
-			appendStringInfoString(str, " IS NOT TRUE");
+			appendStringInfoString(str, " IS NOT TRUE ");
 			break;
 
 		case IS_FALSE:
-			appendStringInfoString(str, " IS FALSE");
+			appendStringInfoString(str, " IS FALSE ");
 			break;
 
 		case IS_NOT_FALSE:
-			appendStringInfoString(str, " IS NOT FALSE");
+			appendStringInfoString(str, " IS NOT FALSE ");
 			break;
 
 		case IS_UNKNOWN:
-			appendStringInfoString(str, " IS UNKNOWN");
+			appendStringInfoString(str, " IS UNKNOWN ");
 			break;
 
 		case IS_NOT_UNKNOWN:
-			appendStringInfoString(str, " IS NOT UNKNOWN");
+			appendStringInfoString(str, " IS NOT UNKNOWN ");
 			break;
 	}
 }
@@ -779,16 +805,13 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 
 		foreach(lc, node->usingClause)
 		{
-			Value	   *value;
-
 			if (comma == 0)
 				comma = 1;
 			else
 				appendStringInfoString(str, ",");
 
-			value = lfirst(lc);
 			appendStringInfoString(str, "\"");
-			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, strVal(lfirst(lc)));
 			appendStringInfoString(str, "\"");
 		}
 
@@ -1210,7 +1233,7 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 	{
 		appendStringInfoString(str, " LIMIT ");
 		if (IsA(node->limitCount, A_Const) &&
-			((A_Const *) node->limitCount)->val.type == T_Null)
+			((A_Const *) node->limitCount)->isnull)
 		{
 			appendStringInfoString(str, "ALL ");
 		}
@@ -1367,7 +1390,7 @@ _outTypeName(StringInfo str, TypeName *node)
 			if (node->typmods != NIL)
 			{
 				A_Const    *v = (A_Const *) linitial(node->typmods);
-				int			mask = v->val.val.ival;
+				int			mask = v->val.ival.ival;
 
 				/*
 				 * precision for SECOND field. backward compatibility. use
@@ -1378,7 +1401,7 @@ _outTypeName(StringInfo str, TypeName *node)
 					list_length(node->typmods) == 2)
 				{
 					appendStringInfoString(str, "(");
-					_outAConst(str, lsecond(node->typmods));
+					_outA_Const(str, lsecond(node->typmods));
 					appendStringInfoString(str, ")");
 				}
 
@@ -1424,8 +1447,8 @@ _outTypeName(StringInfo str, TypeName *node)
 
 		foreach(lc, node->names)
 		{
-			Value	   *v = (Value *) lfirst(lc);
-			char	   *typename = v->val.str;
+			String	   *s = (String *) lfirst(lc);
+			char	   *typename = s->sval;
 
 			if (dot == 0)
 				dot = 1;
@@ -1484,7 +1507,8 @@ _outCollateClause(StringInfo str, const CollateClause *node)
 		_outNode(str, node->arg);
 	appendStringInfoString(str, " COLLATE ");
 	appendStringInfoString(str, "\"");
-	appendStringInfoString(str, ((Value *) linitial(node->collname))->val.str);
+	/* XXX collation name can be schema qualified */
+	appendStringInfoString(str, strVal(linitial(node->collname)));
 	appendStringInfoString(str, "\"");
 }
 
@@ -1584,6 +1608,51 @@ _outCommonTableExpr(StringInfo str, CommonTableExpr *node)
 }
 
 static void
+_outMergeWhenClauses(StringInfo str, List *node)
+{
+	ListCell   *temp;
+
+	foreach(temp, node)
+	{
+		MergeWhenClause *m = (MergeWhenClause *) lfirst(temp);
+
+		if (m->matched)
+			appendStringInfoString(str, " WHEN MATCHED ");
+		else
+			appendStringInfoString(str, " WHEN NOT MATCHED ");
+
+		if (m->condition)
+		{
+			appendStringInfoString(str, "AND ");
+			_outNode(str, m->condition);
+		}
+
+		appendStringInfoString(str, "THEN ");
+
+		switch (m->commandType)
+		{
+			ListCell *s;
+
+			case CMD_UPDATE:
+				foreach(s, m->targetList)
+				{
+					ResTarget *r = (ResTarget *) lfirst(s);
+					appendStringInfo(str, "UPDATE SET %s = ", r->name);
+					_outNode(str, r->val);
+				}
+				break;
+			default:
+				break;
+		}
+	}
+}
+
+static void
+_outMergeAction(StringInfo str, MergeAction *node)
+{
+}
+
+static void
 _outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 {
 
@@ -1597,20 +1666,28 @@ _outTableSampleClause(StringInfo str, TableSampleClause *node)
 }
 
 static void
-_outAExpr(StringInfo str, A_Expr *node)
+_outA_Expr(StringInfo str, A_Expr *node)
 {
-	Value	   *v;
+	String	   *s;
 
 	switch (node->kind)
 	{
 		case AEXPR_OP:
 			if (list_length(node->name) == 1)
 			{
-				Value	   *op = (Value *) lfirst(list_head(node->name));
+				/*
+				 * From PostgreSQL 15, node->name is type of String, rather
+				 * than A_Const because "Value" struct has gone.
+				 * https://git.postgresql.org/gitweb/?p=postgresql.git;a=commit;h=639a86e36aaecb84faaf941dcd0b183ba0aba9e9
+				 */
+
+				String	   *op = (String *) lfirst(list_head(node->name));
 
 				appendStringInfoString(str, " (");
 				_outNode(str, node->lexpr);
-				appendStringInfoString(str, op->val.str);
+				appendStringInfoString(str, " ");
+				appendStringInfoString(str, strVal(op));
+				appendStringInfoString(str, " ");
 				_outNode(str, node->rexpr);
 				appendStringInfoString(str, " )");
 			}
@@ -1618,8 +1695,8 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 		case AEXPR_OP_ANY:
 			_outNode(str, node->lexpr);
-			v = linitial(node->name);
-			appendStringInfoString(str, v->val.str);
+			s = linitial(node->name);
+			appendStringInfoString(str, strVal(s));
 			appendStringInfoString(str, "ANY(");
 			_outNode(str, node->rexpr);
 			appendStringInfoString(str, ")");
@@ -1627,8 +1704,8 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 		case AEXPR_OP_ALL:
 			_outNode(str, node->lexpr);
-			v = linitial(node->name);
-			appendStringInfoString(str, v->val.str);
+			s = linitial(node->name);
+			appendStringInfoString(str, strVal(s));
 			appendStringInfoString(str, "ALL(");
 			_outNode(str, node->rexpr);
 			appendStringInfoString(str, ")");
@@ -1660,8 +1737,8 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 		case AEXPR_IN:
 			_outNode(str, node->lexpr);
-			v = (Value *) lfirst(list_head(node->name));
-			if (v->val.str[0] == '=')
+			s = (String *) lfirst(list_head(node->name));
+			if (*strVal(s) == '=')
 				appendStringInfoString(str, " IN (");
 			else
 				appendStringInfoString(str, " NOT IN (");
@@ -1671,8 +1748,8 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 		case AEXPR_LIKE:
 			_outNode(str, node->lexpr);
-			v = (Value *) lfirst(list_head(node->name));
-			if (!strcmp(v->val.str, "~~"))
+			s = lfirst(list_head(node->name));
+			if (!strcmp(strVal(s), "~~"))
 				appendStringInfoString(str, " LIKE ");
 			else
 				appendStringInfoString(str, " NOT LIKE ");
@@ -1690,8 +1767,8 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 		case AEXPR_ILIKE:
 			_outNode(str, node->lexpr);
-			v = (Value *) lfirst(list_head(node->name));
-			if (!strcmp(v->val.str, "~~*"))
+			s = lfirst(list_head(node->name));
+			if (!strcmp(strVal(s), "~~*"))
 				appendStringInfoString(str, " ILIKE ");
 			else
 				appendStringInfoString(str, " NOT ILIKE ");
@@ -1709,8 +1786,8 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 		case AEXPR_SIMILAR:
 			_outNode(str, node->lexpr);
-			v = (Value *) lfirst(list_head(node->name));
-			if (!strcmp(v->val.str, "~"))
+			s = lfirst(list_head(node->name));
+			if (!strcmp(strVal(s), "~"))
 				appendStringInfoString(str, " SIMILAR TO ");
 			else
 				appendStringInfoString(str, " NOT SIMILAR TO ");
@@ -1763,6 +1840,48 @@ _outAExpr(StringInfo str, A_Expr *node)
 	}
 }
 
+static void
+_outInteger(StringInfo str, const Integer *node)
+{
+    appendStringInfo(str, "%d", node->ival);
+}
+
+static void
+_outFloat(StringInfo str, const Float *node)
+{
+    /*
+ *      * We assume the value is a valid numeric literal and so does not need
+ *           * quoting.
+ *                */
+    appendStringInfoString(str, node->fval);
+}
+
+static void
+_outBoolean(StringInfo str, const Boolean *node)
+{
+    appendStringInfoString(str, node->boolval ? "true" : "false");
+}
+
+static void
+_outString(StringInfo str, const String *node)
+{
+	/*
+	 * We use outToken to provide escaping of the string's content, but we
+	 * don't want it to do anything with an empty string.
+	 */
+    appendStringInfoChar(str, '"');
+    if (node->sval[0] != '\0')
+        outToken(str, node->sval);
+    appendStringInfoChar(str, '"');
+}
+
+static void
+_outBitString(StringInfo str, const BitString *node)
+{
+    /* internal representation already has leading 'b' */
+    appendStringInfoString(str, node->bsval);
+}
+
 /*
  * Node types found in raw parse trees (supported for debug purposes)
  */
@@ -1770,40 +1889,6 @@ _outAExpr(StringInfo str, A_Expr *node)
 static void
 _outRawStmt(StringInfo str, const RawStmt *node)
 {
-}
-
-static void
-_outValue(StringInfo str, Value *value)
-{
-	char		buf[16];
-	char		*p;
-
-	switch (value->type)
-	{
-		case T_Integer:
-			sprintf(buf, "%d", value->val.ival);
-			appendStringInfoString(str, buf);
-			break;
-
-		case T_Float:
-			appendStringInfoString(str, value->val.str);
-			break;
-
-		case T_String:
-			appendStringInfoString(str, "'");
-			p = escape_string(value->val.str);
-			appendStringInfoString(str, p);
-			pfree(p);
-			appendStringInfoString(str, "'");
-			break;
-
-		case T_Null:
-			appendStringInfoString(str, "NULL");
-			break;
-
-		default:
-			break;
-	}
 }
 
 static void
@@ -1818,7 +1903,7 @@ _outColumnRef(StringInfo str, ColumnRef *node)
 
 		if (IsA(n, String))
 		{
-			Value	   *v = (Value *) lfirst(c);
+			String	   *v = (String *) lfirst(c);
 
 			if (first == 0)
 				first = 1;
@@ -1826,7 +1911,7 @@ _outColumnRef(StringInfo str, ColumnRef *node)
 				appendStringInfoString(str, ".");
 
 			appendStringInfoString(str, "\"");
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, strVal(v));
 			appendStringInfoString(str, "\"");
 		}
 		else if (IsA(n, A_Star))
@@ -1852,32 +1937,38 @@ _outParamRef(StringInfo str, ParamRef *node)
 }
 
 static void
-_outAConst(StringInfo str, A_Const *node)
+_outA_Const(StringInfo str, A_Const *node)
 {
 	char		buf[16];
 	char		*p;
 
-	switch (node->val.type)
+	if (node->isnull)
+	{
+		appendStringInfoString(str, " NULL");
+		return;
+	}
+
+	switch (nodeTag(&node->val))
 	{
 		case T_Integer:
-			sprintf(buf, "%d", node->val.val.ival);
+			sprintf(buf, "%d", node->val.ival.ival);
 			appendStringInfoString(str, buf);
 			break;
 
 		case T_Float:
-			appendStringInfoString(str, node->val.val.str);
+			appendStringInfoString(str, node->val.fval.fval);
 			break;
 
 		case T_String:
 			appendStringInfoString(str, "'");
-			p = escape_string(node->val.val.str);
+			p = escape_string(node->val.sval.sval);
 			appendStringInfoString(str, p);
 			pfree(p);
 			appendStringInfoString(str, "'");
 			break;
 
-		case T_Null:
-			appendStringInfoString(str, "NULL");
+		case T_BitString:
+			appendStringInfoString(str, node->val.bsval.bsval);
 			break;
 
 		default:
@@ -2470,6 +2561,30 @@ _outDeleteStmt(StringInfo str, DeleteStmt *node)
 }
 
 static void
+_outMergeStmt(StringInfo str, MergeStmt *node)
+{
+	appendStringInfoString(str, "MERGE INTO ");
+	_outRangeVar(str, node->relation);
+
+	if (node->sourceRelation)
+	{
+		appendStringInfoString(str, " USING ");
+		_outNode(str, node->sourceRelation);
+	}
+
+	if (node->joinCondition)
+	{
+		appendStringInfoString(str, " ON ");
+		_outNode(str, node->joinCondition);
+	}
+
+	if (node->mergeWhenClauses)
+	{
+		_outMergeWhenClauses(str, node->mergeWhenClauses);
+	}
+}
+
+static void
 _outTransactionStmt(StringInfo str, TransactionStmt *node)
 {
 	switch (node->kind)
@@ -2612,7 +2727,7 @@ _outExplainStmt(StringInfo str, ExplainStmt *node)
 				appendStringInfoString(str, opt->defname);
 				appendStringInfoString(str, " ");
 				if (opt->arg)
-					_outValue(str, (Value *) opt->arg);
+					_outNode(str, opt->arg);
 			}
 			appendStringInfoString(str, ")");
 		}
@@ -2741,13 +2856,13 @@ _outCopyStmt(StringInfo str, CopyStmt *node)
 			else if (strcmp(e->defname, "delimiter") == 0)
 			{
 				appendStringInfoString(str, "DELIMITERS ");
-				_outValue(str, (Value *) e->arg);
+				_outNode(str, e->arg);
 				appendStringInfoString(str, " ");
 			}
 			else if (strcmp(e->defname, "null") == 0)
 			{
 				appendStringInfoString(str, "NULL ");
-				_outValue(str, (Value *) e->arg);
+				_outNode(str, e->arg);
 				appendStringInfoString(str, " ");
 			}
 			else if (strcmp(e->defname, "header") == 0)
@@ -2755,13 +2870,13 @@ _outCopyStmt(StringInfo str, CopyStmt *node)
 			else if (strcmp(e->defname, "quote") == 0)
 			{
 				appendStringInfoString(str, "QUOTE ");
-				_outValue(str, (Value *) e->arg);
+				_outNode(str, e->arg);
 				appendStringInfoString(str, " ");
 			}
 			else if (strcmp(e->defname, "escape") == 0)
 			{
 				appendStringInfoString(str, "ESCAPE ");
-				_outValue(str, (Value *) e->arg);
+				_outNode(str, e->arg);
 				appendStringInfoString(str, " ");
 			}
 			else if (strcmp(e->defname, "force_quote") == 0)
@@ -2800,7 +2915,7 @@ _outCopyStmt(StringInfo str, CopyStmt *node)
 					|| strcmp(e->defname, "header") == 0
 					|| strcmp(e->defname, "quote") == 0
 					|| strcmp(e->defname, "escape") == 0)
-					_outValue(str, (Value *) e->arg);
+					_outNode(str, e->arg);
 				else if (strcmp(e->defname, "force_not_null") == 0)
 				{
 					appendStringInfoString(str, "(");
@@ -2882,14 +2997,14 @@ _outRenameStmt(StringInfo str, RenameStmt *node)
 
 				if (IsA(n, String))
 				{
-					Value	   *value = (Value *) n;
+					String	   *value = (String *) n;
 
 					if (comma == 0)
 						comma = 1;
 					else
 						appendStringInfoString(str, ".");
 					appendStringInfoString(str, "\"");
-					appendStringInfoString(str, value->val.str);
+					appendStringInfoString(str, value->sval);
 					appendStringInfoString(str, "\"");
 				}
 				else
@@ -2994,7 +3109,7 @@ _outOptRoleList(StringInfo str, List *options)
 	foreach(lc, options)
 	{
 		DefElem    *elem = lfirst(lc);
-		Value	   *value = (Value *) elem->arg;
+		A_Const	   *value = (A_Const *) elem->arg;
 
 		if (strcmp(elem->defname, "password") == 0)
 		{
@@ -3003,53 +3118,53 @@ _outOptRoleList(StringInfo str, List *options)
 			else
 			{
 				appendStringInfoString(str, " PASSWORD '");
-				appendStringInfoString(str, value->val.str);
+				appendStringInfoString(str, value->val.sval.sval);
 				appendStringInfoString(str, "'");
 			}
 		}
 		else if (strcmp(elem->defname, "encryptedPassword") == 0)
 		{
 			appendStringInfoString(str, " ENCRYPTED PASSWORD '");
-			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, value->val.sval.sval);
 			appendStringInfoString(str, "'");
 		}
 		else if (strcmp(elem->defname, "unencryptedPassword") == 0)
 		{
 			appendStringInfoString(str, " UNENCRYPTED PASSWORD '");
-			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, value->val.sval.sval);
 			appendStringInfoString(str, "'");
 		}
 		else if (strcmp(elem->defname, "superuser") == 0)
 		{
-			if (value->val.ival == TRUE)
+			if (value->val.boolval.boolval)
 				appendStringInfoString(str, " SUPERUSER");
 			else
 				appendStringInfoString(str, " NOSUPERUSER");
 		}
 		else if (strcmp(elem->defname, "inherit") == 0)
 		{
-			if (value->val.ival == TRUE)
+			if (value->val.boolval.boolval)
 				appendStringInfoString(str, " INHERIT");
 			else
 				appendStringInfoString(str, " NOINHERIT");
 		}
 		else if (strcmp(elem->defname, "createdb") == 0)
 		{
-			if (value->val.ival == TRUE)
+			if (value->val.boolval.boolval)
 				appendStringInfoString(str, " CREATEDB");
 			else
 				appendStringInfoString(str, " NOCREATEDB");
 		}
 		else if (strcmp(elem->defname, "createrole") == 0)
 		{
-			if (value->val.ival == TRUE)
+			if (value->val.boolval.boolval)
 				appendStringInfoString(str, " CREATEROLE");
 			else
 				appendStringInfoString(str, " NOCREATEROLE");
 		}
 		else if (strcmp(elem->defname, "canlogin") == 0)
 		{
-			if (value->val.ival == TRUE)
+			if (value->val.boolval.boolval)
 				appendStringInfoString(str, " LOGIN");
 			else
 				appendStringInfoString(str, " NOLOGIN");
@@ -3059,13 +3174,13 @@ _outOptRoleList(StringInfo str, List *options)
 			char		buf[16];
 
 			appendStringInfoString(str, " CONNECTION LIMIT ");
-			snprintf(buf, 16, "%d", value->val.ival);
+			snprintf(buf, 16, "%d", value->val.ival.ival);
 			appendStringInfoString(str, buf);
 		}
 		else if (strcmp(elem->defname, "validUntil") == 0)
 		{
 			appendStringInfoString(str, " VALID UNTIL '");
-			appendStringInfoString(str, value->val.str);
+			appendStringInfoString(str, value->val.sval.sval);
 			appendStringInfoString(str, "'");
 		}
 		else if (strcmp(elem->defname, "rolemembers") == 0)
@@ -3078,7 +3193,7 @@ _outOptRoleList(StringInfo str, List *options)
 			char		buf[16];
 
 			appendStringInfoString(str, " SYSID ");
-			snprintf(buf, 16, "%d", value->val.ival);
+			snprintf(buf, 16, "%d", value->val.ival.ival);
 			appendStringInfoString(str, buf);
 		}
 		else if (strcmp(elem->defname, "adminmembers") == 0)
@@ -3167,13 +3282,13 @@ _outSetTransactionModeList(StringInfo str, List *list)
 			A_Const    *v = (A_Const *) elem->arg;
 
 			appendStringInfoString(str, " ISOLATION LEVEL ");
-			appendStringInfoString(str, v->val.val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 		}
 		else if (strcmp(elem->defname, "transaction_read_only") == 0)
 		{
 			A_Const    *n = (A_Const *) elem->arg;
 
-			if (n->val.val.ival == TRUE)
+			if (n->val.boolval.boolval)
 				appendStringInfoString(str, "READ ONLY ");
 			else
 				appendStringInfoString(str, "READ WRITE ");
@@ -3226,7 +3341,7 @@ _outSetRest(StringInfo str, VariableSetStmt *node)
 		A_Const    *v = linitial(node->args);
 
 		appendStringInfoString(str, "XML OPTION ");
-		appendStringInfoString(str, v->val.val.str);
+		appendStringInfoString(str, v->val.sval.sval);
 	}
 	else
 	{
@@ -3367,7 +3482,7 @@ _outAlterTableCmd(StringInfo str, AlterTableCmd *node)
 			appendStringInfoString(str, "ALTER \"");
 			appendStringInfoString(str, node->name);
 			appendStringInfoString(str, "\" SET STATISTICS ");
-			snprintf(buf, 16, "%d", ((Value *) node->def)->val.ival);
+			snprintf(buf, 16, "%d", ((A_Const *) node->def)->val.ival.ival);
 			appendStringInfoString(str, buf);
 			break;
 
@@ -3375,7 +3490,7 @@ _outAlterTableCmd(StringInfo str, AlterTableCmd *node)
 			appendStringInfoString(str, "ALTER \"");
 			appendStringInfoString(str, node->name);
 			appendStringInfoString(str, "\" SET STORAGE ");
-			appendStringInfoString(str, ((Value *) node->def)->val.str);
+			appendStringInfoString(str, ((A_Const *) node->def)->val.sval.sval);
 			break;
 
 		case AT_DropColumn:
@@ -3408,6 +3523,10 @@ _outAlterTableCmd(StringInfo str, AlterTableCmd *node)
 
 		case AT_DropOids:
 			appendStringInfoString(str, "SET WITHOUT OIDS");
+			break;
+
+		case AT_SetAccessMethod:
+			appendStringInfoString(str, "SET ACCESS METHOD");
 			break;
 
 		case AT_ClusterOn:
@@ -3522,12 +3641,12 @@ _outOptSeqList(StringInfo str, List *options)
 	foreach(lc, options)
 	{
 		DefElem    *e = lfirst(lc);
-		Value	   *v = (Value *) e->arg;
+		A_Const	   *v = (A_Const *) e->arg;
 		char		buf[16];
 
 		if (strcmp(e->defname, "cycle") == 0)
 		{
-			if (v->val.ival == TRUE)
+			if (v->val.boolval.boolval)
 				appendStringInfoString(str, " CYCLE");
 			else
 				appendStringInfoString(str, " NO CYCLE");
@@ -3557,10 +3676,10 @@ _outOptSeqList(StringInfo str, List *options)
 				appendStringInfoString(str, " RESTART ");
 
 			if (IsA(e->arg, String))
-				appendStringInfoString(str, v->val.str);
-			else
+				appendStringInfoString(str, v->val.sval.sval);
+			else if (IsA(e->arg, Integer))
 			{
-				snprintf(buf, 16, "%d", v->val.ival);
+				snprintf(buf, 16, "%d", v->val.ival.ival);
 				appendStringInfoString(str, buf);
 			}
 		}
@@ -3605,7 +3724,7 @@ _outCreatePLangStmt(StringInfo str, CreatePLangStmt *node)
 		appendStringInfoString(str, " HANDLER ");
 		foreach(lc, node->plhandler)
 		{
-			Value	   *v = lfirst(lc);
+			A_Const    *v = (A_Const *) lfirst(lc);
 
 			if (dot == 0)
 				dot = 1;
@@ -3613,7 +3732,7 @@ _outCreatePLangStmt(StringInfo str, CreatePLangStmt *node)
 				appendStringInfoString(str, ".");
 
 			appendStringInfoString(str, "\"");
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			appendStringInfoString(str, "\"");
 		}
 	}
@@ -3626,7 +3745,7 @@ _outCreatePLangStmt(StringInfo str, CreatePLangStmt *node)
 		appendStringInfoString(str, " VALIDATOR ");
 		foreach(lc, node->plvalidator)
 		{
-			Value	   *v = lfirst(lc);
+			A_Const    *v = (A_Const *) lfirst(lc);
 
 			if (dot == 0)
 				dot = 1;
@@ -3634,7 +3753,7 @@ _outCreatePLangStmt(StringInfo str, CreatePLangStmt *node)
 				appendStringInfoString(str, ".");
 
 			appendStringInfoString(str, "\"");
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			appendStringInfoString(str, "\"");
 		}
 	}
@@ -3672,7 +3791,6 @@ static void
 _outFuncName(StringInfo str, List *func_name)
 {
 	ListCell   *lc;
-	Value	   *v;
 	char		dot = 0;
 
 	if (func_name == NULL)
@@ -3680,17 +3798,17 @@ _outFuncName(StringInfo str, List *func_name)
 
 	foreach(lc, func_name)
 	{
-		v = (Value *) lfirst(lc);
+		A_Const *v = (A_Const *) lfirst(lc);
 
 		if (dot == 0)
 			dot = 1;
 		else
 			appendStringInfoString(str, ".");
 
-		if (IsA(v, String))
+		if (IsA(&v->val, String))
 		{
 			appendStringInfoString(str, "\"");
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			appendStringInfoString(str, "\"");
 		}
 		else
@@ -3823,14 +3941,14 @@ _outDefineStmt(StringInfo str, DefineStmt *node)
 
 			foreach(lc, node->defnames)
 			{
-				Value	   *v = lfirst(lc);
+				A_Const	   *v = (A_Const *) lfirst(lc);
 
 				if (dot == 0)
 					dot = 1;
 				else
 					appendStringInfoString(str, ".");
 
-				appendStringInfoString(str, v->val.str);
+				appendStringInfoString(str, v->val.sval.sval);
 			}
 
 			appendStringInfoString(str, " ");
@@ -3881,14 +3999,14 @@ _outOperatorName(StringInfo str, List *list)
 
 	foreach(lc, list)
 	{
-		Value	   *v = lfirst(lc);
+		A_Const	   *v = (A_Const *) lfirst(lc);
 
 		if (dot == 0)
 			dot = 1;
 		else
 			appendStringInfoString(str, ".");
 
-		appendStringInfoString(str, v->val.str);
+		appendStringInfoString(str, v->val.sval.sval);
 	}
 }
 
@@ -4227,14 +4345,14 @@ _outPrivilegeList(StringInfo str, List *list)
 	{
 		foreach(lc, list)
 		{
-			Value	   *v = lfirst(lc);
+			A_Const	   *v = (A_Const *) lfirst(lc);
 
 			if (comma == 0)
 				comma = 1;
 			else
 				appendStringInfoString(str, ", ");
 
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 		}
 	}
 }
@@ -4361,9 +4479,11 @@ _outGrantStmt(StringInfo str, GrantStmt *node)
 		case OBJECT_OPCLASS:
 		case OBJECT_OPERATOR:
 		case OBJECT_OPFAMILY:
+		case OBJECT_PARAMETER_ACL:
 		case OBJECT_POLICY:
 		case OBJECT_PROCEDURE:
 		case OBJECT_PUBLICATION:
+		case OBJECT_PUBLICATION_NAMESPACE:
 		case OBJECT_PUBLICATION_REL:
 		case OBJECT_ROLE:
 		case OBJECT_ROUTINE:
@@ -4435,18 +4555,18 @@ _outFuncOptList(StringInfo str, List *list)
 	foreach(lc, list)
 	{
 		DefElem    *e = lfirst(lc);
-		Value	   *v = (Value *) e->arg;
+		A_Const	   *v = (A_Const *) e->arg;
 
 		if (strcmp(e->defname, "strict") == 0)
 		{
-			if (v->val.ival == TRUE)
+			if (v->val.boolval.boolval)
 				appendStringInfoString(str, " STRICT");
 			else
 				appendStringInfoString(str, " CALLED ON NULL INPUT");
 		}
 		else if (strcmp(e->defname, "volatility") == 0)
 		{
-			char	   *s = v->val.str;
+			char	   *s = v->val.sval.sval;
 
 			if (strcmp(s, "immutable") == 0)
 				appendStringInfoString(str, " IMMUTABLE");
@@ -4457,7 +4577,7 @@ _outFuncOptList(StringInfo str, List *list)
 		}
 		else if (strcmp(e->defname, "security") == 0)
 		{
-			if (v->val.ival == TRUE)
+			if (v->val.boolval.boolval)
 				appendStringInfoString(str, " SECURITY DEFINER");
 			else
 				appendStringInfoString(str, " SECURITY INVOKER");
@@ -4470,7 +4590,7 @@ _outFuncOptList(StringInfo str, List *list)
 		else if (strcmp(e->defname, "language") == 0)
 		{
 			appendStringInfoString(str, " LANGUAGE '");
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			appendStringInfoString(str, "'");
 		}
 	}
@@ -4897,7 +5017,7 @@ _outCreatedbOptList(StringInfo str, List *options)
 	foreach(lc, options)
 	{
 		DefElem    *e = lfirst(lc);
-		Value	   *v = (Value *) e->arg;
+		A_Const	   *v = (A_Const *) e->arg;
 
 		/* keyword */
 		if (strcmp(e->defname, "template") == 0)
@@ -4920,17 +5040,17 @@ _outCreatedbOptList(StringInfo str, List *options)
 		/* value */
 		if (v == NULL)
 			appendStringInfoString(str, "DEFAULT");
-		else if (IsA((Node *) v, String))
+		else if (IsA(&v->val, String))
 		{
 			appendStringInfoString(str, "'");
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			appendStringInfoString(str, "'");
 		}
-		else
+		else if (IsA(&v->val, Integer))
 		{
 			char		buf[16];
 
-			snprintf(buf, sizeof(buf), "%d", v->val.ival);
+			snprintf(buf, sizeof(buf), "%d", v->val.ival.ival);
 			appendStringInfoString(str, buf);
 		}
 	}
@@ -5157,7 +5277,7 @@ static void
 _outCommentStmt(StringInfo str, CommentStmt *node)
 {
 	TypeName   *t;
-	Value	   *v;
+	A_Const	   *v;
 	char		buf[16];
 
 	appendStringInfoString(str, "COMMENT ON ");
@@ -5199,7 +5319,7 @@ _outCommentStmt(StringInfo str, CommentStmt *node)
 		case OBJECT_DOMCONSTRAINT:
 			appendStringInfoString(str, "CONSTRAINT \"");
 			v = lsecond(owa->objname);
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			appendStringInfoString(str, "\" ON ");
 			_outFuncName(str, linitial(owa->objargs));
 			break;
@@ -5207,7 +5327,7 @@ _outCommentStmt(StringInfo str, CommentStmt *node)
 		case OBJECT_RULE:
 			appendStringInfoString(str, "RULE \"");
 			v = lsecond(owa->objname);
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			appendStringInfoString(str, "\" ON ");
 			_outFuncName(str, linitial(owa->objargs));
 			break;
@@ -5215,7 +5335,7 @@ _outCommentStmt(StringInfo str, CommentStmt *node)
 		case OBJECT_TRIGGER:
 			appendStringInfoString(str, "TRIGGER \"");
 			v = lsecond(owa->objname);
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			appendStringInfoString(str, "\" ON ");
 			_outFuncName(str, linitial(owa->objargs));
 			break;
@@ -5225,17 +5345,17 @@ _outCommentStmt(StringInfo str, CommentStmt *node)
 			_outFuncName(str, owa->objname);
 			appendStringInfoString(str, " USING ");
 			v = linitial(owa->objargs);
-			appendStringInfoString(str, v->val.str);
+			appendStringInfoString(str, v->val.sval.sval);
 			break;
 
 		case OBJECT_LARGEOBJECT:
 			appendStringInfoString(str, "LARGE OBJECT ");
-			v = linitial(owa->objname);
-			if (IsA(v, String))
-				appendStringInfoString(str, v->val.str);
-			else if (IsA(v, Integer))
+			v = (A_Const *) linitial(owa->objname);
+			if (IsA(&v->val, String))
+				appendStringInfoString(str, v->val.sval.sval);
+			else if (IsA(&v->val, Integer))
 			{
-				snprintf(buf, 16, "%d", v->val.ival);
+				snprintf(buf, 16, "%d", v->val.ival.ival);
 				appendStringInfoString(str, buf);
 			}
 			break;
@@ -5536,7 +5656,7 @@ _outXmlExpr(StringInfo str, XmlExpr *node)
 			{
 				Node	   *arg = ((TypeCast *) n)->arg;
 
-				if (((A_Const *) arg)->val.val.str[0] == 't')
+				if (((A_Const *) arg)->val.sval.sval[0] == 't')
 					appendStringInfoString(str, " PRESERVE WHITESPACE");
 			}
 
@@ -5567,9 +5687,9 @@ _outWithDefinition(StringInfo str, List *def_list)
 		elem = linitial(def_list);
 		if (strcmp(elem->defname, "oids") == 0)
 		{
-			Value	   *v = (Value *) elem->arg;
+			Integer	   *v = (Integer *) elem->arg;
 
-			if (v->val.ival == 1)
+			if (v->ival == 1)
 				appendStringInfoString(str, " WITH OIDS ");
 			else
 				appendStringInfoString(str, " WITHOUT OIDS ");
@@ -5672,14 +5792,17 @@ _outNode(StringInfo str, void *obj)
 		return;
 	else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList))
 		_outList(str, obj);
-	else if (IsA(obj, Integer) ||
-			 IsA(obj, Float) ||
-			 IsA(obj, String) ||
-			 IsA(obj, BitString))
-	{
-		/* nodeRead does not want to see { } around these! */
-		_outValue(str, obj);
-	}
+	/* nodeRead does not want to see { } around these! */
+	else if (IsA(obj, Integer))
+		_outInteger(str, (Integer *) obj);
+	else if (IsA(obj, Float))
+		_outFloat(str, (Float *) obj);
+	else if (IsA(obj, Boolean))
+		_outBoolean(str, (Boolean *) obj);
+	else if (IsA(obj, String))
+		_outString(str, (String *) obj);
+	else if (IsA(obj, BitString))
+		_outBitString(str, (BitString *) obj);
 	else
 	{
 		switch (nodeTag(obj))
@@ -5925,6 +6048,12 @@ _outNode(StringInfo str, void *obj)
 			case T_CommonTableExpr:
 				_outCommonTableExpr(str, obj);
 				break;
+			case T_MergeWhenClause:
+				_outMergeWhenClauses(str, obj);
+				break;
+			case T_MergeAction:
+				_outMergeAction(str, obj);
+				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
@@ -5936,7 +6065,7 @@ _outNode(StringInfo str, void *obj)
 				_outTableSampleClause(str, obj);
 				break;
 			case T_A_Expr:
-				_outAExpr(str, obj);
+				_outA_Expr(str, obj);
 				break;
 			case T_ColumnRef:
 				_outColumnRef(str, obj);
@@ -5948,7 +6077,7 @@ _outNode(StringInfo str, void *obj)
 				_outRawStmt(str, obj);
 				break;
 			case T_A_Const:
-				_outAConst(str, obj);
+				_outA_Const(str, obj);
 				break;
 
 				/*
@@ -6036,6 +6165,10 @@ _outNode(StringInfo str, void *obj)
 
 			case T_UpdateStmt:
 				_outUpdateStmt(str, obj);
+				break;
+
+			case T_MergeStmt:
+				_outMergeStmt(str, obj);
 				break;
 
 			case T_TransactionStmt:

@@ -3156,19 +3156,19 @@ check_copy_from_stdin(Node *node)
 			foreach(lc, stmt->options)
 			{
 				DefElem    *elem = lfirst(lc);
-				Value	   *v;
+				String	   *v;
 
 				if (strcmp(elem->defname, "delimiter") == 0)
 				{
-					v = (Value *) elem->arg;
-					copy_delimiter = v->val.str[0];
+					v = (String *) elem->arg;
+					copy_delimiter = v->sval[0];
 				}
 				else if (strcmp(elem->defname, "null") == 0)
 				{
 					if (copy_null)
 						pfree(copy_null);
-					v = (Value *) elem->arg;
-					copy_null = MemoryContextStrdup(TopMemoryContext, v->val.str);
+					v = (String *) elem->arg;
+					copy_null = MemoryContextStrdup(TopMemoryContext, v->sval);
 				}
 			}
 		}

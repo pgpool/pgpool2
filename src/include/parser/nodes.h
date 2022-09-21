@@ -4,8 +4,8 @@
  *	  Definitions for tagged nodes.
  *
  *
- * Portions Copyright (c) 2003-2021, PgPool Global Development Group
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2022, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodes.h
@@ -38,6 +38,7 @@ typedef enum NodeTag
 	T_ProjectionInfo,
 	T_JunkFilter,
 	T_OnConflictSetState,
+	T_MergeActionState,
 	T_ResultRelInfo,
 	T_EState,
 	T_TupleTableSlot,
@@ -77,7 +78,7 @@ typedef enum NodeTag
 	T_MergeJoin,
 	T_HashJoin,
 	T_Material,
-	T_ResultCache,
+	T_Memoize,
 	T_Sort,
 	T_IncrementalSort,
 	T_Group,
@@ -136,7 +137,7 @@ typedef enum NodeTag
 	T_MergeJoinState,
 	T_HashJoinState,
 	T_MaterialState,
-	T_ResultCacheState,
+	T_MemoizeState,
 	T_SortState,
 	T_IncrementalSortState,
 	T_GroupState,
@@ -156,7 +157,6 @@ typedef enum NodeTag
 	T_Alias,
 	T_RangeVar,
 	T_TableFunc,
-	T_Expr,
 	T_Var,
 	T_Const,
 	T_Param,
@@ -247,7 +247,7 @@ typedef enum NodeTag
 	T_MergeAppendPath,
 	T_GroupResultPath,
 	T_MaterialPath,
-	T_ResultCachePath,
+	T_MemoizePath,
 	T_UniquePath,
 	T_GatherPath,
 	T_GatherMergePath,
@@ -270,6 +270,7 @@ typedef enum NodeTag
 	T_EquivalenceClass,
 	T_EquivalenceMember,
 	T_PathKey,
+	T_PathKeyInfo,
 	T_PathTarget,
 	T_RestrictInfo,
 	T_IndexClause,
@@ -283,11 +284,11 @@ typedef enum NodeTag
 	T_RollupData,
 	T_GroupingSetData,
 	T_StatisticExtInfo,
+	T_MergeAction,
 
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
 	 */
-	T_MemoryContext,
 	T_AllocSetContext,
 	T_SlabContext,
 	T_GenerationContext,
@@ -295,12 +296,11 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR VALUE NODES (value.h)
 	 */
-	T_Value,
 	T_Integer,
 	T_Float,
+	T_Boolean,
 	T_String,
 	T_BitString,
-	T_Null,
 
 	/*
 	 * TAGS FOR LIST NODES (pg_list.h)
@@ -323,6 +323,7 @@ typedef enum NodeTag
 	T_InsertStmt,
 	T_DeleteStmt,
 	T_UpdateStmt,
+	T_MergeStmt,
 	T_SelectStmt,
 	T_ReturnStmt,
 	T_PLAssignStmt,
@@ -376,6 +377,7 @@ typedef enum NodeTag
 	T_CheckPointStmt,
 	T_CreateSchemaStmt,
 	T_AlterDatabaseStmt,
+	T_AlterDatabaseRefreshCollStmt,
 	T_AlterDatabaseSetStmt,
 	T_AlterRoleSetStmt,
 	T_CreateConversionStmt,
@@ -486,6 +488,7 @@ typedef enum NodeTag
 	T_CTESearchClause,
 	T_CTECycleClause,
 	T_CommonTableExpr,
+	T_MergeWhenClause,
 	T_RoleSpec,
 	T_TriggerTransition,
 	T_PartitionElem,
@@ -494,6 +497,8 @@ typedef enum NodeTag
 	T_PartitionRangeDatum,
 	T_PartitionCmd,
 	T_VacuumRelation,
+	T_PublicationObjSpec,
+	T_PublicationTable,
 
 	/*
 	 * TAGS FOR REPLICATION GRAMMAR PARSE NODES (replnodes.h)
@@ -502,9 +507,9 @@ typedef enum NodeTag
 	T_BaseBackupCmd,
 	T_CreateReplicationSlotCmd,
 	T_DropReplicationSlotCmd,
+	T_ReadReplicationSlotCmd,
 	T_StartReplicationCmd,
 	T_TimeLineHistoryCmd,
-	T_SQLCmd,
 
 	/*
 	 * TAGS FOR RANDOM OTHER STUFF
@@ -526,6 +531,12 @@ typedef enum NodeTag
 	TsmRoutine ,				/* in access/tsmapi.h */
 	T_ForeignKeyCacheInfo,      /* in utils/rel.h */
 	T_CallContext,              /* in nodes/parsenodes.h */
+	T_SupportRequestSimplify,	/* in nodes/supportnodes.h */
+	T_SupportRequestSelectivity,	/* in nodes/supportnodes.h */
+	T_SupportRequestCost,		/* in nodes/supportnodes.h */
+	T_SupportRequestRows,		/* in nodes/supportnodes.h */
+	T_SupportRequestIndexCondition, /* in nodes/supportnodes.h */
+	T_SupportRequestWFuncMonotonic,	/* in nodes/supportnodes.h */
 	/* pgpool Extension */
 				T_PgpoolVariableSetStmt,
 				T_PgpoolVariableShowStmt
@@ -627,7 +638,7 @@ extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
 						 const struct Bitmapset *bms);
 extern void outDatum(struct StringInfoData *str, uintptr_t value,
-					 int typlen, bool typbyval);
+                     int typlen, bool typbyval);
 extern char *nodeToString(const void *obj);
 extern char *bmsToString(const struct Bitmapset *bms);
 
@@ -673,6 +684,8 @@ extern bool equal(const void *a, const void *b);
  */
 typedef double Selectivity;		/* fraction of tuples a qualifier will pass */
 typedef double Cost;			/* execution cost (in page-access units) */
+typedef double Cardinality;		/* (estimated) number of rows or other integer
+								 * count */
 
 
 /*
@@ -687,7 +700,8 @@ typedef enum CmdType
 	CMD_SELECT,					/* select stmt */
 	CMD_UPDATE,					/* update stmt */
 	CMD_INSERT,					/* insert stmt */
-	CMD_DELETE,
+	CMD_DELETE,					/* delete stmt */
+	CMD_MERGE,					/* merge stmt */
 	CMD_UTILITY,				/* cmds like create, destroy, copy, vacuum,
 								 * etc. */
 	CMD_NOTHING					/* dummy command for instead nothing rules

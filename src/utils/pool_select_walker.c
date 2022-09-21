@@ -366,9 +366,9 @@ function_call_walker(Node *node, void *context)
 					Node	   *arg = linitial(fcall->args);
 
 					if (IsA(arg, A_Const) &&
-						((A_Const *) arg)->val.type == T_Integer)
+						IsA(&((A_Const *) arg)->val, Integer))
 					{
-						ctx->pg_terminate_backend_pid = ((A_Const *) arg)->val.val.ival;
+						ctx->pg_terminate_backend_pid = ((A_Const *) arg)->val.ival.ival;
 						ereport(DEBUG1,
 								(errmsg("pg_terminate_backend pid = %d", ctx->pg_terminate_backend_pid)));
 					}

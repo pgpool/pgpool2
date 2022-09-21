@@ -1392,16 +1392,16 @@ static POOL_DEST send_to_where(Node *node, char *query)
 				{
 					A_Const    *v = (A_Const *) lfirst(list_item);
 
-					switch (v->val.type)
+					switch (nodeTag(&v->val))
 					{
 						case T_String:
-							if (!strcasecmp(v->val.val.str, "off") ||
-								!strcasecmp(v->val.val.str, "f") ||
-								!strcasecmp(v->val.val.str, "false"))
+							if (!strcasecmp(v->val.sval.sval, "off") ||
+								!strcasecmp(v->val.sval.sval, "f") ||
+								!strcasecmp(v->val.sval.sval, "false"))
 								ret = POOL_PRIMARY;
 							break;
 						case T_Integer:
-							if (v->val.val.ival)
+							if (v->val.ival.ival)
 								ret = POOL_PRIMARY;
 						default:
 							break;
@@ -1439,7 +1439,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 					{
 						bool		read_only;
 
-						read_only = ((A_Const *) opt->arg)->val.val.ival;
+						read_only = ((A_Const *) opt->arg)->val.ival.ival;
 						if (!read_only)
 							return POOL_PRIMARY;
 					}
@@ -1618,10 +1618,10 @@ is_set_transaction_serializable(Node *node)
 		{
 			A_Const    *v = (A_Const *) lfirst(list_item);
 
-			switch (v->val.type)
+			switch (nodeTag(&v->val))
 			{
 				case T_String:
-					if (!strcasecmp(v->val.val.str, "serializable"))
+					if (!strcasecmp(v->val.sval.sval, "serializable"))
 						return true;
 					break;
 				default:
@@ -1646,7 +1646,7 @@ is_set_transaction_serializable(Node *node)
 			{
 				A_Const    *v = (A_Const *) opt->arg;
 
-				if (!strcasecmp(v->val.val.str, "serializable"))
+				if (!strcasecmp(v->val.sval.sval, "serializable"))
 					return true;
 			}
 		}
@@ -1688,7 +1688,7 @@ is_read_write(TransactionStmt *node)
 		{
 			bool		read_only;
 
-			read_only = ((A_Const *) opt->arg)->val.val.ival;
+			read_only = ((A_Const *) opt->arg)->val.ival.ival;
 			if (read_only)
 				return false;	/* TRANSACTION READ ONLY */
 			else
@@ -1723,8 +1723,8 @@ is_serializable(TransactionStmt *node)
 
 		if (!strcmp("transaction_isolation", opt->defname) &&
 			IsA(opt->arg, A_Const) &&
-			((A_Const *) opt->arg)->val.type == T_String &&
-			!strcmp("serializable", ((A_Const *) opt->arg)->val.val.str))
+			IsA(&((A_Const *) opt->arg)->val, String) &&
+			!strcmp("serializable", ((A_Const *) opt->arg)->val.sval.sval))
 			return true;
 	}
 	return false;
@@ -2007,16 +2007,16 @@ pool_is_transaction_read_only(Node *node)
 		{
 			A_Const    *v = (A_Const *) lfirst(list_item);
 
-			switch (v->val.type)
+			switch (nodeTag(&v->val))
 			{
 				case T_String:
-					if (!strcasecmp(v->val.val.str, "on") ||
-						!strcasecmp(v->val.val.str, "t") ||
-						!strcasecmp(v->val.val.str, "true"))
+					if (!strcasecmp(v->val.sval.sval, "on") ||
+						!strcasecmp(v->val.sval.sval, "t") ||
+						!strcasecmp(v->val.sval.sval, "true"))
 						ret = true;
 					break;
 				case T_Integer:
-					if (v->val.val.ival)
+					if (v->val.ival.ival)
 						ret = true;
 				default:
 					break;
@@ -2042,7 +2042,7 @@ pool_is_transaction_read_only(Node *node)
 			{
 				bool		read_only;
 
-				read_only = ((A_Const *) opt->arg)->val.val.ival;
+				read_only = ((A_Const *) opt->arg)->val.ival.ival;
 				if (read_only)
 				{
 					ret = true;
