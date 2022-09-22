@@ -1620,10 +1620,11 @@ get_processes(int *nrows)
 
 	for (child = 0; child < pool_config->num_init_children; child++)
 	{
+		int exist_live_connection = 0;
+
 		proc_id = process_info[child].pid;
 		pi = pool_get_process_info(proc_id);
 
-		int exist_live_connection = 0;
 		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
 			poolBE = pool * MAX_NUM_BACKENDS;
