@@ -1433,10 +1433,11 @@ get_pools(int *nrows)
 
 	for (child = 0; child < pool_config->num_init_children; child++)
 	{
+		int exist_live_connection = 0;
+
 		proc_id = process_info[child].pid;
 		pi = pool_get_process_info(proc_id);
 
-		int exist_live_connection = 0;
 		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
 			poolBE = pool * MAX_NUM_BACKENDS;
@@ -1452,6 +1453,7 @@ get_pools(int *nrows)
 		{
 			int idle_duration = pi->connection_info[pool * MAX_NUM_BACKENDS].client_idle_duration;
 			int cliet_idle_time = pool_config->client_idle_limit;
+
 			if (pool_config->client_idle_limit > 0)
 			{
 				cliet_idle_time = pool_config->client_idle_limit - idle_duration;
