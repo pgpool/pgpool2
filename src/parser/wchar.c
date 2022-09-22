@@ -2365,63 +2365,6 @@ pg_utf8_verifychar(const unsigned char *s, int len)
 /* invalid byte */
 #define ILL ERR
 
-static const uint32 Utf8Transition[256] =
-{
-	/* ASCII */
-
-	ILL, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-	ASC, ASC, ASC, ASC, ASC, ASC, ASC, ASC,
-
-	/* continuation bytes */
-
-	/* 80..8F */
-	CR1, CR1, CR1, CR1, CR1, CR1, CR1, CR1,
-	CR1, CR1, CR1, CR1, CR1, CR1, CR1, CR1,
-
-	/* 90..9F */
-	CR2, CR2, CR2, CR2, CR2, CR2, CR2, CR2,
-	CR2, CR2, CR2, CR2, CR2, CR2, CR2, CR2,
-
-	/* A0..BF */
-	CR3, CR3, CR3, CR3, CR3, CR3, CR3, CR3,
-	CR3, CR3, CR3, CR3, CR3, CR3, CR3, CR3,
-	CR3, CR3, CR3, CR3, CR3, CR3, CR3, CR3,
-	CR3, CR3, CR3, CR3, CR3, CR3, CR3, CR3,
-
-	/* leading bytes */
-
-	/* C0..DF */
-	ILL, ILL, L2A, L2A, L2A, L2A, L2A, L2A,
-	L2A, L2A, L2A, L2A, L2A, L2A, L2A, L2A,
-	L2A, L2A, L2A, L2A, L2A, L2A, L2A, L2A,
-	L2A, L2A, L2A, L2A, L2A, L2A, L2A, L2A,
-
-	/* E0..EF */
-	L3A, L3B, L3B, L3B, L3B, L3B, L3B, L3B,
-	L3B, L3B, L3B, L3B, L3B, L3C, L3B, L3B,
-
-	/* F0..FF */
-	L4A, L4B, L4B, L4B, L4C, ILL, ILL, ILL,
-	ILL, ILL, ILL, ILL, ILL, ILL, ILL, ILL
-};
-
 static int
 pg_utf8_verifystr(const unsigned char *s, int len)
 {
