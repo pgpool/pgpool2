@@ -1339,8 +1339,8 @@ POOL_REPORT_POOLS* get_pools(int *nrows)
 
 	for (child = 0; child < pool_config->num_init_children; child++)
 	{
-		proc_id = process_info[child].pid;
-		pi = pool_get_process_info(proc_id);
+		pi = &process_info[child];
+		proc_id = pi->pid;
 
 		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
@@ -1536,8 +1536,8 @@ POOL_REPORT_PROCESSES* get_processes(int *nrows)
 
 	for (child = 0; child < pool_config->num_init_children; child++)
     {
-		proc_id = process_info[child].pid;
-	    pi = pool_get_process_info(proc_id);
+		pi = &process_info[child];
+		proc_id = pi->pid;
 
         snprintf(processes[child].pool_pid, POOLCONFIG_MAXCOUNTLEN, "%d", proc_id);
 	    strftime(processes[child].start_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pi->start_time));
