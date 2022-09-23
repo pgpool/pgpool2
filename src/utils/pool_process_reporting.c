@@ -1399,14 +1399,14 @@ get_pools(int *nrows)
 
 	int			lines = 0;
 
-	POOL_REPORT_POOLS *pools = palloc(
-									  pool_config->num_init_children * pool_config->max_pool * NUM_BACKENDS * sizeof(POOL_REPORT_POOLS)
+	POOL_REPORT_POOLS *pools = palloc0(
+		pool_config->num_init_children * pool_config->max_pool * NUM_BACKENDS * sizeof(POOL_REPORT_POOLS)
 	);
 
 	for (child = 0; child < pool_config->num_init_children; child++)
 	{
-		proc_id = process_info[child].pid;
-		pi = pool_get_process_info(proc_id);
+		pi = &process_info[child];
+		proc_id = pi->pid;
 
 		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
@@ -1593,6 +1593,9 @@ pools_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	pfree(pools);
 }
 
+/*
+ * Used by SHOW pool_processes
+ */
 POOL_REPORT_PROCESSES *
 get_processes(int *nrows)
 {
@@ -1602,12 +1605,12 @@ get_processes(int *nrows)
 	ProcessInfo *pi = NULL;
 	int			proc_id;
 
-	POOL_REPORT_PROCESSES *processes = palloc(pool_config->num_init_children * sizeof(POOL_REPORT_PROCESSES));
+	POOL_REPORT_PROCESSES *processes = palloc0(pool_config->num_init_children * sizeof(POOL_REPORT_PROCESSES));
 
 	for (child = 0; child < pool_config->num_init_children; child++)
 	{
-		proc_id = process_info[child].pid;
-		pi = pool_get_process_info(proc_id);
+		pi = &process_info[child];
+		proc_id = pi->pid;
 
 		snprintf(processes[child].pool_pid, POOLCONFIG_MAXCOUNTLEN, "%d", proc_id);
 		strftime(processes[child].start_time, POOLCONFIG_MAXDATELEN, "%Y-%m-%d %H:%M:%S", localtime(&pi->start_time));
@@ -1619,7 +1622,9 @@ get_processes(int *nrows)
 		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
 			poolBE = pool * MAX_NUM_BACKENDS;
-			if (pi->connection_info[poolBE].connected && strlen(pi->connection_info[poolBE].database) > 0 && strlen(pi->connection_info[poolBE].user) > 0)
+			if (pi->connection_info[poolBE].connected &&
+				strlen(pi->connection_info[poolBE].database) > 0 &&
+				strlen(pi->connection_info[poolBE].user) > 0)
 			{
 				StrNCpy(processes[child].database, pi->connection_info[poolBE].database, POOLCONFIG_MAXIDENTLEN);
 				StrNCpy(processes[child].username, pi->connection_info[poolBE].user, POOLCONFIG_MAXIDENTLEN);
