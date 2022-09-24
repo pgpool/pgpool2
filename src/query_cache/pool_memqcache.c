@@ -2950,9 +2950,6 @@ pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 {
 	if (pool_is_shmem_cache() && !is_shmem_locked)
 	{
-#ifdef NOT_USED
-		pool_semaphore_lock(SHM_CACHE_SEM);
-#endif
 		if (flock(memq_lock_fd, type == POOL_MEMQ_EXCLUSIVE_LOCK? LOCK_EX : LOCK_SH))
 		{
 			ereport(FATAL,
@@ -2971,9 +2968,6 @@ pool_shmem_unlock(void)
 {
 	if (pool_is_shmem_cache() && is_shmem_locked)
 	{
-#ifdef NOT_USED
-		pool_semaphore_unlock(SHM_CACHE_SEM);
-#endif
 		if (flock(memq_lock_fd, LOCK_UN))
 		{
 			ereport(FATAL,
