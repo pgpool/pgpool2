@@ -273,12 +273,6 @@ static int dummy_status;
 volatile SI_ManageInfo *si_manage_info;
 
 /*
- * File descriptor used for locking in query cache.
- * Inherited to child process.
- */
-int	memq_lock_fd;
-
-/*
 * pgpool main program
 */
 
@@ -494,6 +488,26 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		free(inet_fds);
 	}
 
+	/* For query cache concurrency control */
+	if (pool_config->memory_cache_enabled)
+	{
+		char path[1024];
+		int		lfd;
+
+		snprintf(path, sizeof(path), "%s/QUERY_CACHE_LOCK_FILE", pool_config->logdir);
+		lfd = open(path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
+		if (lfd == -1)
+		{
+			ereport(FATAL,
+					(errmsg("Failed to open lock file for query cache \"%s\"", path),
+					 errdetail("%m")));
+		}
+		close(lfd);
+
+		/* Register file unlink at exit */
+		on_proc_exit(FileUnlink, (Datum) path);
+	}
+
 	/*
 	 * We need to block signal here. Otherwise child might send some signals,
 	 * for example SIGUSR1(fail over).  Children will inherit signal blocking
@@ -590,24 +604,6 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	/* Create or write status file */
 	(void) write_status_file();
-
-	/* For query cache concurrency control */
-	if (pool_config->memory_cache_enabled)
-	{
-		char path[1024];
-
-		snprintf(path, sizeof(path), "%s/memq_lock_file", pool_config->logdir);
-		memq_lock_fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
-		if (memq_lock_fd == -1)
-		{
-			ereport(FATAL,
-					(errmsg("Failed to open lock file for query cache \"%s\"", path),
-					 errdetail("%m")));
-		}
-
-		/* Register file unlink at exit */
-		on_proc_exit(FileUnlink, (Datum) path);
-	}
 
 	/* This is the main loop */
 	for (;;)

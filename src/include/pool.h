@@ -83,6 +83,9 @@
 /* status file name */
 #define STATUS_FILE_NAME "pgpool_status"
 
+/* query cache lock file name */
+#define QUERY_CACHE_LOCK_FILE "memq_lock_file"
+
 /* default string used to identify pgpool on syslog output */
 #define DEFAULT_SYSLOG_IDENT "pgpool"
 

@@ -2942,12 +2942,33 @@ pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
 }
 #endif
 
+#undef LOCK_TRACE
+
+static int memq_lock_fd = 0;
+
 /*
  * Acquire lock: XXX giant lock
  */
 void
 pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 {
+	if (memq_lock_fd == 0)
+	{
+		char path[1024];
+
+		snprintf(path, sizeof(path), "%s/%s", pool_config->logdir, QUERY_CACHE_LOCK_FILE);
+		memq_lock_fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
+		if (memq_lock_fd == -1)
+		{
+			ereport(FATAL,
+					(errmsg("Failed to open lock file for query cache \"%s\"", path),
+					 errdetail("%m")));
+		}
+	}
+
+#ifdef LOCK_TRACE
+		elog(LOG, "LOCK TRACE: try to aquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK? "LOCK_EX" : "LOCK_SH");
+#endif
 	if (pool_is_shmem_cache() && !is_shmem_locked)
 	{
 		if (flock(memq_lock_fd, type == POOL_MEMQ_EXCLUSIVE_LOCK? LOCK_EX : LOCK_SH))
@@ -2955,7 +2976,12 @@ pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 			ereport(FATAL,
 					(errmsg("Failed to lock file for query cache"),
 					 errdetail("%m")));
+
 		}
+
+#ifdef LOCK_TRACE
+		elog(LOG, "LOCK TRACE: aquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK? "LOCK_EX" : "LOCK_SH");
+#endif
 		is_shmem_locked = true;
 	}
 }
@@ -2974,6 +3000,9 @@ pool_shmem_unlock(void)
 					(errmsg("Failed to unlock file for query cache"),
 					 errdetail("%m")));
 		}
+#ifdef LOCK_TRACE
+		elog(LOG, "LOCK TRACE: unlock");
+#endif
 		is_shmem_locked = false;
 	}
 }

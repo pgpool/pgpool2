@@ -235,12 +235,6 @@ typedef enum
 	POOL_MEMQ_EXCLUSIVE_LOCK,
 } POOL_MEMQ_LOCK_TYPE;
 
-/*
- * File descriptor used for locking in query cache.
- * Inherited to child process.
- */
-extern int memq_lock_fd;
-
 extern int	pool_hash_init(int nelements);
 extern size_t pool_hash_size(int nelements);
 extern POOL_CACHEID * pool_hash_search(POOL_QUERY_HASH * key);
