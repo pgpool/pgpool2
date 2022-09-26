@@ -2578,7 +2578,7 @@ _outMergeStmt(StringInfo str, MergeStmt *node)
 		_outNode(str, node->joinCondition);
 	}
 
-	if (node->mergeWhenClauses)
+	if (node->mergeWhenClauses != NIL)
 	{
 		_outMergeWhenClauses(str, node->mergeWhenClauses);
 	}
