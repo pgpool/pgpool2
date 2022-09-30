@@ -3025,7 +3025,7 @@ block_address(int blockid)
 	char	   *p;
 
 	p = pool_memory_cache_address() +
-		blockid * pool_config->memqcache_cache_block_size;
+		(uint64)blockid * pool_config->memqcache_cache_block_size;
 	return p;
 }
 
