@@ -1171,7 +1171,7 @@ reset_backend(POOL_CONNECTION_POOL * backend, int qcnt)
  * - EXPLAIN ANALYZE and query is SELECT not including writing functions
  * - SHOW
  *
- * Note that for SELECT this function returns false.
+ * Note that for SELECT INTO this function returns false.
  */
 bool
 is_select_query(Node *node, char *sql)
