@@ -95,7 +95,7 @@
      </para>
 
      <table id="memqcache-method-table">
-      <title>Memcache method options</title>
+      <title>Memqcache method options</title>
       <tgroup cols="2">
        <thead>
 	<row>
@@ -119,6 +119,22 @@
       </tgroup>
      </table>
 
+     <para>
+      In general <varname>shmem</varname> is faster
+      than <varname>memcached</varname> because the former does not
+      involve any network access. However, the upper limit size of
+      <varname>memqcache_total_size</varname> is limited by the total
+      shared memory size defined by the system. The size is large
+      enough in modern Linux systems, but in other systems there maybe
+      smaller upper limit. In this case you need to change the system
+      settings regarding the maximum shared memory size. There's a
+      good explanation about shared memory
+      in <ulink url="https://www.postgresql.org/docs/current/kernel-resources.html#SYSVIPC"><productname>PostgreSQL</productname>
+      documentation</ulink>.
+     </para>
+     <para>
+      If you are not sure which memqcache_method to be used, start with <varname>shmem</varname>.
+     </para>
      <para>
       Default is <literal>'shmem'</literal>.
      </para>
