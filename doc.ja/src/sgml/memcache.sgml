@@ -184,6 +184,33 @@
      </table>
 
      <para>
+<!--
+      In general <varname>shmem</varname> is faster
+      than <varname>memcached</varname> because the former does not
+      involve any network access. However, the upper limit size of
+      <varname>memqcache_total_size</varname> is limited by the total
+      shared memory size defined by the system. The size is large
+      enough in modern Linux systems, but in other systems there maybe
+      smaller upper limit. In this case you need to change the system
+      settings regarding the maximum shared memory size. There's a
+      good explanation about shared memory
+      in <ulink url="https://www.postgresql.org/docs/current/kernel-resources.html#SYSVIPC"><productname>PostgreSQL</productname>
+      documentation</ulink>.
+-->
+      一般的に<varname>shmem</varname>はネットワークアクセスが不要なため、<varname>memcached</varname>より高速です。
+      しかし、<varname>shmem</varname>では、<varname>memqcache_total_size</varname>はシステムで決まっている共有メモリサイズの合計に制限されます。
+      最近のLinuxシステムでは、そのサイズは十分大きいのですが、他のシステムでは制限値が小さいかもしれません。
+      この場合は共有メモリサイズの最大値のシステム設定を変更する必要があるでしょう。
+      <ulink url="https://www.postgresql.org/docs/current/kernel-resources.html#SYSVIPC"><productname>PostgreSQL</productname></ulink>のドキュメントに共有メモリに関する良い記述があります。
+     </para>
+     <para>
+<!--
+      If you are not sure which memqcache_method to be used, start with <varname>shmem</varname>.
+-->
+      どちらのmemqcache_methodを使ったらよいかわからない場合は、まず<varname>shmem</varname>を試してください。
+     </para>
+
+     <para>
       <!--
       Default is <literal>'shmem'</literal>.
       -->
