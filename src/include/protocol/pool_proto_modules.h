@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2017	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -166,6 +166,7 @@ extern int	detect_serialization_error(POOL_CONNECTION * master, int major, bool 
 extern int	detect_active_sql_transaction_error(POOL_CONNECTION * backend, int major);
 extern int	detect_query_cancel_error(POOL_CONNECTION * backend, int major);
 extern int	detect_idle_in_transaction_sesion_timeout_error(POOL_CONNECTION * backend, int major);
+extern int	detect_idle_session_timeout_error(POOL_CONNECTION * backend, int major);
 extern bool is_partition_table(POOL_CONNECTION_POOL * backend, Node *node);
 extern POOL_STATUS pool_discard_packet(POOL_CONNECTION_POOL * cp);
 extern void query_cache_register(char kind, POOL_CONNECTION * frontend, char *database, char *data, int data_len);
