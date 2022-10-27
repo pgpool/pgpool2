@@ -185,7 +185,7 @@
 	2022-09-22 [424e68c1]
       -->
     <para>
-     Import PostgreSQL 15's SQL parser.(Bo Peng)
+     Import PostgreSQL 15's SQL parser.(Bo Peng, Tatsuo Ishii)
     </para>
     <para>
      Major changes of PostgreSQL 15 parser include:
@@ -347,6 +347,20 @@
     </para>
    </listitem>
 
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documentation changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2022-10-27 [89d1235]
+    -->
+    <para>
+     Doc: Update documentation of AWS configuration example and add sample scripts for AWS. (Bo Peng)
+    </para>
+   </listitem>
   </itemizedlist>
  </sect2>
 
