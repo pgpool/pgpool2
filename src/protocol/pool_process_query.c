@@ -71,6 +71,7 @@
 #define ADMIN_SHUTDOWN_ERROR_CODE "57P01"
 #define CRASH_SHUTDOWN_ERROR_CODE "57P02"
 #define IDLE_IN_TRANSACTION_SESSION_TIMEOUT_ERROR_CODE "25P03"
+#define IDLE_SESSION_TIMEOUT_ERROR_CODE "57P05"
 
 static int	reset_backend(POOL_CONNECTION_POOL * backend, int qcnt);
 static char *get_insert_command_table_name(InsertStmt *node);
@@ -4370,6 +4371,18 @@ detect_idle_in_transaction_sesion_timeout_error(POOL_CONNECTION * backend, int m
 	return r;
 }
 
+int
+detect_idle_session_timeout_error(POOL_CONNECTION * backend, int major)
+{
+	int			r = detect_error(backend, IDLE_SESSION_TIMEOUT_ERROR_CODE, major, 'E', true);
+
+	if (r == SPECIFIED_ERROR)
+		ereport(DEBUG1,
+				(errmsg("detecting idle session timeout error"),
+				 errdetail("idle session timeout error message from backend")));
+	return r;
+}
+
 /*
  * detect_error: Detect specified error from error code.
  * returns 0 in case of sucess or 1 in cause of specified error.
@@ -4898,7 +4911,18 @@ SELECT_RETRY:
 				{
 					ereport(FATAL,
 							(pool_error_code(IDLE_IN_TRANSACTION_SESSION_TIMEOUT_ERROR_CODE),
-							 errmsg("terminating connection due to idle-in-transaction timeout")));
+							 errmsg("terminating connection due to idle-in-transaction session timeout")));
+				}
+
+				/*
+				 * connection was terminated due to idle_session_timeout expired
+				 */
+				r = detect_idle_session_timeout_error(CONNECTION(backend, i), MAJOR(backend));
+				if (r == SPECIFIED_ERROR)
+				{
+					ereport(FATAL,
+							(pool_error_code(IDLE_SESSION_TIMEOUT_ERROR_CODE),
+							 errmsg("terminating connection due to idle session timeout")));
 				}
 
 				/*
