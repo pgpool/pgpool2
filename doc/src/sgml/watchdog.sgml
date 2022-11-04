@@ -232,17 +232,18 @@ pgpool_port2 = 9999
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-ping-path" xreflabel="ping_path">
-    <term><varname>ping_path</varname> (<type>string</type>)
+   <varlistentry id="guc-trusted-server-command" xreflabel="trusted_server_command">
+    <term><varname>trusted_server_command</varname> (<type>string</type>)
      <indexterm>
-      <primary><varname>ping_path</varname> configuration parameter</primary>
+      <primary><varname>trusted_server_command</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
-      Specifies the path of a ping command for monitoring
-      connection to the upper servers. Set the only path of the directory containing the
-      ping utility, such as <literal>"/bin"</literal> or such directory.
+      Specifies a user command to run when <productname>Pgpool-II</productname> check
+      that trusted servers respond to ping. Any %h in the string is replaced by each host
+      name specified <varname>trusted_servers</varname>. Default is
+      <literal>ping -q -c3 %h</literal>.
      </para>
      <para>
       This parameter can only be set at server start.
@@ -398,6 +399,23 @@ pgpool_port2 = 9999
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-ping-path" xreflabel="ping_path">
+    <term><varname>ping_path</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>ping_path</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the path of a ping command to check startup of the virtual IP.
+      Set the only path of the directory containing the ping utility,
+      such as <literal>"/bin"</literal> or such directory.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </sect2>
 

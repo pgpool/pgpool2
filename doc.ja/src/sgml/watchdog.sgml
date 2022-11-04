@@ -327,24 +327,26 @@
     </listitem>
    </varlistentry>
 
-   <varlistentry id="guc-ping-path" xreflabel="ping_path">
-    <term><varname>ping_path</varname> (<type>string</type>)
+   <varlistentry id="guc-trusted-server-command" xreflabel="trusted_server_command">
+    <term><varname>trusted_server_command</varname> (<type>string</type>)
      <indexterm>
       <!--
-      <primary><varname>ping_path</varname> configuration parameter</primary>
+      <primary><varname>trusted_server_command</varname> configuration parameter</primary>
       -->
-      <primary><varname>ping_path</varname>設定パラメータ</primary>
+      <primary><varname>trusted_server_command</varname>設定パラメータ</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
       <!--
-      Specifies the path of a ping command for monitoring
-      connection to the upper servers. Set the only path of the directory containing the
-      ping utility, such as <literal>"/bin"</literal> or such directory.
+      Specifies a user command to run when <productname>Pgpool-II</productname> check
+      that trusted servers respond to ping. Any %h in the string is replaced by each host
+      name specified <varname>trusted_servers</varname>. Default is
+      <literal>ping -q -c3 %h</literal>.
       -->
-      上位サーバへの接続監視に利用するpingコマンドのパスを指定します。
-      <literal>"/bin"</literal>のようにパスだけを指定します。
+      信頼できるサーバのping応答を確認するユーザコマンドを指定します。
+      %hは<varname>trusted_servers</varname>で指定された各ホスト名に置換されます。
+      デフォルトは<literal>ping -q -c3 %h</literal>です。
      </para>
      <para>
       <!--
@@ -583,6 +585,33 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-ping-path" xreflabel="ping_path">
+    <term><varname>ping_path</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>ping_path</varname> configuration parameter</primary>
+      -->
+      <primary><varname>ping_path</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the path of a ping command to check startup of the virtual IP.
+      Set the only path of the directory containing the ping utility,
+      such as <literal>"/bin"</literal> or such directory.
+      -->
+      仮想IPの起動を確認するために利用するpingコマンドのパスを指定します。
+      <literal>"/bin"</literal>のようにパスだけを指定します。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータは、サーバ起動時にのみ設定できます。
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </sect2>
 

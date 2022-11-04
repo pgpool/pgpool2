@@ -820,6 +820,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "upper server list to observe connection", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "trusted_server_command", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->trusted_server_command);
+	StrNCpy(status[i].desc, "command executed when upper servers are observed", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "delegate_ip", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->delegate_ip);
 	StrNCpy(status[i].desc, "delegate IP address of leader pgpool", POOLCONFIG_MAXDESCLEN);

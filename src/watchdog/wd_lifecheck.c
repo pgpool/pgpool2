@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -72,7 +72,6 @@ typedef struct WdUpstreamConnectionData
 	char	   *hostname;		/* host name of server */
 	pid_t		pid;			/* pid of ping process */
 	bool		reachable;		/* true if last ping was successful */
-	int			outputfd;		/* pipe fd linked to output of ping process */
 }			WdUpstreamConnectionData;
 
 
@@ -168,9 +167,8 @@ reaper(void)
 
 		if (server)
 		{
-			server->reachable = wd_get_ping_result(server->hostname, status, server->outputfd);
+			server->reachable = (status == 0);
 			server->pid = 0;
-			close(server->outputfd);
 		}
 		else
 			wd_reaper_lifecheck(pid, status);
@@ -1118,7 +1116,7 @@ wd_ping_all_server(void)
 		WdUpstreamConnectionData *server = (WdUpstreamConnectionData *) lfirst(lc);
 
 		if (server->pid <= 0)
-			server->pid = wd_issue_ping_command(server->hostname, &server->outputfd);
+			server->pid = wd_trusted_server_command(server->hostname);
 
 		if (server->pid > 0)
 			ping_process++;
@@ -1135,14 +1133,18 @@ wd_ping_all_server(void)
 			if (server)
 			{
 				ping_process--;
-				server->reachable = wd_get_ping_result(server->hostname, status, server->outputfd);
+				server->reachable = (status == 0);
 				server->pid = 0;
-				close(server->outputfd);
 				if (server->reachable)
 				{
 					/* one reachable server is all we need */
 					POOL_SETMASK(&UnBlockSig);
 					return true;
+				}
+				if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
+				{
+					ereport(WARNING,
+							(errmsg("watchdog failed to ping host: \"%s\"", server->hostname)));
 				}
 			}
 			else

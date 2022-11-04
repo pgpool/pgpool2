@@ -1042,6 +1042,16 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"trusted_server_command", CFGCXT_RELOAD, WATCHDOG_CONFIG,
+			"Command to excute when communicate with trusted server.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.trusted_server_command,
+		"ping -q -c3 %h",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
 		{"delegate_IP", CFGCXT_INIT, WATCHDOG_CONFIG,
 			"Old config parameter for delegate_ip.",
 			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_IN_SHOW_ALL

@@ -579,6 +579,7 @@ typedef struct
 	int			pgpool_node_id;	/* pgpool (watchdog) node id */
 	WdNodesConfig wd_nodes;		/* watchdog lists */
 	char	   *trusted_servers;	/* icmp reachable server list (A,B,C) */
+	char	   *trusted_server_command;	/* Executes this command when upper servers are observed */
 	char	   *delegate_ip;	/* delegate IP address */
 	int			wd_interval;	/* lifecheck interval (sec) */
 	char	   *wd_authkey;		/* Authentication key for watchdog

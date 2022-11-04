@@ -654,9 +654,11 @@ backend_clustering_mode = 'streaming_replication'
                                     # to confirm network connection
                                     # (hostA,hostB,hostC,...)
                                     # (change requires restart)
-#ping_path = '/bin'
-                                    # ping command path
-                                    # (change requires restart)
+
+#trusted_server_command = 'ping -q -c3 %h'
+                                    # Command to excute when communicate trusted server.
+                                    # Special values:
+                                    #   %h = host name specified by trusted_servers
 
 # - Watchdog communication Settings -
 
@@ -716,6 +718,10 @@ hostname0 = ''
                                     # (change requires restart)
 #arping_cmd = '/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0'
                                     # arping command
+                                    # (change requires restart)
+
+#ping_path = '/bin'
+                                    # ping command path
                                     # (change requires restart)
 
 # - Behaivor on escalation Setting -

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -30,6 +30,8 @@
 #include <netdb.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include "pool.h"
 #include "utils/elog.h"
 #include "pool_config.h"
@@ -151,6 +153,97 @@ wd_issue_ping_command(char *hostname, int *outfd)
 	}
 	close(pfd[1]);
 	*outfd = pfd[0];
+	return pid;
+}
+
+/*
+ * execute specified command for trusted servers and return the
+ * pid of the process.
+ */
+pid_t
+wd_trusted_server_command(char *hostname)
+{
+	int			status;
+	int			pid;
+	StringInfoData		exec_cmd_data;
+	StringInfo				exec_cmd = &exec_cmd_data;
+	char *command_line = pstrdup(pool_config->trusted_server_command);
+
+	initStringInfo(exec_cmd);
+
+	while (*command_line)
+	{
+		if (*command_line == '%')
+		{
+			if (*(command_line + 1))
+			{
+				char		val = *(command_line + 1);
+
+				switch (val)
+				{
+					case 'h':	/* trusted server host name */
+						appendStringInfoString(exec_cmd, hostname);
+						break;
+
+					case '%':	/* escape */
+						appendStringInfoString(exec_cmd, "%");
+						break;
+
+					default:	/* ignore */
+						break;
+				}
+				command_line++;
+			}
+		}
+		else
+			appendStringInfoChar(exec_cmd, *command_line);
+
+		command_line++;
+	}
+
+	pid = fork();
+	if (pid == -1)
+	{
+		ereport(WARNING,
+				(errmsg("watchdog failed to ping host\"%s\"", hostname),
+				 errdetail("fork() failed. reason: %m")));
+		return -1;
+	}
+	if (pid == 0)
+	{
+		/* CHILD */
+		int	fd;
+
+		on_exit_reset();
+		SetProcessGlobalVariables(PT_WATCHDOG_UTILITY);
+		if (strlen(exec_cmd->data) != 0)
+			elog(DEBUG1, "trusted_server_command: %s", exec_cmd->data);
+
+		fd = open("/dev/null", O_RDWR);
+		if (fd < 0)
+		{
+			ereport(ERROR,
+					(errmsg("failed to open \"/dev/null\""),
+					 errdetail("%m")));
+		}
+		dup2(fd, 0);
+		dup2(fd, 1);
+		dup2(fd, 2);
+		close(fd);
+
+		if (strlen(exec_cmd->data) != 0)
+		{
+			status = system(exec_cmd->data);
+		}
+		pfree(exec_cmd->data);
+
+		if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
+		{
+			exit(EXIT_FAILURE);
+		}
+		exit(0);
+	}
+
 	return pid;
 }
 
