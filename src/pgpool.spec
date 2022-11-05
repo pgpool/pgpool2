@@ -1,10 +1,10 @@
 # How to build RPM:
 #
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 93" --define="pghome /usr/pgsql-9.3" --define="dist .rhel6" --define="pgsql_ver 93"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 93" --define="pghome /usr/pgsql-9.3" --define="dist .rhel7" --define="pgsql_ver 93"
 #
 # OR
 #
-#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 11" --define="pghome /usr/pgsql-11" --define="dist .rhel6" --define="pgsql_ver 110"
+#   rpmbuild -ba pgpool.spec --define="pgpool_version 3.4.0" --define="pg_version 11" --define="pghome /usr/pgsql-11" --define="dist .rhel7" --define="pgsql_ver 110"
 #
 # expecting RPM name are:
 #   pgpool-II-pg{pg_version}-{pgpool_version}-{rel}pgdg.rhel{v}.{arch}.rpm
@@ -38,6 +38,8 @@ Source2:        pgpool_rhel6.sysconfig
 Source3:        pgpool.service
 %endif
 Source4:        pgpool_rhel.sysconfig
+Source5:        pgpool_tmpfiles.d
+Source6:        pgpool_sudoers.d
 Patch1:         pgpool-II-head.patch
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
 Patch2:         pgpool_socket_dir.patch
@@ -134,6 +136,25 @@ make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool_adm
 
 install -d %{buildroot}%{_datadir}/%{short_name}
 install -d %{buildroot}%{_sysconfdir}/%{short_name}
+install -d %{buildroot}%{_sysconfdir}/%{short_name}/scripts
+mv %{buildroot}%{_sysconfdir}/%{short_name}/failover.sh.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/failover.sh.sample
+mv %{buildroot}%{_sysconfdir}/%{short_name}/follow_primary.sh.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/follow_primary.sh.sample
+mv %{buildroot}%{_sysconfdir}/%{short_name}/pgpool_remote_start.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/pgpool_remote_start.sample
+mv %{buildroot}%{_sysconfdir}/%{short_name}/recovery_1st_stage.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/recovery_1st_stage.sample
+mv %{buildroot}%{_sysconfdir}/%{short_name}/replication_mode_recovery_1st_stage.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/replication_mode_recovery_1st_stage.sample
+mv %{buildroot}%{_sysconfdir}/%{short_name}/replication_mode_recovery_2nd_stage.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/replication_mode_recovery_2nd_stage.sample
+mv %{buildroot}%{_sysconfdir}/%{short_name}/escalation.sh.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/escalation.sh.sample
+mv %{buildroot}%{_sysconfdir}/%{short_name}/aws_eip_if_cmd.sh.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/aws_eip_if_cmd.sh.sample
+mv %{buildroot}%{_sysconfdir}/%{short_name}/aws_rtb_if_cmd.sh.sample \
+        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/aws_rtb_if_cmd.sh.sample
 cp %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf
 cp %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf
 cp %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf
@@ -145,9 +166,7 @@ install -d %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/pgpool.service
 
 mkdir -p %{buildroot}%{_tmpfilesdir}
-cat > %{buildroot}%{_tmpfilesdir}/%{name}.conf <<EOF
-d %{_varrundir} 0755 postgres postgres -
-EOF
+install -m 0644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/%{name}.conf
 %else
 install -d %{buildroot}%{_initrddir}
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
@@ -161,6 +180,10 @@ install -d %{buildroot}%{_sysconfdir}/sysconfig
 %else
     install -m 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/sysconfig/pgpool
 %endif
+
+# install sudoers.d to allow postgres user to run ip and arping with root privileges without a password
+install -d %{buildroot}%{_sysconfdir}/sudoers.d
+install -m 0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/sudoers.d/pgpool
 
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
@@ -184,8 +207,6 @@ useradd -M -g postgres -o -r -d /var/lib/pgsql -s /bin/bash \
 
 %post
 /sbin/ldconfig
-echo 'postgres ALL=NOPASSWD: /sbin/ip' | sudo EDITOR='tee -a' visudo >/dev/null 2>&1 || :
-echo 'postgres ALL=NOPASSWD: /usr/sbin/arping' | sudo EDITOR='tee -a' visudo >/dev/null 2>&1 || :
 
 %if %{systemd_enabled}
 %systemd_post pgpool.service
@@ -258,6 +279,7 @@ fi
 %if %{systemd_enabled}
 %ghost %{_varrundir}
 %{_tmpfilesdir}/%{name}.conf
+%{_sysconfdir}/sudoers.d/pgpool
 %{_unitdir}/pgpool.service
 %else
 %{_initrddir}/pgpool
@@ -268,13 +290,15 @@ fi
 %{_sysconfdir}/%{short_name}/pcp.conf.sample
 %{_sysconfdir}/%{short_name}/pool_hba.conf.sample
 %defattr(755,postgres,postgres,-)
-%{_sysconfdir}/%{short_name}/failover.sh.sample
-%{_sysconfdir}/%{short_name}/follow_primary.sh.sample
-%{_sysconfdir}/%{short_name}/pgpool_remote_start.sample
-%{_sysconfdir}/%{short_name}/recovery_1st_stage.sample
-%{_sysconfdir}/%{short_name}/replication_mode_recovery_1st_stage.sample
-%{_sysconfdir}/%{short_name}/replication_mode_recovery_2nd_stage.sample
-%{_sysconfdir}/%{short_name}/escalation.sh.sample
+%{_sysconfdir}/%{short_name}/scripts/failover.sh.sample
+%{_sysconfdir}/%{short_name}/scripts/follow_primary.sh.sample
+%{_sysconfdir}/%{short_name}/scripts/pgpool_remote_start.sample
+%{_sysconfdir}/%{short_name}/scripts/recovery_1st_stage.sample
+%{_sysconfdir}/%{short_name}/scripts/replication_mode_recovery_1st_stage.sample
+%{_sysconfdir}/%{short_name}/scripts/replication_mode_recovery_2nd_stage.sample
+%{_sysconfdir}/%{short_name}/scripts/escalation.sh.sample
+%{_sysconfdir}/%{short_name}/scripts/aws_eip_if_cmd.sh.sample
+%{_sysconfdir}/%{short_name}/scripts/aws_rtb_if_cmd.sh.sample
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/*.conf
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pool_passwd
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pgpool_node_id
@@ -329,6 +353,11 @@ fi
 %endif
 
 %changelog
+* Wed Nov 2 2022 Bo Peng <pengbo@sraoss.co.jp> 4.4.0
+- Change /lib/tmpfiles.d/ file from /var/run to /run
+- Install /etc/sudoers.d/pgpool
+- Add scripts aws_eip_if_cmd.sh.sample and aws_rtb_if_cmd.sh.sample
+
 * Thu Sep 10 2020 Bo Peng <pengbo@sraoss.co.jp> 4.2.0
 - Update to 4.2
 
