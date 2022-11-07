@@ -72,9 +72,12 @@ fi
 # Synchronize Standby with the new Primary.
 logger -i -p local1.info follow_master.sh: pg_rewind for node $NODE_ID
 
+# Run checkpoint command to update control file before running pg_rewind
+${PGHOME}/bin/psql -h ${NEW_MASTER_NODE_HOST} -p ${NEW_MASTER_NODE_PORT} postgres -c "checkpoint;"
+
 # Create replication slot "${REPL_SLOT_NAME}"
-${PGHOME}/bin/psql -h ${NEW_MASTER_NODE_HOST} -p ${NEW_MASTER_NODE_PORT} \
-    -c "SELECT pg_create_physical_replication_slot('${REPL_SLOT_NAME}');"  >/dev/null 2>&1
+${PGHOME}/bin/psql -h ${NEW_MASTER_NODE_HOST} -p ${NEW_MASTER_NODE_PORT} postgres \
+    -c "SELECT pg_create_physical_replication_slot('${REPL_SLOT_NAME}');" >/dev/null 2>&1
 
 if [ $? -ne 0 ]; then
     logger -i -p local1.error follow_master.sh: create replication slot \"${REPL_SLOT_NAME}\" failed. You may need to create replication slot manually.
@@ -88,7 +91,7 @@ ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@${NODE_HOST} "
 
     ${PGHOME}/bin/pg_rewind -D ${NODE_PGDATA} --source-server=\"user=postgres host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT}\"
 
-    rm -rf ${NODE_PGDATA}/pg_replslot/*
+    [ -d \"${NODE_PGDATA}\" ] && rm -rf ${NODE_PGDATA}/pg_replslot/*
 
     cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT} user=${REPLUSER} application_name=${NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
@@ -117,8 +120,8 @@ if [ $? -ne 0 ]; then
 
         set -o errexit
 
-        rm -rf ${NODE_PGDATA}
-        rm -rf ${ARCHIVEDIR}/*
+        [ -d \"${NODE_PGDATA}\" ] && rm -rf ${NODE_PGDATA}
+        [ -d \"${ARCHIVEDIR}\" ] && rm -rf ${ARCHIVEDIR}/*
         ${PGHOME}/bin/pg_basebackup -h ${NEW_MASTER_NODE_HOST} -U $REPLUSER -p ${NEW_MASTER_NODE_PORT} -D ${NODE_PGDATA} -X stream
 
         cat > ${RECOVERYCONF} << EOT
@@ -139,9 +142,8 @@ EOT
 
     if [ $? -ne 0 ]; then
         # drop replication slot
-        ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@${NEW_MASTER_NODE_HOST} "
-            ${PGHOME}/bin/psql -p ${NEW_MASTER_NODE_PORT} -c \"SELECT pg_drop_replication_slot('${REPL_SLOT_NAME}')\"
-        "
+        ${PGHOME}/bin/psql -h ${NEW_MASTER_NODE_HOST} -p ${NEW_MASTER_NODE_PORT} postgres \
+            -c "SELECT pg_drop_replication_slot('${REPL_SLOT_NAME}');" >/dev/null 2>&1
 
         logger -i -p local1.error follow_master.sh: end: pg_basebackup failed
         exit 1
@@ -166,8 +168,8 @@ if [ $? -eq 0 ]; then
 else
 
     # If start Standby failed, drop replication slot "${REPL_SLOT_NAME}"
-    ${PGHOME}/bin/psql -h ${NEW_MASTER_NODE_HOST} -p ${NEW_MASTER_NODE_PORT} \
-        -c "SELECT pg_drop_replication_slot('${REPL_SLOT_NAME}');"  >/dev/null 2>&1
+    ${PGHOME}/bin/psql -h ${NEW_MASTER_NODE_HOST} -p ${NEW_MASTER_NODE_PORT} postgres \
+        -c "SELECT pg_drop_replication_slot('${REPL_SLOT_NAME}');" >/dev/null 2>&1
 
     if [ $? -ne 0 ]; then
         logger -i -p local1.error follow_master.sh: drop replication slot \"${REPL_SLOT_NAME}\" failed. You may need to drop replication slot manually.
