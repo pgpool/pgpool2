@@ -344,7 +344,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 # suggested by libtoolize
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = src
-DIST_SUBDIRS = src doc doc.ja doc.zh-cn
+DIST_SUBDIRS = src doc doc.ja
 all: all-recursive
 
 .SUFFIXES:
@@ -804,7 +804,7 @@ uninstall-am:
 
 
 docs:
-	$(MAKE) -C doc all && $(MAKE) -C doc.ja all && $(MAKE) -C doc.zh-cn all
+	$(MAKE) -C doc all && $(MAKE) -C doc.ja all && $(MAKE)
 .PHONY: docs
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
