@@ -124,7 +124,8 @@ typedef enum
 	WAIT_FOR_CONNECT,
 	COMMAND_EXECUTE,
 	IDLE,
-	IDLE_IN_TRANS
+	IDLE_IN_TRANS,
+	CONNECTING
 }			ProcessStatus;
 
 /*
@@ -176,10 +177,13 @@ typedef struct
 										 * this process */
 	int			client_connection_count;	/* how many times clients used this process */
 	ProcessStatus	status;
-	char		need_to_restart;	/* If non 0, exit this child process as
+	bool		need_to_restart;	/* If non 0, exit this child process as
 									 * soon as current session ends. Typical
 									 * case this flag being set is failback a
 									 * node in streaming replication mode. */
+	bool		exit_if_idle;
+	int		pooled_connections; /* Total number of pooled connections
+									  * by this child */
 }			ProcessInfo;
 
 /*

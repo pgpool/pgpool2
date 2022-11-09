@@ -471,7 +471,7 @@ pool_backend_timer(void)
 			nearest = 1;
 		pool_alarm(pool_backend_timer_handler, nearest);
 	}
-
+	update_pooled_connection_count();
 	POOL_SETMASK(&UnBlockSig);
 }
 
@@ -1065,4 +1065,17 @@ close_all_backend_connections(void)
 	}
 
 	POOL_SETMASK(&oldmask);
+}
+
+void update_pooled_connection_count(void)
+{
+	int i;
+	int count = 0;
+	POOL_CONNECTION_POOL *p = pool_connection_pool;
+	for (i = 0; i < pool_config->max_pool; i++)
+	{
+		if (MAIN_CONNECTION(p))
+			count++;
+	}
+	pool_get_my_process_info()->pooled_connections = count;
 }

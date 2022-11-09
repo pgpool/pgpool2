@@ -236,6 +236,21 @@ static const struct config_enum_entry backend_clustering_mode_options[] = {
 	{NULL, 0, false}
 };
 
+static const struct config_enum_entry process_management_mode_options[] = {
+	{"static", PM_STATIC, false},
+	{"dynamic", PM_DYNAMIC, false},
+
+	{NULL, 0, false}
+};
+
+static const struct config_enum_entry process_management_strategy_options[] = {
+	{"aggressive", PM_STRATEGY_AGGRESSIVE, false},
+	{"gentle", PM_STRATEGY_GENTLE, false},
+	{"lazy", PM_STRATEGY_LAZY, false},
+
+	{NULL, 0, false}
+};
+
 static const struct config_enum_entry log_standby_delay_options[] = {
 	{"always", LSD_ALWAYS, false},
 	{"if_over_threshold", LSD_OVER_THRESHOLD, false},
@@ -1896,11 +1911,33 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"num_init_children", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
-			"Number of children pre-forked for client connections.",
+			"Maximim number of child processs to handle client connections.",
 			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.num_init_children,
 		32,
+		1, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"min_spare_children", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
+			"Minimum number of spare child processes.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.min_spare_children,
+		5,
+		1, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"max_spare_children", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
+			"Maximum number of spare child processes.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.max_spare_children,
+		10,
 		1, INT_MAX,
 		NULL, NULL, NULL
 	},
@@ -2246,6 +2283,27 @@ static struct config_enum ConfigureNamesEnum[] =
 		NULL, NULL, NULL, NULL
 	},
 
+	{
+		{"process_management_mode", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
+			"child process management mode.",
+			CONFIG_VAR_TYPE_ENUM, false, 0
+		},
+		(int *) &g_pool_config.process_management,
+		PM_STATIC,
+		process_management_mode_options,
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"process_management_strategy", CFGCXT_RELOAD, CONNECTION_POOL_CONFIG,
+			"child process management strategy.",
+			CONFIG_VAR_TYPE_ENUM, false, 0
+		},
+		(int *) &g_pool_config.process_management_strategy,
+		PM_STRATEGY_GENTLE,
+		process_management_strategy_options,
+		NULL, NULL, NULL, NULL
+	},
 
 	{
 		{"syslog_facility", CFGCXT_RELOAD, LOGGING_CONFIG,
@@ -4861,6 +4919,14 @@ config_post_processor(ConfigContext context, int elevel)
 		pool_config->failover_when_quorum_exists = false;
 		ereport(elevel,
 				(errmsg("invalid configuration, failover_when_quorum_exists is not allowed in native replication mode")));
+		return false;
+	}
+
+	if (pool_config->min_spare_children >= pool_config->max_spare_children)
+	{
+		ereport(elevel,
+				(errmsg("invalid configuration, max_spare_children:%d must be greater than max_spare_children:%d",
+				pool_config->max_spare_children,pool_config->min_spare_children)));
 		return false;
 	}
 	return true;

@@ -335,10 +335,6 @@ get_config(int *nrows)
 	/* POOLS */
 
 	/* - Pool size -  */
-	StrNCpy(status[i].name, "num_init_children", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->num_init_children);
-	StrNCpy(status[i].desc, "# of children initially pre-forked", POOLCONFIG_MAXDESCLEN);
-	i++;
 
 	StrNCpy(status[i].name, "listen_backlog_multiplier", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->listen_backlog_multiplier);
@@ -358,6 +354,21 @@ get_config(int *nrows)
 	StrNCpy(status[i].name, "max_pool", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->max_pool);
 	StrNCpy(status[i].desc, "max # of connection pool per child", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "num_init_children", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->num_init_children);
+	StrNCpy(status[i].desc, "# of children initially pre-forked", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "min_spare_children", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->min_spare_children);
+	StrNCpy(status[i].desc, "min # of spare children waitting for connection", POOLCONFIG_MAXDESCLEN);
+	i++;
+
+	StrNCpy(status[i].name, "max_spare_children", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->max_spare_children);
+	StrNCpy(status[i].desc, "max # of spare children waitting for connection", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* - Life time - */
@@ -1622,6 +1633,9 @@ get_pools(int *nrows)
 					case IDLE_IN_TRANS:
 						StrNCpy(pools[lines].status, "Idle in transaction", POOLCONFIG_MAXPROCESSSTATUSLEN);
 						break;
+					case CONNECTING:
+						StrNCpy(pools[lines].status, "Connecting", POOLCONFIG_MAXPROCESSSTATUSLEN);
+						break;
 					default:
 						*(pools[lines].status) = '\0';
 				}
@@ -1745,6 +1759,9 @@ get_processes(int *nrows)
 				break;
 			case IDLE_IN_TRANS:
 				StrNCpy(processes[child].status, "Idle in transaction", POOLCONFIG_MAXPROCESSSTATUSLEN);
+				break;
+			case CONNECTING:
+				StrNCpy(processes[child].status, "Connecting", POOLCONFIG_MAXPROCESSSTATUSLEN);
 				break;
 			default:
 				*(processes[child].status) = '\0';

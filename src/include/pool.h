@@ -595,6 +595,7 @@ extern BACKEND_STATUS private_backend_status[MAX_NUM_BACKENDS];
 extern char remote_host[];		/* client host */
 extern char remote_port[];		/* client port */
 
+
 /*
  * public functions
  */

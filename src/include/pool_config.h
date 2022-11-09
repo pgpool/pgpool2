@@ -57,6 +57,19 @@ typedef struct
 	regex_t		regexv;
 }			RegPattern;
 
+typedef enum ProcessManagementModes
+{
+	PM_STATIC = 1,
+	PM_DYNAMIC
+}			ProcessManagementModes;
+
+typedef enum ProcessManagementSstrategies
+{
+	PM_STRATEGY_AGGRESSIVE = 1,
+	PM_STRATEGY_GENTLE,
+	PM_STRATEGY_LAZY
+}			ProcessManagementSstrategies;
+
 typedef enum NativeReplicationSubModes
 {
 	SLONY_MODE = 1,
@@ -203,6 +216,8 @@ typedef struct
 typedef struct
 {
 	ClusteringModes	backend_clustering_mode;	/* Backend clustering mode */
+	ProcessManagementModes	process_management;
+	ProcessManagementSstrategies process_management_strategy;
 	char	   **listen_addresses;	/* hostnames/IP addresses to listen on */
 	int			port;			/* port # to bind */
 	char	   **pcp_listen_addresses;	/* PCP listen address to listen on */
@@ -212,7 +227,10 @@ typedef struct
 	int			unix_socket_permissions;	/* pgpool sockets permissions */
 	char	   *wd_ipc_socket_dir;	/* watchdog command IPC socket directory */
 	char	   *pcp_socket_dir; /* PCP socket directory */
-	int			num_init_children;	/* # of children initially pre-forked */
+	int			num_init_children;	/* Maximum number of child to
+										 * accept connections */
+	int			min_spare_children;		/* Minimum number of idle children */
+	int			max_spare_children;		/* Minimum number of idle children */
 	int			listen_backlog_multiplier;	/* determines the size of the
 											 * connection queue */
 	int			reserved_connections;	/* # of reserved connections */

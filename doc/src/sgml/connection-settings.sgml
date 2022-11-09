@@ -457,6 +457,165 @@
  </sect2>
 </sect1>
 
+<sect1 id="runtime-config-process-management">
+ <title>Process Management</title>
+
+  <para>
+  <variablelist>
+
+   <varlistentry id="guc-process-management-mode" xreflabel="process_management_mode">
+    <term><varname>process_management_mode</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>process_management_mode</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specify the idle process management method for
+      <productname>Pgpool-II</productname> child processes.
+      Valid options:
+      <table id="process-management-mode-table">
+      <title>Possible Process Management Modes</title>
+
+      <tgroup cols="2">
+       <tbody>
+        <row>
+         <entry>Static</entry>
+         <entry>
+          All children are pre-forked at startup.
+         </entry>
+        </row>
+
+       <row>
+         <entry>Dynamic</entry>
+         <entry>child processes are spawned on demand.
+         number of idle child processes at any time depends on
+          min_spare_children and max_spare_children
+         </entry>
+        </row>
+
+       </tbody>
+      </tgroup>
+     </table>
+     </para>
+     <para>
+       Default is Static, that is compatible with pre <emphasis>V4.4</emphasis>.
+     </para>
+
+       <para>
+       <varname>process_management_mode</varname> is not available prior to
+       <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
+      </para>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-process-management-strategy" xreflabel="process_management_strategy">
+    <term><varname>process_management_strategy</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>process_management_strategy</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specify the process management strategy to satisfy spare (idle) processes count
+      Valid options:
+      <table id="process-management-strategy-table">
+      <title>Possible Process Management Strategies</title>
+
+      <tgroup cols="2">
+       <tbody>
+        <row>
+         <entry>Lazy</entry>
+         <entry>With this strategy the scale-down is performed gradually
+         and only gets triggered when excessive spare processes count
+         remains high for more than 5 mins
+         </entry>
+        </row>
+
+       <row>
+         <entry>Gentle</entry>
+         <entry>With this strategy the scale-down is performed gradually
+         and only gets triggered when excessive spare processes count
+         remains high for more than 2 mins
+         </entry>
+        </row>
+
+       <row>
+         <entry>Aggressive</entry>
+         <entry>With this strategy the scale-down is performed aggressively
+         and gets triggered more frequently in case of higher spare processes.
+         This mode uses faster and slightly less smart process selection criteria
+         to identify the child processes that can be serviced to satisfy
+         max_spare_children
+         </entry>
+        </row>
+
+       </tbody>
+      </tgroup>
+     </table>
+     </para>
+     <para>
+       Default is Gentle.
+     </para>
+          <para>
+       <varname>process_management_mode</varname> is not available prior to
+       <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
+      </para>
+
+    </listitem>
+   </varlistentry>
+
+ <varlistentry id="guc-min-spare-children" xreflabel="min_spare_children">
+    <term><varname>min_spare_children</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>min_spare_children</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specify the minimum number of spare (idle) child processes to keep.
+      If the idle process count falls below min_spare_children,
+      Pgpool-II will spawn new child processes unless it hits the total allowed child process ceiling (num_init_children)
+      Default value is 5.
+     </para>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
+     <para>
+      This parameter is only applicable for <emphasis>dynamic</emphasis> process management mode.
+     </para>
+    </listitem>
+   </varlistentry>
+
+ <varlistentry id="guc-max-spare-children" xreflabel="max_spare_children">
+    <term><varname>max_spare_children</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>max_spare_children</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specify the maximum number of spare (idle) child processes to keep.
+       If the idle process count increases from max_spare_children, Pgpool-II will kill the excessive child processes.
+      Default value is 10.
+     </para>
+     <para>
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+     </para>
+     <para>
+      This parameter is only applicable for <emphasis>dynamic</emphasis> process management mode.
+     </para>
+    </listitem>
+   </varlistentry>
+
+    </variablelist>
+
+ </para>
+</sect1>
+
 <sect1 id="runtime-config-running-mode">
  <title>Clustering mode</title>
  <para>

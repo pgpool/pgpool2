@@ -82,6 +82,7 @@ static bool connect_using_existing_connection(POOL_CONNECTION * frontend,
 								  POOL_CONNECTION_POOL * backend,
 								  StartupPacket *sp);
 static void check_restart_request(void);
+static void check_exit_request(void);
 static void enable_authentication_timeout(void);
 static void disable_authentication_timeout(void);
 static int	wait_for_new_connections(int *fds, SockAddr *saddr);
@@ -300,7 +301,7 @@ do_child(int *fds)
 			pool_close(child_frontend);
 			child_frontend = NULL;
 		}
-
+		update_pooled_connection_count();
 		MemoryContextSwitchTo(TopMemoryContext);
 		FlushErrorState();
 	}
@@ -325,6 +326,7 @@ do_child(int *fds)
 		/* pgpool stop request already sent? */
 		check_stop_request();
 		check_restart_request();
+		check_exit_request();
 		accepted = 0;
 		/* Destroy session context for just in case... */
 		pool_session_context_destroy();
@@ -344,6 +346,10 @@ do_child(int *fds)
 
 		if (front_end_fd == RETRY)
 			continue;
+
+		set_process_status(CONNECTING);
+		/* Reset any exit if idle request even if it's pending */
+		pool_get_my_process_info()->exit_if_idle = false;
 
 		con_count = connection_count_up();
 
@@ -459,7 +465,7 @@ do_child(int *fds)
 
 		/* Mark this connection pool is not connected from frontend */
 		pool_coninfo_unset_frontend_connected(pool_get_process_context()->proc_id, pool_pool_index());
-
+		update_pooled_connection_count();
 		accepted = 0;
 		connection_count_down();
 		if (pool_config->log_disconnections)
@@ -482,6 +488,8 @@ do_child(int *fds)
 	}
 	child_exit(POOL_EXIT_NO_RESTART);
 }
+
+
 
 /* -------------------------------------------------------------------
  * private functions
@@ -1433,6 +1441,23 @@ pool_initialize_private_backend_status(void)
 }
 
 static void
+check_exit_request(void)
+{
+	/*
+	 * Check if exit request is set because of spare children management.
+	 */
+	if (pool_get_my_process_info()->exit_if_idle)
+	{
+		ereport(LOG,
+				(errmsg("Exit flag set"),
+				 errdetail("Exiting myself")));
+
+		pool_get_my_process_info()->exit_if_idle = 0;
+		child_exit(POOL_EXIT_NO_RESTART);
+	}
+}
+
+static void
 check_restart_request(void)
 {
 	/*
@@ -1445,7 +1470,7 @@ check_restart_request(void)
 				(errmsg("failover or failback event detected"),
 				 errdetail("restarting myself")));
 
-		pool_get_my_process_info()->need_to_restart = 0;
+		pool_get_my_process_info()->need_to_restart = false;
 		child_exit(POOL_EXIT_AND_RESTART);
 	}
 }

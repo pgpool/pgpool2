@@ -48,8 +48,6 @@ get_pool_config_from_json(char *json_data, int data_len)
 	if (root == NULL || root->type != json_object)
 		goto ERROR_EXIT;
 
-	if (json_get_int_value_for_key(root, "num_init_children", &config->num_init_children))
-		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "listen_backlog_multiplier", &config->listen_backlog_multiplier))
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "child_life_time", &config->child_life_time))
@@ -61,6 +59,16 @@ get_pool_config_from_json(char *json_data, int data_len)
 	if (json_get_int_value_for_key(root, "client_idle_limit", &config->client_idle_limit))
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "max_pool", &config->max_pool))
+		goto ERROR_EXIT;
+	if (json_get_int_value_for_key(root, "num_init_children", &config->num_init_children))
+		goto ERROR_EXIT;
+	if (json_get_int_value_for_key(root, "min_spare_children", &config->min_spare_children))
+		goto ERROR_EXIT;
+	if (json_get_int_value_for_key(root, "max_spare_children", &config->max_spare_children))
+		goto ERROR_EXIT;
+	if (json_get_int_value_for_key(root, "process_management_mode", (int*)&config->process_management))
+		goto ERROR_EXIT;
+	if (json_get_int_value_for_key(root, "process_management_strategy", (int*)&config->process_management_strategy))
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "replication_mode", &config->replication_mode))
 		goto ERROR_EXIT;
@@ -174,13 +182,17 @@ get_pool_config_json(void)
 
 	JsonNode   *jNode = jw_create_with_object(true);
 
-	jw_put_int(jNode, "num_init_children", pool_config->num_init_children);
 	jw_put_int(jNode, "listen_backlog_multiplier", pool_config->listen_backlog_multiplier);
 	jw_put_int(jNode, "child_life_time", pool_config->child_life_time);
 	jw_put_int(jNode, "connection_life_time", pool_config->connection_life_time);
 	jw_put_int(jNode, "child_max_connections", pool_config->child_max_connections);
 	jw_put_int(jNode, "client_idle_limit", pool_config->client_idle_limit);
 	jw_put_int(jNode, "max_pool", pool_config->max_pool);
+	jw_put_int(jNode, "num_init_children", pool_config->num_init_children);
+	jw_put_int(jNode, "min_spare_children", pool_config->min_spare_children);
+	jw_put_int(jNode, "max_spare_children", pool_config->max_spare_children);
+	jw_put_int(jNode, "process_management_mode", pool_config->process_management);
+	jw_put_int(jNode, "process_management_strategy", pool_config->process_management_strategy);
 	jw_put_bool(jNode, "replication_mode", pool_config->replication_mode);
 	jw_put_bool(jNode, "enable_pool_hba", pool_config->enable_pool_hba);
 	jw_put_bool(jNode, "load_balance_mode", pool_config->load_balance_mode);

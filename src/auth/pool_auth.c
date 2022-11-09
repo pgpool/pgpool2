@@ -21,6 +21,7 @@
 */
 
 #include "pool.h"
+#include <unistd.h>
 #include "context/pool_session_context.h"
 #include "protocol/pool_process_query.h"
 #include "protocol/pool_proto_modules.h"
@@ -34,11 +35,11 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "auth/md5.h"
+#include <unistd.h>
 
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
 #endif
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

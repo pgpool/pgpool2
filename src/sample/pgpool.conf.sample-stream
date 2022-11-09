@@ -170,9 +170,45 @@ backend_clustering_mode = 'streaming_replication'
 
 # - Concurrent session and pool size -
 
+#process_management_mode = static
+                                   # process management mode for child processes
+                                   # Valid options:
+                                   # static: all children are pre-forked at startup
+                                   # dynamic: child processes are spawned on demand.
+                                   #      number of idle child processes at any time are
+                                   #      configured by min_spare_children and max_spare_children
+
+#process_management_strategy = gentle
+                                   # process management strategy to satisfy spare processes
+                                   # Valid options:
+                                   #
+                                   #    lazy: In this mode, the scale-down is performed gradually
+                                   #     and only gets triggered when excessive spare processes count
+                                   #     remains high for more than 5 mins
+                                   #
+                                   #    gentle: In this mode, the scale-down is performed gradually
+                                   #     and only gets triggered when excessive spare processes count
+                                   #     remains high for more than 2 mins
+                                   #
+                                   #    aggressive: In this mode, the scale-down is performed aggressively
+                                   #     and gets triggered more frequently in case of higher spare processes.
+                                   #     This mode uses faster and slightly less smart process selection criteria
+                                   #     to identify the child processes that can be serviced to satisfy
+                                   #     max_spare_children
+                                   #
+                                   # (Only applicable for dynamic process management mode)
+
 #num_init_children = 32
-                                   # Number of concurrent sessions allowed
+                                   # Maximum Number of concurrent sessions allowed
                                    # (change requires restart)
+#min_spare_children = 5
+                                   # Minimum number of spare child processes waiting for connection
+                                   # (Only applicable for dynamic process management mode)
+
+#max_spare_children = 10
+                                   # Maximum number of idle child processes waiting for connection
+                                   # (Only applicable for dynamic process management mode)
+
 #max_pool = 4
                                    # Number of connection pool caches per connection
                                    # (change requires restart)

@@ -37,4 +37,5 @@ extern int	connect_inet_domain_socket_by_port(char *host, int port, bool retry);
 extern int	connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry);
 extern int	pool_pool_index(void);
 extern void close_all_backend_connections(void);
+extern void update_pooled_connection_count(void);
 #endif /* pool_connection_pool_h */

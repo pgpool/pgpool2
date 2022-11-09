@@ -42,5 +42,4 @@ extern void register_backend_state_sync_req_interrupt(void);
 extern void register_inform_quarantine_nodes_req(void);
 extern bool register_node_operation_request(POOL_REQUEST_KIND kind,
 											int *node_id_set, int count, unsigned char flags);
-
 #endif /* pool_internal_comms_h */

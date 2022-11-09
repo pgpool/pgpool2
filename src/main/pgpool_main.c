@@ -117,6 +117,8 @@ typedef struct User1SignalSlot
 #endif
 
 #define PGPOOLMAXLITSENQUEUELENGTH 10000
+#define MAX_ONE_SHOT_KILLS 8
+
 
 #define UNIXSOCK_PATH_BUFLEN sizeof(((struct sockaddr_un *) NULL)->sun_path)
 
@@ -198,12 +200,16 @@ static void exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context);
 
 static void check_requests(void);
 static void print_signal_member(sigset_t *sig);
+static void service_child_processes(void);
+static int select_victim_processes(int *process_info_idxs, int count);
 
 static struct sockaddr_un *un_addrs;	/* unix domain socket path */
 static struct sockaddr_un pcp_un_addr;	/* unix domain socket path for PCP */
 ProcessInfo *process_info = NULL;	/* Per child info table on shmem */
 volatile	User1SignalSlot *user1SignalSlot = NULL;	/* User 1 signal slot on
 														 * shmem */
+int		current_child_process_count;
+
 struct timeval random_start_time;
 
 /*
@@ -515,15 +521,24 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	 * is harmless.
 	 */
 	POOL_SETMASK(&BlockSig);
+
+	if (pool_config->process_management == PM_DYNAMIC)
+		current_child_process_count = pool_config->max_spare_children;
+	else
+		current_child_process_count = pool_config->num_init_children;
+
 	/* fork the children */
-	for (i = 0; i < pool_config->num_init_children; i++)
+	for (i = 0; i < current_child_process_count; i++)
 	{
-		process_info[i].pid = fork_a_child(fds, i);
 		process_info[i].start_time = time(NULL);
 		process_info[i].client_connection_count = 0;
 		process_info[i].status = WAIT_FOR_CONNECT;
 		process_info[i].connected = 0;
 		process_info[i].wait_for_connect = 0;
+		process_info[i].pooled_connections = 0;
+		process_info[i].need_to_restart = false;
+		process_info[i].exit_if_idle = false;
+		process_info[i].pid = fork_a_child(fds, i);
 	}
 
 	/* create pipe for delivering event */
@@ -656,11 +671,15 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		for (;;)
 		{
 			int			r;
-			struct timeval t = {3, 0};
+			struct timeval t = {2, 0};
 
 			POOL_SETMASK(&UnBlockSig);
 			r = pool_pause(&t);
 			POOL_SETMASK(&BlockSig);
+
+			if (pool_config->process_management == PM_DYNAMIC)
+				service_child_processes();
+
 			if (r > 0)
 				break;
 		}
@@ -1958,7 +1977,8 @@ reaper(void)
 				{
 					found = true;
 					/* if found, fork a new child */
-					if (!switching && !exiting && restart_child)
+					if (!switching && !exiting && restart_child &&
+						pool_config->process_management != PM_DYNAMIC)
 					{
 						process_info[i].pid = fork_a_child(fds, i);
 						process_info[i].start_time = time(NULL);
@@ -1969,7 +1989,10 @@ reaper(void)
 						process_info[i].wait_for_connect = 0;
 					}
 					else
+					{
+						current_child_process_count--;
 						process_info[i].pid = 0;
+					}
 					break;
 				}
 			}
@@ -2050,12 +2073,25 @@ int *
 pool_get_process_list(int *array_size)
 {
 	int		   *array;
+	int			cnt = 0;
 	int			i;
 
-	*array_size = pool_config->num_init_children;
+	for (i=0;i < pool_config->num_init_children;i++)
+	{
+		if (process_info[i].pid != 0)
+			cnt++;
+	}
+	*array_size = cnt;
+	cnt = 0;
 	array = palloc0(*array_size * sizeof(int));
-	for (i = 0; i < *array_size; i++)
-		array[i] = process_info[i].pid;
+	for (i = 0; i < pool_config->num_init_children || cnt < *array_size; i++)
+	{
+		if (process_info[i].pid != 0)
+		{
+			array[cnt] = process_info[i].pid;
+			cnt++;
+		}
+	}
 
 	return array;
 }
@@ -2977,7 +3013,10 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 
 	process_info = (ProcessInfo *)pool_shared_memory_segment_get_chunk(pool_config->num_init_children * (sizeof(ProcessInfo)));
 	for (i = 0; i < pool_config->num_init_children; i++)
+	{
 		process_info[i].connection_info = pool_coninfo(i, 0, 0);
+		process_info[i].pid = 0;
+	}
 
 	user1SignalSlot = (User1SignalSlot *)pool_shared_memory_segment_get_chunk(sizeof(User1SignalSlot));
 
@@ -3734,6 +3773,7 @@ sync_backend_from_watchdog(void)
 					process_info[i].status = WAIT_FOR_CONNECT;
 					process_info[i].connected = 0;
 					process_info[i].wait_for_connect = 0;
+					process_info[i].pooled_connections = 0;
 				}
 			}
 			else
@@ -3749,7 +3789,8 @@ sync_backend_from_watchdog(void)
 		 */
 		for (i = 0; i < pool_config->num_init_children; i++)
 		{
-			process_info[i].need_to_restart = 1;
+			if (process_info[i].pid)
+				process_info[i].need_to_restart = 1;
 		}
 	}
 
@@ -4598,6 +4639,8 @@ exec_child_restart(FAILOVER_CONTEXT *failover_context, int node_id)
 					process_info[i].status = WAIT_FOR_CONNECT;
 					process_info[i].connected = 0;
 					process_info[i].wait_for_connect = 0;
+					process_info[i].pooled_connections = 0;
+
 				}
 			}
 			else
@@ -4889,4 +4932,181 @@ void print_signal_member(sigset_t *sig)
 	if (sigismember(sig, SIGTERM))
 		ereport(LOG,
 				(errmsg("SIGTERM is member")));
+}
+
+/*
+* Function does the house keeping of spare child processes
+*/
+static void
+service_child_processes(void)
+{
+	int connected_children = Req_info->conn_counter;
+	int idle_children = current_child_process_count - connected_children;
+	static int high_load_counter = 0;
+	ereport(DEBUG2,
+		(errmsg("current_children_count = %d idle_children = %d connected_children = %d high_load_counter = %d",
+						current_child_process_count, idle_children, connected_children, high_load_counter)));
+	if (idle_children > pool_config->max_spare_children)
+	{
+		int ki;
+		int victim_count;
+		int kill_process_info_idxs[MAX_ONE_SHOT_KILLS];
+		int kill_count = idle_children - pool_config->max_spare_children;
+		int cycle_skip_count_before_scale_down;
+		int cycle_skip_between_scale_down;
+		int one_shot_kill_count;
+
+		switch (pool_config->process_management_strategy)
+		{
+		case PM_STRATEGY_AGGRESSIVE:
+			cycle_skip_count_before_scale_down = 25; /* roughly 50 seconds */
+			cycle_skip_between_scale_down = 2;
+			one_shot_kill_count = MAX_ONE_SHOT_KILLS;
+			break;
+
+		case PM_STRATEGY_LAZY:
+			cycle_skip_count_before_scale_down = 150; /* roughly 300 seconds */
+			cycle_skip_between_scale_down = 10;
+			one_shot_kill_count = 3;
+			break;
+
+		case PM_STRATEGY_GENTLE:
+			cycle_skip_count_before_scale_down = 60; /* roughly 120 seconds */
+			cycle_skip_between_scale_down = 5;
+			one_shot_kill_count = 3;
+			break;
+
+		default:
+			/* should never come here, but if we do use gentle counts*/
+			cycle_skip_count_before_scale_down = 60; /* roughly 120 seconds */
+			cycle_skip_between_scale_down = 5;
+			one_shot_kill_count = 3;
+			break;
+		}
+
+		/* Do not scale down too quickly */
+		if (++high_load_counter < cycle_skip_count_before_scale_down || high_load_counter % cycle_skip_between_scale_down)
+			return;
+
+		memset(kill_process_info_idxs, -1 ,sizeof(kill_process_info_idxs));
+
+		if (kill_count > one_shot_kill_count)
+			kill_count = one_shot_kill_count;
+
+		victim_count = select_victim_processes(kill_process_info_idxs, kill_count);
+
+		for (ki = 0; ki < victim_count; ki++)
+		{
+			int index = kill_process_info_idxs[ki];
+			if (index >=0)
+			{
+				if (process_info[index].pid && process_info[index].status == WAIT_FOR_CONNECT)
+				{
+					ereport(DEBUG1,
+					(errmsg("asking child process with pid:%d to kill itself to satisfy max_spare_children",
+							process_info[index].pid),
+							errdetail("child process has %d pooled connections",process_info[index].pooled_connections)));
+					process_info[index].exit_if_idle = true;
+					kill(process_info[index].pid, SIGUSR2);
+				}
+			}
+		}
+	}
+	else
+	{
+		/* Reset the high load counter */
+		high_load_counter = 0;
+		/*See if we need to spawn new children */
+		if (idle_children < pool_config->min_spare_children)
+		{
+			int i;
+			int spawned = 0;
+			int new_spawn_no = pool_config->min_spare_children - idle_children;
+			/* Add 25% of max_spare_children */
+			new_spawn_no += pool_config->max_spare_children / 4;
+			if (new_spawn_no + current_child_process_count > pool_config->num_init_children)
+			{
+				ereport(LOG,
+					(errmsg("we have hit the ceiling, spawning %d child(ren)",
+									pool_config->num_init_children - current_child_process_count)));
+				new_spawn_no = pool_config->num_init_children - current_child_process_count;
+			}
+			if (new_spawn_no <= 0)
+				return;
+			for (i = 0; i < pool_config->num_init_children; i++)
+			{
+				if (process_info[i].pid == 0)
+				{
+					process_info[i].start_time = time(NULL);
+					process_info[i].client_connection_count = 0;
+					process_info[i].status = WAIT_FOR_CONNECT;
+					process_info[i].connected = 0;
+					process_info[i].wait_for_connect = 0;
+					process_info[i].pooled_connections = 0;
+					process_info[i].need_to_restart = 0;
+					process_info[i].exit_if_idle = false;
+					process_info[i].pid = fork_a_child(fds, i);
+
+					current_child_process_count++;
+					if (++spawned >= new_spawn_no)
+						break;
+				}
+			}
+		}
+	}
+}
+
+/*
+ * Function selects the child processes that can be killed based.
+ * selection criteria is to select the processes with minimum number of
+ * pooled connections.
+ * Returns the total number of identified process and fills the proc_info_arr
+ * with the victim children process_info index
+ */
+static int
+select_victim_processes(int *process_info_idxs, int count)
+{
+		int i, ki;
+		bool found_enough = false;
+		int selected_count = 0;
+
+		if (count <= 0)
+			return 0;
+
+		for (i = 0; i < pool_config->num_init_children; i++)
+		{
+			/* Only the child process in waiting for connect can be terminated */
+			if (process_info[i].pid && process_info[i].status == WAIT_FOR_CONNECT)
+			{
+				if (selected_count < count)
+				{
+					process_info_idxs[selected_count++] = i;
+				}
+				else
+				{
+					found_enough = true;
+					/* we don't bother selecting the child having least pooled connection with
+					 * aggressive strategy
+					 */
+					if (pool_config->process_management_strategy != PM_STRATEGY_AGGRESSIVE)
+					{
+						for (ki = 0; ki < count; ki++)
+						{
+							int old_index = process_info_idxs[ki];
+							if (old_index < 0 || process_info[old_index].pooled_connections > process_info[i].pooled_connections)
+							{
+								process_info_idxs[ki] = i;
+								found_enough = false;
+								break;
+							}
+							if (process_info[old_index].pooled_connections)
+								found_enough = false;
+						}
+					}
+				}
+			}
+			if (found_enough)
+				break;
+		}
+	return selected_count;
 }
