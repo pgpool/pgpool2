@@ -12,11 +12,12 @@
   <title>Overview</title>
   <para>
    Many enhancements are added to this version for easier
-   configuration and administration. Streaming replication delay can
-   be controlled by time, rather than WAL
+   configuration and administration. New dynamic spare process management mode is added.
+   Streaming replication delay can be controlled by time, rather than WAL
    bytes. <productname>Pgpool-II</productname> and PCP's listen
    addresses accept multiple addresses. Full configuration of Unix
    socket directory is now possible.
+   Allow to customize the command used by <varname>trusted_servers</varname> for checking upstream connection.
    New <productname>PostgreSQL</productname> 15 <literal>SQL</literal>
    parser is imported. Performance is also improved in query cache.
   </para>
@@ -28,12 +29,19 @@
   <itemizedlist>
    <listitem>
     <para>
+     Add new dynamic spare process management feature.
+     This feature allows selecting between static and dynamic process management modes.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      Allow to specify replication delay by time in streaming
      replication mode. For this purpose new
      parameter <xref linkend="guc-delay-threshold-by-time"> is
      introduced.
     </para>
-   </listitem>    
+   </listitem>
 
    <listitem>
     <para>
@@ -49,10 +57,17 @@
     <para>
      Allow to use comma separated multiple listen addresses in
      <xref linkend="guc-listen-addresses">
-     and <xref linkend="guc-pcp-listen-addresses">.  They control
+     and <xref linkend="guc-pcp-listen-addresses">. They control
      which interfaces accept connection attempts, which can help
      prevent repeated malicious connection requests on insecure
      network interfaces.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Allow to customize the command used by <xref linkend="guc-trusted-servers"> for checking upstream connection.
+     For this purpose new parameter <xref linkend="guc-trusted-server-command"> is introduced.
     </para>
    </listitem>
 
@@ -79,13 +94,19 @@
 
    <listitem>
     <para>
+     Rename configuration parameter <varname>socket_dir</varname> to <xref linkend="guc-unix-socket-directories">.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      Configuration parameter <literal>delegate_IP</literal> is renamed
      to <xref linkend="guc-delegate-ip">.  For compatibility with the
      old versions, the old paramter delegate_IP can still work.  If
      the old paramter delegate_IP is
      used, <productname>Pgpool-II</productname> will set the value to
      delegate_ip and throw a warning message.
-    </para>     
+    </para>
    </listitem>
 
    <listitem>
@@ -113,9 +134,32 @@
 
    <listitem>
     <!--
-	2022-01-28 [832212b2]
-	2022-01-29 [515860f3]
+	2022-11-09 [ce5e529c]
       -->
+    <para>
+     Add new dynamic spare process management feature. (Jianshen Zhou, Muhammad Usama)
+    </para>
+    <para>
+     This feature allows selecting between static and dynamic process management modes.
+     Static process management is the same as the existing behavior of <productname>Pgpool-II</productname>,
+     where it spawns all child processes at startup. The new Dynamic mode keeps track of idle
+     processes and forks or kills processes to keep this number within
+     the specified boundaries.
+    </para>
+    <para>
+     Four new settings, <xref linkend="guc-process-management-mode">,
+     <xref linkend="guc-process-management-strategy">,
+     <xref linkend="guc-min-spare-children">, and <xref linkend="guc-max-spare-children">
+     are added to configure the process management behavior, while <varname>process_management_strategy</varname>
+     allows selecting between three possible scaling-down strategies.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-01-28 [832212b2]
+    2022-01-29 [515860f3]
+    -->
     <para>
      Allow to specify replication delay by time. (Tatsuo Ishii)
     </para>
@@ -136,7 +180,7 @@
     <para>
      For this purpose new member standby_delay_by_time is added to shared
      memory data Backendinfo to distinguish whether replication delay is
-     measured in bytes (standby_delay_by_time == false) or seconds
+     measured in bytes (standby_delay_by_time = false) or seconds
      (standby_delay_by_time = true). If standby_delay_by_time is true,
      standby_delay is measured in second * 1000000, so that the precision
      is 6 digits after decimal point.
@@ -145,22 +189,39 @@
 
    <listitem>
     <!--
-	2022-07-20 [bc03514b]
-      -->
+    2022-07-20 [bc03514b]
+    -->
     <para>
-     Support for unix_socket_directories and related parameters (Masaya Kawamoto)
+     Support for unix_socket_directories and related parameters. (Masaya Kawamoto)
     </para>
     <para>
-     <xref linkend="guc-unix-socket-directories">, <xref linkend="guc-unix-socket-group">
-     and <xref linkend="guc-unix-socket-permissions"> are added.
+     Rename configuration parameter <varname>socket_dir</varname> to <xref linkend="guc-unix-socket-directories">,
+     and add new configuration parameters <xref linkend="guc-unix-socket-group"> and <xref linkend="guc-unix-socket-permissions">.
     </para>
    </listitem>
 
    <listitem>
     <!--
-	2022-02-23 [fd0efcea]
-	2022-03-05 [9f727c1e]
-      -->
+    2022-11-04 [b7bcf0d7]
+    -->
+    <para>
+     Add <xref linkend="guc-trusted-server-command"> configuration parameter. (Takuma Hoshiai)
+    </para>
+    <para>
+     This feature is able to specify a command that is used by
+     <xref linkend="guc-trusted-servers"> for checking up stream connection.
+     Previously, ping command was only used, and it was hard coded.
+    </para>
+    <para>
+     Default is 'ping -q -c3 %h' which means same as before.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-02-23 [fd0efcea]
+    2022-03-05 [9f727c1e]
+    -->
     <para>
      Implement comma separated multiple listen addresses. (Tatsuo Ishii)
     </para>
@@ -169,10 +230,7 @@
      set single hostname, IP or '*' to
      the <xref linkend="guc-listen-addresses"> parameter. Now we can
      set multiple listen addresses to the parameter
-     as <productname>PostgreSQL</productname> already does.  Note that
-     the documentations for listen_addresses are shamelessly stolen
-     from
-     <productname>PostgreSQL</productname>.
+     as <productname>PostgreSQL</productname> already does.
     </para>
     <para>
      Also <xref linkend="guc-pcp-listen-addresses"> now accepts comma
@@ -182,8 +240,8 @@
 
    <listitem>
     <!--
-	2022-09-22 [424e68c1]
-      -->
+    2022-09-22 [424e68c1]
+    -->
     <para>
      Import PostgreSQL 15's SQL parser.(Bo Peng, Tatsuo Ishii)
     </para>
@@ -197,7 +255,7 @@
        Add new SQL MERGE command
       </para>
       <programlisting>
-       MERGE INTO ... USING ...
+MERGE INTO ... USING ...
       </programlisting>
      </listitem>
 
@@ -206,7 +264,7 @@
        Add new option HEADER MATCH to COPY FROM
       </para>
       <programlisting>
-       COPY ... FROM stdin WITH (HEADER MATCH);
+COPY ... FROM stdin WITH (HEADER MATCH);
       </programlisting>
      </listitem>
 
@@ -215,15 +273,10 @@
        Allow foreign key ON DELETE SET actions
       </para>
       <programlisting>
-       CREATE TABLE t1 (
-          ...
-          FOREIGN KEY (c1, c2) REFERENCES t2 ON DELETE SET NULL (c2)
-       );
-
-       CREATE TABLE t1 (
-          ...
-          FOREIGN KEY (c1, c2) REFERENCES t2 ON DELETE SET NULL (c2)
-       );
+CREATE TABLE t1 (
+...
+FOREIGN KEY (c1, c2) REFERENCES t2 ON DELETE SET NULL (c2)
+);
       </programlisting>
      </listitem>
 
@@ -232,7 +285,7 @@
        Allow SET ACCESS METHOD in ALTER TABLE
       </para>
       <programlisting>
-       ALTER TABLE ... SET ACCESS METHOD ...;
+ALTER TABLE ... SET ACCESS METHOD ...;
       </programlisting>
      </listitem>
 
@@ -241,8 +294,8 @@
 
    <listitem>
     <!--
-	2022-09-19 [dc559c07]
-      -->
+    2022-09-19 [dc559c07]
+    -->
     <para>
      Replace exclusive locking with shared locking in query cache. (Tatsuo Ishii)
     </para>
@@ -269,19 +322,18 @@
 
    <listitem>
     <!--
-	2022-02-10 [7ec74730]
-      -->
+    2022-02-10 [7ec74730]
+    -->
     <para>
      Add validations of <xref linkend="guc-wd-lifecheck-password">
-     and <xref linkend="guc-recovery-password"> format (Masaya
-     Kawamoto)
+     and <xref linkend="guc-recovery-password"> format. (Masaya Kawamoto)
     </para>
    </listitem>
 
    <listitem>
     <!--
-	2022-01-31 [4bcba525]
-      -->
+    2022-01-31 [4bcba525]
+    -->
     <para>
      Enhance parameter status handling. (Tatsuo Ishii)
     </para>
@@ -294,8 +346,8 @@
 
    <listitem>
     <!--
-	2022-01-29 [515860f3]
-      -->
+    2022-01-29 [515860f3]
+    -->
     <para>
      Change the way to obtain replication delay when
      <xref linkend="guc-delay-threshold-by-time"> is
@@ -306,8 +358,6 @@
      simpler and more precise replication delay can be obtained. The only
      downside is pg_stat_replication.replay_lag is only available in
      PostgreSQL 10 or later (previous method can be used in 9.5 or later).
-     I think the down side is not worth the trouble and we should use
-     pg_stat_replication.replay_lag.
     </para>
    </listitem>
 
@@ -331,9 +381,9 @@
 
    <listitem>
     <!--
-	2022-01-18 [d9e4bef8]
-	2022-01-12 [a14fe59a]
-      -->
+    2022-01-18 [d9e4bef8]
+    2022-01-12 [a14fe59a]
+    -->
     <para>
      Enhance pgproto. (Tatsuo Ishii)
     </para>
