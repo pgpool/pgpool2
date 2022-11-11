@@ -480,14 +480,14 @@
       <tgroup cols="2">
        <tbody>
         <row>
-         <entry>Static</entry>
+         <entry>static</entry>
          <entry>
           All children are pre-forked at startup.
          </entry>
         </row>
 
        <row>
-         <entry>Dynamic</entry>
+         <entry>dynamic</entry>
          <entry>child processes are spawned on demand.
          number of idle child processes at any time depends on
           min_spare_children and max_spare_children
@@ -499,7 +499,7 @@
      </table>
      </para>
      <para>
-       Default is Static, that is compatible with pre <emphasis>V4.4</emphasis>.
+       Default is <literal>static</literal>, that is compatible with pre <emphasis>V4.4</emphasis>.
      </para>
 
        <para>
@@ -526,7 +526,7 @@
       <tgroup cols="2">
        <tbody>
         <row>
-         <entry>Lazy</entry>
+         <entry>lazy</entry>
          <entry>With this strategy the scale-down is performed gradually
          and only gets triggered when excessive spare processes count
          remains high for more than 5 mins
@@ -534,7 +534,7 @@
         </row>
 
        <row>
-         <entry>Gentle</entry>
+         <entry>gentle</entry>
          <entry>With this strategy the scale-down is performed gradually
          and only gets triggered when excessive spare processes count
          remains high for more than 2 mins
@@ -542,7 +542,7 @@
         </row>
 
        <row>
-         <entry>Aggressive</entry>
+         <entry>aggressive</entry>
          <entry>With this strategy the scale-down is performed aggressively
          and gets triggered more frequently in case of higher spare processes.
          This mode uses faster and slightly less smart process selection criteria
@@ -556,10 +556,10 @@
      </table>
      </para>
      <para>
-       Default is Gentle.
+       Default is <literal>gentle</literal>.
      </para>
           <para>
-       <varname>process_management_mode</varname> is not available prior to
+       <varname>process_management_strategy</varname> is not available prior to
        <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
       </para>
 
@@ -576,7 +576,7 @@
      <para>
       Specify the minimum number of spare (idle) child processes to keep.
       If the idle process count falls below min_spare_children,
-      Pgpool-II will spawn new child processes unless it hits the total allowed child process ceiling (num_init_children)
+      Pgpool-II will spawn new child processes unless it hits the total allowed child process ceiling (num_init_children).
       Default value is 5.
      </para>
      <para>

@@ -703,6 +703,237 @@
  </sect2>
 </sect1>
 
+<sect1 id="runtime-config-process-management">
+ <!--
+ <title>Process Management</title>
+ -->
+ <title>プロセス管理</title>
+
+  <para>
+  <variablelist>
+
+   <varlistentry id="guc-process-management-mode" xreflabel="process_management_mode">
+    <term><varname>process_management_mode</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>process_management_mode</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specify the idle process management method for
+      <productname>Pgpool-II</productname> child processes.
+      Valid options:
+      -->
+      <productname>Pgpool-II</productname>アイドル状態の子プロセスの管理方法を指定します。
+      有効なオプション:
+      <table id="process-management-mode-table">
+      <!--
+      <title>Possible Process Management Modes</title>
+      -->
+      <title>指定可能なプロセス管理モード</title>
+
+      <tgroup cols="2">
+       <tbody>
+        <row>
+         <entry>static</entry>
+         <entry>
+          <!--
+          All children are pre-forked at startup.
+          -->
+          すべての子プロセスは起動時に事前にフォークされます。
+         </entry>
+        </row>
+
+       <row>
+         <entry>dynamic</entry>
+         <entry>
+          <!--
+          child processes are spawned on demand.
+          number of idle child processes at any time depends on
+          min_spare_children and max_spare_children
+          -->
+          子プロセスはオンデマンドで生成されます。
+          アイドル状態の子プロセスの数はmin_spare_childrenとmax_spare_childrenの設定値に基づいて増減していきます。
+         </entry>
+        </row>
+
+       </tbody>
+      </tgroup>
+     </table>
+     </para>
+     <para>
+       <!--
+       Default is Static, that is compatible with pre <emphasis>V4.4</emphasis>.
+       -->
+       デフォルトは<literal>static</literal>で、<emphasis>V4.4</emphasis>より以前のバージョンとの互換性があります。
+     </para>
+
+     <para>
+      <!--
+      <varname>process_management_mode</varname> is not available prior to
+      <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
+      -->
+      <varname>process_management_mode</varname>は、<productname>Pgpool-II</productname><emphasis> V4.4</emphasis>より以前のバージョンでは使用できません。
+     </para>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-process-management-strategy" xreflabel="process_management_strategy">
+    <term><varname>process_management_strategy</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>process_management_strategy</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specify the process management strategy to satisfy spare (idle) processes count
+      Valid options:
+      -->
+      アイドル状態のプロセスの数を満たすためのプロセス管理戦略を指定します。
+      有効なオプション:
+      <table id="process-management-strategy-table">
+      <!--
+      <title>Possible Process Management Strategies</title>
+      -->
+      <title>指定可能なプロセス管理戦略</title>
+
+      <tgroup cols="2">
+       <tbody>
+        <row>
+         <entry>lazy</entry>
+         <entry>
+          <!--
+          With this strategy the scale-down is performed gradually
+          and only gets triggered when excessive spare processes count
+          remains high for more than 5 mins
+          -->
+          この戦略では、スケールダウンが徐々に実行され、余分なアイドル状態のプロセスが5分以上残っている場合にのみトリガーされます。
+         </entry>
+        </row>
+
+       <row>
+         <entry>gentle</entry>
+         <entry>
+          <!--
+          With this strategy the scale-down is performed gradually
+          and only gets triggered when excessive spare processes count
+          remains high for more than 2 mins
+          -->
+          この戦略では、スケールダウンが徐々に実行され、余分なアイドル状態のプロセスが2分以上残っている場合にのみトリガーされます。
+         </entry>
+        </row>
+
+       <row>
+         <entry>aggressive</entry>
+         <entry>
+          <!--
+          With this strategy the scale-down is performed aggressively
+          and gets triggered more frequently in case of higher spare processes.
+          This mode uses faster and slightly less smart process selection criteria
+          to identify the child processes that can be serviced to satisfy
+          max_spare_children
+          -->
+          この戦略では、スケールダウンが積極的に実行され、アイドル状態のプロセスが多い場合により頻繁にトリガーされます。
+          このモードでは、<xref linkend="guc-max-spare-children">を満たすために、サービスを提供するための子プロセスの識別基準は、より高速でややスマートでないプロセス選択基準を使用します。
+         </entry>
+        </row>
+
+       </tbody>
+      </tgroup>
+     </table>
+     </para>
+     <para>
+      <!--
+      Default is Gentle.
+      -->
+      デフォルトは<literal>gentle</literal>です。
+     </para>
+     <para>
+      <!--
+      <varname>process_management_strategy</varname> is not available prior to
+      <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
+      -->
+      <varname>process_management_strategy</varname>は、<productname>Pgpool-II</productname><emphasis>V4.4</emphasis>より以前のバージョンでは使用できません。
+     </para>
+
+    </listitem>
+   </varlistentry>
+
+ <varlistentry id="guc-min-spare-children" xreflabel="min_spare_children">
+    <term><varname>min_spare_children</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>min_spare_children</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specify the minimum number of spare (idle) child processes to keep.
+      If the idle process count falls below min_spare_children,
+      Pgpool-II will spawn new child processes unless it hits the total allowed child process ceiling (num_init_children)
+      Default value is 5.
+      -->
+      保持する予備（アイドル状態）の子プロセスの最小個数を指定します。
+      予備（アイドル状態）の子プロセス数が<varname>min_spare_children</varname>を下回った場合、<productname>Pgpool-II</productname>は許容される子プロセスの合計上限（<xref linkend="guc-num-init-children">）に達しない限り、新しい子プロセスを生成します。
+      デフォルト値は5です。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</productname>の設定を再読み込みすることで変更可能です。
+     </para>
+     <para>
+      <!--
+      This parameter is only applicable for <emphasis>dynamic</emphasis> process management mode.
+      -->
+      このパラメーターは、動的プロセス管理モードが有効になっている場合にのみ適用されます。
+     </para>
+    </listitem>
+   </varlistentry>
+
+ <varlistentry id="guc-max-spare-children" xreflabel="max_spare_children">
+    <term><varname>max_spare_children</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>max_spare_children</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specify the maximum number of spare (idle) child processes to keep.
+       If the idle process count increases from max_spare_children, Pgpool-II will kill the excessive child processes.
+      Default value is 10.
+      -->
+      保持する予備（アイドル状態）の子プロセスの最大個数を指定します。
+      予備（アイドル状態）の子プロセス数が<varname>max_spare_children</varname>を超えた場合、<productname>Pgpool-II</productname>は余分な子プロセスを強制終了します。
+      デフォルト値は10です。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</productname> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</productname>の設定を再読み込みすることで変更可能です。
+     </para>
+     <para>
+      <!--
+      This parameter is only applicable for <emphasis>dynamic</emphasis> process management mode.
+      -->
+      このパラメーターは、動的プロセス管理モードが有効になっている場合にのみ適用されます。
+     </para>
+    </listitem>
+   </varlistentry>
+
+    </variablelist>
+
+ </para>
+</sect1>
+
 <sect1 id="runtime-config-running-mode">
  <title>クラスタリングモード</title>
 
