@@ -175,11 +175,11 @@ arping_cmd = 'true'
     Create the script executed by if_up_cmd/if_down_cmd on each Pgpool-II instance.
    </para>
    <para>
-    In this example, we use the sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/aws_eip_if_cmd.sh.sample;hb=refs/heads/master">aws_eip_if_cmd.sh</ulink>. Modify it if necessary.
+    In this example, we use the sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/aws_eip_if_cmd.sh.sample;hb=refs/heads/V4_4_STABLE">aws_eip_if_cmd.sh</ulink>. Modify it if necessary.
    </para>
    <programlisting>
 (run the following command on each Pgpool-II instance)
-# cp -p /etc/pgpool-II/aws_eip_if_cmd.sh{.sample,}
+# cp -p /etc/pgpool-II/sample_scripts/aws_eip_if_cmd.sh.sample /etc/pgpool-II/aws_eip_if_cmd.sh
    </programlisting>
   </sect3>
 
@@ -403,11 +403,11 @@ arping_cmd = 'true'
     <productname>Pgpool-II</productname> instance.
    </para>
    <para>
-    In this example, we use the sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/aws_rtb_if_cmd.sh.sample;hb=refs/heads/master">aws_rtb_if_cmd.sh</ulink>. Modify it if necessary.
+    In this example, we use the sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/aws_rtb_if_cmd.sh.sample;hb=refs/heads/V4_4_STABLE">aws_rtb_if_cmd.sh</ulink>. Modify it if necessary.
    </para>
    <programlisting>
 (run the following command on each Pgpool-II instance)
-# cp -p /etc/pgpool-II/aws_rtb_if_cmd.sh{.sample,}
+# cp -p /etc/pgpool-II/sample_scripts/aws_rtb_if_cmd.sh.sample /etc/pgpool-II/aws_rtb_if_cmd.sh
    </programlisting>
   </sect3>
 

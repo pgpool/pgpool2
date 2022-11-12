@@ -525,17 +525,17 @@ recovery_1st_stage_command = 'recovery_1st_stage'
 recovery_2nd_stage_command = 'recovery_2nd_stage'
    </programlisting>
     The sample scripts
-    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_1st_stage.sample;hb=refs/heads/V4_3_STABLE">replication_mode_recovery_1st_stage.sample</ulink>,
-    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_2nd_stage.sample;hb=refs/heads/V4_3_STABLE">replication_mode_recovery_2nd_stage.sample</ulink>
+    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_1st_stage.sample;hb=refs/heads/V4_4_STABLE">replication_mode_recovery_1st_stage.sample</ulink>,
+    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_2nd_stage.sample;hb=refs/heads/V4_4_STABLE">replication_mode_recovery_2nd_stage.sample</ulink>
     and
-    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_3_STABLE">pgpool_remote_start.sample</ulink>
+    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_4_STABLE">pgpool_remote_start.sample</ulink>
     are installed in <filename>/etc/pgpool-II/</filename>.
     Create the scripts used by online recovery command from sample scripts and copy these files to the database cluster directory.
    </para>
    <programlisting>
-[server1]# cp -p /etc/pgpool-II/replication_mode_recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage
-[server1]# cp -p /etc/pgpool-II/replication_mode_recovery_2nd_stage.sample /var/lib/pgsql/14/data/recovery_2nd_stage
-[server1]# cp -p /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
+[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage
+[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_2nd_stage.sample /var/lib/pgsql/14/data/recovery_2nd_stage
+[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
 [server1]# chown postgres:postgres /var/lib/pgsql/14/data/{recovery_1st_stage,recovery_2nd_stage,pgpool_remote_start}
    </programlisting>
    <para>

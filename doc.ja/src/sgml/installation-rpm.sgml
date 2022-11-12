@@ -36,14 +36,14 @@
    -->
    RHELとその派生ディストリビューションでは、以下を一度行ってください。
    <programlisting>
-    dnf install https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-8-x86_64/pgpool-II-release-4.3-1.noarch.rpm
+dnf install https://www.pgpool.net/yum/rpms/4.4/redhat/rhel-8-x86_64/pgpool-II-release-4.4-1.noarch.rpm
    </programlisting>
    <!--
    Then:
    -->
    そして以下を実施してください。
    <programlisting>
-    dnf install pgpool-II-pg13
+dnf install pgpool-II-pg15
    </programlisting>
 
    <!--
@@ -60,12 +60,12 @@
 
    Optionally you can install:
    -->
-   <literal>pg13</literal>は、<literal>PostgreSQL 13</literal>を意味しています。
+   <literal>pg15</literal>は、<literal>PostgreSQL 15</literal>を意味しています。
    <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>のライブラリと拡張のディレクトリが必要です。
    そのディレクトリへのパスは<productname>PostgreSQL</productname>のバージョンごとに異なっているので、<productname>PostgreSQL</productname>に対応するRPMを選んでください。
    またRPMは、<ulink url="https://www.postgresql.org/download/linux/redhat/"><productname>PostgreSQL</productname>コミュニティRPM</ulink>を使用することを前提としています。
    <programlisting>
-    dnf install pgpool-II-pg13-debuginfo
+dnf install pgpool-II-pg15-debuginfo
    </programlisting>
    <!--
    which makes it easier to retrieve debugging symbols from the core
@@ -77,7 +77,7 @@
    インストールすることを推奨します。
    開発向けのオプションパッケージがあります。
    <programlisting>
-    dnf install pgpool-II-pg13-devel
+dnf install pgpool-II-pg15-devel
    </programlisting>
    <!--
    This installs header files which developers are interested in
@@ -92,7 +92,7 @@
    -->
    すべての<productname>PostgreSQL</productname>サーバに、以下をインストールしてください。
    <programlisting>
-    dnf install pgpool-II-pg13-extensions
+dnf install pgpool-II-pg15-extensions
    </programlisting>
 
   </para>
@@ -122,34 +122,32 @@
   <title>Pgpool-IIの起動と停止</title>
   <para>
    <!--
-   RHEL7/CentOS 7では、以下を一度行ってください。
+   On RHEL7,8/CentOS7,8, do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
    -->
-   <!--
-   Do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
-   -->
-   <productname>Pgpool-II</productname>の自動起動を設定する場合、以下を実行してください。
+   RHEL7,8/CentOS7,8では、<productname>Pgpool-II</productname>の自動起動を設定する場合、以下を実行してください。
    <programlisting>
-    systemctl enable pgpool.service
+systemctl enable pgpool.service
    </programlisting>
 
    <!--
-   After this, restart the whole system or do this. Please note that
-   <productname>PostgreSQL</productname> servers must have been started
-   before this.
+   After this, to start <productname>Pgpool-II</productname>,
+   run the following command or restart the whole system.
+   Please note that PostgreSQL servers must have been started before this. 
    -->
-   この後システム全体を再起動するか、以下を実行してください。
+   この後<productname>Pgpool-II</productname>を起動するには、システム全体を再起動するか、以下を実行してください。
    <productname>PostgreSQL</productname>サーバは、これよりも前に起動済みでなければならないことに注意してください。
    <programlisting>
-    systemctl start pgpool.service 
+systemctl start pgpool.service 
    </programlisting>
 
    <!--
    To stop <productname>Pgpool-II</productname>, do this once.
-   <productname>Pgpool-II</productname> must need to stop, before <productname>PostgreSQL</productname> is stopped.
+   Please note that <productname>Pgpool-II</productname> must need to stop,
+   before <productname>PostgreSQL</productname> is stopped.
    -->
    <productname>Pgpool-II</productname>を停止するには、以下を実行してください。<productname>PostgreSQL</productname>を停止する場合、<productname>Pgpool-II</productname>を先に停止する必要があります。
    <programlisting>
-    systemctl stop pgpool.service 
+systemctl stop pgpool.service 
    </programlisting>
 
    <!--
@@ -160,41 +158,41 @@
   </para>
   <para>
    <!--
-   On RHEL6/CentOS 6, do this once.
+   On RHEL6/CentOS6, do this once, if set the automatic startup of Pgpool-II. 
    -->
-   RHEL6/CentOS 6では、以下を一度行ってください。
+   RHEL6/CentOS6では、<productname>Pgpool-II</productname>の自動起動を設定する場合、以下を実行してください。
 
    <programlisting>
-    chkconfig pgpool on
+chkconfig pgpool on
    </programlisting>
 
    <!--
-   After this, restart the whole system or:
+   After this, to start <productname>Pgpool-II</productname>,
+   run the following command or restart the whole system.
+   Please note that PostgreSQL servers must have been started before this. 
    -->
-   この後システム全体を再起動するか、以下を実行してください。
-   <programlisting>
-    service start pgpool
-   </programlisting>
-
-   <!--
-   Please note that <productname>PostgreSQL</productname> servers
-   must have been started before this.
-   -->
+   この後<productname>Pgpool-II</productname>を起動するには、システム全体を再起動するか、以下を実行してください。
    <productname>PostgreSQL</productname>サーバは、これよりも前に起動済みでなければならないことに注意してください。
+   <programlisting>
+service start pgpool
+   </programlisting>
+
    <!--
-   To stop <productname>Pgpool-II</productname>:
+   To stop <productname>Pgpool-II</productname> run the following command.
+   Please note that <productname>Pgpool-II</productname> must need to stop,
+   before <productname>PostgreSQL</productname> is stopped.
    -->
-   <productname>Pgpool-II</productname>を停止するには、次のようにしてください。
+   <productname>Pgpool-II</productname>を停止するには、以下を実行してください。<productname>PostgreSQL</productname>を停止する場合、<productname>Pgpool-II</productname>を先に停止する必要があります。
 
    <programlisting>
-    service stop pgpool
+service stop pgpool
    </programlisting>
 
    <!--
    After this, you can stop <productname>PostgreSQL</productname>
    servers.
    -->
-   この後、<productname>PostgreSQL</productname>サーバを停止しても構いません。
+この後、<productname>PostgreSQL</productname>サーバを停止しても構いません。
   </para>
 
  </sect2>

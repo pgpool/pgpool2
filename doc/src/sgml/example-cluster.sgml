@@ -188,25 +188,25 @@
     <tbody>
      <row>
       <entry morerows='1'>Failover</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/failover.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/failover.sh.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-FAILOVER-COMMAND"> to perform failover</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/follow_primary.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/follow_primary.sh.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> to synchronize the Standby with the new Primary after failover.</entry>
      </row>
      <row>
       <entry morerows='1'>Online recovery</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/recovery_1st_stage.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/recovery_1st_stage.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> to recovery a Standby node</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/pgpool_remote_start.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/pgpool_remote_start.sample</ulink></entry>
       <entry>Run after <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> to start the Standby node</entry>
      </row>
      <row>
       <entry morerows='1'>Watchdog</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_3_STABLE">/etc/pgpool-II/escalation.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/escalation.sh.sample</ulink></entry>
       <entry>Run by <xref linkend="guc-wd-escalation-command"> to switch the Active/Standby Pgpool-II safely</entry>
      </row>
     </tbody>
@@ -684,13 +684,13 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
     </para>
    </note>
    <para>
-    Sample scripts <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_3_STABLE">failover.sh</ulink>
-    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_3_STABLE">follow_primary.sh</ulink>
+    Sample scripts <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_4_STABLE">failover.sh</ulink>
+    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_4_STABLE">follow_primary.sh</ulink>
     are installed in <filename>/etc/pgpool-II/</filename>. Create failover scripts using these sample files.
    </para>
    <programlisting>
-[all servers]# cp -p /etc/pgpool-II/failover.sh{.sample,}
-[all servers]# cp -p /etc/pgpool-II/follow_primary.sh{.sample,}
+[all servers]# cp -p /etc/pgpool-II/sample_scripts/failover.sh.sample /etc/pgpool-II/failover.sh
+[all servers]# cp -p /etc/pgpool-II/sample_scripts/follow_primary.sh.sample /etc/pgpool-II/follow_primary.sh
 [all servers]# chown postgres:postgres /etc/pgpool-II/{failover.sh,follow_primary.sh}
    </programlisting>
    <para>
@@ -765,13 +765,13 @@ recovery_password = ''
 recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
-    Online recovery sample scripts<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_3_STABLE">recovery_1st_stage</ulink>
-    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_3_STABLE">pgpool_remote_start</ulink>
+    Online recovery sample scripts<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_4_STABLE">recovery_1st_stage</ulink>
+    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_4_STABLE">pgpool_remote_start</ulink>
     are installed in <filename>/etc/pgpool-II/</filename>. Copy these files to the data directory of the primary server (server1).
    </para>
    <programlisting>
-[server1]# cp -p /etc/pgpool-II/recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage
-[server1]# cp -p /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
+[server1]# cp -p /etc/pgpool-II/sample_scripts/recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage
+[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
 [server1]# chown postgres:postgres /var/lib/pgsql/14/data/{recovery_1st_stage,pgpool_remote_start}
    </programlisting>
    <para>
@@ -1010,10 +1010,10 @@ wd_escalation_command = '/etc/pgpool-II/escalation.sh'
                                     # (change requires restart)
     </programlisting>
    <para>
-    The sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_3_STABLE">escalation.sh</ulink> is installed in <filename>/etc/pgpool-II/</filename>.
+    The sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_4_STABLE">escalation.sh</ulink> is installed in <filename>/etc/pgpool-II/</filename>.
    </para>
     <programlisting>
-[all servers]# cp -p /etc/pgpool-II/escalation.sh{.sample,}
+[all servers]# cp -p /etc/pgpool-II/sample_scripts/escalation.sh.sample /etc/pgpool-II/escalation.sh
 [all servers]# chown postgres:postgres /etc/pgpool-II/escalation.sh
     </programlisting>
 
