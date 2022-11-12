@@ -210,7 +210,6 @@ useradd -M -g postgres -o -r -d /var/lib/pgsql -s /bin/bash \
 
 %if %{systemd_enabled}
 %systemd_post pgpool.service
-%tmpfiles_create
 %else
 /sbin/chkconfig --add pgpool
 %endif
