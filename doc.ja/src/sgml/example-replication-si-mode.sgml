@@ -534,16 +534,16 @@ recovery_1st_stage_command = 'recovery_1st_stage.sh'
 recovery_2nd_stage_command = 'recovery_2nd_stage.sh'
    </programlisting>
    <para>
-    ネイティブレプリケーションモード/スナップショットアイソレーションモード専用のオンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_1st_stage.sample;hb=refs/heads/V4_3_STABLE">replication_mode_recovery_1st_stage.sample</ulink>、
-    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_2nd_stage.sample;hb=refs/heads/V4_3_STABLE">replication_mode_recovery_2nd_stage.sample</ulink>
-    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_3_STABLE">pgpool_remote_start.sample</ulink>は
+    ネイティブレプリケーションモード/スナップショットアイソレーションモード専用のオンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_1st_stage.sample;hb=refs/heads/V4_4_STABLE">replication_mode_recovery_1st_stage.sample</ulink>、
+    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_2nd_stage.sample;hb=refs/heads/V4_4_STABLE">replication_mode_recovery_2nd_stage.sample</ulink>
+    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_4_STABLE">pgpool_remote_start.sample</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、
     これらのファイルをmainノード(<literal>server1</literal>)のデータベースクラスタ配下に配置します。
    </para>
    <programlisting>
-[server1]# cp -p /etc/pgpool-II/replication_mode_recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage.sh
-[server1]# cp -p /etc/pgpool-II/replication_mode_recovery_2nd_stage.sample /var/lib/pgsql/14/data/recovery_2nd_stage.sh
-[server1]# cp -p /etc/pgpool-II/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
+[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage.sh
+[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_2nd_stage.sample /var/lib/pgsql/14/data/recovery_2nd_stage.sh
+[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
 [server1]# chown postgres:postgres /var/lib/pgsql/14/data/{recovery_1st_stage.sh,recovery_2nd_stage.sh,pgpool_remote_start}
    </programlisting>
    <para>

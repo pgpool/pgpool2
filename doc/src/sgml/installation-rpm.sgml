@@ -20,15 +20,15 @@
   <para>
    For RHEL and its derivatives do following once:
    <programlisting>
-    dnf install https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-8-x86_64/pgpool-II-release-4.3-1.noarch.rpm
+dnf install https://www.pgpool.net/yum/rpms/4.4/redhat/rhel-8-x86_64/pgpool-II-release-4.4-1.noarch.rpm
    </programlisting>
    Then:
    <programlisting>
-    dnf install pgpool-II-pg13
+dnf install pgpool-II-pg15
    </programlisting>
 
-   <literal>pg13</literal> means <literal>PostgreSQL
-    13</literal>. <productname>Pgpool-II</productname>
+   <literal>pg15</literal> means <literal>PostgreSQL
+    15</literal>. <productname>Pgpool-II</productname>
    needs <productname>PostgreSQL</productname>'s library and
    extensions directory. Since the directory paths are different in
    the particular <productname>PostgreSQL</productname> versions,
@@ -40,14 +40,14 @@
 
    Optionally you can install:
    <programlisting>
-    dnf install pgpool-II-pg13-debuginfo
+dnf install pgpool-II-pg15-debuginfo
    </programlisting>
    which makes it easier to retrieve debugging symbols from the core
    or the backtrace. We recommend to install it.
 
    There is an optional package for developers.
    <programlisting>
-    dnf install pgpool-II-pg13-devel
+dnf install pgpool-II-pg15-devel
    </programlisting>
    This installs header files which developers are interested in.
   </para>
@@ -56,7 +56,7 @@
    On all the <productname>PostgreSQL</productname> servers you need
    to install:
    <programlisting>
-    dnf install pgpool-II-pg13-extensions
+dnf install pgpool-II-pg15-extensions
    </programlisting>
 
   </para>
@@ -75,48 +75,50 @@
  <sect2 id="start-rpm">
   <title>Starting/stopping Pgpool-II</title>
   <para>
-   On RHEL7/CentOS 7, do this once.
-   Do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
+   On RHEL7,8/CentOS7,8, do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
    <programlisting>
-    systemctl enable pgpool.service
+systemctl enable pgpool.service
    </programlisting>
 
-   After this, restart the whole system or do this. Please note that
-   <productname>PostgreSQL</productname> servers must have been started
-   before this.
+   After this, to start <productname>Pgpool-II</productname>,
+   run the following command or restart the whole system.
+   Please note that PostgreSQL servers must have been started before this. 
 
    <programlisting>
-    systemctl start pgpool.service 
+systemctl start pgpool.service 
    </programlisting>
 
    To stop <productname>Pgpool-II</productname>, do this once.
-   <productname>Pgpool-II</productname> must need to stop, before <productname>PostgreSQL</productname> is stopped.
+   Please note that <productname>Pgpool-II</productname> must need to stop,
+   before <productname>PostgreSQL</productname> is stopped.
    <programlisting>
-    systemctl stop pgpool.service 
+systemctl stop pgpool.service 
    </programlisting>
 
    After this, you can stop <productname>PostgreSQL</productname>
    servers.
   </para>
   <para>
-   On RHEL6/CentOS 6, do this once.
+   On RHEL6/CentOS6, do this once, if set the automatic startup of Pgpool-II. 
 
    <programlisting>
-    chkconfig pgpool on
+chkconfig pgpool on
    </programlisting>
 
-   After this, restart the whole system or:
+   After this, to start <productname>Pgpool-II</productname>,
+   run the following command or restart the whole system.
+   Please note that PostgreSQL servers must have been started before this. 
 
    <programlisting>
-    service start pgpool
+service start pgpool
    </programlisting>
 
-   Please note that <productname>PostgreSQL</productname> servers
-   must have been started before this.
+   To stop <productname>Pgpool-II</productname> run the following command.
+   Please note that <productname>Pgpool-II</productname> must need to stop,
+   before <productname>PostgreSQL</productname> is stopped.
 
-   To stop <productname>Pgpool-II</productname>:
    <programlisting>
-    service stop pgpool
+service stop pgpool
    </programlisting>
 
    After this, you can stop <productname>PostgreSQL</productname>

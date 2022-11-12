@@ -160,11 +160,11 @@ arping_cmd = 'true'
     <varname>if_up_cmd/if_down_cmd</varname>で実行するスクリプトをすべての<productname>Pgpool-II</productname>インスタンス上に作成します。
    </para>
    <para>
-    この設定例では、サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/aws_eip_if_cmd.sh.sample;hb=refs/heads/master">aws_eip_if_cmd.sh</ulink>を使用します。必要に応じて、編集してください。
+    この設定例では、サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/aws_eip_if_cmd.sh.sample;hb=refs/heads/V4_4_STABLE">aws_eip_if_cmd.sh</ulink>を使用します。必要に応じて、編集してください。
    </para>
    <programlisting>
 (すべてのPgpool-IIインスタンスで実行)
-# cp -p /etc/pgpool-II/aws_eip_if_cmd.sh{.sample,}
+# cp -p /etc/pgpool-II/sample_scripts/aws_eip_if_cmd.sh.sample /etc/pgpool-II/aws_eip_if_cmd.sh
    </programlisting>
 
    <para>
@@ -353,11 +353,11 @@ arping_cmd = 'true'
     if_up_cmd/if_down_cmdで実行するスクリプトをすべてのPgpool-IIインスタンス上に作成します。
    </para>
    <para>
-    この設定例では、サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/aws_rtb_if_cmd.sh.sample;hb=refs/heads/master">aws_rtb_if_cmd.sh</ulink>を使用します。必要に応じて、編集してください。
+    この設定例では、サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/aws_rtb_if_cmd.sh.sample;hb=refs/heads/V4_4_STABLE">aws_rtb_if_cmd.sh</ulink>を使用します。必要に応じて、編集してください。
    </para>
    <programlisting>
 (すべてのPgpool-IIインスタンスで実行)
-# cp -p /etc/pgpool-II/aws_rtb_if_cmd.sh{.sample,}
+# cp -p /etc/pgpool-II/sample_scripts/aws_rtb_if_cmd.sh.sample /etc/pgpool-II/aws_rtb_if_cmd.sh
    </programlisting>
   </sect3>
 

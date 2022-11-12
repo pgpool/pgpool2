@@ -136,25 +136,25 @@ make %{?_smp_mflags} DESTDIR=%{buildroot} install -C src/sql/pgpool_adm
 
 install -d %{buildroot}%{_datadir}/%{short_name}
 install -d %{buildroot}%{_sysconfdir}/%{short_name}
-install -d %{buildroot}%{_sysconfdir}/%{short_name}/scripts
+install -d %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts
 mv %{buildroot}%{_sysconfdir}/%{short_name}/failover.sh.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/failover.sh.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/failover.sh.sample
 mv %{buildroot}%{_sysconfdir}/%{short_name}/follow_primary.sh.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/follow_primary.sh.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/follow_primary.sh.sample
 mv %{buildroot}%{_sysconfdir}/%{short_name}/pgpool_remote_start.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/pgpool_remote_start.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/pgpool_remote_start.sample
 mv %{buildroot}%{_sysconfdir}/%{short_name}/recovery_1st_stage.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/recovery_1st_stage.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/recovery_1st_stage.sample
 mv %{buildroot}%{_sysconfdir}/%{short_name}/replication_mode_recovery_1st_stage.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/replication_mode_recovery_1st_stage.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/replication_mode_recovery_1st_stage.sample
 mv %{buildroot}%{_sysconfdir}/%{short_name}/replication_mode_recovery_2nd_stage.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/replication_mode_recovery_2nd_stage.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/replication_mode_recovery_2nd_stage.sample
 mv %{buildroot}%{_sysconfdir}/%{short_name}/escalation.sh.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/escalation.sh.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/escalation.sh.sample
 mv %{buildroot}%{_sysconfdir}/%{short_name}/aws_eip_if_cmd.sh.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/aws_eip_if_cmd.sh.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/aws_eip_if_cmd.sh.sample
 mv %{buildroot}%{_sysconfdir}/%{short_name}/aws_rtb_if_cmd.sh.sample \
-        %{buildroot}%{_sysconfdir}/%{short_name}/scripts/aws_rtb_if_cmd.sh.sample
+        %{buildroot}%{_sysconfdir}/%{short_name}/sample_scripts/aws_rtb_if_cmd.sh.sample
 cp %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pcp.conf
 cp %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pgpool.conf
 cp %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf.sample %{buildroot}%{_sysconfdir}/%{short_name}/pool_hba.conf
@@ -289,15 +289,15 @@ fi
 %{_sysconfdir}/%{short_name}/pcp.conf.sample
 %{_sysconfdir}/%{short_name}/pool_hba.conf.sample
 %defattr(755,postgres,postgres,-)
-%{_sysconfdir}/%{short_name}/scripts/failover.sh.sample
-%{_sysconfdir}/%{short_name}/scripts/follow_primary.sh.sample
-%{_sysconfdir}/%{short_name}/scripts/pgpool_remote_start.sample
-%{_sysconfdir}/%{short_name}/scripts/recovery_1st_stage.sample
-%{_sysconfdir}/%{short_name}/scripts/replication_mode_recovery_1st_stage.sample
-%{_sysconfdir}/%{short_name}/scripts/replication_mode_recovery_2nd_stage.sample
-%{_sysconfdir}/%{short_name}/scripts/escalation.sh.sample
-%{_sysconfdir}/%{short_name}/scripts/aws_eip_if_cmd.sh.sample
-%{_sysconfdir}/%{short_name}/scripts/aws_rtb_if_cmd.sh.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/failover.sh.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/follow_primary.sh.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/pgpool_remote_start.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/recovery_1st_stage.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/replication_mode_recovery_1st_stage.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/replication_mode_recovery_2nd_stage.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/escalation.sh.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/aws_eip_if_cmd.sh.sample
+%{_sysconfdir}/%{short_name}/sample_scripts/aws_rtb_if_cmd.sh.sample
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/*.conf
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pool_passwd
 %attr(600,postgres,postgres) %config(noreplace) %{_sysconfdir}/%{short_name}/pgpool_node_id
