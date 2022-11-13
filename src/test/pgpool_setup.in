@@ -161,7 +161,7 @@ function create_failover_script()
 {
 # If $TEST_SAMPLES = "true", use sample scripts and config files
 if [ $TEST_SAMPLES = "true" ]; then
-    cp -p $PGPOOLDIR/scripts/failover.sh.sample $FAILOVER_SCRIPT
+    cp -p $PGPOOLDIR/sample_scripts/failover.sh.sample $FAILOVER_SCRIPT
     # Rewrite script
     PGHOMEVER=`expr $PGVERSION / 10`
     /bin/sed -i \
@@ -252,7 +252,7 @@ function create_follow_primary_script()
 {
 # If $TEST_SAMPLES = "true", use sample scripts and config files
 if [ $TEST_SAMPLES = "true" ]; then
-    cp -p $PGPOOLDIR/scripts/follow_primary.sh.sample  $FOLLOW_PRIMARY_SCRIPT
+    cp -p $PGPOOLDIR/sample_scripts/follow_primary.sh.sample  $FOLLOW_PRIMARY_SCRIPT
     # Rewrite script
     PGHOMEVER=`expr $PGVERSION / 10`
     /bin/sed -i \
@@ -376,7 +376,7 @@ function create_pgpool_remote_start_script()
 {
 # If $TEST_SAMPLES = "true", use sample scripts and config files
 if [ $TEST_SAMPLES = "true" ]; then
-    cp -p $PGPOOLDIR/scripts/pgpool_remote_start.sample  $1/$PGPOOL_REMOTE_START_SCRIPT
+    cp -p $PGPOOLDIR/sample_scripts/pgpool_remote_start.sample  $1/$PGPOOL_REMOTE_START_SCRIPT
     # Rewrite script
     PGHOMEVER=`expr $PGVERSION / 10`
     /bin/sed -i \
@@ -515,7 +515,7 @@ SCRIPT=basebackup.sh
 
 # If $TEST_SAMPLES = "true", use sample scripts and config files
 if [ $TEST_SAMPLES = "true" ]; then
-    cp -p $PGPOOLDIR/scripts/recovery_1st_stage.sample $1/$SCRIPT
+    cp -p $PGPOOLDIR/sample_scripts/recovery_1st_stage.sample $1/$SCRIPT
     # Rewrite script
     PGHOMEVER=`expr $PGVERSION / 10`
     /bin/sed -i \
@@ -663,7 +663,7 @@ function create_basebackup_replication {
 
     # If $TEST_SAMPLES = "true", use sample scripts and config files
     if [ $TEST_SAMPLES = "true" ]; then
-        cp -p $PGPOOLDIR/scripts/replication_mode_recovery_1st_stage.sample $1/$SCRIPT
+        cp -p $PGPOOLDIR/sample_scripts/replication_mode_recovery_1st_stage.sample $1/$SCRIPT
         # Rewrite script
         PGHOMEVER=`expr $PGVERSION / 10`
         /bin/sed -i \
@@ -733,7 +733,7 @@ SCRIPT=pgpool_recovery_pitr
 
 # If $TEST_SAMPLES = "true", use sample scripts and config files
 if [ $TEST_SAMPLES = "true" ]; then
-    cp -p $PGPOOLDIR/scripts/replication_mode_recovery_2nd_stage.sample $1/$SCRIPT
+    cp -p $PGPOOLDIR/sample_scripts/replication_mode_recovery_2nd_stage.sample $1/$SCRIPT
     # Rewrite script
     PGHOMEVER=`expr $PGVERSION / 10`
     /bin/sed -i \
