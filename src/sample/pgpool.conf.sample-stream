@@ -48,7 +48,7 @@ backend_clustering_mode = 'streaming_replication'
 #unix_socket_group = ''
                                    # The Owner group of Unix domain socket(s)
                                    # (change requires restart)
-#unix_socket_premissions = 0777
+#unix_socket_permissions = 0777
                                    # Permissions of Unix domain socket(s)
                                    # (change requires restart)
 #reserved_connections = 0
