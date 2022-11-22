@@ -9,18 +9,23 @@
   <variablelist>
 
    <varlistentry>
-    <term>Functionality of PostgreSQL</term>
+    <term>Using pg_terminate_backend</term>
     <listitem>
      <para>
-      If you use <function>pg_terminate_backend()</function> to stop
-      a backend, this will trigger a failover.  The reason why this
+      If you use <function>pg_terminate_backend()</function> to stop a
+      backend, this will trigger a failover.  The reason why this
       happens is that <productname>PostgreSQL</productname> sends
       exactly the same message for a terminated backend as for a full
       postmaster shutdown.  There is no workaround prior of version
       3.6. From version 3.6, this limitation has been mitigated. If
       the argument to the function (that is a process id) is a
       constant, you can safely use the function. In extended protocol
-      mode, you cannot use the function though.
+      mode, you cannot use the function though.  In 4.3 or later you
+      can completely prevent the failover caused
+      by <function>pg_terminate_backend()</function> by
+      setting <literal>off</literal>
+      to <xref linkend="guc-failover-on-backend-shutdown">, this will
+      prevent failover caused by termination of postmaster though.
      </para>
     </listitem>
    </varlistentry>
