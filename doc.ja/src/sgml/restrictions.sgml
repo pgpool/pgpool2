@@ -18,26 +18,32 @@
     <!--
     <term>Functionality of PostgreSQL</term>
     -->
-    <term>PostgreSQLの機能</term>
+    <term>pg_terminate_backendの利用</term>
     <listitem>
      <para>
       <!--
-      If you use <function>pg_terminate_backend()</function> to stop
-      a backend, this will trigger a failover.  The reason why this
+      If you use <function>pg_terminate_backend()</function> to stop a
+      backend, this will trigger a failover.  The reason why this
       happens is that <productname>PostgreSQL</productname> sends
       exactly the same message for a terminated backend as for a full
       postmaster shutdown.  There is no workaround prior of version
       3.6. From version 3.6, this limitation has been mitigated. If
       the argument to the function (that is a process id) is a
       constant, you can safely use the function. In extended protocol
-      mode, you cannot use the function though.
+      mode, you cannot use the function though.  In 4.3 or later you
+      can completely prevent the failover caused
+      by <function>pg_terminate_backend()</function> by
+      setting <literal>off</literal>
+      to <xref linkend="guc-failover-on-backend-shutdown">, this will
+      prevent failover caused by termination of postmaster.
       -->
       <function>pg_terminate_backend()</function>を使ってバックエンドを停止すると、フェイルオーバが起こります。
       これは、<productname>PostgreSQL</productname>が、postmasterの停止と全く同じメッセージをバックエンド停止時に送るためです。
-      3.6より前のバージョンには回避策はありません。
+      <productname>Pgpool-II</productname> 3.6より前のバージョンには回避策はありません。
       3.6以降では、この制限は緩和されています。
       その関数の引数（プロセスIDです）が定数なら、その関数を使っても安全です。
       しかし、拡張プロトコルでは、その関数は使えません。
+      4.3以降では、<xref linkend="guc-failover-on-backend-shutdown">を<literal>off</literal>にすることで、<function>pg_terminate_backend()</function>によるフェイルオーバを完全に回避できますが、その代わりpostmasterの停止によるフェイルオーバも起きなくなります。
      </para>
     </listitem>
    </varlistentry>
