@@ -65,6 +65,9 @@ fprintf_to_ereport(const char *fmt, const char *msg)
  * head of gram.y, ie flex/bison code must not depend on any GUC variables;
  * as such, changing their values can induce very unintuitive behavior.
  * But we shall have to live with it until we can remove these variables.
+ *
+ * standard_conforming_strings is overridden by parser_set_param()
+ * while connecting to backend by receiving parameter status message.
  */
 int			backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
 bool		escape_string_warning = true;
@@ -1502,21 +1505,25 @@ check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner)
 	if (ychar == '\'')
 	{
 		if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
+#ifdef NOT_USED
 			ereport(WARNING,
 					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 					 errmsg("nonstandard use of \\' in a string literal"),
 					 errhint("Use '' to write quotes in strings, or use the escape string syntax (E'...')."),
 					 lexer_errposition()));
+#endif
 		yyextra->warn_on_first_escape = false;	/* warn only once per string */
 	}
 	else if (ychar == '\\')
 	{
 		if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
+#ifdef NOT_USED
 			ereport(WARNING,
 					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 					 errmsg("nonstandard use of \\\\ in a string literal"),
 					 errhint("Use the escape string syntax for backslashes, e.g., E'\\\\'."),
 					 lexer_errposition()));
+#endif
 		yyextra->warn_on_first_escape = false;	/* warn only once per string */
 	}
 	else
@@ -1527,11 +1534,13 @@ static void
 check_escape_warning(core_yyscan_t yyscanner)
 {
 	if (yyextra->warn_on_first_escape && yyextra->escape_string_warning)
+#ifdef NOT_USED
 		ereport(WARNING,
 				(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 				 errmsg("nonstandard use of escape in a string literal"),
 		errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
 				 lexer_errposition()));
+#endif
 	yyextra->warn_on_first_escape = false;		/* warn only once per string */
 }
 
