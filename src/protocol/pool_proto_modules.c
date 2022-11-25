@@ -310,7 +310,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		/*
 		 * Check if the transaction is in abort status. If so, we do nothing
 		 * and just return an error message to frontend, execpt for
-		 * transaction commit or abort command.
+		 * transaction COMMIT or ROLLBACK (TO) command.
 		 */
 		if (check_transaction_state_and_abort(contents, node, frontend, backend) == false)
 		{
