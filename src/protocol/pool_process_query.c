@@ -1235,7 +1235,7 @@ is_select_query(Node *node, char *sql)
 bool
 is_commit_or_rollback_query(Node *node)
 {
-	return is_commit_query(node) || is_rollback_query(node);
+	return is_commit_query(node) || is_rollback_query(node) || is_rollback_to_query(node);
 }
 
 /*
@@ -1268,6 +1268,21 @@ is_rollback_query(Node *node)
 
 	stmt = (TransactionStmt *) node;
 	return stmt->kind == TRANS_STMT_ROLLBACK;
+}
+
+/*
+ * Returns true if SQL is transaction rollback to command
+ */
+bool
+is_rollback_to_query(Node *node)
+{
+	TransactionStmt *stmt;
+
+	if (node == NULL || !IsA(node, TransactionStmt))
+		return false;
+
+	stmt = (TransactionStmt *) node;
+	return stmt->kind == TRANS_STMT_ROLLBACK_TO;
 }
 
 /*

@@ -26,3 +26,21 @@ SELECT 1;
         1
 (1 row)
 
+BEGIN;
+BEGIN
+SAVEPOINT s1;
+SAVEPOINT
+aaa;
+ERROR:  syntax error at or near "aaa"
+LINE 1: aaa;
+        ^
+ROLLBACK TO s1;
+ROLLBACK
+SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+END;
+COMMIT

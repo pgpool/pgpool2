@@ -153,6 +153,7 @@ extern bool is_select_query(Node *node, char *sql);
 extern bool is_commit_query(Node *node);
 extern bool is_rollback_query(Node *node);
 extern bool is_commit_or_rollback_query(Node *node);
+extern bool is_rollback_to_query(Node *node);
 extern bool is_strict_query(Node *node);	/* returns non 0 if this is strict
 											 * query */
 extern int	need_insert_lock(POOL_CONNECTION_POOL * backend, char *query, Node *node);
