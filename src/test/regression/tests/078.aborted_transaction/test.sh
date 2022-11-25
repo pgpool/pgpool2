@@ -33,6 +33,12 @@ aaa;
 SELECT 1;
 END;
 SELECT 1;
+BEGIN;
+SAVEPOINT s1;
+aaa;
+ROLLBACK TO s1;
+SELECT 1;
+END;
 EOF
 
 if cmp ../expected.txt results.txt >/dev/null
