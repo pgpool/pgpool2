@@ -8,7 +8,7 @@ DEST_NODE_HOST="$2"                 # hostname of the DB node to be recovered
 DEST_NODE_PGDATA="$3"              # database cluster of the DB node to be recovered
 MAIN_NODE_PORT="$4"                 # PostgreSQL port number
 
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-15
 ARCHIVEDIR=/var/lib/pgsql/archivedir  # archive log directory
 POSTGRESQL_STARTUP_USER=postgres
 SSH_KEY_FILE=id_rsa_pgpool
