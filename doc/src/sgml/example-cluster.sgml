@@ -7,7 +7,7 @@
   servers to create a robust cluster system and avoid the single point of failure or split brain.
  </para>
  <para>
-  <productname>PostgreSQL</productname> 14 is used in this configuration example.
+  <productname>PostgreSQL</productname> 15 is used in this configuration example.
   All scripts have been tested with <productname>PostgreSQL</productname> 10 and later.
  </para>
  <sect2 id="example-cluster-requirement">
@@ -81,7 +81,7 @@
     <tbody>
      <row>
       <entry>PostgreSQL Version</entry>
-      <entry>14.0</entry>
+      <entry>15.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -91,7 +91,7 @@
      </row>
      <row>
       <entry>$PGDATA</entry>
-      <entry>/var/lib/pgsql/14/data</entry>
+      <entry>/var/lib/pgsql/15/data</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -101,11 +101,6 @@
      </row>
      <row>
       <entry>Replication Slots</entry>
-      <entry>Enable</entry>
-      <entry>-</entry>
-     </row>
-     <row>
-      <entry>Start automatically</entry>
       <entry>Enable</entry>
       <entry>-</entry>
      </row>
@@ -166,11 +161,6 @@
       <entry>on</entry>
       <entry>Life check method: heartbeat</entry>
      </row>
-     <row>
-      <entry>Start automatically</entry>
-      <entry>Enable</entry>
-      <entry>-</entry>
-     </row>
     </tbody>
    </tgroup>
   </table>
@@ -228,7 +218,7 @@
   </para>
   <programlisting>
 [all servers]# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-[all servers]# yum install -y postgresql14-server
+[all servers]# yum install -y postgresql15-server
   </programlisting>
   <para>
    Since <productname>Pgpool-II</productname> related packages are also included in <productname>PostgreSQL</productname> YUM repository,
@@ -243,6 +233,10 @@
   </para>
   <programlisting>
 [pgdg-common]
+...
+exclude=pgpool*
+
+[pgdg15]
 ...
 exclude=pgpool*
 
@@ -265,18 +259,14 @@ exclude=pgpool*
 [pgdg10]
 ...
 exclude=pgpool*
-
-[pgdg96]
-...
-exclude=pgpool*
   </programlisting>
 
   <para>
    Install <productname>Pgpool-II</productname> from Pgpool-II YUM repository.
   </para>
   <programlisting>
-[all servers]# yum install -y https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-7-x86_64/pgpool-II-release-4.3-1.noarch.rpm
-[all servers]# yum install -y pgpool-II-pg14-*
+[all servers]# yum install -y https://www.pgpool.net/yum/rpms/4.4/redhat/rhel-7-x86_64/pgpool-II-release-4.4-1.noarch.rpm
+[all servers]# yum install -y pgpool-II-pg15-*
   </programlisting>
  </sect2>
 
@@ -307,7 +297,7 @@ exclude=pgpool*
     </para>
     <programlisting>
 [server1]# su - postgres
-[server1]$ /usr/pgsql-14/bin/initdb -D $PGDATA
+[server1]$ /usr/pgsql-15/bin/initdb -D $PGDATA
     </programlisting>
 
     <para>
@@ -472,28 +462,6 @@ server3:5432:postgres:postgres:&lt;postgres user password&gt;
 [all servers]# firewall-cmd --reload
     </programlisting>
    </listitem>
-
-   <listitem>
-    <para>
-     We set <productname>Pgpool-II</productname> to start automatically on all servers.
-    </para>
-    <programlisting>
-[all servers]# systemctl enable pgpool.service
-    </programlisting>
-
-    <note>
-     <para>
-      If you set the auto-start of <productname>Pgpool-II</productname>, you need to
-      change the <xref linkend="guc-search-primary-node-timeout"> to an appropriate
-      value that you can start the <productname>PostgreSQL</productname> after the
-      server has been started.
-      <productname>Pgpool-II</productname> will fail if it can't connect to the
-      <productname>PostgreSQL</productname> on the backend during the
-      <literal>search_primary_node_timeout</literal>.
-     </para>
-    </note>
-
-   </listitem>
   </itemizedlist>
  </sect2>
 
@@ -630,19 +598,19 @@ health_check_max_retries = 3
 backend_hostname0 = 'server1'
 backend_port0 = 5432
 backend_weight0 = 1
-backend_data_directory0 = '/var/lib/pgsql/14/data'
+backend_data_directory0 = '/var/lib/pgsql/15/data'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname1 = 'server2'
 backend_port1 = 5432
 backend_weight1 = 1
-backend_data_directory1 = '/var/lib/pgsql/14/data'
+backend_data_directory1 = '/var/lib/pgsql/15/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname2 = 'server3'
 backend_port2 = 5432
 backend_weight2 = 1
-backend_data_directory2 = '/var/lib/pgsql/14/data'
+backend_data_directory2 = '/var/lib/pgsql/15/data'
 backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
    <para>
@@ -699,12 +667,12 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
    <programlisting>
 [all servers]# vi /etc/pgpool-II/failover.sh
 ...
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-15
 ...
 
 [all servers]# vi /etc/pgpool-II/follow_primary.sh
 ...
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-15
 ...
    </programlisting>
 
@@ -770,22 +738,22 @@ recovery_1st_stage_command = 'recovery_1st_stage'
     are installed in <filename>/etc/pgpool-II/</filename>. Copy these files to the data directory of the primary server (server1).
    </para>
    <programlisting>
-[server1]# cp -p /etc/pgpool-II/sample_scripts/recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage
-[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
-[server1]# chown postgres:postgres /var/lib/pgsql/14/data/{recovery_1st_stage,pgpool_remote_start}
+[server1]# cp -p /etc/pgpool-II/sample_scripts/recovery_1st_stage.sample /var/lib/pgsql/15/data/recovery_1st_stage
+[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/15/data/pgpool_remote_start
+[server1]# chown postgres:postgres /var/lib/pgsql/15/data/{recovery_1st_stage,pgpool_remote_start}
    </programlisting>
    <para>
     Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
    </para>
    <programlisting>
-[server1]# vi /var/lib/pgsql/14/data/recovery_1st_stage
+[server1]# vi /var/lib/pgsql/15/data/recovery_1st_stage
 ...
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-15
 ...
 
-[server1]# vi /var/lib/pgsql/14/data/pgpool_remote_start
+[server1]# vi /var/lib/pgsql/15/data/pgpool_remote_start
 ...
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-15
 ...
    </programlisting>
 
@@ -953,32 +921,15 @@ pgpool_port2 = 9999
    </para>
    <programlisting>
 wd_lifecheck_method = 'heartbeat'
-                                    # Method of watchdog lifecheck ('heartbeat' or 'query' or 'external')
-                                    # (change requires restart)
 wd_interval = 10
-                                    # lifecheck interval (sec) > 0
-                                    # (change requires restart)
    </programlisting>
    <para>
     Specify all <productname>Pgpool-II</productname> nodes information for sending and receiving heartbeat signal.
    </para>
    <programlisting>
 heartbeat_hostname0 = 'server1'
-                                    # Host name or IP address used
-                                    # for sending heartbeat signal.
-                                    # (change requires restart)
 heartbeat_port0 = 9694
-                                    # Port number used for receiving/sending heartbeat signal
-                                    # Usually this is the same as heartbeat_portX.
-                                    # (change requires restart)
 heartbeat_device0 = ''
-                                    # Name of NIC device (such like 'eth0')
-                                    # used for sending/receiving heartbeat
-                                    # signal to/from destination 0.
-                                    # This works only when this is not empty
-                                    # and pgpool has root privilege.
-                                    # (change requires restart)
-
 heartbeat_hostname1 = 'server2'
 heartbeat_port1 = 9694
 heartbeat_device1 = ''
@@ -993,11 +944,7 @@ heartbeat_device2 = ''
    </para>
    <programlisting>
 wd_heartbeat_keepalive = 2
-                                    # Interval time of sending heartbeat signal (sec)
-                                    # (change requires restart)
 wd_heartbeat_deadtime = 30
-                                    # Deadtime interval for heartbeat signal (sec)
-                                    # (change requires restart)
    </programlisting>
 
    <para>
@@ -1006,8 +953,6 @@ wd_heartbeat_deadtime = 30
    </para>
     <programlisting>
 wd_escalation_command = '/etc/pgpool-II/escalation.sh'
-                                    # Executes this command at escalation on new active pgpool.
-                                    # (change requires restart)
     </programlisting>
    <para>
     The sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_4_STABLE">escalation.sh</ulink> is installed in <filename>/etc/pgpool-II/</filename>.
@@ -1141,7 +1086,7 @@ OPTS=" -D -n"
   </para>
   <programlisting>
 [server1]# su - postgres
-[server1]$ /usr/pgsql-14/bin/pg_ctl start -D $PGDATA
+[server1]$ /usr/pgsql-15/bin/pg_ctl start -D $PGDATA
   </programlisting>
   <para>
    Then let's start <productname>Pgpool-II</productname> on <literal>server1</literal>,
@@ -1255,7 +1200,7 @@ Password for user pgpool:
     <literal>server1</literal>, and verify automatic failover.
    </para>
    <programlisting>
-[server1]$ pg_ctl -D /var/lib/pgsql/13/data -m immediate stop
+[server1]$ pg_ctl -D /var/lib/pgsql/15/data -m immediate stop
    </programlisting>
    <para>
     After stopping <productname>PostgreSQL</productname> on <literal>server1</literal>,
