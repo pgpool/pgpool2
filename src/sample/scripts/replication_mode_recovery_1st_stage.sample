@@ -11,7 +11,7 @@ DEST_NODE_ID="$5"
 DEST_NODE_PORT="$6"
 MAIN_NODE_HOST="$7"
 
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-15
 ARCHIVEDIR=/var/lib/pgsql/archivedir
 REPLUSER=repl
 MAX_DURATION=60
@@ -42,8 +42,8 @@ ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@${DEST_NODE_HOST} "
 
     set -o errexit
 
-    rm -rf $DEST_NODE_PGDATA
-    rm -rf $ARCHIVEDIR/*
+    [ -d \"${DEST_NODE_PGDATA}\" ] && rm -rf ${DEST_NODE_PGDATA}
+    [ -d \"${ARCHIVEDIR}\" ] && rm -rf ${ARCHIVEDIR}/*
 
     ${PGHOME}/bin/pg_basebackup -h ${MAIN_NODE_HOST} -U ${REPLUSER} -p ${MAIN_NODE_PORT} -D ${DEST_NODE_PGDATA} -X stream
 
