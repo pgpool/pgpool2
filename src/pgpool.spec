@@ -165,6 +165,7 @@ touch %{buildroot}%{_sysconfdir}/%{short_name}/pgpool_node_id
 install -d %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/pgpool.service
 
+install -d -m 755 %{buildroot}%{_varrundir}
 mkdir -p %{buildroot}%{_tmpfilesdir}
 install -m 0644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/%{name}.conf
 %else
@@ -276,7 +277,7 @@ fi
 %{_datadir}/%{short_name}/pgpool.pam
 %{_libdir}/libpcp.so.*
 %if %{systemd_enabled}
-%ghost %{_varrundir}
+%attr(755,postgres,postgres) %dir {_varrundir}
 %{_tmpfilesdir}/%{name}.conf
 %{_sysconfdir}/sudoers.d/pgpool
 %{_unitdir}/pgpool.service
