@@ -3118,7 +3118,7 @@ static int accept_incomming_connections(fd_set* rmask, int pending_fds_count)
 		else
 		{
 			MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("new IPC connection received")));
 			g_cluster.ipc_command_socks = lappend_int(g_cluster.ipc_command_socks, fd);
 			MemoryContextSwitchTo(oldCxt);
