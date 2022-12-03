@@ -5,7 +5,7 @@
  <title>リリース 4.4.0</title>
  <note>
   <title>リリース日</title>
-  <simpara>2022-xx-xx</simpara>
+  <simpara>2022-12-06</simpara>
  </note>
 
  <sect2>
@@ -338,6 +338,19 @@ ALTER TABLE ... SET ACCESS METHOD ...;
     <para>
     新しいコマンド'z'を追加しました。
     これは'y'と似ていますが、'z'は 1 つのメッセージのみを読み取り、"ready for query" が到着するまで待機しません（または、1 秒以内にメッセージが到着しない場合はタイムアウトします）。
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2022-12-03 [0b31fdc3]
+    -->
+    <para>
+     LOGメッセージ"new IPC connection received"をDEBUG1にダウングレードしました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=775">bug 775</ulink>) (Bo Peng)
+    </para>
+    <para>
+     これは定期的に出力される正常なメッセージで、LOGとして記録すべきではありません。
+     パッチはpstefによって作成され、Bo Pengによってレビューされます。
     </para>
    </listitem>
   </itemizedlist>

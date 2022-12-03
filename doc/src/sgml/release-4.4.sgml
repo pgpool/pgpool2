@@ -5,7 +5,7 @@
  <title>Release 4.4.0</title>
  <note>
   <title>Release Date</title>
-  <simpara>2022-xx-xx</simpara>
+  <simpara>2022-12-06</simpara>
  </note>
 
  <sect2>
@@ -397,6 +397,19 @@ ALTER TABLE ... SET ACCESS METHOD ...;
     </para>
    </listitem>
 
+   <listitem>
+    <!--
+    2022-12-03 [0b31fdc3]
+    -->
+    <para>
+     Downgrade LOG message "new IPC connection received" to DEBUG1.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=775">bug 775</ulink>) (Bo Peng)
+    </para>
+    <para>
+     This message is output periodically and should not be logged as LOG.
+     Patch is created by pstef and reviewed by Bo Peng.
+    </para>
+   </listitem>
   </itemizedlist>
  </sect2>
 
