@@ -277,7 +277,7 @@ fi
 %{_datadir}/%{short_name}/pgpool.pam
 %{_libdir}/libpcp.so.*
 %if %{systemd_enabled}
-%attr(755,postgres,postgres) %dir {_varrundir}
+%attr(755,postgres,postgres) %dir %{_varrundir}
 %{_tmpfilesdir}/%{name}.conf
 %{_sysconfdir}/sudoers.d/pgpool
 %{_unitdir}/pgpool.service
