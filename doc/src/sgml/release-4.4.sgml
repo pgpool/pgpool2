@@ -168,14 +168,11 @@
      upper limit in bytes. Add similar parameter called
      <xref linkend="guc-delay-threshold-by-time"> so that the limit
      can be specified by time (seconds). The new parameter is
-     effective if it is greater than 0 and track_commit_timestamp
-     (available in <productname>PostgreSQL</productname> 9.5 or after)
-     is enabled. In this case <xref linkend="SQL-SHOW-POOL-NODES">
-     and <xref linkend="pcp-node-info"> display the replication delay
-     in seconds. If the parameter is set to 0 or
-     track_commit_timestamp is not
-     enabled, <xref linkend="guc-delay-threshold-by-time"> is ignored
-     and falls back to delay_threshold mode.
+     effective if it is greater than 0.
+     In this case <xref linkend="SQL-SHOW-POOL-NODES"> and
+     <xref linkend="pcp-node-info"> display the replication delay in seconds.
+     If the parameter is set to 0, <xref linkend="guc-delay-threshold-by-time">
+     is ignored and falls back to delay_threshold mode.
     </para>
     <para>
      For this purpose new member standby_delay_by_time is added to shared
