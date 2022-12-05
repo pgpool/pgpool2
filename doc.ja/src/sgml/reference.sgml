@@ -342,8 +342,8 @@
      -->
      次のSQLコマンドをアクセスしたいすべてのデータベースに発行します。
      <programlisting>
-      $ psql ...
-      $ CREATE EXTENSION pgpool_adm
+$ psql ...
+=# CREATE EXTENSION pgpool_adm
      </programlisting>
     </para>
    </sect1>

@@ -179,7 +179,7 @@
       <acronym>PEM</acronym>形式の<acronym>CA</acronym>ルート証明書ファイルが格納されているディレクトリへのパスを指定します。
       これはバックエンドサーバ証明書の検証に用いられます。
       相対パスで指定した場合、<productname>Pgpool-II</productname>の設定ファイルディレクトリが基準となります。
-      このオプションは<command>OpenSSL verify(1)</command>コマンドにおける<command>-CAfile</command>オプションと同様の機能を提供します。
+      このオプションは<command>OpenSSL verify(1)</command>コマンドにおける<command>-CApath</command>オプションと同様の機能を提供します。
      </para>
      <para>
       <!--

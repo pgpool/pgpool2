@@ -52,7 +52,7 @@ Pgpool-II documentation
        デフォルトは"local"です。
        <itemizedlist>
 	<listitem><para>c, cluster : クラスタを構成するすべてのPgpool-IIの設定ファイルを再読込みします。</para></listitem>
-	<listitem><para>l, local : ローカルPgpool-IIの設定ファイルをのみを再読込みします。</para></listitem>
+	<listitem><para>l, local : ローカルPgpool-IIの設定ファイルのみを再読込みします。</para></listitem>
        </itemizedlist>
       </para>
      </listitem>

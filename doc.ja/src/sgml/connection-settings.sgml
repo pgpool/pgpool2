@@ -584,7 +584,7 @@
       -->
       パスワードは、3つの形式でpool_passwdファイルに保存できます。
       AES256暗号化形式、平文形式、md5形式です。
-      <productname>Pgpool-II</productname>は接頭辞によってパスワードの形式を確認するため、pool_passwd内の各パスワードのエントリはパスワードの形式を接頭語として付ける必要があります。
+      <productname>Pgpool-II</productname>は接頭辞によってパスワードの形式を確認するため、pool_passwd内の各パスワードのエントリはパスワードの形式を接頭辞として付ける必要があります。
      </para>
      <para>
       <!--
@@ -1419,7 +1419,7 @@ backend_clustering_mode = 'native_replication'
        acquire the lock for the table. Of cause this results in an error.
        The transaction will be aborted, and the following INSERT statement produces the above error message.
        -->
-       たとえば、transactionsテストでは、存在しないテーブルに対してINSERTを試みており、<productname>Pgpool-II</productname>は<productname>PostgerSQL</productname>にそのテーブルのロックを獲得させることになります。
+       たとえば、transactionsテストでは、存在しないテーブルに対してINSERTを試みており、<productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>にそのテーブルのロックを獲得させることになります。
        これはもちろんエラーとなります。
        トランザクションがアボート状態になり、続くINSERTでは上記エラーが出てしまいます。
       </para>
@@ -2055,7 +2055,7 @@ backend_clustering_mode = 'raw'
       たとえば、プライマリノードがbackend0（そのホスト名は"host0"とします）、スタンバイノードはbackend1で、backend1のbackend_application_nameは"server1"であるとします。
       すると、<filename>postgresql.conf</filename>の<literal>primary_conninfo</literal>パラメータは次のようになるはずです。
       <programlisting>
-primary_conninfo = 'host=host0 port=5432 user=postgres application_name='server1''
+primary_conninfo = 'host=host0 port=5432 user=postgres application_name=''server1'''
       </programlisting>
       <xref linkend="guc-recovery-1st-stage-command">がそのパラメータを生成します。
       コマンドの完全な例に関しては、<xref linkend="example-cluster-pgpool-config-online-recovery">をご覧ください。

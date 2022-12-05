@@ -164,7 +164,7 @@
     installed from source code. An example of what this file might look like is:
     -->
     これらのパラメータを設定する最も基本的な方法は、<filename>pgpool.conf</><indexterm><primary>pgpool.conf</></>ファイルを編集することです。
-    ソースコードからインストールした場合、<literal>$prefix/ext/pgpool.conf</literal>に配置されています。
+    ソースコードからインストールした場合、<literal>$prefix/etc/pgpool.conf</literal>に配置されています。
     このファイルがどういったものかの例を示します。
     <programlisting>
      # This is a comment
@@ -189,7 +189,7 @@
     引用符の中の空白（white space）を除き、空白は特に意味を持たず、何もない行は無視されます。
     ハッシュ記号（<literal>#</literal>）はその行の後の表記がコメントであることを意味します。
     単純でない識別子、または数値でないパラメータ値は単一引用符で括られなければなりません。
-    パラメータ値の中に単一引用符を埋め込む場合、二重引用符（推奨）もしくはバックスラッシュ-引用符で括ります。
+    パラメータ値の中に単一引用符を埋め込む場合、単一引用符を二つ（推奨）もしくはバックスラッシュ-引用符で括ります。
 
    </para>
 

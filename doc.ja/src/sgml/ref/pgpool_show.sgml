@@ -95,7 +95,7 @@ PostgreSQL documentation
       Currently there are three parameter groups.
       -->
       <productname>Pgpool-II</productname> の設定パラメータのグループ名です。
-      現在、指定可能なパラメータグループは以下の 3つです。
+      現在、指定可能なパラメータグループは以下の 4つです。
      </para>
      <variablelist>
       <varlistentry>

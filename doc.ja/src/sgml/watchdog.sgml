@@ -1110,7 +1110,7 @@
 	then the cluster re-calibrate itself dynamically to adjust all
 	subsequent majority rule computations.
 -->
-    <productname>Pgpool-II</productname> <emphasis>V4.3</emphasis>では<emphasis>メンバー</emphasis>と<emphasis>非メンバーの</emphasis>の概念を導入することにより動的にクラスタの定義を変えることができるようになりました。
+    <productname>Pgpool-II</productname> <emphasis>V4.3</emphasis>では<emphasis>メンバー</emphasis>と<emphasis>非メンバー</emphasis>の概念を導入することにより動的にクラスタの定義を変えることができるようになりました。
 	</para>
 	<para>
 <!--

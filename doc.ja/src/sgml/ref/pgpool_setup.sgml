@@ -101,8 +101,8 @@ Pgpool-II documentation
        omitted, <literal>s</literal> is assumed.
        -->
        動作モードを指定します。<replaceable>mode</replaceable>は
-       <literal>r</literal> (ネイティブレプリケーションモード), <literal>s</literal> (ストリーミングレプリケーションモード)、<literal>n</literal> (raw モード)、<literal>l</literal> (ロジカルレプリケーションモード)、<literal>l</literal>（slonyモード）及び<literal>i</literal>（スナップショットアイソレーションモード）を指定できます。
-       指定しない場合は、<literal>s</literal> (ストリーミングレプリケーションモード) を指定した見なされます。
+       <literal>r</literal> (ネイティブレプリケーションモード), <literal>s</literal> (ストリーミングレプリケーションモード)、<literal>n</literal> (raw モード)、<literal>l</literal> (ロジカルレプリケーションモード)、<literal>y</literal>（slonyモード）及び<literal>i</literal>（スナップショットアイソレーションモード）を指定できます。
+       指定しない場合は、<literal>s</literal> (ストリーミングレプリケーションモード) を指定したと見なされます。
       </para>
      </listitem>
     </varlistentry>
@@ -223,7 +223,7 @@ Pgpool-II documentation
        -->
        ストリーミングレプリケーションモードの時に、アーカイブの代わりにレプリケーションスロットを使います。
        アーカイブディレクトリは<productname>PostgreSQL</productname>クラスタに共有されているので、スタンバイが昇格すると、アーカイアブディレクトリ内のタイムラインが変わり、他のスタンバイが停止してしまいます。
-       レプリケーションスロットを使うとこの問題が起きないので、レプリケーションスロットをサポートしている<productname>PostgreSQL</productname> 9.4以降が使えるのであれば、常にレプリケーションスロットを使うのが常にお勧めです。
+       レプリケーションスロットを使うとこの問題が起きないので、レプリケーションスロットをサポートしている<productname>PostgreSQL</productname> 9.4以降が使えるのであれば、常にレプリケーションスロットを使うのがお勧めです。
        <application>pgpool_setup</application>が使うレプリケーションスロット名は、<literal>pgpool_setup_slot</literal>です。
       </para>
      </listitem>

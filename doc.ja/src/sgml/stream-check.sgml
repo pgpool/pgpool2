@@ -166,7 +166,7 @@
         <term>平文パスワード</term>
         <listitem>
          <para>
-          暗号化されていない平分のパスワードです。
+          暗号化されていない平文のパスワードです。
           可能ならば使用を避けるべきです。
           パスワード文字列は<literal>TEXT</literal>で始まっていなければなりません。
           例えば、パスワードとして<literal>mypass</literal>を設定したい場合、パスワードフィールドに<literal>TEXTmypass</literal>と指定します。
@@ -349,7 +349,7 @@
       このパラメータは<xref linkend="guc-delay-threshold">あるいは<xref linkend="guc-delay-threshold-by-time">を使用しているときに有効です。
       onに設定すると、負荷分散先のスタンバイサーバが<varname>delay_threshold</varname>を超えて遅延したときに、プライマリサーバでなく、
       <xref linkend="guc-backend-weight">が0より大きくて1番遅延の少ないスタンバイサーバを負荷分散ノードにします。
-      全てのスタンバイサーバが<xref linkend="guc-delay-threshold-by-time">あるいは<xref linkend="guc-delay-threshold-by-time">を超えて遅延しているか、負荷分散先として最初からプライマリが選ばれた場合はプライマリサーバに送ります。
+      全てのスタンバイサーバが<xref linkend="guc-delay-threshold">あるいは<xref linkend="guc-delay-threshold-by-time">を超えて遅延しているか、負荷分散先として最初からプライマリが選ばれた場合はプライマリサーバに送ります。
       デフォルトはoffです。
      </para>
      <para>

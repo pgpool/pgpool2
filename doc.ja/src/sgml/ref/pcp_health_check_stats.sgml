@@ -30,7 +30,7 @@ Pgpool-II documentation
  </refsynopsisdiv>
 
  <refsect1 id="R1-PCP-HEALTH-CHECK-STATS-1">
-  <title>Description</title>
+  <title>説明</title>
   <para>
    <command>pcp_health_check_stats</command>
    与えられたノードIDのヘルスチェック統計データを表示します。

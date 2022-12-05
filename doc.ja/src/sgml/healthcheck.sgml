@@ -222,7 +222,7 @@
         <term>平文パスワード</term>
          <listitem>
           <para>
-           暗号化されていない平分のパスワードです。
+           暗号化されていない平文のパスワードです。
            可能ならば使用を避けるべきです。
            パスワード文字列は<literal>TEXT</literal>で始まっていなければなりません。
            例えば、パスワードとして<literal>mypass</literal>を設定したい場合、パスワードフィールドに<literal>TEXTmypass</literal>と指定します。
