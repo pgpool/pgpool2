@@ -140,9 +140,9 @@
     <para>
      <xref linkend="guc-delay-threshold">では、レプリケーション遅延の上限をバイト単位で指定します。
      今回は<xref linkend="guc-delay-threshold-by-time">というパラメータを追加して、レプリケーション遅延の上限を時間（秒）で指定できるようにしました。
-     新しいパラメータは0より大きい、かつ<varname>track_commit_timestamp</varname>（PostgreSQL 9.5以降で使用可能）が有効になっている場合に有効です。
+     新しいパラメータが0より大きい場合に有効になります。
      この場合は、<xref linkend="SQL-SHOW-POOL-NODES">と<xref linkend="pcp-node-info">のレプリケーションの遅延は秒単位で表示します。
-     このパラメータが0に設定されている、または<varname>track_commit_timestamp</varname>が有効になっていない場合には、
+     このパラメータが0に設定されている場合には、
      <varname>delay_threshold_by_time</varname>は無視され、delay_thresholdモードに戻ります。
     </para>
     <para>
