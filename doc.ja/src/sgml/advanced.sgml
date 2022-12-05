@@ -1070,7 +1070,7 @@
     methods of remote node health checking, "heartbeat", "query" and "external" mode.
     -->
     Watchdogにおける死活監視は、watchdogクラスタに参加している<productname>Pgpool-II</productname>ノードの健全性を監視するwatchdogの下位コンポーネントです。
-    <productname>Pgpool-II</productname> watchdogは、リモートノードの健全性をチェックする3つの方法、"heartbeat"と"query"とexternal"モードを提供します。
+    <productname>Pgpool-II</productname> watchdogは、リモートノードの健全性をチェックする3つの方法、"heartbeat"と"query"と"external"モードを提供します。
    </para>
    <para>
     <!--
@@ -1110,6 +1110,7 @@
     -->
     リモートノードの死活監視以外にも、watchdogの死活監視は、上位サーバへの接続を監視することにより、インストールされたノードの健全性をチェックできます。
     上位サーバへの接続を監視するために、<productname>Pgpool-II</productname>の死活監視は<literal>execv()</literal>を使って<command>'ping -q -c3 hostname'</command>コマンドを実行します。
+    各pingコマンドを実行するために新しい子プロセスが生成されます。
     つまり、各々の死活監視のサイクルごとに、それぞれの上位サーバのために子プロセスが作られ、破棄されます。
     たとえば、死活監視の設定で2つの上位サーバがあり、10秒ごとに死活監視を行うとすると、死活監視は10秒ごとに2つの子プロセスを起動し、各上位サーバ用に1個ずつプロセスが割り当てられます。
     それぞれのプロセスは、pingコマンドが完了するまで生存します。

@@ -578,7 +578,7 @@
    また、メインプロセスからforkされるいくつかのワーカープロセスがあります。
    ワーカープロセスは、ストリーミングレプリケーションの遅延を検出する役目があります。
    また、「PCPプロセス」と呼ばれる特殊なプロセスがあります。これは、<productname>Pgpool-II</productname>の管理専用に使用されます。
-   <productname>Pgpool-II</productname>には、組み込みの"watchdog"と呼ばれる組み込みの高可用性機能があります。
+   <productname>Pgpool-II</productname>には、"watchdog"と呼ばれる組み込みの高可用性機能があります。
    watchdogはいくつかのプロセスから構成されています。
    watchdogの詳細については<xref linkend="tutorial-watchdog">をご覧ください。
   </para>

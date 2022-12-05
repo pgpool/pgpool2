@@ -68,7 +68,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       The name of the <productname>Pgpool-II</productname> configuration parameter group.
-      Currently there are three parameter groups.
+      Currently there are four parameter groups.
      </para>
      <variablelist>
       <varlistentry>

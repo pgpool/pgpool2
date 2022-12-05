@@ -35,7 +35,7 @@ Pgpool-II documentation
  </refsynopsisdiv>
 
  <refsect1 id="R1-WD-CLI-1">
-  <title>Description</title>
+  <title>説明</title>
   <para>
    <command>wd_cli</command>
 <!--
@@ -90,7 +90,7 @@ watchdogノード状態を更新します。
 <!--
   <title>Node Search Options</title>
 -->
-  <title>ノード検索操作</title>
+  <title>ノード検索オプション</title>
   <para>
    <variablelist>
 
@@ -168,7 +168,7 @@ node_idでwatchdogノードを検索します。
 <!--
   <title>Options</title>
 -->
-  <title>操作</title>
+  <title>オプション</title>
   <para>
    <variablelist>
 
@@ -195,7 +195,7 @@ watchdog認証キー。
 <!--
        Specifies the <filename>pgpool.conf</filename> file.
 -->
-<filename>pgpool.conf</filename> file.
+<filename>pgpool.conf</filename>ファイル.
       </para>
      </listitem>
     </varlistentry>

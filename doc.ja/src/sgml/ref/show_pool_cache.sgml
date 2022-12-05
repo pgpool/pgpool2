@@ -72,7 +72,7 @@
     all columns except num_cache_hits, num_selects and cache_hit_ratio
     show 0.
 -->
-    キャッシュストレージが<literal>memcached</literal>のときは、num_cache_hits, num_selects and cache_hit_ratio以外の列の値は0になります。
+    キャッシュストレージが<literal>memcached</literal>のときは、num_cache_hits, num_selects, cache_hit_ratio以外の列の値は0になります。
    </para>
   </note>
 

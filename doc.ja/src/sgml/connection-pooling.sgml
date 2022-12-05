@@ -964,7 +964,7 @@ local0.*    /var/log/pgpool.log
       the program name used to identify <productname>Pgpool-II</productname>
       messages in <application>syslog</> logs. The default is <literal>pgpool</literal>.
       -->
-      <application>syslog</>にログ取得が有効な場合、このパラメータは<application>syslog</>ログ内の<productname>Pgpool-II</productname>メッセージを特定するのに使用するプログラム名を確定します。
+      <application>syslog</>へのログ取得が有効な場合、このパラメータは<application>syslog</>ログ内の<productname>Pgpool-II</productname>メッセージを特定するのに使用するプログラム名を確定します。
       デフォルトは<literal>pgpool</literal>です。
      </para>
      <para>

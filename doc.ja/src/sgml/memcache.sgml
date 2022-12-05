@@ -184,7 +184,7 @@
      </para>
 
      <table id="memqcache-method-table">
-      <title>Memcache method options</title>
+      <title>Memqcache method options</title>
       <tgroup cols="2">
        <thead>
 	<row>

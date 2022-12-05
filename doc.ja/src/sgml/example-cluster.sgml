@@ -579,7 +579,7 @@ port = 9999
     この設定例では、<xref linkend="GUC-SR-CHECK-PASSWORD">は<filename>pgpool.conf</filename>に指定せず、
     <xref linkend="GUC-POOL-PASSWD">ファイルに作成します。
     作成方法については後述の<xref linkend="example-cluster-pgpool-config-auth">を参照ください。
-    <productname>Pgpool-II</productname> 4.0から、<xref linkend="GUC-SR-CHECK-PASSWORD">が空白の場合、
+    <productname>Pgpool-II</productname> 4.0から、<xref linkend="GUC-SR-CHECK-PASSWORD">が空の場合、
     <productname>Pgpool-II</productname>は空のパスワードを使用する前に
     まず<xref linkend="GUC-POOL-PASSWD">ファイルから<xref linkend="GUC-SR-CHECK-USER">に
     指定したユーザのパスワードを取得できるか試みます。

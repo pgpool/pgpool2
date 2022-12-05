@@ -16,7 +16,7 @@
   レプリケーションを行う点はネイティブレプリケーションモードと同じです。
  </para>
  <para>
-  この設定例では<productname>PostgreSQL</productname> 14を使っていますが、
+  この設定例では<productname>PostgreSQL</productname> 15を使っていますが、
   各種スクリプトは<productname>PostgreSQL</productname> 10以降での動作確認を行っています。
  </para>
 
@@ -78,7 +78,7 @@
     <tbody>
      <row>
       <entry>PostgreSQLバージョン</entry>
-      <entry>14.0</entry>
+      <entry>15.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -88,7 +88,7 @@
      </row>
      <row>
       <entry>$PGDATA</entry>
-      <entry>/var/lib/pgsql/14/data</entry>
+      <entry>/var/lib/pgsql/15/data</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -159,7 +159,7 @@
   </para>
   <programlisting>
 [全サーバ]# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-[全サーバ]# yum install -y postgresql14-server
+[全サーバ]# yum install -y postgresql15-server
   </programlisting>
 
   <para>
@@ -181,6 +181,10 @@
 exclude=pgpool*
 
 
+[pgdg15]
+...
+exclude=pgpool*
+
 [pgdg14]
 ...
 exclude=pgpool*
@@ -200,18 +204,14 @@ exclude=pgpool*
 [pgdg10]
 ...
 exclude=pgpool*
-
-[pgdg96]
-...
-exclude=pgpool*
   </programlisting>
 
   <para>
    <productname>Pgpool-II</productname>をインストールします。
   </para>
   <programlisting>
-[全サーバ]# yum install -y https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-7-x86_64/pgpool-II-release-4.3-1.noarch.rpm
-[全サーバ]# yum install -y pgpool-II-pg14-*
+[全サーバ]# yum install -y https://www.pgpool.net/yum/rpms/4.4/redhat/rhel-7-x86_64/pgpool-II-release-4.4-1.noarch.rpm
+[全サーバ]# yum install -y pgpool-II-pg15-*
   </programlisting>
  </sect2>
 
@@ -319,7 +319,7 @@ server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
   </para>
   <programlisting>
 [server1]# su - postgres
-[server1]$ /usr/pgsql-14/bin/initdb -E UTF8 --no-locale
+[server1]$ /usr/pgsql-15/bin/initdb -E UTF8 --no-locale
   </programlisting>
   <para>
    次に<literal>server1</literal>にて、設定ファイル<filename>$PGDATA/postgresql.conf</filename>を以下のように編集します。
@@ -348,7 +348,7 @@ host    replication     all             samenet                 scram-sha-256
    server1で以下のコマンドを実行し、PostgreSQLを起動します。
   </para>
   <programlisting>
-[server1]$ /usr/pgsql-14/bin/pg_ctl start
+[server1]$ /usr/pgsql-15/bin/pg_ctl start
   </programlisting>
 
   <para>
@@ -469,10 +469,10 @@ listen_addresses = '*'
     <literal>health_check_max_retries = 3</literal> に設定しておきます。
     この設定例では、<xref linkend="GUC-HEALTH-CHECK-PASSWORD">は<filename>pgpool.conf</filename>に指定せず、
     <xref linkend="GUC-POOL-PASSWD">ファイルに作成します。
-    作成方法については後述の<xref linkend="example-cluster-pgpool-config-auth">を参照ください。
-    <productname>Pgpool-II</productname> 4.0から、<xref linkend="GUC-SR-CHECK-PASSWORD">が空白の場合、
-    <productname>Pgpool-II</productname>は空のパスワードを使用する前に
-    まず<xref linkend="GUC-POOL-PASSWD">ファイルから<xref linkend="GUC-SR-CHECK-USER">に
+    作成方法については後述の<xref linkend="example-replication-mode-auth">を参照ください。
+    <productname>Pgpool-II</productname> 4.0から、<xref linkend="GUC-HEALTH-CHECK-PASSWORD">が空の場合、
+    <productname>Pgpool-II</productname>は空のパスワードを使用する前に、
+    まず<xref linkend="GUC-POOL-PASSWD">ファイルから<xref linkend="GUC-HEALTH-CHECK-USER">に
     指定したユーザのパスワードを取得できるか試みます。
    </para>
    <programlisting>
@@ -498,19 +498,19 @@ health_check_max_retries = 3
 backend_hostname0 = 'server1'
 backend_port0 = 5432
 backend_weight0 = 1
-backend_data_directory0 = '/var/lib/pgsql/14/data'
+backend_data_directory0 = '/var/lib/pgsql/15/data'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname1 = 'server2'
 backend_port1 = 5432
 backend_weight1 = 1
-backend_data_directory1 = '/var/lib/pgsql/14/data'
+backend_data_directory1 = '/var/lib/pgsql/15/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname2 = 'server3'
 backend_port2 = 5432
 backend_weight2 = 1
-backend_data_directory2 = '/var/lib/pgsql/14/data'
+backend_data_directory2 = '/var/lib/pgsql/15/data'
 backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
   </sect3>
@@ -541,28 +541,28 @@ recovery_2nd_stage_command = 'recovery_2nd_stage.sh'
     これらのファイルをmainノード(<literal>server1</literal>)のデータベースクラスタ配下に配置します。
    </para>
    <programlisting>
-[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage.sh
-[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_2nd_stage.sample /var/lib/pgsql/14/data/recovery_2nd_stage.sh
-[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
-[server1]# chown postgres:postgres /var/lib/pgsql/14/data/{recovery_1st_stage.sh,recovery_2nd_stage.sh,pgpool_remote_start}
+[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_1st_stage.sample /var/lib/pgsql/15/data/recovery_1st_stage.sh
+[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_2nd_stage.sample /var/lib/pgsql/15/data/recovery_2nd_stage.sh
+[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/15/data/pgpool_remote_start
+[server1]# chown postgres:postgres /var/lib/pgsql/15/data/{recovery_1st_stage.sh,recovery_2nd_stage.sh,pgpool_remote_start}
    </programlisting>
    <para>
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
    </para>
    <programlisting>
-[server1]# vi /var/lib/pgsql/14/data/recovery_1st_stage.sh
+[server1]# vi /var/lib/pgsql/15/data/recovery_1st_stage.sh
 ...
-PGHOME=/usr/pgsql-14
-...
-
-[server1]# vi /var/lib/pgsql/14/data/recovery_2nd_stage.sh
-...
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-15
 ...
 
-[server1]# vi /var/lib/pgsql/14/data/pgpool_remote_start
+[server1]# vi /var/lib/pgsql/15/data/recovery_2nd_stage.sh
 ...
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-15
+...
+
+[server1]# vi /var/lib/pgsql/15/data/pgpool_remote_start
+...
+PGHOME=/usr/pgsql-15
 ...
    </programlisting>
 
@@ -781,15 +781,15 @@ Password for user pgpool:
     pgbenchを使って、レプリケーション機能を試してみましょう。
    </para>
    <programlisting>
-[server1]# /usr/pgsql-14/bin/createdb test -U postgres -p 9999
-[server1]# /usr/pgsql-14/bin/pgbench -h server1 -U postgres -i -p 9999 test
+[server1]# /usr/pgsql-15/bin/createdb test -U postgres -p 9999
+[server1]# /usr/pgsql-15/bin/pgbench -h server1 -U postgres -i -p 9999 test
    </programlisting>
    <para>
     <productname>Pgpool-II</productname>のレプリケーション機能が正しく動いているかどうか確かめるために、
     それぞれのノードに接続して、同じ結果を返すかどうか見てみます。
    </para>
    <programlisting>
-[server1]# /usr/pgsql-14/bin/psql -h server1 -U postgres -p 5432 test
+[server1]# /usr/pgsql-15/bin/psql -h server1 -U postgres -p 5432 test
 test=# \d
               List of relations
  Schema |       Name       | Type  |  Owner
@@ -800,7 +800,7 @@ test=# \d
  public | pgbench_tellers  | table | postgres
 (4 rows)
 
-[server1]# /usr/pgsql-14/bin/psql -h server2 -U postgres -p 5432 test
+[server1]# /usr/pgsql-15/bin/psql -h server2 -U postgres -p 5432 test
 test=# \d
               List of relations
  Schema |       Name       | Type  |  Owner
@@ -811,7 +811,7 @@ test=# \d
  public | pgbench_tellers  | table | postgres
 (4 rows)
 
-[server1]# /usr/pgsql-14/bin/psql -h server3 -U postgres -p 5432 test
+[server1]# /usr/pgsql-15/bin/psql -h server3 -U postgres -p 5432 test
 test=# \d
               List of relations
  Schema |       Name       | Type  |  Owner
@@ -829,27 +829,27 @@ test=# \d
     次に、pgbenchをしばらく走らせて、結果を見てみます。
    </para>
    <programlisting>
-[server1]# /usr/pgsql-14/bin/pgbench -h server1 -U postgres -p 9999 -T 10 test
+[server1]# /usr/pgsql-15/bin/pgbench -h server1 -U postgres -p 9999 -T 10 test
    </programlisting>
    <para>
     すべてのPostgreSQLは、同一の結果を返しています。
    </para>
    <programlisting>
-[server1]# /usr/pgsql-14/bin/psql -h server1 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
+[server1]# /usr/pgsql-15/bin/psql -h server1 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
 Password for user postgres:
   sum
 --------
  -99710
 (1 row)
 
-[server1]# /usr/pgsql-14/bin/psql -h server2 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
+[server1]# /usr/pgsql-15/bin/psql -h server2 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
 Password for user postgres:
   sum
 --------
  -99710
 (1 row)
 
-[server1]# /usr/pgsql-14/bin/psql -h server3 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
+[server1]# /usr/pgsql-15/bin/psql -h server3 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
 Password for user postgres:
   sum
 --------
@@ -865,7 +865,7 @@ Password for user postgres:
     mainノードの切り替えを確認してみます。
    </para>
    <programlisting>
-[server1]# su - postgres -c "/usr/pgsql-14/bin/pg_ctl -m i stop"
+[server1]# su - postgres -c "/usr/pgsql-15/bin/pg_ctl -m i stop"
    </programlisting>
    <para>
     <literal>ノード0</literal>を停止した後に、ノード0が切り離されて、mainノードの切り替えが発生することを確認します。
