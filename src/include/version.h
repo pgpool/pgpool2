@@ -1,2 +1,2 @@
-#define PGPOOLVERSION "nurikoboshi"
+#define PGPOOLVERSION "hotooriboshi"
 
