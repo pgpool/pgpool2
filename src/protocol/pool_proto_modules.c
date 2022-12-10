@@ -1656,7 +1656,7 @@ Close(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 				 errmsg("unable to execute close, invalid message")));
 
 	/*
-	 * As per the postgresql, calling close on non existing portals or
+	 * For PostgreSQL, calling close on non existing portals or
 	 * statements is not an error. So on the same footings we will ignore all
 	 * such calls and return the close complete message to clients with out
 	 * going to backend
@@ -1708,8 +1708,9 @@ Close(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		/*
 		 * Parse_before_bind() may have sent a bind message to the primary
 		 * node id. So send the close message to the primary node as well.
-		 * Even if not, sending a close message for non existing
-		 * statement/portal is harmless. No error will happen.
+		 * Even if we do not send the bind message, sending a close message
+		 * for non existing statement/portal is harmless. No error will
+		 * happen.
 		 */
 		if (session_context->load_balance_node_id != PRIMARY_NODE_ID)
 		{
@@ -3466,8 +3467,8 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 			 * Before sending the parse message to the primary, we need to
 			 * close the named statement. Otherwise we will get an error from
 			 * backend if the named statement already exists. This could
-			 * happend if parse_before_bind is called with a bind message
-			 * using same named statement. If the named statement does not
+			 * happen if parse_before_bind is called with a bind message
+			 * using the same named statement. If the named statement does not
 			 * exist, it's fine. PostgreSQL just ignores a request trying to
 			 * close a non-existing statement. If the statement is unnamed
 			 * one, we do not need it because unnamed statement can be
@@ -3480,6 +3481,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 					(errmsg("parse before bind"),
 					 errdetail("close statement: %s", bind_message->contents + offset)));
 
+			/* named statement? */
 			if (bind_message->contents[offset] != '\0')
 			{
 				message_len = 1 + strlen(bind_message->contents + offset) + 1;
