@@ -740,8 +740,10 @@
          <entry>
           <!--
           All children are pre-forked at startup.
+	  Number of child processes is fixed (<xref linkend="guc-num-init-children">).
           -->
           すべての子プロセスは起動時に事前にフォークされます。
+	   子プロセスの数は固定です(<xref linkend="guc-num-init-children">)。
          </entry>
         </row>
 
@@ -749,11 +751,11 @@
          <entry>dynamic</entry>
          <entry>
           <!--
-          child processes are spawned on demand.
+         <entry>child processes are spawned on demand up to <xref linkend="guc-num-init-children">.
           number of idle child processes at any time depends on
           min_spare_children and max_spare_children
           -->
-          子プロセスはオンデマンドで生成されます。
+          子プロセスはオンデマンドで生成され、最大<xref linkend="guc-num-init-children">です。
           アイドル状態の子プロセスの数はmin_spare_childrenとmax_spare_childrenの設定値に基づいて増減していきます。
          </entry>
         </row>
@@ -775,6 +777,10 @@
       <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
       -->
       <varname>process_management_mode</varname>は、<productname>Pgpool-II</productname><emphasis> V4.4</emphasis>より以前のバージョンでは使用できません。
+     </para>
+
+     <para>
+      詳細は<xref linkend="process-management-mode">を参照してください。
      </para>
 
     </listitem>

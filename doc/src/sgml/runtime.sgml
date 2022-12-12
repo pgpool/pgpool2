@@ -324,7 +324,7 @@ default_transaction_isolation = 'repeatable read'
           processes to keep this number within the specified boundaries.
      </para>
      <para>
-       <varname>process_management_mode</varname> is not available prior to
+       <xref linkend="guc-process-management-mode"> is not available prior to
        <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
       </para>
   </sect2>
