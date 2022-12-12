@@ -483,13 +483,14 @@
          <entry>static</entry>
          <entry>
           All children are pre-forked at startup.
+	  Number of child processes is fixed (<xref linkend="guc-num-init-children">).
          </entry>
         </row>
 
        <row>
          <entry>dynamic</entry>
-         <entry>child processes are spawned on demand.
-         number of idle child processes at any time depends on
+         <entry>child processes are spawned on demand up to <xref linkend="guc-num-init-children">.
+          Number of idle child processes at any time depends on
           min_spare_children and max_spare_children
          </entry>
         </row>
@@ -502,10 +503,14 @@
        Default is <literal>static</literal>, that is compatible with pre <emphasis>V4.4</emphasis>.
      </para>
 
-       <para>
-       <varname>process_management_mode</varname> is not available prior to
-       <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
-      </para>
+     <para>
+      <varname>process_management_mode</varname> is not available prior to
+      <productname>Pgpool-II </productname><emphasis>V4.4</emphasis>.
+     </para>
+
+     <para>
+      See <xref linkend="process-management-mode"> for more details.
+     </para>
 
     </listitem>
    </varlistentry>
