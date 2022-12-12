@@ -320,7 +320,7 @@ default_transaction_isolation = 'repeatable read'
           num_init_children number of child
           process at startup, and each child process keeps listening for incoming
           client connection. While with dynamic process management mode,
-          <productname>Pgpool-II</> keeps track of idle processes and forks or kills
+          <productname>Pgpool-II</> keeps track of idle processes and forks or kills
           processes to keep this number within the specified boundaries.
      </para>
      <para>
