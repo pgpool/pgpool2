@@ -5026,7 +5026,7 @@ service_child_processes(void)
 			new_spawn_no += pool_config->max_spare_children / 4;
 			if (new_spawn_no + current_child_process_count > pool_config->num_init_children)
 			{
-				ereport(LOG,
+				ereport(DEBUG5,
 					(errmsg("we have hit the ceiling, spawning %d child(ren)",
 									pool_config->num_init_children - current_child_process_count)));
 				new_spawn_no = pool_config->num_init_children - current_child_process_count;
