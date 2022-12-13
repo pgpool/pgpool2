@@ -36,3 +36,21 @@ pgpool.8
 sql/pgpool-recovery/pgpool-recovery.sql
 sql/pgpool-regclass/pgpool-regclass.sql
 stamp-h1
+Makefile.in
+
+# Local excludes in root directory
+/aclocal.m4
+/compile
+/config.guess
+/config.sub
+/depcomp
+/install-sh
+/ltmain.sh
+/missing
+/mkinstalldirs
+/ylwrap
+/m4/libtool.m4
+/m4/ltoptions.m4
+/m4/ltsugar.m4
+/m4/ltversion.m4
+/m4/lt~obsolete.m4
