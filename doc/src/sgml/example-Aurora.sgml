@@ -22,6 +22,10 @@
      <para>
       Create <filename>pgpool.conf</filename>
       from <filename>pgpool.conf.sample</filename>.
+      Make sure your <filename>pgpool.conf</filename> includes following line:
+      <programlisting>
+backend_clustering_mode = 'streaming_replication'
+      </programlisting>
      </para>
     </listitem>
     <listitem>
@@ -79,7 +83,7 @@ backend_hostname1 = 'reader endpoint'
       for <xref linkend="guc-backend-hostname">0 and <xref linkend="guc-backend-hostname">1.
      </para>
      <programlisting>
-backend_flag0 = 'ALWAYS_MASTER|DISALLOW_TO_FAILOVER'
+backend_flag0 = 'ALWAYS_PRIMARY|DISALLOW_TO_FAILOVER'
 backend_flag1 = 'DISALLOW_TO_FAILOVER'
      </programlisting>
     </listitem>
