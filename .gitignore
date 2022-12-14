@@ -37,6 +37,7 @@ sql/pgpool-recovery/pgpool-recovery.sql
 sql/pgpool-regclass/pgpool-regclass.sql
 stamp-h1
 Makefile.in
+src/include/config.h.in
 
 # Local excludes in root directory
 /aclocal.m4
