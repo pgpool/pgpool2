@@ -122,7 +122,7 @@ backend_hostname1 = '読み取りエンドポイント'
       フェイルオーバはAuroraによって管理されますので、<xref linkend="guc-backend-hostname">0と<xref linkend="guc-backend-hostname">1の<xref linkend="guc-backend-flag">の<varname>DISALLOW_TO_FAILOVER</varname>をオンにします。
      </para>
      <programlisting>
-backend_flag0 = 'ALWAYS_MASTER|DISALLOW_TO_FAILOVER'
+backend_flag0 = 'ALWAYS_PRIMARY|DISALLOW_TO_FAILOVER'
 backend_flag1 = 'DISALLOW_TO_FAILOVER'
      </programlisting>
     </listitem>
