@@ -3236,6 +3236,8 @@ read_status_file(bool discard_status)
 			{
 				BACKEND_INFO(i).backend_status = CON_UP;
 				someone_wakeup = true;
+				ereport(LOG,
+						(errmsg("reading status file: %d th backend is set to up status", i)));
 			}
 			else if (!strncasecmp("down", readbuf, 4))
 			{
@@ -3248,6 +3250,8 @@ read_status_file(bool discard_status)
 			{
 				BACKEND_INFO(i).backend_status = CON_UNUSED;
 				pool_set_backend_status_changed_time(i);
+				ereport(LOG,
+						(errmsg("reading status file: %d th backend is set to unused status", i)));
 			}
 			else
 			{
