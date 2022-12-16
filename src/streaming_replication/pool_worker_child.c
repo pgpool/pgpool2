@@ -480,8 +480,8 @@ check_replication_time_lag(void)
 						if (s)
 						{
 							bkinfo->standby_delay = atol(s);
-							ereport(LOG,
-									(errmsg("standby_delay: %lu", bkinfo->standby_delay)));
+							ereport(DEBUG1,
+									(errmsg("standby delay in seconds * 1000000: " UINT64_FORMAT "", bkinfo->standby_delay)));
 						}
 						else
 							bkinfo->standby_delay = 0;
