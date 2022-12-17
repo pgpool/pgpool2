@@ -98,7 +98,7 @@ function export_env_vars
 
 	export PGPOOL_INSTALL_DIR=$PGPOOL_PATH
 	# where to look for pgpool.conf.sample files.
-	export PGPOOLDIR=$PGPOOL_INSTALL_DIR/etc
+	export PGPOOLDIR=${PGPOOLDIR:-"$PGPOOL_INSTALL_DIR/etc"}
 
 	PGPOOLLIB=${PGPOOL_INSTALL_DIR}/lib
 	if [ -z "$LD_LIBRARY_PATH" ];then
