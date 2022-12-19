@@ -140,6 +140,27 @@
     the socket and could give heavy load to the system. To
     mitigate the problem, you could set serialize_accept to on so
     that there's only one process to grab the accepting socket.
+    However notice that the performance may be dropped when the number
+    of concurrent clients is small.
+   </para>
+   <para>
+    In <productname>Pgpool-II</productname> 4.4 or later, it is
+    possible to use <xref linkend="guc-process-management-mode"> for
+    more efficient management.  By
+    setting <varname>process-management-mode</varname>
+    to <literal>dynamic</literal>, when the number of concurrent
+    clients is small, the number of child process
+    of <productname>Pgpool-II</productname> can be decreased thus we
+    can save the resource consumption.  On the other hand when the
+    number of concurrent clients gets larger, the number of child
+    process increases so that it can respond to the more demand of
+    connections. However, notice that the time for connection
+    establishment could be increasing because new process need to be
+    started to have more child process.
+   </para>
+   <para>
+    See also <xref linkend="process-management-mode"> for
+    understanding <varname>process-management-mode</varname>.
    </para>
   </sect2>
 
