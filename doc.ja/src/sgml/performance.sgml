@@ -121,7 +121,7 @@
     たとえば、処理に時間を要する重いクエリがあると、容易にこの問題の引き金になります。
    </para>
    <para>
-    解決方法は、すでに<productname>PostgreSQL</productname>が行っているように、溢れてしまうような接続要求は拒否することです。
+    解決方法は、<xref linkend="guc-reserved-connections">を使って、すでに<productname>PostgreSQL</productname>が行っているように、溢れてしまうような接続要求は拒否することです。
     これはアプリケーションから見える"Sorry max_connections already"エラーを起こすので、アプリケーションは処理を再実行する必要があります。
     ですから、この方法はシステムの負荷を事前に予測できないときにだけ使用するべきです。
    </para>
