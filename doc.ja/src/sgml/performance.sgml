@@ -102,6 +102,16 @@
     新しい接続要求が到達すると、カーネルはaccept()システムコールを発行するために休眠中のプロセスをすべて起こします。
     これはプロセス同士がソケットを奪い合うきっかけとなり、システムに高負荷を与えます。
     <xref linkend="guc-serialize-accept">をonにすることにより、接続を受け付けるソケットを確保するプロセスをひとつだけにすることができます。
+    ただし、この方法では、同時に接続するクライアント数が少ない時に、性能が低下する可能性があることに注意してください
+   </para>
+   <para>
+    <productname>Pgpool-II</productname> 4.4以降では、<xref linkend="guc-process-management-mode">を使ってより効果的な対処が可能です。
+    <varname>process-management-mode</varname>を<literal>dynamic</literal>にすることにより、同時に接続するクライアント数が少ない時には<productname>Pgpool-II</productname>の子プロセスの数を削減し、システムのリソースの消費を抑えます。
+    一方、同時に接続するクライアント数が増えてくると、必要に応じて子プロセスの数を増やすので、増大する接続要求にも応えられます。
+    ただし、子プロセスを増やすには新たなプロセスの起動が必要となり、接続に要する時間が増えることに留意してください。
+   </para>
+   <para>
+    <varname>process-management-mode</varname>については、<xref linkend="process-management-mode">もご覧ください。
    </para>
   </sect2>
 
