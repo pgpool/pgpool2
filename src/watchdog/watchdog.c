@@ -378,7 +378,8 @@ typedef struct wd_cluster
 	int			network_monitor_sock;
 	bool		clusterInitialized;
 	bool		ipc_auth_needed;
-	int			current_failover_id;
+	int 		current_failover_id;
+	int 		failover_command_timeout;
 	struct timeval last_bcast_srv_msg_time;	/* timestamp when last packet was
 											 *  broadcasted by the local node */
 	char		last_bcast_srv_msg;
@@ -608,7 +609,7 @@ static int revoke_cluster_membership_of_node(WatchdogNode* wdNode, WD_NODE_MEMBE
 static int restore_cluster_membership_of_node(WatchdogNode* wdNode);
 static void update_missed_beacon_count(WDCommandData* ipcCommand, bool clear);
 static void wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt);
-
+static void	update_failover_timeout(WatchdogNode * wdNode, POOL_CONFIG *pool_config);
 /* global variables */
 wd_cluster	g_cluster;
 struct timeval g_tm_set_time;
@@ -2393,7 +2394,7 @@ service_expired_failovers(void)
 
 		if (failoverObj)
 		{
-			if (WD_TIME_DIFF_SEC(currTime, failoverObj->startTime) >= FAILOVER_COMMAND_FINISH_TIMEOUT)
+			if (WD_TIME_DIFF_SEC(currTime, failoverObj->startTime) >= g_cluster.failover_command_timeout)
 			{
 				failovers_to_del = lappend(failovers_to_del, failoverObj);
 				ereport(DEBUG1,
@@ -4243,6 +4244,7 @@ standard_packet_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 					if (standby_config)
 					{
 						verify_pool_configurations(wdNode, standby_config);
+						update_failover_timeout(wdNode, standby_config);
 					}
 				}
 			}
@@ -6021,6 +6023,8 @@ watchdog_state_machine_coordinator(WD_EVENTS event, WatchdogNode * wdNode, WDPac
 				send_cluster_command(NULL, WD_DECLARE_COORDINATOR_MESSAGE, 4);
 				set_timeout(MAX_SECS_WAIT_FOR_REPLY_FROM_NODE);
 				update_missed_beacon_count(NULL,true);
+				update_failover_timeout(g_cluster.localNode, pool_config);
+
 				ereport(LOG,
 						(errmsg("I am announcing my self as leader/coordinator watchdog node")));
 
@@ -8159,6 +8163,43 @@ static void update_missed_beacon_count(WDCommandData* ipcCommand, bool clear)
 			}
 		}
 	}
+}
+
+static void
+update_failover_timeout(WatchdogNode * wdNode, POOL_CONFIG *pool_config)
+{
+	int failover_command_timeout;
+	if (get_local_node_state() != WD_COORDINATOR)
+		return;
+
+	failover_command_timeout = pool_config->health_check_period + (pool_config->health_check_retry_delay * pool_config->health_check_max_retries);
+
+	if (pool_config->health_check_params)
+	{
+		int i;
+		for (i = 0 ; i < pool_config->backend_desc->num_backends; i++)
+		{
+			int pn_failover_command_timeout = pool_config->health_check_params[i].health_check_period +
+							(pool_config->health_check_params[i].health_check_retry_delay *
+							pool_config->health_check_params[i].health_check_max_retries);
+
+			if (failover_command_timeout < pn_failover_command_timeout)
+				failover_command_timeout = pn_failover_command_timeout;
+		}
+	}
+
+	if (g_cluster.localNode == wdNode)
+	{
+		/* Reset*/
+		g_cluster.failover_command_timeout = failover_command_timeout;
+	}
+	else if (g_cluster.failover_command_timeout < failover_command_timeout)
+		g_cluster.failover_command_timeout = failover_command_timeout;
+
+	if (g_cluster.failover_command_timeout < FAILOVER_COMMAND_FINISH_TIMEOUT)
+		g_cluster.failover_command_timeout = FAILOVER_COMMAND_FINISH_TIMEOUT;
+
+	ereport(LOG,(errmsg("Setting failover command timeout to %d",failover_command_timeout)));
 }
 
 #ifdef WATCHDOG_DEBUG
