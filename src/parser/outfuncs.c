@@ -1939,7 +1939,6 @@ _outParamRef(StringInfo str, ParamRef *node)
 static void
 _outA_Const(StringInfo str, A_Const *node)
 {
-	char		buf[16];
 	char		*p;
 
 	if (node->isnull)
@@ -1951,12 +1950,11 @@ _outA_Const(StringInfo str, A_Const *node)
 	switch (nodeTag(&node->val))
 	{
 		case T_Integer:
-			sprintf(buf, "%d", node->val.ival.ival);
-			appendStringInfoString(str, buf);
+			_outInteger(str, &node->val.ival);
 			break;
 
 		case T_Float:
-			appendStringInfoString(str, node->val.fval.fval);
+			_outFloat(str, &node->val.fval);
 			break;
 
 		case T_String:
@@ -1968,10 +1966,15 @@ _outA_Const(StringInfo str, A_Const *node)
 			break;
 
 		case T_BitString:
-			appendStringInfoString(str, node->val.bsval.bsval);
+			_outBitString(str, &node->val.bsval);
+			break;
+
+		case T_Boolean:
+			_outBoolean(str, &node->val.boolval);
 			break;
 
 		default:
+			elog(ERROR, "unrecognized A_Const kind: %d", nodeTag(&node->val));
 			break;
 	}
 }
