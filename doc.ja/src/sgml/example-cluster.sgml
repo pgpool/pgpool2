@@ -275,7 +275,7 @@ exclude=pgpool*
    <productname>Pgpool-II</productname>をインストールします。
   </para>
   <programlisting>
-[全サーバ]# yum install -y https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-7-x86_64/pgpool-II-release-4.2-1.noarch.rpm
+[全サーバ]# yum install -y https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-7-x86_64/pgpool-II-release-4.2-2.noarch.rpm
 [全サーバ]# yum install pgpool-II-pg13-*
   </programlisting>
  </sect2>
