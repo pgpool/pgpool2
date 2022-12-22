@@ -1308,7 +1308,7 @@ exclude=pgpool*
      <productname>Pgpool-II</productname>をインストールします。
     </para>
     <programlisting>
-[全サーバ]# yum install -y http://www.pgpool.net/yum/rpms/4.0/redhat/rhel-7-x86_64/pgpool-II-release-4.0-2.noarch.rpm
+[全サーバ]# yum install -y http://www.pgpool.net/yum/rpms/4.0/redhat/rhel-7-x86_64/pgpool-II-release-4.0-3.noarch.rpm
 [全サーバ]# yum install -y pgpool-II-pg11-*
     </programlisting>
    </sect2>
