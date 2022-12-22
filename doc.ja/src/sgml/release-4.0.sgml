@@ -1,6 +1,218 @@
 <!-- doc/src/sgml/release-4.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-0-21">
+ <title>リリース 4.0.21</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2022-12-22</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-03 [bcea238]
+    -->
+    <para>
+     ログメッセージ"new IPC connection received"をDEBUG1にダウングレードしました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=775">bug 775</ulink>) (Bo Peng)
+    </para>
+    <para>
+     これは通常のメッセージで、LOGとして記録されるべきではありません。
+     パッチはpstefによって作成され、Bo Pengによってレビューされました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-20 [7bc3176]
+    -->
+    <para>
+     <xref linkend="guc-failover-require-consensus">の問題を修正しました。(Muhammad Usama)
+    </para>
+    <para>
+     Watchdogクラスタ全体のヘルスチェックパラメータの最大値に基づいて、フェイルオーバコマンドのタイムアウトを動的に設定するように修正しました。
+    </para>
+    <para>
+     Tatsuo Ishiiによってレビューおよびテストされました。
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-November/004228.html">[pgpool-hackers: 4227]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-11-24 [77fdaca]
+    -->
+    <para>
+     パーサ内でバックスラッシュを使った場合の警告を出力しないように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <varname>standard_conforming_strings = off</varname>かつ<varname>escape_string_warning = on</varname>の場合、<productname>PostgreSQL</productname>は文字列リテラル内でバックスラッシュを使った場合に警告を出力します。
+     これは問題ありません。
+     しかし、以前は<productname>Pgpool-II</productname>のパーサも同じメッセージを出力していました。
+     これは冗長です。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-10-27 [573b84b]
+    -->
+    <para>
+     <varname>idle_session_timeout</varname>に対応しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     idle_session_timeout (PostgreSQL 14 で追加)が有効、かつ、タイムアウトが発生した場合、次のことが発生します:
+     <itemizedlist>
+      <listitem>
+       <para>
+        <varname>failover_on_backend_error</varname>がon (デフォルト)の場合、<productname>Pgpool-II</productname>はフェイルオーバを発生させます。
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        PostgreSQL サーバが 1 台のみが idle_session_timeout を有効にしていると、Pgpool-II がハングする可能性があります。
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+    <para>
+     idle_session_timeoutに対応するため、エラーコードを検出するdetect_idle_session_timeout_error()を追加しました。
+     エラーを検出すると、Pgpool-II は致命的なエラーとしてフロントエンドにエラーコードを返し、セッションを切断します。
+     これはidle_in_transaction_session_timeoutの実装と同じような修正です。
+     <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=3f5986eee360f12e6a0bb77aa46f95abf5f6bc10">3f5986eee360f12e6a0bb77aa46f95abf5f6bc10</ulink>
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-October/004209.html">[pgpool-hackers: 4208]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-09-14 [963391b]
+    -->
+    <para>
+     SSLエラーSSL_ERROR_ZERO_RETURNに対応しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前はこれによってフェイルオーバが発生しましたが、サーバは単に接続を閉じることを意味するため、実際には不要でした。
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-September/008425.html">[pgpool-general: 8366]</ulink>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-September/004194.html">[pgpool-hackers: 4193]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-10-01 [c360057]
+    -->
+    <para>
+     メモリキャッシュサイズを2GBより多く設定した場合に発生するセグメンテーション違反を修正しました。(Muhammad Usama)
+    </para>
+    <para>
+     問題は与えられたキャッシュブロックのメモリアドレスを返す block_address()関数にあり、
+     2GB上限まで有効な共有メモリ空間内のブロックのオフセットを計算するために32bit整数を使っていました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-09-23 [50f0285]
+    -->
+    <para>
+     <command>pcp_proc_info</command>、<command>SHOW pool_pools</command>および<command>SHOW pool_processes</command>内のまれなセグメンテーション違反を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     セグメンテーション違反はget_pools()とget_processes()にありました。
+     それらは、最初に共有メモリ上の特定のプロセス情報スロットのpidを抽出し、次にキーとして pid を使ってスロットを再び検索していました。
+     これらのステップはロックによって保護されていなかったため、プロセス終了時に新しい子プロセスのフォークを担う親プロセスによって pid が上書きされた場合、
+     pid を使った検索が失敗し、NULLを返す可能性がありました。
+     その結果、それに続くNULLポインタの参照によってセグメンテーション違反が発生していました。
+    </para>
+    <para>
+     解決策は、最初にプロセス情報スロットへのポインタを取得し、次にポインタからpidメンバを抽出することです。
+     この方法でも、親プロセスによる共有メモリ情報の同時更新は可能ですが(出力におかしな結果をもたらす可能性があります)、少なくともセグメンテーション違反は回避できます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-09-12 [7b288c6]
+    -->
+    <para>
+     無効な長さのUnixドメインソケットパスを使えないように修正しました。(Masaya Kawamoto)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-10-07 [0acb52b]
+    -->
+    <para>
+     Doc: memqcache_methodの説明を拡充しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     どの方式を使うべきかの説明を追加しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-08-28 [4551ef6]
+    -->
+    <para>
+     Doc: ヘルスチェックプロセスでSSLが使えることに言及しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ストリーミングレプリケーションのチェックでもSSLが使えることに言及しました。
+     これは2010年以降に使えていたはずです。
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-August/004188.html">[pgpool-hackers: 4187]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-17 [2985853]
+    -->
+    <para>
+     環境変数を使ってPGPOOLDIRを定義できるようにしました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=766">bug 766</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-0-20">
  <title>リリース 4.0.20</title>
   <note>
