@@ -36,7 +36,7 @@
    -->
    RHELとその派生ディストリビューションでは、以下を一度行ってください。
    <programlisting>
-    dnf install https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-8-x86_64/pgpool-II-release-4.3-1.noarch.rpm
+    dnf install https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-8-x86_64/pgpool-II-release-4.3-2.noarch.rpm
    </programlisting>
    <!--
    Then:
