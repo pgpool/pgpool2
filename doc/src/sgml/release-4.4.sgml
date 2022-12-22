@@ -1,6 +1,133 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-1">
+ <title>Release 4.4.1</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2022-12-22</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2022-12-16 [6311565]
+    -->
+    <para>
+     Downgrade streaming replication LOG message "standby_delay: 54" to DEBUG1. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-12 [dfcc21e]
+    -->
+    <para>
+     Downgrade LOG messages "we have hit the ceiling" to DEBUG5. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-20 [f6cbfe2]
+    -->
+    <para>
+     Fix time stamp rewrite bug. (Tatsuo Ishii)
+    </para>
+    <para>
+     In <productname>Pgpool-II</productname> 4.4 outfuncs module, boolean constant was ignored and turned into
+     an empty string in the rewritten query string, which caused syntax errors.
+    </para>
+    <para>
+     This issue is reported by Michiel van Leening.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-December/008581.html">[pgpool-general: 8521]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-20 [7bc3176]
+    -->
+    <para>
+     Fix issue with <xref linkend="guc-failover-require-consensus">. (Muhammad Usama)
+    </para>
+    <para>
+     The fix is to dynamically set the failover command timeout based on the maximum
+     value of health check parameters across the watchdog cluster.
+    </para>
+    <para>
+     Reviewed and tested by Tatsuo Ishii.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-November/004228.html">[pgpool-hackers: 4227]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-19 [8e5f5eb]
+    -->
+    <para>
+     Doc: enhance the performance section. (Tatsuo Ishii)
+    </para>
+    <para>
+     Mention about dynamic process management.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-14 [5d5d4a2]
+    -->
+    <para>
+     Doc: fix typo in Aurora example. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-12 [83dcd83]
+    -->
+    <para>
+     Doc: enhance dynamic process management document. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-17 [2985853]
+    -->
+    <para>
+     Allow to define PGPOOLDIR using environment variable.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=766">bug 766</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-0">
  <title>Release 4.4.0</title>
  <note>
@@ -405,6 +532,18 @@ ALTER TABLE ... SET ACCESS METHOD ...;
     <para>
      This message is output periodically and should not be logged as LOG.
      Patch is created by pstef and reviewed by Bo Peng.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+     In this release same bug fixes as <productname>Pgpool-II</productname> 4.3.4 are
+     already applied. See <xref linkend="release-4-3-4"> for more details of those fixes.
     </para>
    </listitem>
   </itemizedlist>

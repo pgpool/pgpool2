@@ -1,6 +1,131 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-1">
+ <title>リリース 4.4.1</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2022-12-22</simpara>
+ </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2022-12-16 [6311565]
+    -->
+    <para>
+     ストリーミングレプリケーションLOGメッセージ"standby_delay: 54"をDEBUG1にダウングレードしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-12 [dfcc21e]
+    -->
+    <para>
+     LOGメッセージ"we have hit the ceiling"をDEBUG5にダウングレードしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-20 [f6cbfe2]
+    -->
+    <para>
+     タイムスタンプのリライト処理の不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname> 4.4のoutfuncsモジュールでは、boolean定数が無視され、空の文字列になり、構文エラーが発生しました。
+    </para>
+    <para>
+     この問題はMichiel van Leeningによって報告されました。
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2022-December/008581.html">[pgpool-general: 8521]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-20 [7bc3176]
+    -->
+    <para>
+     <xref linkend="guc-failover-require-consensus">の問題を修正しました。(Muhammad Usama)
+    </para>
+    <para>
+     Watchdogクラスタ全体のヘルスチェックパラメータの最大値に基づいて、フェイルオーバコマンドのタイムアウトを動的に設定するように修正しました。
+    </para>
+    <para>
+     Tatsuo Ishiiによってレビューおよびテストされました。
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2022-November/004228.html">[pgpool-hackers: 4227]</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-19 [8e5f5eb]
+    -->
+    <para>
+     Doc: パフォーマンスセクションを強化しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     動的なプロセス管理について言及しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-14 [5d5d4a2]
+    -->
+    <para>
+     Doc: Aurora設定例内のタイポを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-12 [83dcd83]
+    -->
+    <para>
+     Doc: 動的なプロセス管理ドキュメントを強化しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-17 [2985853]
+    -->
+    <para>
+     環境変数を使ってPGPOOLDIRを定義できるようにしました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=766">bug 766</ulink>) (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-0">
  <title>リリース 4.4.0</title>
  <note>
@@ -351,6 +476,18 @@ ALTER TABLE ... SET ACCESS METHOD ...;
     <para>
      これは定期的に出力される正常なメッセージで、LOGとして記録すべきではありません。
      パッチはpstefによって作成され、Bo Pengによってレビューされます。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>バグ修正</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+     このリリースでは、<productname>Pgpool-II</productname> 4.3.4と同じバグ修正がすでに適用されています。
+     これらの修正の詳細については、<xref linkend="release-4-3-4">を参照してください。
     </para>
    </listitem>
   </itemizedlist>
