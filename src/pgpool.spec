@@ -47,7 +47,7 @@ Patch3:         pcp_unix_domain_path.patch
 Patch4:         pgpool_log.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl openldap-devel
-%if %{rhel} >= 9
+%if %{rhel} >= 9
 BuildRequires:  libmemcached-awesome-devel
 %else
 BuildRequires:  libmemcached-devel
