@@ -37,13 +37,19 @@ Source2:        pgpool_rhel6.sysconfig
 Source3:        pgpool.service
 %endif
 Source4:        pgpool_rhel.sysconfig
+Source5:        pgpool_tmpfiles.d
 Patch1:         pgpool-II-head.patch
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
 Patch2:         pgpool_socket_dir.patch
 Patch3:         pcp_unix_domain_path.patch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel libmemcached-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl
+BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl openldap-devel
+%if %{rhel} >= 9
+BuildRequires:  libmemcached-awesome-devel
+%else
+BuildRequires:  libmemcached-devel
+%endif
 %if %{pgsql_ver} >= 110 && %{rhel} == 7
 BuildRequires:  llvm-toolset-7 llvm-toolset-7-llvm-devel llvm5.0
 %endif
@@ -139,10 +145,9 @@ touch %{buildroot}%{_sysconfdir}/%{short_name}/pool_passwd
 install -d %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/pgpool.service
 
+install -d -m 755 %{buildroot}%{_varrundir}
 mkdir -p %{buildroot}%{_tmpfilesdir}
-cat > %{buildroot}%{_tmpfilesdir}/%{name}.conf <<EOF
-d %{_varrundir} 0755 postgres postgres -
-EOF
+install -m 0644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/%{name}.conf
 %else
 install -d %{buildroot}%{_initrddir}
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
@@ -182,7 +187,6 @@ echo 'postgres ALL=NOPASSWD: /usr/sbin/arping' | sudo EDITOR='tee -a' visudo >/d
 
 %if %{systemd_enabled}
 %systemd_post pgpool.service
-%tmpfiles_create
 %else
 /sbin/chkconfig --add pgpool
 %endif
@@ -246,7 +250,7 @@ fi
 %{_datadir}/%{short_name}/pgpool.pam
 %{_libdir}/libpcp.so.*
 %if %{systemd_enabled}
-%ghost %{_varrundir}
+%attr(755,postgres,postgres) %dir %{_varrundir}
 %{_tmpfilesdir}/%{name}.conf
 %{_unitdir}/pgpool.service
 %else
@@ -313,6 +317,10 @@ fi
 %endif
 
 %changelog
+* Fri Dec 23 2022 Bo Peng <pengbo@sraoss.co.jp> 4.1.14
+- Change /lib/tmpfiles.d/ file from /var/run to /run
+- Update BuildRequires
+
 * Mon Jul 27 2020 Bo Peng <pengbo@sraoss.co.jp> 4.1.3
 - Rename src/redhat/pgpool_rhel7.sysconfig to src/redhat/pgpool_rhel.sysconfig.
 
