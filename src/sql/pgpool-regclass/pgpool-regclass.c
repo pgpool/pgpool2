@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * Copyright (c) 2003-2012	PgPool Global Development Group
+ * Copyright (c) 2003-2022	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -20,20 +20,21 @@
  * If something goes wrong, it returns InvalidOid.
  */
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #include "postgres.h"
-#include "utils/builtins.h"
-#include "utils/syscache.h"
-#include "utils/elog.h"
 #include "catalog/namespace.h"
-#include "nodes/makefuncs.h"
 #include "commands/dbcommands.h"
 #include "fmgr.h"
 #include "funcapi.h"
-
-#include <stdlib.h>
+#include "nodes/makefuncs.h"
+#include "utils/builtins.h"
+#include "utils/elog.h"
+#include "utils/syscache.h"
+#include "utils/varlena.h"
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
