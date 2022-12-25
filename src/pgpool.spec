@@ -317,7 +317,7 @@ fi
 %endif
 
 %changelog
-* Fri Dec 23 2022 Bo Peng <pengbo@sraoss.co.jp> 4.1.14
+* Fri Dec 23 2022 Bo Peng <pengbo@sraoss.co.jp> 4.1.14
 - Change /lib/tmpfiles.d/ file from /var/run to /run
 - Update BuildRequires
 
