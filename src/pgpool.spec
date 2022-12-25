@@ -37,18 +37,18 @@ Source2:        pgpool_rhel6.sysconfig
 Source3:        pgpool.service
 %endif
 Source4:        pgpool_rhel.sysconfig
-Source5:        pgpool_tmpfiles.d
+Source5:        pgpool_tmpfiles.d
 Patch1:         pgpool-II-head.patch
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
 Patch2:         pgpool_socket_dir.patch
 Patch3:         pcp_unix_domain_path.patch
 %endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl openldap-devel
+BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl openldap-devel
 %if %{rhel} >= 9
-BuildRequires:  libmemcached-awesome-devel
+BuildRequires:  libmemcached-awesome-devel
 %else
-BuildRequires:  libmemcached-devel
+BuildRequires:  libmemcached-devel
 %endif
 %if %{pgsql_ver} >= 110 && %{rhel} == 7
 BuildRequires:  llvm-toolset-7 llvm-toolset-7-llvm-devel llvm5.0
@@ -145,9 +145,9 @@ touch %{buildroot}%{_sysconfdir}/%{short_name}/pool_passwd
 install -d %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE3} %{buildroot}%{_unitdir}/pgpool.service
 
-install -d -m 755 %{buildroot}%{_varrundir}
+install -d -m 755 %{buildroot}%{_varrundir}
 mkdir -p %{buildroot}%{_tmpfilesdir}
-install -m 0644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/%{name}.conf
+install -m 0644 %{SOURCE5} %{buildroot}%{_tmpfilesdir}/%{name}.conf
 %else
 install -d %{buildroot}%{_initrddir}
 install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
@@ -250,7 +250,7 @@ fi
 %{_datadir}/%{short_name}/pgpool.pam
 %{_libdir}/libpcp.so.*
 %if %{systemd_enabled}
-%attr(755,postgres,postgres) %dir %{_varrundir}
+%attr(755,postgres,postgres) %dir %{_varrundir}
 %{_tmpfilesdir}/%{name}.conf
 %{_unitdir}/pgpool.service
 %else
