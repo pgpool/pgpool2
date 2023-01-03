@@ -239,6 +239,14 @@
     </para>
 
     <para>
+     This parameter relies
+     on <xref linkend="guc-backend-application-name"> being correctly
+     set and matching <varname>application_name</varname> in
+     your <productname>PostgreSQL</productname> standby's
+     primary_conninfo.
+    </para>
+
+    <para>
       If this parameter is
       enabled, <xref linkend="sql-show-pool-nodes">
       and <xref linkend="pcp-node-info"> show replication delay in

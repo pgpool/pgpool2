@@ -2056,6 +2056,7 @@ backend_clustering_mode = 'raw'
       <varname>backend_application_name</varname>はWAL logをプライマリサーバから読み込むwalreceiverのために使用するapplication_nameを設定します。
       ですから、ストリーミングレプリケーションモード以外では設定する必要がありません。
       また、このパラメータは<xref linkend="SQL-SHOW-POOL-NODES">と<xref linkend="PCP-NODE-INFO">コマンド中に表示される"replication_state"と"replication_sync_state"のために使用されます。
+       更に、<xref linkend="guc-delay-threshold-by-time">もこのパラメータを必要とします。
      </para>
      <para>
       たとえば、プライマリノードがbackend0（そのホスト名は"host0"とします）、スタンバイノードはbackend1で、backend1のbackend_application_nameは"server1"であるとします。

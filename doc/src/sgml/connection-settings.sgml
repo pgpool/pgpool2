@@ -1506,6 +1506,8 @@ backend_clustering_mode = 'raw'
       Also this parameter is required to if you want to show
       "replication_state" and "replication_sync_state" column
       in <xref linkend="SQL-SHOW-POOL-NODES"> and <xref linkend="PCP-NODE-INFO"> commands.
+      Moreover <xref linkend="guc-delay-threshold-by-time"> requires
+      this parameter too.
      </para>
      <para>
       For example, suppose the primary node is backend0 (its host name
