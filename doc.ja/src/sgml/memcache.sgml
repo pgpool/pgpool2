@@ -62,8 +62,8 @@
   access to <productname>PostgreSQL</> are involved, the serving of results
   from the in memory cache is extremely fast.
   -->
-  インメモリクエリキャッシュは、SELECT文(拡張問い合わせの場合は更にバインドパラメータ)と 検索結果をペアで記録します。
-  同じSELECT文が発行された場合に、<productname>Pgpool-II</productname>はキャッシュから結果を返します。
+  インメモリクエリキャッシュは、ユーザ名、データベース名、SELECT文(拡張問い合わせの場合は更にバインドパラメータ)と 検索結果をペアで記録します。
+  ユーザ名、データベース名、バインドパラメータが同じSELECT文が発行された場合に、<productname>Pgpool-II</productname>はキャッシュから結果を返します。
   <acronym>SQL</acronym>の解析も<productname>PostgreSQL</>へのアクセスも行われないため、インメモリキャッシュからの結果の提供は非常に高速です。
 
  </para>
@@ -576,9 +576,28 @@
     <listitem>
      <para>
       <!--
-      Specifies the shared memory cache size in bytes.
+      Specifies the shared memory cache size.
       -->
-      共有メモリのキャッシュサイズをバイト単位で指定します。
+      共有メモリのキャッシュサイズを指定します。
+      デフォルトは64MBです。
+     </para>
+     <para>
+      キャッシュは<xref linkend="guc-memqcache-cache-block-size">で指定される固定長のブロックに格納されます。
+      このブロックの数は、<xref linkend="guc-memqcache-total-size"> / <xref linkend="guc-memqcache-cache-block-size"> で計算できます。
+      ブロック数が整数になるように小数点以下が切り捨てられます。
+      ブロック数が0になると、エラーとなります。
+      つまり、<varname>memqcache_total_size</varname>は、<xref linkend="guc-memqcache-cache-block-size">よりも大きくなければなりません。
+     </para>
+     <para>
+      各キャッシュデータは64バイトの管理データと、クエリ結果のデータに分けて一つのブロックに格納されます。
+      クエリ結果とその管理データは複数のブロックにまたがって格納されることはないので、クエリ結果のデータ長+64バイトが<xref linkend="guc-memqcache-cache-block-size">より大きいと、ブロックに格納できず、キャッシュされません。
+     </para>
+     <para>
+      あるブロックがキャッシュで一杯になると、次のブロックが利用されます。
+      すべてのブロックが一杯になると、最も古いブロックのキャッシュが消去されて再利用されます
+      （新しいキャッシュデータは空きがある最初のブロックに格納されるので、最も古いブロックが最も古いキャッシュデータを保持しているとは限らないことに注意してください）。
+      したがって、<varname>memqcache_total_size</varname>が小さくてもエラーになりませんが、キャッシュヒット率が下がり、性能を低下させます。
+      キャッシュヒット率は<xref linkend="SQL-SHOW-POOL-CACHE">の<structname>cache_hit_ratio</structname>で確認できます。
      </para>
      <para>
       <!--
@@ -600,23 +619,21 @@
     </term>
     <listitem>
      <para>
-      <!--
-      Specifies the number of cache entries. This is used to define the size of cache management space.
-      -->
       キャッシュエントリの数を指定します。
-      この設定項目は、キャッシュの管理領域の大きさを決めるために使用します。
+      デフォルトは1,000,000です。
+     </para>
+     <para>
+      この設定項目は、登録できるキャッシュの数の上限を決めます。
+      <varname>memqcache_max_num_cache</varname>を超えてキャッシュを登録しようと、キャッシュ登録済みのブロックのキャッシュが消去されて再利用されます。
+      したがって、<varname>memqcache_max_num_cache</varname>が小さくてもエラーになりませんが、キャッシュヒット率が下がり、性能を低下させます。
+      キャッシュヒット率は<xref linkend="SQL-SHOW-POOL-CACHE">の<structname>cache_hit_ratio</structname>で確認できます。
      </para>
      <note>
       <para>
-       <!--
-       The management space size can be calculated by:
-       <varname>memqcache_max_num_cache</varname> * 48 bytes.
-       Too small number will cause an error while registering cache.
-       On the other hand too large number will just waste space.
-       -->
-       管理領域の大きさは、<varname>memqcache_max_num_cache</varname> * 48バイトで計算できます。
-       少なすぎるとキャッシュを登録することができずにエラーになります。
-       逆に多すぎると単に空間の無駄になります。
+       キャッシュはアクセスを高速にするために共有メモリ上のハッシュテーブルで管理されており、その大きさは、<varname>memqcache_max_num_cache</varname> * 64バイトで計算できます。
+       ハッシュテーブルのエントリ数は<xref linkend="SQL-SHOW-POOL-CACHE">の<structname>num_hash_entries</structname>で確認できます。
+       <structname>num_hash_entries</structname>は通常<varname>memqcache_max_num_cache</varname>と一致しますが、<varname>memqcache_max_num_cache</varname>が2のべき乗になっていない場合は、<varname>memqcache_max_num_cache</varname>より大きい2のべき乗に丸められるので、一致しないこともあります。
+       使用済みのエントリ数は<structname>used_hash_entries</structname>で確認できます。
       </para>
      </note>
      <para>
@@ -647,16 +664,20 @@
       not cached.
       -->
       キャッシュのブロックサイズを指定します。
+      デフォルトは1MBです。
+     </para>
+
+     <para>
       <productname>Pgpool-II</productname>は<varname>memqcache_cache_block_size</varname>のブロックで管理されたキャッシュメモリを利用します。
-      SELECT結果はこのブロックに詰め込まれ、１つのブロックに収まらなければなりません。
-      従って、<varname>memqcache_cache_block_size</varname>を検索結果が超えると、キャッシュされません。
+      各キャッシュデータは64バイトの管理データと、クエリ結果のデータに分けて一つのブロックに格納されます。
+      クエリ結果とその管理データは複数のブロックにまたがって格納されることはないので、クエリ結果のデータ長+64バイトが<xref linkend="guc-memqcache-cache-block-size">より大きいと、ブロックに格納できず、キャッシュされません。
      </para>
 
      <para>
       <!--
       <varname>memqcache_cache_block_size</varname> must be set to at least 512.
       -->
-      <varname>memqcache_cache_block_size</varname>は、512以上の値でなければなりません。
+      <varname>memqcache_cache_block_size</varname>は、512バイト以上の値でなければなりません。
      </para>
 
      <para>

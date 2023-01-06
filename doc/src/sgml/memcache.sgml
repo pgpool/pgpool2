@@ -11,10 +11,10 @@
   the underlying table updates.
  </para>
  <para>
-  In memory cache saves the pair of SELECT statement
+  In memory cache saves the pair of user name, database name, SELECT statement
   and its result
   (along with the Bind parameters, if the SELECT is an
-  extended query). If the same SELECTs comes in,
+  extended query). If the same user name, database name and SELECTs comes in,
   <productname>Pgpool-II</productname> returns the value from
   cache. Since no <acronym>SQL</acronym> parsing nor access
   to <productname>PostgreSQL</productname> are involved, the serving
@@ -382,7 +382,35 @@
     </term>
     <listitem>
      <para>
-      Specifies the shared memory cache size in bytes.
+      Specifies the shared memory cache size.
+      The default is 64MB.
+     </para>
+     <para>
+      Each cache is stored in fixed-size blocks specified
+      by <xref linkend="guc-memqcache-cache-block-size">.  The number
+      of blocks can be calculated
+      by <xref linkend="guc-memqcache-total-size">
+      / <xref linkend="guc-memqcache-cache-block-size">. Any decimal
+      places are truncated so that the number of blocks is an
+      integer. If the number becomes 0, an error is raised. That
+      is, <varname>memqcache_total_size</varname> must be greater
+      than <xref linkend="guc-memqcache-cache-block-size">.  Query
+      results and their management data are not stored across multiple
+      blocks, so if the query result data length + 64 bytes is greater
+      than <xref linkend="guc-memqcache-cache-block-size">, it cannot
+      be stored in a block and will not be cached.
+     </para>
+     <para>
+      When one block is filled with cache, the next block is used.
+      When all blocks are full, the oldest block is flushed and reused
+      (Note that the oldest block does not necessarily holds the
+      oldest cache data because new cache data is registered whenever
+      the first fitting space is found). While
+      smaller <varname>memqcache_total_size</varname> does not raise
+      an error, performance decreases because the cache hit ratio
+      decreases. The cache hit ratio can be checked by
+      consulting <structname>cache_hit_ratio</structname>
+      of <xref linkend="SQL-SHOW-POOL-CACHE">.
      </para>
      <para>
       This parameter can only be set at server start.
@@ -398,14 +426,33 @@
     </term>
     <listitem>
      <para>
-      Specifies the number of cache entries. This is used to define the size of cache management space.
+      Specifies the number of cache entries. The default is 1,000,000.
+     </para>
+     <para>
+      If you attempt to register more
+      than <varname>memqcache_max_num_cache</varname> caches, a block
+      containing cached data is flushed and reused.  While
+      smaller <varname>memqcache_max_num_cache</varname> does not
+      raise an error, performance decreases because the cache hit
+      ratio decreases. The cache hit ratio can be checked by
+      consulting <structname>cache_hit_ratio</structname>
+      of <xref linkend="SQL-SHOW-POOL-CACHE">.
      </para>
      <note>
       <para>
-       The management space size can be calculated by:
-       <varname>memqcache_max_num_cache</varname> * 48 bytes.
-       Too small number will cause an error while registering cache.
-       On the other hand too large number will just waste space.
+       The cache is managed by a hash table in shared memory for fast
+       access.  The hash table space size can be calculated by:
+       <varname>memqcache_max_num_cache</varname> * 64 bytes.  Number
+       of hash entries can be found
+       in <structname>used_hash_entries</structname>
+       of <xref linkend="SQL-SHOW-POOL-CACHE">.  Number of the hash
+       table entries usually
+       matches <varname>memqcache_max_num_cache</varname>, but may not
+       match if <varname>memqcache_max_num_cache</varname> is not a
+       power of 2. In this case it is rounded to a power of 2 greater
+       than <varname>memqcache_max_num_cache</varname>.  Number of
+       hash entries in use can be found
+       at <structname>used_hash_entries</structname>.
       </para>
      </note>
      <para>
@@ -422,17 +469,18 @@
     </term>
     <listitem>
      <para>
-      Specifies the cache block size. <productname>Pgpool-II</productname> uses the
-      cache memory arranged in <varname>memqcache_cache_block_size</varname> blocks.
-      SELECT result is packed into the block and must fit in a single block.
-      And the results larger than <varname>memqcache_cache_block_size</varname> are
-      not cached.
+      Specifies the cache block size.
+      The default is 1MB.
      </para>
-
+     <para>
+      Query results and their management data are not stored across
+      multiple blocks, so if the query result data length + 64 bytes
+      is greater than <xref linkend="guc-memqcache-cache-block-size">,
+      it cannot be stored in a block and will not be cached.
+     </para>
      <para>
       <varname>memqcache_cache_block_size</varname> must be set to at least 512.
      </para>
-
      <para>
       This parameter can only be set at server start.
      </para>
