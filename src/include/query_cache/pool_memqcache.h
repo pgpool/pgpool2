@@ -91,7 +91,7 @@ typedef struct
 
 /*
  * Each block holds several "cache item", which consists of variable
- * length of Data(header plus RowDescription packet and DataRow
+ * length of Data (header plus RowDescription packet and DataRow
  * packet).  Each cache item is assigned "cache item id", which
  * represents the cache item order in a block.
  */
@@ -104,13 +104,13 @@ typedef struct
 
 /*
  * "Cache Item header" structure is used to manage each cache item.
- *  (24 bytes)
+ *  (16 bytes)
  */
 typedef struct
 {
 	unsigned int total_length;	/* total length in bytes including myself */
 	time_t		timestamp;		/* cache creation time */
-	int			expire;			/* cache expire	*/
+	int			expire;			/* cache expire	duration in seconds */
 }			POOL_CACHE_ITEM_HEADER;
 
 typedef struct
