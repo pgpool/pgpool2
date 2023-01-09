@@ -104,7 +104,7 @@ typedef struct
 
 /*
  * "Cache Item header" structure is used to manage each cache item.
- *  (24 bytes)
+ *  (12 bytes)
  */
 typedef struct
 {
