@@ -231,10 +231,13 @@ wd_trusted_server_command(char *hostname)
 		dup2(fd, 2);
 		close(fd);
 
-		if (strlen(exec_cmd->data) != 0)
+		if (strlen(exec_cmd->data) == 0)
 		{
-			status = system(exec_cmd->data);
+			pfree(exec_cmd->data);
+			exit(EXIT_FAILURE);
 		}
+
+		status = system(exec_cmd->data);
 		pfree(exec_cmd->data);
 
 		if (WIFEXITED(status) == 0 || WEXITSTATUS(status) != 0)
