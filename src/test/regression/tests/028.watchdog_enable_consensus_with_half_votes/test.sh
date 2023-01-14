@@ -121,7 +121,7 @@ do
     fi
 
     ./shutdownall
-    sleep 1
+    sleep 5
     val="on"
     set_param
     ./startall
