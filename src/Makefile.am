@@ -163,7 +163,10 @@ EXTRA_DIST = sample/pgpool.pam \
 		redhat/pgpool.init \
 		redhat/pgpool_rhel.sysconfig redhat/pgpool_rhel6.sysconfig \
 	   	redhat/pgpool.conf.sample.patch \
+		redhat/pcp_unix_domain_path.patch \
 		redhat/pgpool.service \
+		redhat/pgpool_socket_dir.patch \
+		redhat/pgpool_tmpfiles.d \
 		pgpool.spec
 
 bin_SCRIPTS = test/pgpool_setup test/watchdog_setup
