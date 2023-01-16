@@ -39,12 +39,11 @@ Source3:        pgpool.service
 %endif
 Source4:        pgpool_rhel.sysconfig
 Source5:        pgpool_tmpfiles.d
-Patch1:         pgpool-II-head.patch
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
-Patch2:         pgpool_socket_dir.patch
-Patch3:         pcp_unix_domain_path.patch
+Patch1:         pgpool_socket_dir.patch
+Patch2:         pcp_unix_domain_path.patch
 %endif
-Patch4:         pgpool_log.patch
+Patch3:         pgpool_log.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl openldap-devel
 %if %{rhel} >= 9
@@ -102,12 +101,11 @@ Postgresql extensions libraries and sql files for pgpool-II.
 
 %prep
 %setup -q -n %{archive_name}
-%patch1 -p1
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
+%patch1 -p0
 %patch2 -p0
-%patch3 -p0
 %endif
-%patch4 -p0
+%patch3 -p0
 
 %build
 %configure --with-pgsql=%{pghome} \
