@@ -23,7 +23,7 @@ Pgpool-II documentation
  <refsynopsisdiv>
   <funcsynopsis>
    <funcprototype>
-    <funcdef><function>pcp_pool_status</function> returns record</funcdef>
+    <funcdef><function>pcp_pool_status</function> returns setof record</funcdef>
     <paramdef>text <parameter>host</parameter></paramdef>
     <paramdef>integer <parameter>port</parameter></paramdef>
     <paramdef>text <parameter>username</parameter></paramdef>
@@ -34,7 +34,7 @@ Pgpool-II documentation
    </funcprototype>
 
    <funcprototype>
-    <funcdef><function>pcp_pool_status</function> returns record</funcdef>
+    <funcdef><function>pcp_pool_status</function> returns setof record</funcdef>
     <paramdef>text <parameter>pcp_server</parameter></paramdef>
     <paramdef>out <parameter>item text</parameter></paramdef>
     <paramdef>out <parameter>value text</parameter></paramdef>

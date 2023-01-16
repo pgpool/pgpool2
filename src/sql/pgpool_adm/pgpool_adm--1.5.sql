@@ -1,4 +1,4 @@
-/* contrib/pgpool_adm/pgpool_adm--1.4.sql */
+/* contrib/pgpool_adm/pgpool_adm--1.5.sql */
 
 /* ***********************************************
  * Administrative functions for pgPool
@@ -40,7 +40,7 @@ LANGUAGE C VOLATILE STRICT;
  * input parameters: host, port, username, password
  */
 CREATE FUNCTION pcp_pool_status(IN host text, IN port integer, IN username text, IN password text, OUT item text, OUT value text, OUT description text)
-RETURNS record
+RETURNS SETOF record
 AS 'MODULE_PATHNAME', '_pcp_pool_status'
 LANGUAGE C VOLATILE STRICT;
 
@@ -48,7 +48,7 @@ LANGUAGE C VOLATILE STRICT;
  * input parameters: pcp_server
  */
 CREATE FUNCTION pcp_pool_status(IN pcp_server text, OUT item text, OUT value text, OUT description text)
-RETURNS record
+RETURNS SETOF record
 AS 'MODULE_PATHNAME', '_pcp_pool_status'
 LANGUAGE C VOLATILE STRICT;
 
