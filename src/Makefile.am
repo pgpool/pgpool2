@@ -145,6 +145,8 @@ EXTRA_DIST = sample/pgpool.pam \
 		sql/pgpool_adm/pgpool_adm--1.2--1.3.sql \
 		sql/pgpool_adm/pgpool_adm--1.4.sql \
 		sql/pgpool_adm/pgpool_adm--1.3--1.4.sql \
+		sql/pgpool_adm/pgpool_adm--1.5.sql \
+		sql/pgpool_adm/pgpool_adm--1.4--1.5.sql \
 		sql/pgpool_adm/Makefile \
 		test/parser/expected/copy.out test/parser/expected/create.out \
 		test/parser/expected/cursor.out test/parser/expected/delete.out \
