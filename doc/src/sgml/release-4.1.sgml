@@ -1,6 +1,200 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-1-15">
+ <title>Release 4.1.15</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2023-01-23</simpara>
+  </note>
+
+ <sect2>
+  <title>Overview</title>
+  <para>
+   This release contains a security fix.
+  </para>
+  <para>
+   If following conditions are all met, the password of <xref linkend="guc-wd-lifecheck-user"> is
+   exposed by <xref linkend="SQL-SHOW-POOL-STATUS"> command.
+   The command can be executed by any user who can
+   connect to <productname>Pgpool-II</productname>. (CVE-2023-22332)
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Version 3.3 or later.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    <xref linkend="guc-use-watchdog"> is <literal>on</literal>.
+     </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    <xref linkend="guc-wd-lifecheck-method"> is <literal>query</literal>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    A plain text password is set
+    to <xref linkend="guc-wd-lifecheck-password">.
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   In this case it is strongly recommended to upgrade to this version
+   (we do not expose <xref linkend="guc-wd-lifecheck-password"> in
+   show pool_status command any more), or use one of following
+   workarounds.
+  </para>
+
+  <para>
+   Workarounds for 4.0.x to 4.4.x users:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+    Disable watchdog. Set <xref linkend="guc-use-watchdog">
+    to <literal>off</literal>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Change <xref linkend="guc-wd-lifecheck-method">
+    to <literal>heartbeat</literal>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Set an empty string
+    to <xref linkend="guc-wd-lifecheck-password">. This will use
+    password in the <filename>pool_passwd</filename> file.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+    Set an AES encrypted password
+    to <xref linkend="guc-wd-lifecheck-password">.
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   In any case we recommend to
+   change <xref linkend="guc-wd-lifecheck-password">
+   in <productname>PostgreSQL</productname>.
+  </para>
+
+  <para>
+   Workarounds for 3.0.x to 3.7.x users:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+    Disable watchdog. Set <xref linkend="guc-use-watchdog">
+    to <literal>off</literal>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Change <xref linkend="guc-wd-lifecheck-method">
+     to <literal>heartbeat</literal>.
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   In any case we recommend to
+   change <xref linkend="guc-wd-lifecheck-password">
+   in <productname>PostgreSQL</productname>.
+  </para>
+
+  <para>
+   Please note that <productname>Pgpool-II</productname> 3.7.x or
+   before are end of life and no minor updates are provided for those
+   versions.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+	2023-01-21 [123ceb46]
+      -->
+    <para>
+     Do not expose <xref linkend="guc-wd-lifecheck-password"> in
+     <xref linkend="SQL-SHOW-POOL-STATUS">,
+     <xref linkend="PCP-POOL-STATUS"> and
+     <xref linkend="PGPOOL-ADM-PCP-POOL-STATUS"> commands. (CVE-2023-22332) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+	2023-01-21 [4e0cb44b]
+      -->
+    <para>
+     Change the default value
+     for <xref linkend="guc-wd-lifecheck-password"> to empty string as
+     documented. (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-24 [7749e0c]
+      -->
+    <para>
+     Fix compiler warning
+     in <filename>pgpool-regclass.c</filename>. (Florian Weimer,
+     Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2023-01-06 [1f61532]
+      -->
+    <para>
+     Doc: Enhance and fix some mistakes
+     in <link linkend="runtime-in-memory-query-cache-shmem-config">Configurations
+     to use shared memory</link> chapter. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-1-14">
  <title>Release 4.1.14</title>
   <note>

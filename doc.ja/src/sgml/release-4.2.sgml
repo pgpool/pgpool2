@@ -1,6 +1,171 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-12">
+ <title>リリース 4.2.12</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2023-01-23</simpara>
+  </note>
+
+ <sect2>
+  <title>概要</title>
+  <para>
+   このリリースには、セキュリティ修正が含まれています。
+  </para>
+  <para>
+   以下の条件をすべて満たす場合、<xref linkend="SQL-SHOW-POOL-STATUS">コマンドにより<xref linkend="guc-wd-lifecheck-user">のパスワードが公開されます。このコマンドは、<productname>Pgpool-II</productname>に接続できるすべてのユーザーが実行できます。(CVE-2023-22332)
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     バージョン3.3以降
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-use-watchdog">が<literal>on</literal>に設定されている
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-wd-lifecheck-method">に<literal>query</literal>が設定されている
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-wd-lifecheck-password">にプレーンテキストのパスワードが設定されている
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   上記条件のすべてに該当するユーザは、このバージョンにアップグレードするか (show pool_statusコマンドで<xref linkend="guc-wd-lifecheck-password">が表示されなくなる)、次の回避策のいずれかを使用することを強くお勧めします。
+  </para>
+
+  <para>
+   4.0.x～4.4.xユーザ向けの回避策:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Watchdogを無効にする。(<xref linkend="guc-use-watchdog">を<literal>off</literal>に設定する)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-wd-lifecheck-method">に<literal>heartbeat</literal>を設定する。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-wd-lifecheck-password">には空文字を設定し、パスワードはpool_passwdファイルに設定する。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-wd-lifecheck-password">にAESで暗号化したパスワードを設定する。
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   いずれにせよ、PostgreSQLで<xref linkend="guc-wd-lifecheck-password">を変更することをお勧めします。
+  </para>
+
+  <para>
+   3.3.x～3.7.xユーザ向けの回避策:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Watchdogを無効にする。(<xref linkend="guc-use-watchdog">を<literal>off</literal>に設定する)
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-wd-lifecheck-method">に<literal>heartbeat</literal>を設定する。
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   いずれにせよ、<productname>PostgreSQL</productname>で<xref linkend="guc-wd-lifecheck-password">を変更することをお勧めします。
+  </para>
+
+  <para>
+   <productname>Pgpool-II</productname> 3.7.xおよび以前のバージョンはサポートが終了しているため、これらのバージョンのマイナーアップデートはリリースされません。
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+	2023-01-21 [123ceb46]
+      -->
+    <para>
+     <xref linkend="SQL-SHOW-POOL-STATUS">、<xref linkend="PCP-POOL-STATUS">および<xref linkend="PGPOOL-ADM-PCP-POOL-STATUS">コマンドでwd_lifecheck_passwordを表示しないように修正しました。(CVE-2023-22332) (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+	2023-01-21 [4e0cb44b]
+      -->
+    <para>
+     ドキュメントに記載されているように、<xref linkend="guc-wd-lifecheck-password">のデフォルト値を空の文字列に変更しました。(Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2022-12-24 [c259b1f]
+      -->
+    <para>
+     pgpool-regclass.cのコンパイラ警告を修正しました。(Florian Weimer, Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2023-01-06 [0652da7]
+      -->
+    <para>
+     <link linkend="runtime-in-memory-query-cache-shmem-config">共有メモリ使用時の設定</link>の章のいくつかの誤りを修正し、説明を強化しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-11">
  <title>リリース 4.2.11</title>
   <note>
