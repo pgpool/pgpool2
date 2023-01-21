@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1017,7 +1017,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.wd_lifecheck_password,
-		"postgres",
+		"",
 		NULL, NULL, NULL, NULL
 	},
 
