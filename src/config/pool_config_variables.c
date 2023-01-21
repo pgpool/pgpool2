@@ -948,7 +948,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_VALUE
 		},
 		&g_pool_config.wd_lifecheck_password,
-		"postgres",
+		"",
 		NULL, NULL, NULL, NULL
 	},
 
