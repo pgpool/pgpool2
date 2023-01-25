@@ -537,7 +537,7 @@ read_only_function_list = "f1,public.f1"
      <note>
       <para>
        If this parameter and <xref linkend="guc-write-function-list">
-       is empty string, function's volatile proper will be checked. If
+       is empty string, function's volatile property will be checked. If
        the property is volatile, the function is regarded as a writing
        function.  This is convenient and recommended way. However this
        requires one extra query against system catalog for the first
