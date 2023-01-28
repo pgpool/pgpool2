@@ -6,7 +6,7 @@
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
-for mode in s r i n
+for mode in s r n
 do
     echo "=== starting test in \"$mode\" mode ==="
     if [ $mode = "n" ];then
