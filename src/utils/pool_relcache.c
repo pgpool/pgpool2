@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -258,6 +258,19 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	    if (pool_config->enable_shared_relcache)
 		{
 			query_cache_data = relation_cache_to_query_cache(res, &query_cache_len);
+			/*
+			 * So far, we have already obtained a lock. But to register
+			 * a query cache entry, we need to aquire an exclusive lock.
+			 * Unfortunately:
+			 * (1) we don't know if we already aquired an exclusive or not.
+			 * (2) we cannot escalate a shared lock to an exclusive lock.
+			 * So we release the lock and obtain an exclusive lock.  This may
+			 * create a window and thus we might try to register duplicate
+			 * query cache entry if other process is trying to register the same entry
+			 * in the window. But it should be harmless.
+			 */
+			pool_shmem_unlock();
+			pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 			pool_catalog_commit_cache(backend, query, query_cache_data, query_cache_len);
 		}
 	}
