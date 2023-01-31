@@ -10,9 +10,9 @@ for mode in s r n
 do
     echo "=== starting test in \"$mode\" mode ==="
     if [ $mode = "n" ];then
-	num_tests=5
-    else
 	num_tests=6
+    else
+	num_tests=7
     fi
     success_count=0
 
@@ -54,8 +54,15 @@ DEALLOCATE test2;
 DEALLOCATE all;
 EOF
 
+    # run test3 multi-statement
+    $PSQL -p 11000 test <<EOF
+SELECT 1\;PREPARE test3 AS SELECT 2;
+DEALLOCATE test3;
+EOF
+
     expect1=`fgrep "PREPARE test1" log/pgpool.log  | awk '{print substr($0, index($0, "DB node id:"),13)}'`
     expect2=`fgrep "PREPARE test2" log/pgpool.log  | awk '{print substr($0, index($0, "DB node id:"),13)}'`
+    expect3=`fgrep "PREPARE test3" log/pgpool.log  | awk '{print substr($0, index($0, "DB node id:"),13)}'`
 
     #test1 result
     echo -n "case 1: PREPARE and EXECUTE with SELECT query..."
@@ -105,7 +112,6 @@ EOF
 	echo "failed."
     fi
 
-    echo -n "case 6: node1 DEALLOCATE all query..."
     if [ $mode = "n" ];then
 	echo "this test is not applied to mode \"$mode\" and skipped."
     else
@@ -118,7 +124,15 @@ EOF
 	fi
     fi
 
-    echo "In mode \"$mode\" out of $success_count, $num_tests cases succeeded."
+    # DEALLOCATE in multi-statement
+    echo -n "case 6: DEALLOCATE in multi-statement..."
+    result=`fgrep "DEALLOCATE test3" log/pgpool.log  | awk '{print substr($0, index($0, "DB node id:"),13)}'`
+    if [  "$expect3" = "$result" ]; then
+        success_count=$(( success_count + 1 ))
+	echo "ok."
+    else
+	echo "failed."
+    fi
 
     ./shutdownall
 
