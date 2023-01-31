@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -370,7 +370,6 @@ typedef enum
 #define STREAM (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION)
 #define LOGICAL (pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION)
 #define SLONY (pool_config->backend_clustering_mode == CM_SLONY)
-#define DUAL_MODE (REPLICATION || NATIVE_REPLICATION)
 #define RAW_MODE (pool_config->backend_clustering_mode == CM_RAW)
 #define SL_MODE (STREAM || LOGICAL) /* streaming or logical replication mode */
 
