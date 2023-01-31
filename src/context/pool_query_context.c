@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -633,6 +633,10 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 			}
 		}
 	}
+	else if (REPLICATION && query_context->is_multi_statement)
+	{
+		pool_setall_node_to_be_sent(query_context);
+	}
 	else if (REPLICATION)
 	{
 		if (pool_config->load_balance_mode &&
@@ -700,24 +704,9 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 	}
 
 	/*
-	 * EXECUTE?
+	 * DEALLOCATE or EXECUTE?
 	 */
-	if (IsA(node, ExecuteStmt))
-	{
-		POOL_SENT_MESSAGE *msg;
-
-		msg = pool_get_sent_message('Q', ((ExecuteStmt *) node)->name, POOL_SENT_MESSAGE_CREATED);
-		if (!msg)
-			msg = pool_get_sent_message('P', ((ExecuteStmt *) node)->name, POOL_SENT_MESSAGE_CREATED);
-		if (msg)
-			pool_copy_prep_where(msg->query_context->where_to_send,
-								 query_context->where_to_send);
-	}
-
-	/*
-	 * DEALLOCATE?
-	 */
-	else if (IsA(node, DeallocateStmt))
+	if (IsA(node, DeallocateStmt) || IsA(node, ExecuteStmt))
 	{
 		where_to_send_deallocate(query_context, node);
 	}
@@ -1468,26 +1457,55 @@ static POOL_DEST send_to_where(Node *node, char *query)
 	return POOL_PRIMARY;
 }
 
+/*
+ * Decide where to send given message.
+ * "node" must be a parse tree of either DEALLOCATE or EXECUTE.
+ */
 static
 void
 where_to_send_deallocate(POOL_QUERY_CONTEXT * query_context, Node *node)
 {
-	DeallocateStmt *d = (DeallocateStmt *) node;
+	DeallocateStmt *d = NULL;
+	ExecuteStmt *e = NULL;
+	char		*name;
 	POOL_SENT_MESSAGE *msg;
 
-	/* DEALLOCATE ALL? */
-	if (d->name == NULL)
+	if (IsA(node, DeallocateStmt))
 	{
-		pool_setall_node_to_be_sent(query_context);
+		d = (DeallocateStmt *) node;
+		name = d->name;
+	}
+	else if (IsA(node, ExecuteStmt))
+	{
+		e = (ExecuteStmt *) node;
+		name = e->name;
 	}
 	else
 	{
-		msg = pool_get_sent_message('Q', d->name, POOL_SENT_MESSAGE_CREATED);
+		ereport(ERROR,
+				(errmsg("invalid node type for where_to_send_deallocate")));
+		return;
+	}
+
+	/* DEALLOCATE ALL? */
+	if (d && (name == NULL))
+	{
+		/* send to all backend node */
+		pool_setall_node_to_be_sent(query_context);
+		return;
+	}
+
+	/* ordinary DEALLOCATE or EXECUTE */
+	else
+	{
+		/* check if message was created by SQL PREPARE */
+		msg = pool_get_sent_message('Q', name, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			msg = pool_get_sent_message('P', d->name, POOL_SENT_MESSAGE_CREATED);
+			/* message may be created by Parse message */
+			msg = pool_get_sent_message('P', name, POOL_SENT_MESSAGE_CREATED);
 		if (msg)
 		{
-			/* Inherit same map from PREPARE or PARSE */
+			/* Inherit same map from PREPARE or Parse */
 			pool_copy_prep_where(msg->query_context->where_to_send,
 								 query_context->where_to_send);
 
@@ -1495,8 +1513,33 @@ where_to_send_deallocate(POOL_QUERY_CONTEXT * query_context, Node *node)
 			query_context->load_balance_node_id = msg->query_context->load_balance_node_id;
 		}
 		else
-			/* prepared statement was not found */
-			pool_setall_node_to_be_sent(query_context);
+		{
+			/*
+			 * prepared statement was not found.
+			 * There are two cases when this could happen.
+			 * (1) mistakes by client. In this case backend will return ERROR
+			 * anyway.
+			 * (2) previous query was issued as multi-statement query. e.g.
+			 * SELECT 1\;PREPARE foo AS SELECT 1;
+			 * In this case pgpool does not know anything about the prepared
+			 * statement "foo".
+			 */
+			if (SL_MODE)
+			{
+				/*
+				 * In streaming replication or logical replication, sent to
+				 * primary node only.
+				 */
+				pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+			}
+			else
+			{
+				/*
+				 * In other mode, sent to all node.
+				 */
+				pool_setall_node_to_be_sent(query_context);
+			}
+		}
 	}
 }
 
