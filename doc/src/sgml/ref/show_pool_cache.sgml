@@ -35,6 +35,7 @@
    displays <link linkend="runtime-in-memory-query-cache">in memory
     query cache </link> statistics if in memory query cache is
    enabled.  Here is an example session:
+   See <xref linkend="show-pool-cache-table"> for a description of each item.
    <programlisting>
     test=# \x
     \x
@@ -61,6 +62,99 @@
     num_cache_hits, num_selects and cache_hit_ratio show 0.
    </para>
   </note>
+
+  <table id="show-pool-cache-table">
+   <title>Items displayed in show pool_cache</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry><literal>num_cache_hits</literal></entry>
+      <entry>The number of hits against the query cache.</entry>
+     </row>
+
+     <row>
+      <entry><literal>num_selects</literal></entry>
+      <entry>The number of SELECT that did not hit against the query cache.</entry>
+     </row>
+
+     <row>
+      <entry><literal>cache_hit_ratio</literal></entry>
+      <entry>The cache hit ratio.
+       Calculated as num_cache_hits/(num_cache_hits+num_selects).</entry>
+     </row>
+
+     <row>
+      <entry><literal>num_hash_entries</literal></entry>
+      <entry>The number of entries in the hash table used to manage
+       the cache.  In order to manage large number of
+       cache <productname>Pgpool-II</productname> uses the hash table.
+       The number of hash entries is automatically adjusted to the
+       nearest power of two greater
+       than <xref linkend="guc-memqcache-max-num-cache">.  For
+       example, 100,000, which is the default
+       for <xref linkend="guc-memqcache-max-num-cache"> is adjusted to
+       131,072 (2 to the 17th power).
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>used_hash_entries</literal></entry>
+      <entry>
+       The number of used hash entries.  If the value
+       approaches <literal>num_hash_entries</literal>, it is
+       recommended to increase <literal>num_hash_entries</literal>.
+       Even if all the hash table entries are used, no error is
+       raised.  However, performance suffers because hash table
+       entries and caches are reused to register new cache entries.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>num_cache_entries</literal></entry>
+      <entry>
+       The number of cache entries already used.  In the current
+       implementation the number should be identical
+       to <literal>used_hash_entries</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>free_cache_entries_size</literal></entry>
+      <entry>
+       The size in bytes of the unsed cache.  As this value approaches
+       0, it removes the registered cache and registers a new cache,
+       which does not cause an error, but reduces performance.
+       Consider to increase <xref linkend="guc-memqcache-total-size">.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>fragment_cache_entries_size</literal></entry>
+      <entry>
+       The size in bytes of the fragmented cache.  When a registered
+       cache is evicted, the space becomes fragmented until the next
+       time that block is reused.
+       <productname>Pgpool-II</productname> writes cache in fixed-size
+	blocks specified
+	by <xref linkend="guc-memqcache-cache-block-size">.  When a
+	registered cache is evicted, the space becomes fragmented
+	until the next time that block is reused.
+	<literal>fragment_cache_entries_size</literal> displays the
+	total size of such fragmented regions.
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
 
  </refsect1>
 

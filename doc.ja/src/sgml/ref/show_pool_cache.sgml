@@ -45,6 +45,7 @@
    -->
    は <link linkend="runtime-in-memory-query-cache"> インメモリクエリキャッシュ</link> が有効である場合に、
    クエリキャッシュのヒット率や、キャッシュストレージの状況を表示します。 例を示します。
+   各項目の説明は<xref linkend="show-pool-cache-table">をご覧ください。
    <programlisting>
     test=# \x
     \x
@@ -75,6 +76,83 @@
     キャッシュストレージが<literal>memcached</literal>のときは、num_cache_hits, num_selects, cache_hit_ratio以外の列の値は0になります。
    </para>
   </note>
+
+   <table id="show-pool-cache-table">
+   <title>show pool_cacheの表示項目</title>
+   <tgroup cols="2">
+   <thead>
+   <row>
+   <entry>名称</entry>
+   <entry>説明</entry>
+  </row>
+  </thead>
+
+   <tbody>
+
+   <row>
+    <entry><literal>num_cache_hits</literal></entry>
+    <entry>クエリキャッシュにヒットした回数です。</entry>
+   </row>
+
+   <row>
+    <entry><literal>num_selects</literal></entry>
+    <entry>キャッシュにヒットしなかったSELECTクエリの回数です。</entry>
+   </row>
+
+   <row>
+    <entry><literal>cache_hit_ratio</literal></entry>
+    <entry>キャッシュのヒット率です。
+     num_cache_hits/(num_cache_hits+num_selects)で計算されます。</entry>
+   </row>
+
+   <row>
+    <entry><literal>num_hash_entries</literal></entry>
+    <entry>キャッシュを管理するハッシュテーブルのエントリ数です。
+     大量のキャッシュを効率よく管理するため、<productname>Pgpool-II</productname>はハッシュテーブルを使っています。
+     ハッシュテーブルのエントリ数は、<xref linkend="guc-memqcache-max-num-cache">以上で、かつその数に最も近い2のべき乗になる数が自動的に設定されます。
+     たとえば、<xref linkend="guc-memqcache-max-num-cache">のデフォルトである100,000では、131,072 (2の17乗)が設定されます。
+    </entry>
+   </row>
+
+   <row>
+    <entry><literal>used_hash_entries</literal></entry>
+    <entry>
+     使用済みのハッシュエントリ数です。
+     これが<literal>num_hash_entries</literal>に近くなる場合は、<literal>num_hash_entries</literal>を増やすことをお勧めします。
+     ハッシュテーブルを使い切ってもエラーにはなりませんが、登録済みのハッシュテーブルエントリとキャッシュを削除して新しいキャッシュを登録するため、性能が低下します。
+    </entry>
+   </row>
+
+   <row>
+    <entry><literal>num_cache_entries</literal></entry>
+    <entry>
+     使用済みのキャッシュエントリ数です。
+     現在の実装では<literal>used_hash_entries</literal>と同じ値になります。
+    </entry>
+   </row>
+
+   <row>
+    <entry><literal>free_cache_entries_size</literal></entry>
+    <entry>
+     未使用のキャッシュのバイト単位のサイズです。
+     この値が0に近づくと、登録済みのキャッシュを削除して新しいキャッシュを登録するため、エラーにはなりませんが性能が低下します。
+     <xref linkend="guc-memqcache-total-size">を増やすことを検討してください。
+    </entry>
+   </row>
+
+   <row>
+    <entry><literal>fragment_cache_entries_size</literal></entry>
+    <entry>
+     断片化しているキャッシュのバイト単位のサイズです。
+     <productname>Pgpool-II</productname>は<xref linkend="guc-memqcache-cache-block-size">で指定される固定長のブロックにキャッシュを書き込みます。
+     登録されたキャッシュが削除されると、次にそのブロックを再利用するまではその領域は断片化します。
+      <literal>fragment_cache_entries_size</literal>はそうした断片化した領域の合計サイズを表示します。
+    </entry>
+   </row>
+
+  </tbody>
+  </tgroup>
+  </table>
 
  </refsect1>
 
