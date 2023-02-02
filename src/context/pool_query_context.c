@@ -836,8 +836,8 @@ pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 			continue;
 
 		/*
-		 * If in native replication mode, we do not send COMMIT/ABORT to
-		 * standbys if it's in I(idle) state.
+		 * If we are in streaming replication mode or logical replication mode,
+		 * we do not send COMMIT/ABORT to standbys if it's in I (idle) state.
 		 */
 		if (is_commit && MAIN_REPLICA && !IS_MAIN_NODE_ID(i) && TSTATE(backend, i) == 'I')
 		{
