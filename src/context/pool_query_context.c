@@ -809,9 +809,9 @@ pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 
 	/*
 	 * If the query is BEGIN READ WRITE or BEGIN ... SERIALIZABLE in
-	 * native replication mode, we send BEGIN to standbys instead.
-	 * original_query which is BEGIN READ WRITE is sent to primary.
-	 * rewritten_query which is BEGIN is sent to standbys.
+	 * streaming replication mode, we send BEGIN to standbys instead.
+	 * The original_query which is BEGIN READ WRITE is sent to primary.
+	 * The rewritten_query BEGIN is sent to standbys.
 	 */
 	if (pool_need_to_treat_as_if_default_transaction(query_context))
 	{
@@ -962,9 +962,9 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 
 	/*
 	 * If the query is BEGIN READ WRITE or BEGIN ... SERIALIZABLE in
-	 * native replication mode, we send BEGIN to standbys instead.
-	 * original_query which is BEGIN READ WRITE is sent to primary.
-	 * rewritten_query which is BEGIN is sent to standbys.
+	 * streaming replication mode, we send BEGIN to standbys instead.
+	 * The original_query which is BEGIN READ WRITE is sent to primary.
+	 * The rewritten_query BEGIN is sent to standbys.
 	 */
 	if (pool_need_to_treat_as_if_default_transaction(query_context))
 	{
@@ -1781,10 +1781,10 @@ is_serializable(TransactionStmt *node)
 
 /*
  * If the query is BEGIN READ WRITE or
- * BEGIN ... SERIALIZABLE in native replication mode,
+ * BEGIN ... SERIALIZABLE in streaming replication mode,
  * we send BEGIN to standbys instead.
- * original_query which is BEGIN READ WRITE is sent to primary.
- * rewritten_query which is BEGIN is sent to standbys.
+ * The original_query which is BEGIN READ WRITE is sent to primary.
+ * The rewritten_query BEGIN is sent to standbys.
  */
 bool
 pool_need_to_treat_as_if_default_transaction(POOL_QUERY_CONTEXT * query_context)
