@@ -300,4 +300,6 @@ extern bool pool_is_shmem_lock(void);
 
 extern void InvalidateQueryCache(int tableoid, int dboid);
 
+extern void pool_init_whole_cache_blocks(void);
+
 #endif							/* POOL_MEMQCACHE_H */
