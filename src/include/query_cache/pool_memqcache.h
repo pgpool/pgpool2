@@ -285,4 +285,6 @@ extern void pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache);
 extern void pool_shmem_lock(void);
 extern void pool_shmem_unlock(void);
 
+extern void pool_init_whole_cache_blocks(void);
+
 #endif							/* POOL_MEMQCACHE_H */
