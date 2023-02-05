@@ -351,6 +351,20 @@ check_replication_time_lag(void)
 		return;
 	}
 
+	if (!VALID_BACKEND(REAL_PRIMARY_NODE_ID))
+	{
+		/*
+		 * No need to check replication delay if primary is down. This could
+		 * happen if ALWAYS_PRIMARY flag is on because REAL_PRIMARY_NODE_ID
+		 * macro returns the node id which ALWAYS_PRIMARY flag is set to.  If
+		 * we do not check this, subsequent test (i == PRIMARY_NODE_ID) in the
+		 * for loop below will return unexpected result because
+		 * PRIMARY_NODE_ID macro returns MAIN_NODE_ID, which could be a
+		 * standby server.
+		 */
+		return;
+	}
+
 	/*
 	 * Register a error context callback to throw proper context message
 	 */
