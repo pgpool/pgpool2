@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2099,6 +2099,8 @@ pool_clear_memory_cache(void)
 		pool_discard_oid_maps();
 
 		pool_hash_reset(pool_config->memqcache_max_num_cache);
+
+		pool_init_whole_cache_blocks();
 	}
 	PG_CATCH();
 	{
@@ -2122,8 +2124,19 @@ pool_memory_cache_address(void)
 }
 
 /*
- * Initialize new block
+ * Initialize whole cache blocks
  */
+void
+pool_init_whole_cache_blocks(void)
+{
+	int		blocks = pool_get_memqcache_blocks();
+	int		i;
+
+	for (i = 0; i < blocks; i++)
+	{
+		pool_init_cache_block(i);
+	}
+}
 
 /*
  * Free space management map
@@ -2136,7 +2149,7 @@ pool_memory_cache_address(void)
  * For example, if the value is 2, the free space can be between 64
  * bytes and 95 bytes.
  *
- * value free space(in bytes)
+ * value free space (in bytes)
  * 0     0-31
  * 1     32-63
  * 2     64-95
@@ -2240,6 +2253,7 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void)
 	reused_block = *pool_fsmm_clock_hand;
 	p = block_address(reused_block);
 
+	/* Remove all items in this block from hash table */
 	for (i = 0; i < bh->num_items; i++)
 	{
 		cip = item_pointer(p, i);
@@ -2298,7 +2312,7 @@ static POOL_CACHE_BLOCKID pool_get_block(size_t free_space)
 		if (p[i] >= encode_value)
 		{
 			/*
-			 * This block *may" have enough space. We need to make sure it
+			 * This block may not have enough space. We need to make sure it
 			 * actually has enough space.
 			 */
 			bh = (POOL_CACHE_BLOCK_HEADER *) block_address(i);
@@ -2429,7 +2443,6 @@ static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, ch
 	{
 		/* If not, reuse next victim block */
 		blockid = pool_reuse_block();
-		pool_init_cache_block(blockid);
 	}
 
 	/* Get block address on shmem */
@@ -2826,7 +2839,7 @@ pool_delete_item_shmem_cache(POOL_CACHEID * cacheid)
 	pool_hash_delete(&key);
 
 	/*
-	 * If the deleted item is last one in the block, we add it to the free
+	 * If the deleted item is the last one in the block, we add it to the free
 	 * space.
 	 */
 	if (cacheid->itemid == (bh->num_items - 1))
@@ -2834,7 +2847,7 @@ pool_delete_item_shmem_cache(POOL_CACHEID * cacheid)
 		bh->free_bytes += size;
 		ereport(DEBUG1,
 				(errmsg("memcache deleting item data"),
-				 errdetail("deleted %d bytes, freebytes is = %d",
+				 errdetail("deleted %d bytes, freebytes is %d",
 						   size, bh->free_bytes)));
 
 		bh->num_items--;

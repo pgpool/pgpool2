@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3894,6 +3894,8 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 					(errmsg("pool_discard_oid_maps: discarded memqcache oid maps")));
 
 			pool_hash_init(pool_config->memqcache_max_num_cache);
+
+			pool_init_whole_cache_blocks();
 		}
 
 #ifdef USE_MEMCACHED

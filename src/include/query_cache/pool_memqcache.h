@@ -290,4 +290,6 @@ extern void pool_shmem_lock(void);
 extern void pool_shmem_unlock(void);
 extern bool pool_is_shmem_lock(void);
 
+extern void pool_init_whole_cache_blocks(void);
+
 #endif							/* POOL_MEMQCACHE_H */
