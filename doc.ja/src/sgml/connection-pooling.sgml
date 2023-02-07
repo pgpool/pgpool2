@@ -1113,12 +1113,59 @@ local0.*    /var/log/pgpool.log
     <listitem>
      <para>
       <!--
-      Similar to <xref linkend="guc-log-statement">, except that it print the
+      Similar to <xref linkend="guc-log-statement">, except that it prints the
       logs for each DB node separately. It can be useful to make sure that
       replication or load-balancing is working.
       -->
       <xref linkend="guc-log-statement">と似ていますが、DBノード単位でログが出力されます。
        レプリケーションや負荷分散が動いていることを確認するのに便利です。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+      this parameter for a current session.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-notice-per-node-statement" xreflabel="notice_per_node_statement">
+    <term><varname>notice_per_node_statement</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>notice_per_node_statement</varname> configuration parameter</primary>
+      -->
+      <primary><varname>notice_per_node_statement</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Similar to <xref linkend="guc-log-per-node-statement">, except
+      that it prints the statement logs for each DB node separately as
+      a NOTICE message. With the
+      default <xref linkend="client_min_messages"> setting (that is
+      NOTICE), the log message will be printed on client's terminal as
+      well. This is convenient for clients because it does not need to
+      access <productname>Pgpool-II</productname> log file.  Note that
+      unlike <xref linkend="guc-log-per-node-statement">, <xref linkend="guc-notice-per-node-statement">
+      does not print internal queries, (e.g., system catalog inquiry).
+      This is because this feature is designed to be used for testing
+      as well. As internal queries tend to be non-deterministic,
+      printing them in testing is not helpful. For the same reason,
+      backend process id is not printed.
+      -->
+      <xref linkend="guc-log-per-node-statement">と似ていますが、NOTICEメッセージとしてDBノード単位でログが出力されます。
+      <xref linkend="guc-client-min-messages">のデフォルト設定(すなわちNOTICE)では、このログメッセージはクライアントの端末にも出力されます。
+      クライアントにとっては、<productname>Pgpool-II</productname>のログファイルにアクセスする必要がないので便利です。
+      <xref linkend="guc-log-per-node-statement">と違って、<xref linkend="guc-notice-per-node-statement">は内部的に発行する問い合わせ（たとえば
+システムカタログへの問い合わせ）は出力しないことに注意してください。
+      これは、この機能がテストにも使えるように設計されているからです。
+      内部的な問い合わせは非決定論的に発行される傾向があるため、テストに使うには適していません。
+      同じ理由で、バックエンドのプロセスIDも出力されません。
      </para>
      <para>
       <!--

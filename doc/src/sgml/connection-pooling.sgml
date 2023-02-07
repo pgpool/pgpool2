@@ -728,6 +728,37 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-notice-per-node-statement" xreflabel="notice_per_node_statement">
+    <term><varname>notice_per_node_statement</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>notice_per_node_statement</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Similar to <xref linkend="guc-log-per-node-statement">, except
+      that it prints the statement logs for each DB node separately as
+      a NOTICE message. With the
+      default <xref linkend="guc-client-min-messages"> setting (that
+      is NOTICE), the log message will be printed on client's terminal
+      as well. This is convenient for clients because it does not need
+      to access <productname>Pgpool-II</productname> log file.  Note
+      that
+      unlike <xref linkend="guc-log-per-node-statement">, <xref linkend="guc-notice-per-node-statement">
+      does not print internal queries, (e.g., system catalog inquiry).
+      This is because this feature is designed to be used for testing
+      as well. As internal queries tend to be non-deterministic,
+      printing them in testing is not helpful. For the same reason,
+      backend process id is not printed.
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+      this parameter for a current session.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-log-client-messages" xreflabel="log_client_messages">
     <term><varname>log_client_messages</varname> (<type>boolean</type>)
      <indexterm>

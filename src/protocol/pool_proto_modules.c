@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3566,6 +3566,17 @@ per_node_statement_log(POOL_CONNECTION_POOL * backend, int node_id, char *query)
 	if (pool_config->log_per_node_statement)
 		ereport(LOG,
 				(errmsg("DB node id: %d backend pid: %d statement: %s", node_id, ntohl(slot->pid), query)));
+}
+
+/*
+ * Make per DB node statement notice message
+ */
+void
+per_node_statement_notice(POOL_CONNECTION_POOL * backend, int node_id, char *query)
+{
+	if (pool_config->notice_per_node_statement)
+		ereport(NOTICE,
+				(errmsg("DB node id: %d statement: %s", node_id, query)));
 }
 
 /*

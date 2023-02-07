@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -397,6 +397,8 @@ typedef struct
 											 * each query */
 	bool		log_statement;	/* logs all SQL statements */
 	bool		log_per_node_statement; /* logs per node detailed SQL
+										 * statements */
+	bool		notice_per_node_statement; /* logs notice message for per node detailed SQL
 										 * statements */
 	bool		log_client_messages;	/* If true, logs any client messages */
 	char	   *lobj_lock_table;	/* table name to lock for rewriting

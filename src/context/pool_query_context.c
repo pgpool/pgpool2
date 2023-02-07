@@ -870,6 +870,7 @@ pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 		}
 
 		per_node_statement_log(backend, i, string);
+		per_node_statement_notice(backend, i, string);
 		stat_count_up(i, query_context->parse_tree);
 		send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend));
 	}
@@ -1047,6 +1048,7 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 			}
 
 			per_node_statement_log(backend, i, msgbuf);
+			per_node_statement_notice(backend, i, msgbuf);
 		}
 
 		/* if Execute message, count up stats count */
