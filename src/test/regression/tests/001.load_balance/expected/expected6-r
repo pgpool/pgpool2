@@ -1,0 +1,16 @@
+SELECT f1(1);
+NOTICE:  DB node id: 0 statement: SELECT f1(1);
+NOTICE:  DB node id: 1 statement: SELECT f1(1);
+ f1 
+----
+  1
+(1 row)
+
+SELECT public.f2(1);
+NOTICE:  DB node id: 0 statement: SELECT public.f2(1);
+NOTICE:  DB node id: 1 statement: SELECT public.f2(1);
+ f2 
+----
+  1
+(1 row)
+

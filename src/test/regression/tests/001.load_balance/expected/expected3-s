@@ -1,0 +1,40 @@
+SELECT * FROM t1;
+NOTICE:  DB node id: 0 statement: SELECT * FROM t1;
+ i 
+---
+(0 rows)
+
+SELECT 'a';
+NOTICE:  DB node id: 0 statement: SELECT 'a';
+ ?column? 
+----------
+ a
+(1 row)
+
+SELECT 1;
+NOTICE:  DB node id: 0 statement: SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+SELECT ';';
+NOTICE:  DB node id: 0 statement: SELECT ';';
+ ?column? 
+----------
+ ;
+(1 row)
+
+SELECT * FROM t2;
+NOTICE:  DB node id: 0 statement: SELECT * FROM t2;
+ i 
+---
+(0 rows)
+
+SELECT f1(1);
+NOTICE:  DB node id: 0 statement: SELECT f1(1);
+ f1 
+----
+  1
+(1 row)
+

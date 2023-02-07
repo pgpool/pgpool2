@@ -1,0 +1,32 @@
+CREATE TABLE t1(i INTEGER);
+NOTICE:  DB node id: 0 statement: CREATE TABLE t1(i INTEGER);
+CREATE TABLE
+CREATE TABLE t2(i INTEGER);
+NOTICE:  DB node id: 0 statement: CREATE TABLE t2(i INTEGER);
+CREATE TABLE
+CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT $1' LANGUAGE SQL;
+NOTICE:  DB node id: 0 statement: CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT $1' LANGUAGE SQL;
+CREATE FUNCTION
+CREATE FUNCTION f2(INTEGER) returns INTEGER AS 'SELECT $1' LANGUAGE SQL;
+NOTICE:  DB node id: 0 statement: CREATE FUNCTION f2(INTEGER) returns INTEGER AS 'SELECT $1' LANGUAGE SQL;
+CREATE FUNCTION
+SELECT * FROM t1;
+NOTICE:  DB node id: 1 statement: SELECT * FROM t1;
+ i 
+---
+(0 rows)
+
+SELECT f1(1);
+NOTICE:  DB node id: 0 statement: SELECT f1(1);
+ f1 
+----
+  1
+(1 row)
+
+SELECT public.f2(1);
+NOTICE:  DB node id: 0 statement: SELECT public.f2(1);
+ f2 
+----
+  1
+(1 row)
+

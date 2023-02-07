@@ -1,0 +1,8 @@
+SELECT f1(2);
+NOTICE:  DB node id: 0 statement: SELECT f1(2);
+NOTICE:  DB node id: 1 statement: SELECT f1(2);
+ f1 
+----
+  2
+(1 row)
+
