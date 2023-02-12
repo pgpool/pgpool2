@@ -2119,7 +2119,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 			TSTATE(backend, i) = kind;
 			ereport(DEBUG5,
 					(errmsg("processing ReadyForQuery"),
-					 errdetail("transaction state '%c'(%02x)", state, state)));
+					 errdetail("transaction state of node %d '%c'(%02x)", i, kind , kind)));
 
 			/*
 			 * The transaction state to be returned to frontend is main node's.
@@ -4540,6 +4540,9 @@ check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION * fro
 								  POOL_CONNECTION_POOL * backend)
 {
 	int		len;
+
+	if (TSTATE(backend, MAIN_NODE_ID) != 'E')
+		return true;
 
 	/*
 	 * Are we in failed transaction and the command is not a transaction close

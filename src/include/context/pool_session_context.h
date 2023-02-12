@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -142,6 +142,9 @@ typedef struct
 											 * used by parse_before_bind() */
 	bool		node_ids[MAX_NUM_BACKENDS];	/* backend node map which this message was sent to */
 	POOL_QUERY_CONTEXT *query_context;	/* query context */
+
+	bool		is_tx_started_by_multi_statement; /* true if an explicit transaction has been strated by
+													 multi statement query */
 }			POOL_PENDING_MESSAGE;
 
 typedef enum {
@@ -302,6 +305,10 @@ typedef struct
 	/* Whether transaction is read only. Only used by Snapshot Isolation mode. */
 	SI_STATE	transaction_read_only;
 
+	bool		is_tx_started_by_multi_statement;	/* True if an explicit
+													 * transaction has been
+													 * started by a
+													 * multi-statement-query */
 }			POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
@@ -384,6 +391,10 @@ extern void pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE stat
 extern void	pool_temp_tables_commit_pending(void);
 extern void	pool_temp_tables_remove_pending(void);
 extern void	pool_temp_tables_dump(void);
+
+extern bool is_tx_started_by_multi_statement_query(void);
+extern void set_tx_started_by_multi_statement_query(void);
+extern void unset_tx_started_by_multi_statement_query(void);
 
 #ifdef NOT_USED
 extern void pool_set_preferred_main_node_id(int node_id);
