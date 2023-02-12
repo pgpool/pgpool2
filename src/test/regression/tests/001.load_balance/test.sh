@@ -5,6 +5,9 @@
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
+PSQLOPTS="-a -q -X"
+PGPOOLBIN=$PGPOOL_INSTALL_DIR/bin
+export PGDATABASE=test
 
 # sleep time after reload in seconds
 st=10
@@ -58,7 +61,7 @@ do
 
 	wait_for_pgpool_startup
 
-	$PSQL -ae test > result1 2>&1 <<EOF
+	$PSQL $PSQLOPTS > result1 2>&1 <<EOF
 CREATE TABLE t1(i INTEGER);
 CREATE TABLE t2(i INTEGER);
 CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL;
@@ -77,7 +80,7 @@ EOF
 	./pgpool_reload
 	sleep $st
 
-	$PSQL -ae test > result2 2>&1 <<EOF
+	$PSQL $PSQLOPTS > result2 2>&1 <<EOF
 SELECT f1(1);			-- this does load balance
 SELECT public.f2(1);	-- this does load balance
 EOF
@@ -90,7 +93,7 @@ EOF
 	./startall
 	wait_for_pgpool_startup
 
-	$PSQL -ae test > result3 2>&1 <<EOF
+	$PSQL $PSQLOPTS > result3 2>&1 <<EOF
 SELECT * FROM t1;
 SELECT 'a';
 SELECT 1;
@@ -138,7 +141,7 @@ EOF
 	    ./startall
 	    wait_for_pgpool_startup
 
-	    $PSQL -ae test > result4 2>&1 <<EOF
+	    $PSQL $PSQLOPTS > result4 2>&1 <<EOF
 BEGIN;
 SELECT 1;
 END;
@@ -154,7 +157,7 @@ EOF
 	    echo "read_only_function_list = ''" >> etc/pgpool.conf
 	    ./pgpool_reload
 	    sleep $st
-	    $PSQL -ae test > result5 2>&1 <<EOF
+	    $PSQL $PSQLOPTS > result5 2>&1 <<EOF
 SELECT f1(2);		-- this should be sent to all the nodes
 EOF
 	    check_result 5
@@ -174,16 +177,60 @@ EOF
 	./pgpool_reload
 	sleep $st
 
-	$PSQL -ae test > result6 2>&1 <<EOF
+	$PSQL $PSQLOPTS > result6 2>&1 <<EOF
 SELECT f1(1);
 SELECT public.f2(1);
 EOF
 	check_result 6
 
+	echo "=== test7 started ==="
+# -------------------------------------------------------------------------------
+# multi statement queries
+# -------------------------------------------------------------------------------
+	echo "statement_level_load_balance = off" >> etc/pgpool.conf
+	# XXX primary_routing_query_pattern_list does not allow to overwritten.
+	# So following does not work.
+	#echo "primary_routing_query_pattern_list = ''" >> etc/pgpool.conf
+	sed -i '/^primary_routing_query_pattern_list/d' etc/pgpool.conf
+	#echo "log_min_messages = debug5" >> etc/pgpool.conf
+
+	./shutdownall
+	./startall
+	wait_for_pgpool_startup
+	$PSQL -c "SHOW POOL_NODES;" test
+
+	$PSQL $PSQLOPTS < ../sql/7.sql > result7 2>&1
+	check_result 7
+
+	echo "=== test8 started ==="
+# -------------------------------------------------------------------------------
+# multi statement queries (swapping primary and standby)
+# -------------------------------------------------------------------------------
+	if [ $mode = 's' ];then
+	    echo $PGPOOLBIN/pcp_promote_node -w -p $PCP_PORT --switchover 1
+	    $PGPOOLBIN/pcp_promote_node -w -p $PCP_PORT --switchover 1
+	    while :
+	    do
+		wait_for_pgpool_startup
+		$PSQL -c "SHOW POOL_NODES;" test | grep down
+		if [ $? != 0 ];then
+		    break
+		fi
+		sleep 1
+	    done
+
+	    # Swap the weights. Now backend 0 is the load balance node
+	    echo "backend_weight0 = 1" >> etc/pgpool.conf
+	    echo "backend_weight1 = 0" >> etc/pgpool.conf
+	    ./shutdownall
+	    ./startall
+	    wait_for_pgpool_startup
+	    $PSQL $PSQLOPTS < ../sql/7.sql > result8 2>&1
+	    check_result 8
+	fi
 	./shutdownall
 
 	cd ..
-
 done
 
 exit 0

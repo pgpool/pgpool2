@@ -1,11 +1,11 @@
-SELECT f1(1);
+SELECT f1(1);			-- this does load balance
 NOTICE:  DB node id: 1 statement: SELECT f1(1);
  f1 
 ----
   1
 (1 row)
 
-SELECT public.f2(1);
+SELECT public.f2(1);	-- this does load balance
 NOTICE:  DB node id: 1 statement: SELECT public.f2(1);
  f2 
 ----

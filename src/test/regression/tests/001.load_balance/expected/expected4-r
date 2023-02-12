@@ -1,7 +1,6 @@
 BEGIN;
 NOTICE:  DB node id: 0 statement: BEGIN;
 NOTICE:  DB node id: 1 statement: BEGIN;
-BEGIN
 SELECT 1;
 NOTICE:  DB node id: 0 statement: SELECT 1;
  ?column? 
@@ -12,4 +11,3 @@ NOTICE:  DB node id: 0 statement: SELECT 1;
 END;
 NOTICE:  DB node id: 1 statement: END;
 NOTICE:  DB node id: 0 statement: END;
-COMMIT

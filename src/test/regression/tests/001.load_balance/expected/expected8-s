@@ -1,0 +1,88 @@
+-- ordinary read only SELECT: load balance expected
+SELECT 1;
+NOTICE:  DB node id: 0 statement: SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- multi-statement query including BEGIN
+BEGIN\;SELECT 1;
+NOTICE:  DB node id: 1 statement: BEGIN;SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- ordinary read only SELECT: load balance expected
+SELECT 2;
+NOTICE:  DB node id: 0 statement: SELECT 2;
+ ?column? 
+----------
+        2
+(1 row)
+
+-- tx started by multi-statement query ends
+END;
+NOTICE:  DB node id: 1 statement: END;
+-- multi-statement query including BEGIN
+BEGIN\;SELECT 1;
+NOTICE:  DB node id: 1 statement: BEGIN;SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- SAVEPOINT
+SAVEPOINT a;
+NOTICE:  DB node id: 1 statement: SAVEPOINT a;
+-- PREPARE
+PREPARE foo AS SELECT 2;
+NOTICE:  DB node id: 1 statement: PREPARE foo AS SELECT 2;
+-- EXECUTE
+EXECUTE foo;
+NOTICE:  DB node id: 1 statement: EXECUTE foo;
+ ?column? 
+----------
+        2
+(1 row)
+
+-- DEALLOCATE
+DEALLOCATE foo;
+NOTICE:  DB node id: 1 statement: DEALLOCATE foo;
+-- ROLLBACK TO
+ROLLBACK TO a;
+NOTICE:  DB node id: 1 statement: ROLLBACK TO a;
+-- tx started by multi-statement query ends
+END;
+NOTICE:  DB node id: 1 statement: END;
+-- multi-statement query including BEGIN and ROLLBACK
+BEGIN\;SELECT 1\;ROLLBACK;
+NOTICE:  DB node id: 1 statement: BEGIN;SELECT 1;ROLLBACK;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- ordinary read only SELECT: load balance expected
+SELECT 1;
+NOTICE:  DB node id: 0 statement: SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- multi-statement query including BEGIN and invalid query
+BEGIN\;SELECT 1\;FOO;
+NOTICE:  DB node id: 1 statement: BEGIN;SELECT 1;FOO;
+ERROR:  syntax error at or near "FOO"
+LINE 1: BEGIN;SELECT 1;FOO;
+                       ^
+-- ordinary read only SELECT: load balance expected
+SELECT 1;
+NOTICE:  DB node id: 0 statement: SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
