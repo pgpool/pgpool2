@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -138,6 +138,36 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 			return POOL_END;
 		p1 = palloc(len);
 		memcpy(p1, p, len);
+	}
+
+	/*
+	 * Check if a transaction start command was issued by a multi statement
+	 * query by looking at the command tag. We cannot look into the parse tree
+	 * because our parse tree is only the first query in the multi statement.
+	 */
+	if (SL_MODE && session_context->query_context &&
+		session_context->query_context->is_multi_statement)
+	{
+		if (!strcmp(p1, "BEGIN"))
+		{
+			/*
+			 * If the query was a transaction starting command, remember it
+			 * until it gets committed or roll backed.
+			 */
+			elog(DEBUG1, "Call set_tx_started_by_multi_statement_query() in CommandComplete");
+			set_tx_started_by_multi_statement_query();
+		}
+		else if (!strcmp(p1, "COMMIT") || !strcmp(p1, "ROLLBACK"))
+		{
+			/*
+			 * It is possible that the multi statement query included both
+			 * BEGIN and COMMIT/ROLLBACK, or just COMMIT/ROLLBACK command.  In
+			 * this case we forget that a transaction was started by multi
+			 * statement query.
+			 */
+			elog(DEBUG1, "Call unset_tx_started_by_multi_statement_query() in CommandComplete");
+			unset_tx_started_by_multi_statement_query();
+		}
 	}
 
 	/*
@@ -334,11 +364,18 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 		{
 			/* Commit ongoing CRETAE/DROP temp table status */
 			pool_temp_tables_commit_pending();			
+
+			/* Forget a transaction was started by multi statement query */
+			unset_tx_started_by_multi_statement_query();
 		}
 		else if (stmt->kind == TRANS_STMT_ROLLBACK)
 		{
 			/* Remove ongoing CRETAE/DROP temp table status */
 			pool_temp_tables_remove_pending();
+
+			/* Forget a transaction was started by multi statement query */
+			elog(LOG, "unset_tx_started_by_multi_statement_query is called in CommandComplete");
+			unset_tx_started_by_multi_statement_query();
 		}
 	}
 	else if (IsA(node, CreateStmt))

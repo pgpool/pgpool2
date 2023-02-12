@@ -59,13 +59,11 @@ pgpool_SOURCES = main/main.c \
 	utils/sha2.c \
 	utils/ssl_utils.c \
 	utils/statistics.c \
-	utils/pool_health_check_stats.c \
 	utils/psqlscan.l \
 	utils/pgstrcasecmp.c
 
 utils/psqlscan.c: utils/psqlscan.l
 	$(LEX) -o'utils/psqlscan.c' $<
->>>>>>> ea63203c... Judge multi statement query using psqlscan.
 
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\"

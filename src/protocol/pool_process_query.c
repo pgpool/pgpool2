@@ -4106,6 +4106,22 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 				PG_END_TRY();
 
 				INTERNAL_TRANSACTION_STARTED(backend, i) = false;
+
+				/*
+				 * Explicitly set the tx state to 'Idle'. This is necessary
+				 * because ReadyForQuery only takes care VALID_BACKEND.
+				 */
+				TSTATE(backend, i) = 'I';
+
+				if (MAJOR(backend) == PROTO_MAJOR_V3 && !VALID_BACKEND(i))
+				{
+					/*
+					 * Skip rest of Ready for Query packet for the backend
+					 * that does not satisfy VALID_BACKEND.
+					 */
+					pool_read(CONNECTION(backend, i), &len, sizeof(len));
+					pool_read(CONNECTION(backend, i), &tstate, sizeof(tstate));
+				}
 			}
 		}
 
@@ -4139,7 +4155,24 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 				PG_RE_THROW();
 			}
 			PG_END_TRY();
+
 			INTERNAL_TRANSACTION_STARTED(backend, MASTER_NODE_ID) = false;
+
+			/*
+			 * Explicitly set the tx state to 'Idle'. This is necessary
+			 * because ReadyForQuery only takes care VALID_BACKEND.
+			 */
+			TSTATE(backend, MASTER_NODE_ID) = 'I';
+
+			if (MAJOR(backend) == PROTO_MAJOR_V3 && !VALID_BACKEND(MASTER_NODE_ID))
+			{
+				/*
+				 * Skip rest of Ready for Query packet for the backend
+				 * that does not satisfy VALID_BACKEND.
+				 */
+				pool_read(CONNECTION(backend, MASTER_NODE_ID), &len, sizeof(len));
+				pool_read(CONNECTION(backend, MASTER_NODE_ID), &tstate, sizeof(tstate));
+			}
 		}
 	}
 	PG_CATCH();

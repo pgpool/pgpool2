@@ -457,7 +457,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 	else if (MASTER_SLAVE && query_context->is_multi_statement)
 	{
 		/*
-		 * If we are in master/slave mode and we have multi statement query,
+		 * If we are in streaming replication mode and we have multi statement query,
 		 * we should send it to primary server only. Otherwise it is possible
 		 * to send a write query to standby servers because we only use the
 		 * first element of the multi statement query and don't care about the
@@ -488,7 +488,21 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 		/* Should be sent to both primary and standby? */
 		else if (dest == POOL_BOTH)
 		{
-			pool_setall_node_to_be_sent(query_context);
+			if (is_tx_started_by_multi_statement_query())
+			{
+				/*
+				 * If we are in an explicit transaction and the transaction
+				 * was started by a multi statement query, we should send
+				 * query to primary node only (which was supposed to be sent
+				 * to all nodes) until the transaction gets committed or
+				 * aborted.
+				 */
+				pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+			}
+			else
+			{
+				pool_setall_node_to_be_sent(query_context);
+			}
 		}
 		else if (pool_is_writing_transaction() &&
 				 pool_config->disable_load_balance_on_write == DLBOW_ALWAYS)
@@ -1304,8 +1318,19 @@ static POOL_DEST send_to_where(Node *node, char *query)
 			}
 			/* SAVEPOINT related commands are sent to both primary and standby */
 			else if (is_savepoint_query(node))
+			{
+				if (SL_MODE && is_tx_started_by_multi_statement_query())
+				{
+					/*
+					 * But in streaming replication mode, if a transaction was
+					 * started by a multi statement query, SAVEPOINT should be
+					 * sent to primary because the transaction was started on
+					 * primary only.
+					*/
+					return POOL_PRIMARY;
+				}
 				return POOL_BOTH;
-
+			}
 			/*
 			 * 2PC commands
 			 */
