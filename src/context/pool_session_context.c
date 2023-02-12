@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -180,6 +180,8 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	session_context->transaction_read_only = false;
 
 	dml_adaptive_init();
+
+	unset_tx_started_by_multi_statement_query();
 }
 
 /*
@@ -2105,4 +2107,46 @@ pool_temp_tables_dump(void)
 	}
 #endif
 
+}
+
+/*
+ * Return true if an explicit transaction has been started by a
+ * multi-statement-query
+ */
+bool
+is_tx_started_by_multi_statement_query(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("is_tx_started_by_multi_statement_query: session context is not initialized")));
+
+	return session_context->is_tx_started_by_multi_statement;
+}
+
+/*
+ * Remember that an explicit transaction has been started by a
+ * multi-statement-query
+ */
+void
+set_tx_started_by_multi_statement_query(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("set_tx_started_by_multi_statement_query: session context is not initialized")));
+
+	session_context->is_tx_started_by_multi_statement = true;
+}
+
+/*
+ * Forget that an explicit transaction has been started by a
+ * multi-statement-query
+ */
+void
+unset_tx_started_by_multi_statement_query(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("unset_tx_started_by_multi_statement_query: session context is not initialized")));
+
+	session_context->is_tx_started_by_multi_statement = false;
 }
