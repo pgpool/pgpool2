@@ -2103,7 +2103,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 			TSTATE(backend, i) = kind;
 			ereport(DEBUG5,
 					(errmsg("processing ReadyForQuery"),
-					 errdetail("transaction state '%c'(%02x)", state, state)));
+					 errdetail("transaction state of node %d '%c'(%02x)", i, kind , kind)));
 
 			/*
 			 * The transaction state to be returned to frontend is main node's.
