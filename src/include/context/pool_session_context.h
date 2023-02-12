@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -147,6 +147,9 @@ typedef struct
 	 * message for frontend are sent out.
 	 */
 	bool		flush_pending;
+
+	bool		is_tx_started_by_multi_statement; /* true if an explicit transaction has been strated by
+													 multi statement query */
 }			POOL_PENDING_MESSAGE;
 
 typedef enum {
@@ -312,6 +315,11 @@ typedef struct
 	 * Set by read_kind_from_backend and reset by SimpleForwardToFrontend.
 	 */
 	bool		flush_pending;
+
+	bool		is_tx_started_by_multi_statement;	/* True if an explicit
+													 * transaction has been
+													 * started by a
+													 * multi-statement-query */
 }			POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
@@ -395,6 +403,10 @@ extern void pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE stat
 extern void	pool_temp_tables_commit_pending(void);
 extern void	pool_temp_tables_remove_pending(void);
 extern void	pool_temp_tables_dump(void);
+
+extern bool is_tx_started_by_multi_statement_query(void);
+extern void set_tx_started_by_multi_statement_query(void);
+extern void unset_tx_started_by_multi_statement_query(void);
 
 #ifdef NOT_USED
 extern void pool_set_preferred_main_node_id(int node_id);

@@ -4184,6 +4184,12 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 
 				INTERNAL_TRANSACTION_STARTED(backend, i) = false;
 
+				/*
+				 * Explicitly set the tx state to 'Idle'. This is necessary
+				 * because ReadyForQuery only takes care VALID_BACKEND.
+				 */
+				TSTATE(backend, i) = 'I';
+
 				if (MAJOR(backend) == PROTO_MAJOR_V3 && !VALID_BACKEND(i))
 				{
 					/*
@@ -4229,6 +4235,12 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 			}
 			PG_END_TRY();
 			INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID) = false;
+
+			/*
+			 * Explicitly set the tx state to 'Idle'. This is necessary
+			 * because ReadyForQuery only takes care VALID_BACKEND.
+			 */
+			TSTATE(backend, MAIN_NODE_ID) = 'I';
 
 			if (MAJOR(backend) == PROTO_MAJOR_V3 && !VALID_BACKEND(MAIN_NODE_ID))
 			{
