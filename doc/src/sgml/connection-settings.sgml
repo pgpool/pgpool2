@@ -644,7 +644,7 @@
   </variablelist>
  </para>
 
- <sect2 id="runtime-config-streaming-replication-mode">
+ <sect2 id="runtime-config-streaming-replication-mode" xreflabel="streaming replication mode">
   <title>Streaming replication mode</title>
 
   <para>
@@ -676,7 +676,7 @@ backend_clustering_mode = 'streaming_replication'
   </para>
  </sect2>
  
- <sect2 id="guc-replication-mode" xreflabel="native_replication_mode">
+ <sect2 id="guc-replication-mode" xreflabel="native replication mode">
   <title>Native replication mode</title>
 
   <para>
@@ -1106,7 +1106,7 @@ backend_clustering_mode = 'native_replication'
   </variablelist>
  </sect2>
 
- <sect2 id="guc-snapshot-isolation-mode" xreflabel="snapshot_isolation_mode">
+ <sect2 id="guc-snapshot-isolation-mode" xreflabel="snapshot isolation mode">
   <title>Snapshot isolation mode</title>
 
   <para>
@@ -1237,7 +1237,7 @@ backend_clustering_mode = 'slony'
   </para>
  </sect2>
 
- <sect2 id="guc-raw-mode" xreflabel="raw_mode">
+ <sect2 id="guc-raw-mode" xreflabel="raw mode">
   <title>Raw mode</title>
   <para>
    In this mode, <productname>Pgpool-II</> does not care about the database synchronization.
