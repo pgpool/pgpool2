@@ -961,7 +961,7 @@
    </varlistentry>
   </variablelist>
 
- <sect2 id="runtime-config-streaming-replication-mode">
+ <sect2 id="runtime-config-streaming-replication-mode" xreflabel="ストリーミングレプリケーションモード">
   <title>ストリーミングレプリケーションモード</title>
 
   <para>
@@ -986,7 +986,7 @@ backend_clustering_mode = 'streaming_replication'
   </para>
  </sect2>
  
- <sect2 id="guc-replication-mode" xreflabel="native_replication_mode">
+ <sect2 id="guc-replication-mode" xreflabel="ネイティブレプリケーションモード">
   <title>ネイティブレプリケーションモード</title>
 
   <para>
@@ -1560,7 +1560,7 @@ backend_clustering_mode = 'native_replication'
   </variablelist>
  </sect2>
 
- <sect2 id="guc-snapshot-isolation-mode" xreflabel="snapshot_isolation_mode">
+ <sect2 id="guc-snapshot-isolation-mode" xreflabel="スナップショットアイソレーションモード">
   <title>スナップショットアイソレーションモード</title>
 
   <para>
@@ -1674,7 +1674,7 @@ backend_clustering_mode = 'slony'
   </para>
  </sect2>
 
- <sect2 id="guc-raw-mode" xreflabel="raw_mode">
+ <sect2 id="guc-raw-mode" xreflabel="rawモード">
   <title>rawモード</title>
   <para>
    このモードでは、<productname>Pgpool-II</>はデータベースの同期に関しては関与しません。

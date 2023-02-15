@@ -591,24 +591,27 @@
 
   <para>
    <!--
-   If you are not going to use the native replication mode, you can skip this section.
+   If you are not going to use
+   the <xref linkend="guc-replication-mode">
+   nor <xref linkend="guc-snapshot-isolation-mode">, you can skip this
+   section.
    -->
-   ネイティブレプリケーションモードを使う予定のない場合は、本節は飛ばすことができます。
+   <xref linkend="guc-replication-mode">または<xref linkend="guc-snapshot-isolation-mode">を使う予定のない場合は、本節は飛ばすことができます。
   </para>
 
   <para>
    <!--
-   If you plan to use native replication mode and insert_lock,
-   creating <structname>pgpool_catalog.insert_lock</structname>
-   table for mutual exclusion is strongly recommended.  Without
-   this, insert_lock works so far. However in that
-   case <productname>Pgpool-II</productname> locks against the
-   insert target table. This behavior is same
-   as <productname>Pgpool-II</productname> 2.2 and 2.3 series. The
-   table lock conflicts with <command>VACUUM</command>, so <command>INSERT</command>
+   If you plan to use the <xref linkend="guc-replication-mode">
+   or <xref linkend="guc-snapshot-isolation-mode"> and insert_lock,
+   creating <structname>pgpool_catalog.insert_lock</structname> table
+   for mutual exclusion is strongly recommended.  Without this,
+   insert_lock works so far. However in that
+   case <productname>Pgpool-II</productname> locks against the insert
+   target table. This behavior is same table lock conflicts
+   with <command>VACUUM</command>, so <command>INSERT</command>
    processing may be thereby kept waiting for a long time.
    -->
-   ネイティブレプリケーションモードでinsert_lockを利用したい場合は、排他制御用のテーブル<structname>pgpool_catalog.insert_lock</structname>を作成することを強く推奨します。
+   <xref linkend="guc-replication-mode">または<xref linkend="guc-snapshot-isolation-mode">でinsert_lockを利用したい場合は、排他制御用のテーブル<structname>pgpool_catalog.insert_lock</structname>を作成することを強く推奨します。
    これがなくてもある程度はinsert_lock は動作します。
    しかしその場合は、<productname>Pgpool-II</productname>は挿入対象のテーブルに対してロックを行います。
    これは<productname>Pgpool-II</productname> 2.2と2.3 シリーズの動作と同じです。
