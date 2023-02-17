@@ -12,11 +12,23 @@ export PGDATABASE=test
 # sleep time after reload in seconds
 st=10
 
+# Get psql version
+PSQLVERSION=`$PSQL --version|awk '{print $3}'|sed 's/\..*//'`
+
 # function to check the result
 # argument is test case number.
 function check_result
 {
-    diff -c ../expected/expected$1$suffix result$1
+    if [ $PSQLVERSION -lt 15 ];then
+	expected=../expected/expected$1$suffix-pre15
+	if [ -f $expected ];then
+	    diff -c $expected result$1
+	else
+	    diff -c ../expected/expected$1$suffix result$1
+	fi
+    else
+	diff -c ../expected/expected$1$suffix result$1
+    fi
     if [ $? = 0 ];then
 	echo "test$1 succeeded."
     else
@@ -181,7 +193,7 @@ EOF
 SELECT f1(1);
 SELECT public.f2(1);
 EOF
-	check_result 6
+	check_result 6 $PSQLVERSION
 
 	echo "=== test7 started ==="
 # -------------------------------------------------------------------------------
