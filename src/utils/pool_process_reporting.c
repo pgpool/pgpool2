@@ -1767,8 +1767,6 @@ version_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	num_fields = sizeof(field_names) / sizeof(char *);
 	version = get_version();
 
-	send_row_description(frontend, backend, num_fields, field_names);
-
 	send_row_description_and_data_rows(frontend, backend, num_fields, field_names, offsettbl,
 									   (char *)version, sizeof(POOL_REPORT_VERSION), nrows);
 
