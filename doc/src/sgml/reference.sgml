@@ -56,9 +56,9 @@
    <sect1 id="pcp-password-file">
     <title>PCP password file</title>
     <para>
-     The file <indexterm><primary><filename>.pcppass</filename></primary></indexterm> in a user's home
+     The file <indexterm><primary>.pcppass</primary></indexterm> <filename>.pcppass</filename> in a user's home
      directory or the file referenced by environment variable
-     <indexterm><primary>PCPPASSFILE</primary></indexterm> can contain passwords to be used if no password has
+     <indexterm><primary>PCPPASSFILE</primary></indexterm> PCPPASSFILE can contain passwords to be used if no password has
      been specified for the pcp connection and the <literal>-w/--no-password</literal> option is given.
      See <xref linkend="PCP-COMMON-OPTIONS"> for more details.
     </para>
