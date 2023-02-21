@@ -94,7 +94,7 @@
      been specified for the pcp connection and the <literal>&#45;w/&#45;-no&#45;password</literal> option is given.
      See <xref linkend="PCP-COMMON-OPTIONS"> for more details.
      -->
-     PCP 接続時にパスワードが指定されなかった場合、<literal>-w/--no-password</literal>オプションを指定することにより、ユーザのホームディレクトリに配置された<indexterm><primary><filename>.pcppass</filename></primary></indexterm> ファイルか、環境変数 <indexterm><primary>PCPPASSFILE</primary></indexterm>で参照されるファイルに格納されたパスワードが使用可能です。
+     PCP 接続時にパスワードが指定されなかった場合、<literal>-w/--no-password</literal>オプションを指定することにより、ユーザのホームディレクトリに配置された<indexterm><primary>.pcppass</primary></indexterm><filename>.pcppass</filename>ファイルか、環境変数 <indexterm><primary>PCPPASSFILE</primary></indexterm>PCPPASSFILEで参照されるファイルに格納されたパスワードが使用可能です。
      詳細は<xref linkend="PCP-COMMON-OPTIONS">を参照してください。
     </para>
     <para>
