@@ -333,11 +333,16 @@
      <para>
       <!--
       <productname>Pgpool-II</productname> binaries will be built
-      with <productname>OpenSSL</productname>
-      support.  <productname>OpenSSL</productname> support is
+      with <productname>OpenSSL</productname> support.  If you plan to
+      encrypt passwords using AES256 encryption, you need this option
+      too.  See <xref linkend="auth-aes-encrypted-password"> for more
+      details.
+      <productname>OpenSSL</productname> support is
       disabled by default.
       -->
       <productname>Pgpool-II</productname>バイナリが<productname>OpenSSL</productname>サポート付で構築されます。
+      AES256暗号化を使ってパスワードを暗号化する場合もこのオプションが必要です。
+      詳細は<xref linkend="auth-aes-encrypted-password">を参照してください。
       デフォルトでは<productname>OpenSSL</productname>サポートは無効です。
      </para>
     </listitem>
