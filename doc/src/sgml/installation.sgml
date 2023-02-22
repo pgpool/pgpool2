@@ -184,8 +184,11 @@
     <listitem>
      <para>
       <productname>Pgpool-II</productname> binaries will be built
-      with <productname>OpenSSL</productname>
-      support.  <productname>OpenSSL</productname> support is
+      with <productname>OpenSSL</productname> support.  If you plan to
+      encrypt passwords using AES256 encryption, you need this option
+      too.  See <xref linkend="auth-aes-encrypted-password"> for more
+      details.
+      <productname>OpenSSL</productname> support is
       disabled by default.
      </para>
     </listitem>
