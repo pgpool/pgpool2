@@ -257,7 +257,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
 	/* parse SQL string */
-	parse_tree_list = raw_parser(contents, RAW_PARSE_DEFAULT, len, &error, !REPLICATION);
+	parse_tree_list = raw_parser(contents, RAW_PARSE_DEFAULT, len, &error, false);
 
 	if (parse_tree_list == NIL)
 	{

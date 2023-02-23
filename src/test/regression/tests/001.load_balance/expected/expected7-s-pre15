@@ -56,6 +56,36 @@ NOTICE:  DB node id: 0 statement: ROLLBACK TO a;
 -- tx started by multi-statement query ends
 END;
 NOTICE:  DB node id: 0 statement: END;
+-- multi-statement query including BEGIN and INSERT
+DROP TABLE t1;
+NOTICE:  DB node id: 0 statement: DROP TABLE t1;
+CREATE TABLE t1(i INT);
+NOTICE:  DB node id: 0 statement: CREATE TABLE t1(i INT);
+BEGIN\;INSERT INTO t1 VALUES(1);
+NOTICE:  DB node id: 0 statement: BEGIN;INSERT INTO t1 VALUES(1);
+-- SAVEPOINT
+SAVEPOINT a;
+NOTICE:  DB node id: 0 statement: SAVEPOINT a;
+-- PREPARE
+PREPARE foo AS SELECT 2;
+NOTICE:  DB node id: 0 statement: PREPARE foo AS SELECT 2;
+-- EXECUTE
+EXECUTE foo;
+NOTICE:  DB node id: 0 statement: EXECUTE foo;
+ ?column? 
+----------
+        2
+(1 row)
+
+-- DEALLOCATE
+DEALLOCATE foo;
+NOTICE:  DB node id: 0 statement: DEALLOCATE foo;
+-- ROLLBACK TO
+ROLLBACK TO a;
+NOTICE:  DB node id: 0 statement: ROLLBACK TO a;
+-- tx started by multi-statement query ends
+END;
+NOTICE:  DB node id: 0 statement: END;
 -- multi-statement query including BEGIN and ROLLBACK
 BEGIN\;SELECT 1\;ROLLBACK;
 NOTICE:  DB node id: 0 statement: BEGIN;SELECT 1;ROLLBACK;
