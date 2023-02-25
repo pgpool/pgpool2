@@ -1,3 +1,4 @@
+\set SHOW_ALL_RESULTS off
 -- ordinary read only SELECT: load balance expected
 SELECT 1;
 NOTICE:  DB node id: 1 statement: SELECT 1;
@@ -89,11 +90,6 @@ NOTICE:  DB node id: 0 statement: END;
 -- multi-statement query including BEGIN and ROLLBACK
 BEGIN\;SELECT 1\;ROLLBACK;
 NOTICE:  DB node id: 0 statement: BEGIN;SELECT 1;ROLLBACK;
- ?column? 
-----------
-        1
-(1 row)
-
 -- ordinary read only SELECT: load balance expected
 SELECT 1;
 NOTICE:  DB node id: 1 statement: SELECT 1;

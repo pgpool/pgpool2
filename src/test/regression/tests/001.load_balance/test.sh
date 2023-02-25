@@ -12,23 +12,12 @@ export PGDATABASE=test
 # sleep time after reload in seconds
 st=10
 
-# Get psql version
-PSQLVERSION=`$PSQL --version|awk '{print $3}'|sed 's/\..*//'`
-
 # function to check the result
 # argument is test case number.
 function check_result
 {
-    if [ $PSQLVERSION -lt 15 ];then
-	expected=../expected/expected$1$suffix-pre15
-	if [ -f $expected ];then
-	    diff -c $expected result$1
-	else
-	    diff -c ../expected/expected$1$suffix result$1
-	fi
-    else
-	diff -c ../expected/expected$1$suffix result$1
-    fi
+    diff -c ../expected/expected$1$suffix result$1
+
     if [ $? = 0 ];then
 	echo "test$1 succeeded."
     else
@@ -42,16 +31,16 @@ function check_result
 
 for mode in s r i
 do
-	rm -fr $TESTDIR
-	mkdir $TESTDIR
-	cd $TESTDIR
+    rm -fr $TESTDIR
+    mkdir $TESTDIR
+    cd $TESTDIR
 
-# create test environment
-	echo -n "creating test environment..."
-	$PGPOOL_SETUP -m $mode -n 2 || exit 1
-	echo "done."
+    # create test environment
+    echo -n "creating test environment..."
+    $PGPOOL_SETUP -m $mode -n 2 || exit 1
+    echo "done."
 
-	source ./bashrc.ports
+    source ./bashrc.ports
 
 	# set expected file suffix
 	if [ $mode = 's' ];then

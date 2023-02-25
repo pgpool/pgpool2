@@ -1,3 +1,4 @@
+\set SHOW_ALL_RESULTS off
 -- ordinary read only SELECT: load balance expected
 SELECT 1;
 -- multi-statement query including BEGIN
