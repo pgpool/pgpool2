@@ -456,6 +456,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "if non 0, logs all SQL statements on each node", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "notice_per_node_statement", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->notice_per_node_statement);
+	StrNCpy(status[i].desc, "if non 0, logs all SQL statements on each node as notice message", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "log_client_messages", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_client_messages);
 	StrNCpy(status[i].desc, "if non 0, logs any client messages", POOLCONFIG_MAXDESCLEN);
