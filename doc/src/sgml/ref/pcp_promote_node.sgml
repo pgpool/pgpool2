@@ -154,6 +154,7 @@ Pgpool-II documentation
      <listitem>
       <para>
        The index of backend node to promote as new main.
+       The specified node must be in "up" or "waiting" status.
       </para>
      </listitem>
     </varlistentry>
