@@ -131,8 +131,10 @@ Pgpool-II documentation
       <para>
        <!--
        The index of backend node to promote as new main node.
+       The specified node must be in "up" or "waiting" status.
        -->
        プライマリに昇格させるバックエンドノードのインデックスを指定します。
+       指定するノードは"up"あるいは"waiting"状態でなければなりません。
       </para>
      </listitem>
     </varlistentry>
