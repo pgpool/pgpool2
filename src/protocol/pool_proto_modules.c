@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -58,6 +58,7 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "pool_config_variables.h"
+#include "utils/psqlscan.h"
 
 char	   *copy_table = NULL;	/* copy table name */
 char	   *copy_schema = NULL; /* copy table name */
@@ -96,6 +97,8 @@ static bool
 			process_pg_terminate_backend_func(POOL_QUERY_CONTEXT * query_context);
 static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * frontend,
 											 POOL_CONNECTION_POOL * backend);
+
+static bool multi_statement_query(char *buf);
 
 /*
  * This is the workhorse of processing the pg_terminate_backend function to
@@ -187,6 +190,13 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	POOL_QUERY_CONTEXT *query_context;
 
 	bool		error;
+	bool		use_minimal;
+
+/*
+ * If query string is shorter than this, we do not run
+ * multi_statement_query() to avoid its overhead.
+ */
+#define	LENGTHY_QUERY_STRING	1024*10
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -247,8 +257,47 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	query_context = pool_init_query_context();
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
-	/* parse SQL string */
-	parse_tree_list = raw_parser(contents, len, &error, !REPLICATION);
+	/* Is query string long? */
+	if (len > LENGTHY_QUERY_STRING)
+	{
+		/*
+		 * Check whether the query is multi statement or not.
+		 */
+		if (multi_statement_query(contents))
+		{
+			elog(DEBUG5, "multi statement query found");
+			query_context->is_multi_statement = true;
+			use_minimal = false;	/* never use minimal parser */
+		}
+		else
+		{
+			query_context->is_multi_statement = false;
+			/*
+			 * Do not use minimal parser if we are in native replication or
+			 * snapshot isolation mode.
+			 */
+			if (REPLICATION)
+				use_minimal = false;
+			else
+				use_minimal = true;
+		}
+	}
+	else
+	{
+		use_minimal = false;
+	}
+
+	/* Parse SQL string */
+	parse_tree_list = raw_parser(contents, len, &error, use_minimal);
+
+	if (len <= LENGTHY_QUERY_STRING)
+	{
+		/* we have not checked whether multi-statement query or not */
+		if (list_length(parse_tree_list) > 1)
+			query_context->is_multi_statement = true;
+		else
+			query_context->is_multi_statement = false;
+	}
 
 	if (parse_tree_list == NIL)
 	{
@@ -321,19 +370,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 						(errmsg("DB's oid to discard its cache directory: dboid = %d", query_context->dboid)));
 			}
 		}
-
-		/*
-		 * Check if multi statement query
-		 */
-		if (parse_tree_list && list_length(parse_tree_list) > 1)
-		{
-			query_context->is_multi_statement = true;
-		}
-		else
-		{
-			query_context->is_multi_statement = false;
-		}
-
+		
 		/*
 		 * check COPY FROM STDIN if true, set copy_* variable
 		 */
@@ -4065,4 +4102,66 @@ pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 				discard_temp_table_relcache();
 		}
 	}
+}
+/*
+ * Return true if query in buf is multi statement query.
+ * We import PostgreSQL's psqlscan() for the purpose.
+ * As far as I know this is the most accurate and cheap way.
+ */
+static
+bool multi_statement_query(char *queries)
+{
+	PsqlScanState sstate;
+	promptStatus_t prompt;
+	PsqlScanResult sr;
+	PQExpBufferData lbuf;
+	int		num_semicolons = 0;
+	bool	done = false;
+
+	initPQExpBuffer(&lbuf);	/* initialize line buffer */
+
+	sstate = psql_scan_create(NULL);	/* create scan state */
+
+	/* add the query string to the scan state */
+	psql_scan_setup(sstate, queries, strlen(queries), 0, true);
+
+	for (;;)
+	{
+		resetPQExpBuffer(&lbuf);
+		sr = psql_scan(sstate, &lbuf, &prompt);	/* run scanner */
+
+		switch(sr)
+		{
+			case PSCAN_SEMICOLON:	/* found command-ending semicolon */
+				num_semicolons++;
+				break;
+			case PSCAN_BACKSLASH:	/* found backslash command */
+				break;
+			case PSCAN_INCOMPLETE:	/* end of line, SQL statement incomplete */
+			case PSCAN_EOL:			/* end of line, SQL possibly complete */
+				/*
+				 * If we have already seen ";" and this time something is
+				 * transferred into buffer, we assume that the last query is
+				 * not terminated by ";".  We should treat this as a multi
+				 * statement query. So we count up the semicolon counter.
+				 */
+				if (num_semicolons > 0 && lbuf.len > 0)
+				{
+					num_semicolons++;
+				}
+				done = true;
+				break;
+			default:
+				break;
+		}
+		if (done)
+			break;
+	}
+
+	/* we are done */
+	termPQExpBuffer(&lbuf);
+	psql_scan_finish(sstate);
+	psql_scan_destroy(sstate);
+
+	return num_semicolons > 1;
 }
