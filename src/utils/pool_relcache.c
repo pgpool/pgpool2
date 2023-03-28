@@ -106,7 +106,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	char	   *dbname;
 	int			i;
 	int			maxrefcnt = INT_MAX;
-	char		query[1024];
+	char		query[MAX_QUERY_LENGTH];
 	POOL_SELECT_RESULT *res = NULL;
 	int			index = 0;
 	int			local_session_id;

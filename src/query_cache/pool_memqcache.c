@@ -19,7 +19,7 @@
  * pool_memqcache.c: query cache on shmem or memcached
  *
  */
-#define DATABASE_TO_OID_QUERY "SELECT oid FROM pg_database WHERE datname = '%s'"
+#define DATABASE_TO_OID_QUERY "SELECT oid FROM pg_catalog.pg_database WHERE datname = '%s'"
 
 #include "pool.h"
 
