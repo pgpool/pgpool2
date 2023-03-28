@@ -1240,7 +1240,7 @@ backend_clustering_mode = 'raw'
       is "host0"), the standby node in question is backend1 and the
       backend_application_name for backend1 is "server1", then
       <literal>primary_conninfo</literal> parameter of
-      <filename>postgresql.conf</filename> should like like:
+      <filename>postgresql.conf</filename> should look like:
       <programlisting>
 primary_conninfo = 'host=host0 port=5432 user=postgres application_name='server1''
       </programlisting>
