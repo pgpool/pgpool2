@@ -46,10 +46,11 @@ typedef struct
 	time_t		expire;			/* cache expiration absolute time in seconds */
 }			PoolRelCache;
 
+#define	MAX_QUERY_LENGTH	1500
 typedef struct
 {
 	int			num;			/* number of cache items */
-	char		sql[MAX_ITEM_LENGTH];	/* Query to relation */
+	char		sql[MAX_QUERY_LENGTH];	/* Query to relation */
 
 	/*
 	 * User defined function to be called at data register. Argument is
