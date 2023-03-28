@@ -856,7 +856,9 @@ function set_pool_hba_conf {
 # argument: absolute path to pgpool.conf
 #-------------------------------------------
 function set_pgpool_conf {
+	echo "listen_addresses = '*'"  >> $CONF
 	echo "sr_check_user = '$WHOAMI'" >> $CONF
+	echo "sr_check_password = ''"  >> $CONF
 	echo "recovery_user = '$WHOAMI'" >> $CONF
 	echo "recovery_password = ''"  >> $CONF
 	echo "recovery_1st_stage_command = 'basebackup.sh'" >> $CONF
@@ -1024,6 +1026,7 @@ EOF
 	echo "backend_port$n = $PORT" >> $CONF
 	echo "backend_weight$n = 1" >> $CONF
 	echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+	echo "backend_flag$n = 'ALLOW_TO_FAILOVER'" >> $CONF
 	echo "backend_application_name$n = 'server$n'" >> $CONF
 
 	if [ $NO_CREATE_PGCLUSTER = "false" ];then
@@ -1049,6 +1052,7 @@ EOF
 		CLUSTER="data"`expr $n`
 		CLUSTERDIR=$BASEDIR/$CLUSTER
 		echo "backend_data_directory$n = '$CLUSTERDIR'" >> $CONF
+		echo "backend_flag$n = 'ALLOW_TO_FAILOVER'" >> $CONF
 		echo "backend_application_name$n = 'server$n'" >> $CONF
 		n=`expr $n + 1`
 	    done
