@@ -42,6 +42,7 @@ src/include/config.h.in
 # Local excludes in root directory
 /aclocal.m4
 /compile
+/configure
 /config.guess
 /config.sub
 /depcomp
