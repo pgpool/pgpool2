@@ -675,7 +675,7 @@ Pgversion(POOL_CONNECTION_POOL * backend)
 		/*
 		 * Create relcache.
 		 */
-		relcache = pool_create_relcache(pool_config->relcache_size, "SELECT version()",
+		relcache = pool_create_relcache(pool_config->relcache_size, "SELECT pg_catalog.version()",
 										string_register_func, string_unregister_func, false);
 		if (relcache == NULL)
 		{
