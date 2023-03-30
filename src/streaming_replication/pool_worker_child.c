@@ -393,7 +393,7 @@ check_replication_time_lag(void)
 
 		if (server_version[i] == 0)
 		{
-			query = "SELECT current_setting('server_version_num')";
+			query = "SELECT pg_catalog.current_setting('server_version_num')";
 
 			/*
 			 * Get backend server version. If the query fails, keep previous
@@ -411,27 +411,27 @@ check_replication_time_lag(void)
 		if (PRIMARY_NODE_ID == i)
 		{
 			if (server_version[i] >= PG10_SERVER_VERSION)
-				query = "SELECT pg_current_wal_lsn()";
+				query = "SELECT pg_catalog.pg_current_wal_lsn()";
 			else
-				query = "SELECT pg_current_xlog_location()";
+				query = "SELECT pg_catalog.pg_current_xlog_location()";
 
 			if (server_version[i] == PG91_SERVER_VERSION)
-				stat_rep_query = "SELECT application_name, state, '' AS sync_state, '' AS replay_lag FROM pg_stat_replication";
+				stat_rep_query = "SELECT application_name, state, '' AS sync_state, '' AS replay_lag FROM pg_catalog.pg_stat_replication";
 			else if (server_version[i] >= PG10_SERVER_VERSION)
 			{
-				stat_rep_query = "SELECT application_name, state, sync_state,(EXTRACT(EPOCH FROM replay_lag)*1000000)::BIGINT FROM pg_stat_replication";
+				stat_rep_query = "SELECT application_name, state, sync_state,(EXTRACT(EPOCH FROM replay_lag)*1000000)::BIGINT FROM pg_catalog.pg_stat_replication";
 				if (pool_config->delay_threshold_by_time > 0)
 					replication_delay_by_time = true;
 			}
 			else if (server_version[i] > PG91_SERVER_VERSION)
-				stat_rep_query = "SELECT application_name, state, sync_state, '' AS replay_lag FROM pg_stat_replication";
+				stat_rep_query = "SELECT application_name, state, sync_state, '' AS replay_lag FROM pg_catalog.pg_stat_replication";
 		}
 		else
 		{
 			if (server_version[i] >= PG10_SERVER_VERSION)
-				query = "SELECT pg_last_wal_replay_lsn()";
+				query = "SELECT pg_catalog.pg_last_wal_replay_lsn()";
 			else
-				query = "SELECT pg_last_xlog_replay_location()";
+				query = "SELECT pg_catalog.pg_last_xlog_replay_location()";
 
 			active_standby_node++;
 		}
