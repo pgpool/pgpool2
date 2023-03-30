@@ -2435,7 +2435,7 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 		if (!slots[i])
 			continue;
 
-		if (get_query_result(slots, i, "SELECT pg_is_in_recovery()", &res))
+		if (get_query_result(slots, i, "SELECT pg_catalog.pg_is_in_recovery()", &res))
 		{
 			continue;
 		}
@@ -2585,7 +2585,7 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 						ereport(DEBUG1,
 								(errmsg("verify_backend_node_status: %d is standby", j)));
 
-						if (get_query_result(slots, j, "SELECT status, conninfo FROM pg_stat_wal_receiver", &res))
+						if (get_query_result(slots, j, "SELECT status, conninfo FROM pg_catalog.pg_stat_wal_receiver", &res))
 						{
 							ereport(DEBUG1,
 									(errmsg("verify_backend_node_status: call pg_stat_wal_receiver to standby %d failed", j)));
@@ -3830,7 +3830,7 @@ get_server_version(POOL_CONNECTION_POOL_SLOT * *slots, int node_id)
 
 	if (server_versions[node_id] == 0)
 	{
-		query = "SELECT current_setting('server_version_num')";
+		query = "SELECT pg_catalog.current_setting('server_version_num')";
 
 		/* Get backend server version. If the query fails, keep previous info. */
 		if (get_query_result(slots, node_id, query, &res) == 0)
