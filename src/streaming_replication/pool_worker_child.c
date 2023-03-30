@@ -344,7 +344,7 @@ check_replication_time_lag(void)
 
 		if (server_version[i] == 0)
 		{
-			query = "SELECT current_setting('server_version_num')";
+			query = "SELECT pg_catalog.current_setting('server_version_num')";
 
 			/*
 			 * Get backend server version. If the query fails, keep previous
@@ -362,16 +362,16 @@ check_replication_time_lag(void)
 		if (PRIMARY_NODE_ID == i)
 		{
 			if (server_version[i] >= PG10_SERVER_VERSION)
-				query = "SELECT pg_current_wal_lsn()";
+				query = "SELECT pg_catalog.pg_current_wal_lsn()";
 			else
-				query = "SELECT pg_current_xlog_location()";
+				query = "SELECT pg_catalog.pg_current_xlog_location()";
 		}
 		else
 		{
 			if (server_version[i] >= PG10_SERVER_VERSION)
-				query = "SELECT pg_last_wal_replay_lsn()";
+				query = "SELECT pg_catalog.pg_last_wal_replay_lsn()";
 			else
-				query = "SELECT pg_last_xlog_replay_location()";
+				query = "SELECT pg_catalog.pg_last_xlog_replay_location()";
 		}
 
 		if (get_query_result(slots, i, query, &res) == 0 && res->nullflags[0] != -1)
