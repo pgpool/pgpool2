@@ -118,7 +118,10 @@ $ pcp_node_info -w -p 11001 -n 1
    available in <productname>PostgreSQL</productname> 9.1 or later. If
    <productname>Pgpool-II</productname> was built with
    <productname>PostgreSQL</productname> 9.0 or earlier, the column
-   shows "unknown". When a backend node is detached by <xref
+   shows "unknown". Also
+   if <link linkend="runtime-config-health-check">health check</link>
+   is disabled, it shows "unknown".
+   When a backend node is detached by <xref
    linkend="pcp-detach-node">, the status managed by
    <productname>Pgpool-II</productname> will be "down", while the
    actual backend status is "up". Thus it is possible that 5 does not
