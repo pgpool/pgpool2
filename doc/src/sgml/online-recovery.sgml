@@ -2,6 +2,9 @@
 
 <sect1 id="runtime-online-recovery">
  <title>Online Recovery</title>
+ <indexterm>
+  <primary>online recovery</primary>
+ </indexterm>
 
  <para>
   <productname>Pgpool-II</productname> can synchronize database

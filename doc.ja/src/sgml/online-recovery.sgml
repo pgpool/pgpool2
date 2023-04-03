@@ -5,7 +5,12 @@
  <title>Online Recovery</title>
  -->
  <title>オンラインリカバリ</title>
-
+ <indexterm>
+  <primary>online recovery</primary>
+ </indexterm>
+ <indexterm>
+  <primary>オンラインリカバリ</primary>
+ </indexterm>
  <para>
   <!--
   <productname>Pgpool-II</productname> can synchronize database
