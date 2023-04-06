@@ -206,7 +206,7 @@ extern POOL_STATUS ErrorResponse(POOL_CONNECTION * frontend,
 extern void NoticeResponse(POOL_CONNECTION * frontend,
 			   POOL_CONNECTION_POOL * backend);
 
-extern void per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id,
-char *query, char *prefix, bool unread);
+extern char per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id,
+							   char *query, char *prefix, bool unread);
 
 #endif
