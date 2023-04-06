@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -29,6 +29,7 @@ pid_t		mypid;				/* pgpool parent process id */
 pid_t		myProcPid;		/* process pid */
 ProcessType processType;
 ProcessState processState;
+bool		reset_query_error;	/* true if error returned from backend while processing reset queries */
 
 /*
  * Application name
