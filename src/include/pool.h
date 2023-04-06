@@ -560,6 +560,7 @@ extern pid_t mypid;				/* parent pid */
 extern pid_t myProcPid;			/* process pid */
 extern ProcessType processType;
 extern ProcessState processState;
+extern bool	reset_query_error;	/* true if error occurs in reset queries */
 extern void set_application_name(ProcessType ptype);
 extern void set_application_name_with_string(char *string);
 extern void set_application_name_with_suffix(ProcessType ptype, int suffix);
