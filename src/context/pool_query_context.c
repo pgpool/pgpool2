@@ -929,8 +929,15 @@ pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 		 * Check if some error detected.  If so, emit log. This is useful when
 		 * invalid encoding error occurs. In this case, PostgreSQL does not
 		 * report what statement caused that error and make users confused.
+		 * Also set reset_query_error to true in ERROR case. This does
+		 * anything in normal query processing but when processing reset
+		 * queries, this is important because it might mean DISCARD ALL
+		 * command fails. If so, we need to discard the connection cache so
+		 * that any session object (i.e. named statement) does not remain in
+		 * the last session.
 		 */
-		per_node_error_log(backend, i, string, "pool_send_and_wait: Error or notice message from backend: ", true);
+		if (per_node_error_log(backend, i, string, "pool_send_and_wait: Error or notice message from backend: ", true) == 'E')
+			reset_query_error = true;
 	}
 
 	return POOL_CONTINUE;
