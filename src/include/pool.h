@@ -571,6 +571,7 @@ typedef struct
 }			PGVersion;
 
 extern ProcessState processState;
+extern bool	reset_query_error;	/* true if error occurs in reset queries */
 
 extern POOL_CONNECTION_POOL * pool_connection_pool; /* connection pool */
 extern volatile sig_atomic_t backend_timer_expired; /* flag for connection
