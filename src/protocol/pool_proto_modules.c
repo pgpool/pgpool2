@@ -3397,7 +3397,7 @@ per_node_statement_log(POOL_CONNECTION_POOL * backend, int node_id, char *query)
  * Check kind and produce error message
  * All data read in this function is returned to stream.
  */
-void
+char
 per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id, char *query, char *prefix, bool unread)
 {
 	POOL_CONNECTION_POOL_SLOT *slot = backend->slots[node_id];
@@ -3409,7 +3409,7 @@ per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id, char *query, cha
 
 	if (kind != 'E' && kind != 'N')
 	{
-		return;
+		return kind;
 	}
 
 	if (pool_extract_error_message(true, CONNECTION(backend, node_id), MAJOR(backend), unread, &message) == 1)
@@ -3419,6 +3419,7 @@ per_node_error_log(POOL_CONNECTION_POOL * backend, int node_id, char *query, cha
 						prefix, node_id, ntohl(slot->pid), query, message)));
 		pfree(message);
 	}
+	return kind;
 }
 
 /*

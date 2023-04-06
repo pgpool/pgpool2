@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -126,6 +126,12 @@ pool_process_query(POOL_CONNECTION * frontend,
 	{
 		memcached_connect();
 	}
+
+	/*
+	 * Reset error flag while processing reset queries.
+	 * The flag is set to on inside pool_send_and_wait().
+	 */
+	reset_query_error = false;
 
 	for (;;)
 	{

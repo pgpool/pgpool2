@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2019	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -515,8 +515,10 @@ backend_cleanup(POOL_CONNECTION * volatile *frontend, POOL_CONNECTION_POOL * vol
 	if (cache_connection)
 	{
 		/*
-		 * For those special databases, and when frontend client exits
-		 * abnormally, we don't cache connection to backend.
+		 * For those special databases, or when frontend client exits
+		 * abnormally, we don't cache connection to backend.  Also we have to
+		 * check whether reset query failed. If so, the existing connection to
+		 * backend may not be used and we don't want to cache the connection.
 		 */
 		if ((sp &&
 			 (!strcmp(sp->database, "template0") ||
@@ -525,7 +527,8 @@ backend_cleanup(POOL_CONNECTION * volatile *frontend, POOL_CONNECTION_POOL * vol
 			  !strcmp(sp->database, "regression"))) ||
 			(*frontend != NULL &&
 			 ((*frontend)->socket_state == POOL_SOCKET_EOF ||
-			  (*frontend)->socket_state == POOL_SOCKET_ERROR)))
+			  (*frontend)->socket_state == POOL_SOCKET_ERROR)) ||
+			reset_query_error)
 			cache_connection = false;
 	}
 
