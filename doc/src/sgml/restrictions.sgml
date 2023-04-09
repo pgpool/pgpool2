@@ -264,17 +264,6 @@
    </varlistentry>
 
    <varlistentry>
-    <term>Multi-statement Query</term>
-    <listitem>
-     <para>
-      <productname>Pgpool-II</productname> cannot process multi-statement queries.
-      However, when <productname>Pgpool-II</productname> is connected by <command>psql</command>, It is no problem.
-      <command>psql</command> parse multi-statement, send a statement one by one.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term>libpq</term>
     <listitem>
      <para>
