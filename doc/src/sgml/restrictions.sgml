@@ -48,7 +48,7 @@
     <term>Authentication/Access Controls</term>
     <listitem>
      <para>
-      In the replication mode or native replication mode, trust and pam methods are supported. md5 is also
+      Trust and pam methods are supported. md5 is also
       supported since <productname>Pgpool-II</productname> 3.0.  md5
       is supported by using an authentication file <filename>pool_passwd</filename>.
       scram-sha-256, cert, and clear text password is also supported since
@@ -98,6 +98,11 @@
       </listitem>
      </orderedlist>
 
+     <para>
+      See <xref linkend="setting-scram-sha-256-authentication"> for
+      details about setting scram-sha-256 authentication.
+     </para>
+
     </listitem>
    </varlistentry>
 
@@ -105,14 +110,13 @@
     <term>Large objects</term>
     <listitem>
      <para>
-      In streaming replication
-      mode, <productname>Pgpool-II</productname> supports large
-      objects.
+      In <xref linkend="runtime-config-streaming-replication-mode">, <productname>Pgpool-II</productname>
+      supports large objects.
      </para>
      <para>
-      In native replication
-      mode, <productname>Pgpool-II</productname> supports large
-      objects if the backend
+      In <xref linkend="guc-snapshot-isolation-mode">
+      and <xref linkend="guc-replication-mode">, <productname>Pgpool-II</productname>
+      supports large objects if the backend
       is <productname>PostgreSQL</productname> 8.1 or later.  For
       this, you need to enable lobj_lock_table directive
       in <filename>pgpool.conf</filename>.  Large object replication
@@ -170,12 +174,14 @@
    </varlistentry>
 
    <varlistentry>
-    <term>Functions, etc. In Native Replication mode</term>
+    <term>Functions,
+    etc. in <xref linkend="guc-snapshot-isolation-mode">
+    and <xref linkend="guc-replication-mode"></term>
     <listitem>
      <para>
       There is no guarantee that any data provided using a
       context-dependent mechanism (e.g. random number, transaction
-      ID, OID, SERIAL, sequence), will be replicated correctly on
+      ID, OID, SERIAL, sequence etc,), will be replicated correctly on
       multiple backends. For SERIAL, enabling insert_lock will help
       replicating data.  insert_lock also helps SELECT setval() and
       SELECT nextval().
@@ -188,7 +194,7 @@
       using <function>CURRENT_TIMESTAMP</function>, <function>CURRENT_DATE</function>,
       <function>now()</function> as their DEFAULT values will also
       be replicated correctly.  This is done by replacing those
-      functions by constants fetched from primary at query execution
+      functions by constants fetched from <productname>PostgreSQL</productname> at query execution
       time.  There are a few limitations however:
      </para>
      <para>
