@@ -69,7 +69,7 @@
       authentication file. Here are the
       steps to enable md5 authentication:
       -->
-      レプリケーションモードまたマスタ/スレーブモード時にはtrust、reject、pam認証方式が利用できます。
+      trust、reject、pam認証方式が利用できます。
       <productname>Pgpool-II</productname> 3.0以降では、<filename>pool_passwd</filename>というファイルを使ってmd5認証も使えます。
       <productname>Pgpool-II</productname> 4.0以降では、scram-sha-256、cert、clear text password認証も使えます。
       <filename>pool_passwd</filename>はデフォルトの認証ファイル名です。
@@ -135,6 +135,10 @@
       </listitem>
      </orderedlist>
 
+     <para>
+      scram-sha-256認証の設定については、<xref linkend="setting-scram-sha-256-authentication">を参照してください。
+     </para>
+
     </listitem>
    </varlistentry>
 
@@ -150,7 +154,7 @@
       mode, <productname>Pgpool-II</productname> supports large
       objects.
       -->
-      ストリーミングレプリケーションモードでは、<productname>Pgpool-II</productname>はラージオブジェクトをサポートしています。
+      <xref linkend="runtime-config-streaming-replication-mode">では、<productname>Pgpool-II</productname>はラージオブジェクトをサポートしています。
      </para>
      <para>
       <!--
@@ -163,7 +167,7 @@
       using backend function <function>lo_import</function> is not
       supported, however.
       -->
-      ネィティブレプリケーションモードでは、<productname>PostgreSQL</productname> 8.1以降ならばラージオブジェクトをサポートします。
+      <xref linkend="guc-snapshot-isolation-mode">と<xref linkend="guc-replication-mode">では、<productname>PostgreSQL</productname> 8.1以降ならばラージオブジェクトをサポートします。
       その際には、<filename>pgpool.conf</filename>のlobj_lock_tableを有効にしてください。
       なお、バックエンド関数の<function>lo_import</function>を使ったラージオブジェクトのレプリケーションはサポートされていません。
      </para>
@@ -251,7 +255,7 @@
     <!--
     <term>Functions, etc. In replication mode</term>
     -->
-    <term>ネィティブレプリケーションモードにおける関数などの扱い</term>
+    <term><xref linkend="guc-snapshot-isolation-mode">と<xref linkend="guc-replication-mode">における関数などの扱い</term>
     <listitem>
      <para>
       <!--
@@ -262,7 +266,7 @@
       replicating data.  insert_lock also helps SELECT setval() and
       SELECT nextval().
       -->
-      文脈依存の仕組み（たとえば乱数やトランザクションID、OID、SERIAL、シーケンス）を使って提供されるデータが複数のバックエンドに正しくレプリケーションされる保証はありません。
+      文脈依存の仕組み（たとえば乱数やトランザクションID、OID、SERIAL、シーケンスなど）を使って提供されるデータが複数のバックエンドに正しくレプリケーションされる保証はありません。
       SERIALに対しては、insert_lockを使って対応できます。
       SELECT setval()とSELECT nextval()に対してもinsert_lockで対応できます。
      </para>
@@ -280,7 +284,7 @@
       -->
       <function>CURRENT_TIMESTAMP</function>、<function>CURRENT_DATE</function>、<function>now()</function>を含むINSERT/UPDATEは正しくレプリケーションされます。
       <function>CURRENT_TIMESTAMP</function>、<function>CURRENT_DATE</function>、<function>now()</function>をデフォルト値として使うINSERT/UPDATEも正しくレプリケーションされます。
-      これは、関数を、クエリ実行時にマスターから取得した定数に置き換えることで達成されています。
+      これは、関数を、クエリ実行時に<productname>PostgreSQL</productname>から取得した定数に置き換えることで達成されています。
       しかし、いくつか制限事項があります。
      </para>
      <para>
