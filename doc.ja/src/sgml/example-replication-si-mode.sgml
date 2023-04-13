@@ -692,21 +692,6 @@ log_rotation_size = 10MB
   </sect3>
  </sect2>
 
- <sect2 id="example-replication-mode-sysconfig">
-  <title>/etc/sysconfig/pgpoolの設定</title>
-  <para>
-   <productname>Pgpool-II</productname>起動時に<filename>pgpool_status</filename>ファイルが存在する場合、
-   <productname>Pgpool-II</productname>は<filename>pgpool_status</filename>ファイルからバックエンドの状態(up/down)を読み取ります。
-   <productname>Pgpool-II</productname>起動時に<filename>pgpool_status</filename>ファイルを無視させたい場合、
-   <filename>/etc/sysconfig/pgpool</filename>の起動オプションOPTSに「-D」を追加します。
-  </para>
-  <programlisting>
-[server1]# vi /etc/sysconfig/pgpool
-(...省略...)
-OPTS=" -D -n"
-  </programlisting>
- </sect2>
-
  <sect2 id="example-replication-mode-start-stop">
   <title>システムの起動と停止</title>
   <para>
