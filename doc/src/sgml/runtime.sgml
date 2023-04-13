@@ -700,4 +700,42 @@ backend_flag0 = ALLOW_TO_FAILOVER
 
  </sect1>
 
+ <sect1 id="backup">
+  <title>Backing up PostgreSQL database</title>
+
+  <indexterm zone="backup">
+   <primary>backup</primary>
+  </indexterm>
+
+  <para>
+   If you plan to backup <productname>PostgreSQL</productname>
+   database
+   using <command>pg_dump</command>, <command>pg_basebackup</command>
+   or any other tools, we strongly recommend to run the commands
+   against <productname>PostgreSQL</productname>
+   directly. As <productname>Pgpool-II</productname> is a proxy
+   software, it gives an overhead for relaying message packets. Since
+   obtaining a backup tends to produce lots of packets, performing
+   backup through <productname>Pgpool-II</productname> will be slow
+   compared with directly
+   connecting <productname>PostgreSQL</productname> unless the
+   database is very small.
+  </para>
+  <para>
+   Moreover, parallel <command>pg_dump</command> raises error if it is
+   executed through <productname>Pgpool-II</productname> because the
+   command handles snapshot id, which is a database depending object.
+  </para>
+  <para>
+   In most cases you want to choose primary server as the backup
+   target.  If you want backup standby server, you have to be very
+   careful in choosing the right <productname>PostgreSQL</productname>
+   server to obtain a backup because if the data is outdated, you are
+   likely to have outdated database backup. You can
+   use <xref linkend="SQL-SHOW-POOL-NODES">
+   or <xref linkend="PCP-NODE-INFO"> to know how the standby server
+   catches up the primary server.
+  </para>
+ </sect1>
+
 </chapter>
