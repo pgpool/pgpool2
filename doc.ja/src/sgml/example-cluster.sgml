@@ -935,18 +935,6 @@ heartbeat_device1 = ''
    </itemizedlist>
   </sect3>
 
-  <sect3 id="example-cluster-pgpool-config-sysconfig">
-   <title>/etc/sysconfig/pgpoolの設定</title>
-   <para>
-    <productname>Pgpool-II</productname>を起動時に<filename>pgpool_status</filename>ファイルを無視させたい場合、<filename>/etc/sysconfig/pgpool</filename>の起動オプションOPTSに「-D」を追加します。
-   </para>
-   <programlisting>
-[全サーバ]# vi /etc/sysconfig/pgpool
-(...省略...)
-OPTS=" -D -n"
-   </programlisting>
-  </sect3>
-
   <sect3 id="example-cluster-pgpool-config-log">
    <title>ログの設定</title>
    <para>
