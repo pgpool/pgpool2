@@ -885,4 +885,61 @@ backend_flag0 = ALLOW_TO_FAILOVER
 
  </sect1>
 
+ <sect1 id="backup">
+<!--
+  <title>Backing up PostgreSQL database</title>
+-->
+  <title>PostgreSQLデータベースのバックアップ</title>
+
+  <indexterm zone="backup">
+   <primary>backup</primary>
+  </indexterm>
+
+  <para>
+<!--
+   If you plan to backup <productname>PostgreSQL</productname>
+   database
+   using <command>pg_dump</command>, <command>pg_basebackup</command>
+   or any other tools, we strongly recommend to run the commands
+   against <productname>PostgreSQL</productname>
+   directly. As <productname>Pgpool-II</productname> is a proxy
+   software, it gives an overhead for relaying message packets. Since
+   obtaining a backup tends to produce lots of packets, performing
+   backup through <productname>Pgpool-II</productname> will be slow
+   compared with directly
+   connecting <productname>PostgreSQL</productname> unless the
+   database is very small.
+-->
+<command>pg_dump</command>、<command>pg_basebackup</command>その他のツールを使って<productname>PostgreSQL</productname>データベースをバックアップする際は、そうしたコマンドを<productname>PostgreSQL</productname>で直接実行することを強くお勧めします。
+<productname>Pgpool-II</productname>はproxyソフトウェアなので、メッセージパケットを転送する際にオーバヘッドが生じるからです。
+バックアップの取得は大量のパケットを生じるので、データベースが非常に小さくない限り、<productname>Pgpool-II</productname>経由でバックアップを取得するのは、直接<productname>PostgreSQL</productname>に接続するよりも遅くなります。
+  </para>
+  <para>
+<!--
+   Moreover, parallel <command>pg_dump</command> raises error if it is
+   executed through <productname>Pgpool-II</productname> because the
+   command handles snapshot id, which is a database depending object.
+-->
+  </para>
+  <para>
+   また、パラレル<command>pg_dump</command>では、データベース依存のオブジェクトであるスナップショットIDを扱うため、<productname>Pgpool-II</productname>経由で実行するとエラーになってしまいます。
+  </para>
+  <para>
+<!--
+   In most cases you want to choose primary server as the backup
+   target.  If you want backup standby server, you have to be very
+   careful in choosing the right <productname>PostgreSQL</productname>
+   server to obtain a backup because if the data is outdated, you are
+   likely to have outdated database backup. You can
+   use <xref linkend="SQL-SHOW-POOL-NODES">
+   or <xref linkend="PCP-NODE-INFO"> to know how the standby server
+   catches up the primary server.
+-->
+   多くの場合、プライマリサーバをバックアップ取得対象に選ぶと思います。
+   スタンバイサーバを選ぶ場合は、正しい<productname>PostgreSQL</productname>サーバを選ぶようにしましょう。
+　 データが古ければ、バックアップも古いものになってしまう可能性が高いからです。
+   <xref linkend="SQL-SHOW-POOL-NODES">あるいは<xref linkend="PCP-NODE-INFO">を使って対象のスタンバイサーバがプライマリサーバに追いついているかどうかを知ることができます。
+  </para>
+ </sect1>
+
 </chapter>
