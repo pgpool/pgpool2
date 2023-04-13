@@ -677,25 +677,6 @@ log_rotation_size = 10MB
   </sect3>
  </sect2>
 
- <sect2 id="example-replication-mode-sysconfig">
-  <title>/etc/sysconfig/pgpool Configuration</title>
-  <para>
-   When starting <productname>Pgpool-II</productname>, if the <filename>pgpool_status</filename>
-   file exists, <productname>Pgpool-II</productname> will read the backend status (up/down) from the
-   <filename>pgpool_status</filename> file.
-  </para>
-  <para>
-   If you want to ignore the <filename>pgpool_status</filename> file at startup of
-   <productname>Pgpool-II</productname>, add "- D" to the start option OPTS to
-   <filename>/etc/sysconfig/pgpool</filename>.
-  </para>
-  <programlisting>
-[all servers]# vi /etc/sysconfig/pgpool
-...
-OPTS=" -D -n"
-  </programlisting>
- </sect2>
-
  <sect2 id="example-replication-mode-start-stop">
   <title>Starting/Stopping Pgpool-II</title>
   <para>
