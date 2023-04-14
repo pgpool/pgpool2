@@ -75,11 +75,11 @@
    <productname>Pgpool-II</productname> provides separate packages for each PostgreSQL version.
    "XX" in the above package is a two-digit number representing the version of PostgreSQL.
    Choose <productname>Pgpool-II</productname> RPM corresponding to your PostgreSQL version.
-   (For example, if you are using PostgreSQL 15, you need to install <filename>pgpool-II-pg15</filename>)
+   (For example, if you are using PostgreSQL 14, you need to install <filename>pgpool-II-pg14</filename>)
    -->
    <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>のライブラリと拡張のディレクトリが必要です。
    そのディレクトリへのパスは<productname>PostgreSQL</productname>のバージョンごとに異なっているので、<productname>Pgpool-II</productname>はPostgreSQLバージョンごとにパッケージを提供しています。
-   上記パッケージの「XX」はPostgreSQLのバージョンを表す2桁の数値です。<productname>PostgreSQL</productname>バージョンに対応する<productname>Pgpool-II</productname>のRPMを選んでください。(例えば、PostgreSQL 15を利用している場合は、<filename>pgpool-II-pg15</filename>を使用してください)
+   上記パッケージの「XX」はPostgreSQLのバージョンを表す2桁の数値です。<productname>PostgreSQL</productname>バージョンに対応する<productname>Pgpool-II</productname>のRPMを選んでください。(例えば、PostgreSQL 14を利用している場合は、<filename>pgpool-II-pg14</filename>を使用してください)
   </para>
 
  <sect2 id="before-installing">
@@ -155,10 +155,10 @@ exclude=pgpool*
   </para>
   <para>
    <!--
-   The following commands assume that you are using Pgpool-II 4.3.x for PostgreSQL 15 on RHEL8.
+   The following commands assume that you are using Pgpool-II 4.3.x for PostgreSQL 14 on RHEL8.
    If you are using other versions, replace "pgXX" with your PostgreSQL version.
    -->
-   以下の手順はRHEL8に<productname>PostgreSQL 15</productname>に対応した<productname>Pgpool-II 4.3.x</productname>をインストールすることが前提となります。
+   以下の手順はRHEL8に<productname>PostgreSQL 14</productname>に対応した<productname>Pgpool-II 4.3.x</productname>をインストールすることが前提となります。
    他のバージョンの<productname>PostgreSQL</productname>を利用している場合は、<productname>PostgreSQL</productname>のバージョンに応じて「pgXX」を適宜置き換えてください。
   </para>
   <para>
@@ -180,11 +180,11 @@ dnf install https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-8-x86_64/pgpool-II-r
    次に、<productname>Pgpool-II</productname>をインストールします。
   </para>
   <programlisting>
-dnf install pgpool-II-pg15
+dnf install pgpool-II-pg14
   </programlisting>
   <para>
    <!--
-   To use online recovery feature, install <filename>pgpool-II-pg15-extensions</filename>
+   To use online recovery feature, install <filename>pgpool-II-pg14-extensions</filename>
    on <emphasis>all PostgreSQL servers</emphasis>.
    Because <filename>pgpool-II-pgXX-extensions</filename> depends on
    <filename>pgpool-II-pgXX</filename> package,
@@ -207,7 +207,7 @@ dnf install pgpool-II-pg15
    </para>
   </note>
   <programlisting>
-dnf install pgpool-II-pg15-extensions pgpool-II-pg15
+dnf install pgpool-II-pg14-extensions pgpool-II-pg14
   </programlisting>
   <para>
     <!--
@@ -216,7 +216,7 @@ dnf install pgpool-II-pg15-extensions pgpool-II-pg15
    必要に応じて、開発者向けのオプションパッケージdebuginfoおよびdevelパッケージをインストールします。
   </para>
   <programlisting>
-dnf install pgpool-II-pg15-debuginfo pgpool-II-pg15-devel
+dnf install pgpool-II-pg14-debuginfo pgpool-II-pg14-devel
   </programlisting>
  </sect2>
 
