@@ -399,7 +399,7 @@ pool_virtual_main_db_node_id(void)
 }
 
 /*
- * The function sets the destination for the current query to the specific backend node
+ * Set the destination for the current query to the specific backend node.
  */
 void
 pool_force_query_node_to_backend(POOL_QUERY_CONTEXT * query_context, int backend_id)
@@ -412,14 +412,7 @@ pool_force_query_node_to_backend(POOL_QUERY_CONTEXT * query_context, int backend
 			(errmsg("forcing query destination node to backend node:%d", backend_id)));
 
 	pool_set_node_to_be_sent(query_context, backend_id);
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (query_context->where_to_send[i])
-		{
-			query_context->virtual_main_node_id = i;
-			break;
-		}
-	}
+	set_virtual_main_node(query_context);
 }
 
 /*
@@ -2132,7 +2125,9 @@ pool_is_transaction_read_only(Node *node)
 }
 
 /*
- * Set virtual main node according to the where_to_send map.
+ * Set virtual main node according to the where_to_send map.  If there are
+ * multiple sending requests are in the map, the first node id is set to the
+ * virtual_main_node_id.
  */
 static void
 set_virtual_main_node(POOL_QUERY_CONTEXT *query_context)
