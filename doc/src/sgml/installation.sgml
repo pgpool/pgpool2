@@ -231,7 +231,7 @@
    named <filename>pgpool-II-&version;.tar.gz</filename>. After you
    have obtained the file, unpack it:
    <screen>
-    <userinput>tar xf pgpool-II-&version;.tar.gz</userinput>
+<userinput>tar xf pgpool-II-&version;.tar.gz</userinput>
    </screen>
    This will create a directory
    <filename>pgpool-II-&version;</filename> under the current directory

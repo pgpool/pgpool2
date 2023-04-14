@@ -1,20 +1,145 @@
 <!-- doc/src/sgml/installation-rpm.sgml -->
 
- <sect1 id="install-rpm">
+<sect1 id="install-rpm">
  <!--
  <title>Installation from RPM</title>
  -->
  <title>RPMからのインストール</title>
  <para>
   <!--
-  This chapter describes the installation
-  of <productname>Pgpool-II</productname> from PRM.  If you are
-  going to install from the source code, please
-  check <xref linkend="install-source">.
+  This chapter describes the installation of <productname>Pgpool-II</productname> from RPM.
+  If you are going to install from the source code, please check <xref linkend="install-source">.
   -->
-  この章では、RPMから<productname>Pgpool-II</productname>のインストールについて説明します。
+  この章では、RPMから<productname>Pgpool-II</productname>をインストールする方法について説明します。
   ソースコードからインストールする場合は、<xref linkend="install-source">を参照してください。
  </para>
+  <para>
+   <!--
+   <productname>Pgpool-II</productname> community provides RPM packages for RHEL9/8/7
+   and the operating system which is compatible with RHEL.
+   You can download package files from
+   <ulink url="https://www.pgpool.net/yum/">official Pgpool-II repository</ulink>.
+   -->
+   <productname>Pgpool-II</productname>コミュニティはRHEL9/8/7および互換OS向けにRPMパッケージを提供しています。
+   パッケージファイルは<ulink url="https://www.pgpool.net/yum/">Pgpool-IIの公式リポジトリ</ulink>から入手できます。
+  </para>
+  <para>
+   <!--
+   <productname>Pgpool-II</productname> official repository contains the following packages:
+   -->
+   以下のパッケージがあります。
+  </para>
+  <table id="rpm-packages">
+   <title>Pgpool-II RPM Packages</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>パッケージ名</entry>
+      <entry>説明</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>pgpool-II-pgXX</entry>
+      <entry>Pgpool-IIの動作上に必要なライブラリやバイナリが含まれる</entry>
+     </row>
+     <row>
+      <entry>pgpool-II-pgXX-extensions</entry>
+      <entry>オンラインリカバリ機能を使用する場合、このパッケージをすべてのPostgreSQLサーバにインストールする必要がある</entry>
+     </row>
+     <row>
+      <entry>pgpool-II-pgXX-debuginfo</entry>
+      <entry>デバッグ情報が含まれる</entry>
+     </row>
+     <row>
+      <entry>pgpool-II-pgXX-debugsource</entry>
+      <entry>RHEL8/9の場合のみ。デバッグ情報が含まれる</entry>
+     </row>
+     <row>
+      <entry>pgpool-II-pgXX-extensions-debuginfo</entry>
+      <entry>RHEL8/9の場合のみ。デバッグ情報が含まれる</entry>
+     </row>
+     <row>
+      <entry>pgpool-II-pgXX-devel</entry>
+      <entry>開発者向けのヘッダーファイルが含まれる</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   <!--
+   <productname>Pgpool-II</productname> needs <productname>PostgreSQL</productname>'s
+   library and extensions directory. Since the directory paths are different in
+   the particular <productname>PostgreSQL</productname> versions,
+   <productname>Pgpool-II</productname> provides separate packages for each PostgreSQL version.
+   "XX" in the above package is a two-digit number representing the version of PostgreSQL.
+   Choose <productname>Pgpool-II</productname> RPM corresponding to your PostgreSQL version.
+   (For example, if you are using PostgreSQL 12, you need to install <filename>pgpool-II-pg12</filename>)
+   -->
+   <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>のライブラリと拡張のディレクトリが必要です。
+   そのディレクトリへのパスは<productname>PostgreSQL</productname>のバージョンごとに異なっているので、<productname>Pgpool-II</productname>はPostgreSQLバージョンごとにパッケージを提供しています。
+   上記パッケージの「XX」はPostgreSQLのバージョンを表す2桁の数値です。<productname>PostgreSQL</productname>バージョンに対応する<productname>Pgpool-II</productname>のRPMを選んでください。(例えば、PostgreSQL 12を利用している場合は、<filename>pgpool-II-pg12</filename>を使用してください)
+  </para>
+
+ <sect2 id="before-installing">
+  <!--
+  <title>Before Installing</title>
+  -->
+  <title>事前準備</title>
+  <para>
+   <!--
+   Since <productname>Pgpool-II</productname> related packages are also included in
+   <productname>PostgreSQL</productname> YUM repository,
+   if PostgreSQL repository package is already installed,
+   add the "exclude" settings to <filename>/etc/yum.repos.d/pgdg-redhat-all.repo</filename>,
+   so that <productname>Pgpool-II</productname> will not be installed from
+   <productname>PostgreSQL</productname> YUM repository.
+   If <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname>
+   are installed on separate servers, you can skip this section.
+   -->
+   <productname>Pgpool-II</productname>関連のパッケージは<productname>PostgreSQL</productname>コミュニティのリポジトリにもあるため、
+   <productname>PostgreSQL</productname>のリポジトリパッケージがすでにインストールされている場合は、<productname>PostgreSQL</productname>コミュニティのリポジトリから<productname>Pgpool-II</productname>をインストールしないように<filename>/etc/yum.repos.d/pgdg-redhat-all.repo</filename>にexclude設定を追加します。<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>をそれぞれ別のサーバにインストールする場合は、以下の設定は不要です。
+  </para>
+  <programlisting>
+vi /etc/yum.repos.d/pgdg-redhat-all.repo
+  </programlisting>
+  <para>
+   <!--
+   The following is a setting example of <filename>/etc/yum.repos.d/pgdg-redhat-all.repo</filename>.
+   -->
+   以下は、<filename>/etc/yum.repos.d/pgdg-redhat-all.repo</filename>の設定例です。
+  </para>
+  <programlisting>
+[pgdg-common]
+...
+exclude=pgpool*
+
+[pgdg15]
+...
+exclude=pgpool*
+
+[pgdg14]
+...
+exclude=pgpool*
+
+[pgdg13]
+...
+exclude=pgpool*
+
+[pgdg12]
+...
+exclude=pgpool*
+
+[pgdg11]
+...
+exclude=pgpool*
+
+[pgdg10]
+...
+exclude=pgpool*
+  </programlisting>
+ </sect2>
 
  <sect2 id="installing-rpm">
   <!--
@@ -23,86 +148,83 @@
   <title>RPMのインストール</title>
   <para>
    <!--
-   <productname>Pgpool-II</productname> official RPMs can be
-   obtained from
-   <ulink url="http://www.pgpool.net/yum">http://www.pgpool.net/yum</ulink>.
+   Here we install <productname>Pgpool-II</productname> using
+   <ulink url="https://www.pgpool.net/yum">Pgpool-II official YUM repository</ulink>.
    -->
-   <productname>Pgpool-II</productname>の公式RPMは、<ulink url="https://www.pgpool.net/yum">https://www.pgpool.net/yum</ulink>から入手できます。
+   ここでは<ulink url="https://www.pgpool.net/yum"><productname>Pgpool-II</productname>の公式YUMレポジトリ</ulink>を使用してPgpool-IIをインストールします。
   </para>
-
   <para>
    <!--
-   For RHEL and its derivatives do following once:
+   The following commands assume that you are using Pgpool-II 4.1.x for PostgreSQL 12 on RHEL8.
+   If you are using other versions, replace "pgXX" with your PostgreSQL version.
    -->
-   RHELとその派生ディストリビューションでは、以下を一度行ってください。
-   <programlisting>
-    yum install https://www.pgpool.net/yum/rpms/4.1/redhat/rhel-7-x86_64/pgpool-II-release-4.1-3.noarch.rpm
-   </programlisting>
-   <!--
-   Then:
-   -->
-   そして以下を実施してください。
-   <programlisting>
-    yum install pgpool-II-pg12
-   </programlisting>
-
-   <!--
-   <literal>pg12</literal> means <literal>PostgreSQL
-   12</literal>. <productname>Pgpool-II</productname>
-   needs <productname>PostgreSQL</productname>'s library and
-   extensions directory. Since the directory paths are different in
-   the particular <productname>PostgreSQL</productname> versions,
-   You must choose appropriate RPM for
-   your <productname>PostgreSQL</productname> rpm installation. We
-   also assume you are
-   using <ulink url="https://www.postgresql.org/download/linux/redhat/"><productname>PostgreSQL</productname>
-   community rpms</ulink>.
-
-   Optionally you can install:
-   -->
-   <literal>pg12</literal>は、<literal>PostgreSQL 12</literal>を意味しています。
-   <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>のライブラリと拡張のディレクトリが必要です。
-   そのディレクトリへのパスは<productname>PostgreSQL</productname>のバージョンごとに異なっているので、<productname>PostgreSQL</productname>に対応するRPMを選んでください。
-   またRPMは、<ulink url="https://www.postgresql.org/download/linux/redhat/"><productname>PostgreSQL</productname>コミュニティRPM</ulink>を使用することを前提としています。
-   <programlisting>
-    yum install pgpool-II-pg12-debuginfo
-   </programlisting>
-   <!--
-   which makes it easier to retrieve debugging symbols from the core
-   or the backtrace. We recommend to install it.
-
-   There is an optional package for developers.
-   -->
-   これにより、コアファイルあるいはバックトレースにおいて、デバッグ用のシンボルを得ることができます。
-   インストールすることを推奨します。
-   開発向けのオプションパッケージがあります。
-   <programlisting>
-    yum install pgpool-II-pg12-devel
-   </programlisting>
-   <!--
-   This installs header files which developers are interested in
-   -->
-   これにより、開発者向けのヘッダーファイルがインストールされます。
+   以下の手順はRHEL8に<productname>PostgreSQL 12</productname>に対応した<productname>Pgpool-II 4.1.x</productname>をインストールすることが前提となります。
+   他のバージョンの<productname>PostgreSQL</productname>を利用している場合は、<productname>PostgreSQL</productname>のバージョンに応じて「pgXX」を適宜置き換えてください。
   </para>
-
   <para>
    <!--
-   On all the <productname>PostgreSQL</productname> servers you need
-   to install:
+   First, install the repository corresponding to your <productname>Pgpool-II</productname>
+   version and distribution.
+   For REHL7/9, see <ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">here</ulink>.
    -->
-   すべての<productname>PostgreSQL</productname>サーバに、以下をインストールしてください。
-   <programlisting>
-    yum install pgpool-II-pg12-extensions
-   </programlisting>
-
+   まず、Pgpool-IIバージョンとディストリビューションに対応するレポジトリをインストールします。
+   REHL7/9の場合は、<ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">こちら</ulink>を参照してください。
   </para>
+  <programlisting>
+dnf install https://www.pgpool.net/yum/rpms/4.1/redhat/rhel-8-x86_64/pgpool-II-release-4.1-2.noarch.rpm
+  </programlisting>
+  <para>
+   <!--
+   Then, install <productname>Pgpool-II</productname>.
+   -->
+   次に、<productname>Pgpool-II</productname>をインストールします。
+  </para>
+  <programlisting>
+dnf install pgpool-II-pg12
+  </programlisting>
+  <para>
+   <!--
+   To use online recovery feature, install <filename>pgpool-II-pg12-extensions</filename>
+   on <emphasis>all PostgreSQL servers</emphasis>.
+   Because <filename>pgpool-II-pgXX-extensions</filename> depends on
+   <filename>pgpool-II-pgXX</filename> package,
+   if <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname>
+   are installed on separate servers, <filename>pgpool-II-pgXX</filename> also need to be installed
+   on PostgreSQL servers.
+   -->
+   <productname>Pgpool-II</productname>のオンラインリカバリ機能を利用するには、<emphasis>すべての<productname>PostgreSQL</productname>サーバに</emphasis>、<filename>pgpool-II-pgXX-extensions</filename>をインストールします。また、<filename>pgpool-II-pgXX-extensions</filename>は<filename>pgpool-II-pgXX</filename>パッケージに依存しているため、<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>をそれぞれ別のサーバにインストールしている場合は、<filename>pgpool-II-pgXX</filename>も<productname>PostgreSQL</productname>が稼働しているサーバにインストールする必要があります。
+  </para>
+  <note>
+   <para>
+    <!--
+    <filename>pgpool-II-pgXX-extensions</filename> needs to be installed
+    <emphasis>on the PostgreSQL servers</emphasis>.
+    If <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname>
+    are installed on separate servers,
+    it is not requried to install it on the servers where <productname>Pgpool-II</productname> are running.
+   -->
+   <filename>pgpool-II-pgXX-extensions</filename>は<emphasis>PostgreSQLサーバ側にインストールするパッケージ</emphasis>となります。<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>をそれぞれ別のサーバにインストールしている場合は、<filename>pgpool-II-pgXX-extensions</filename>は<productname>Pgpool-II</productname>が稼働しているサーバにインストールする必要はありません。
+   </para>
+  </note>
+  <programlisting>
+dnf install pgpool-II-pg12-extensions pgpool-II-pg12
+  </programlisting>
+  <para>
+    <!--
+   Optionally you can install debuginfo and devel packages for developers if necessary.
+   -->
+   必要に応じて、開発者向けのオプションパッケージdebuginfoおよびdevelパッケージをインストールします。
+  </para>
+  <programlisting>
+dnf install pgpool-II-pg12-debuginfo pgpool-II-pg12-devel
+  </programlisting>
  </sect2>
 
  <sect2 id="configure-rpm">
   <!--
   <title>Configuration with RPM</title>
   -->
-  <title>RPMの設定</title>
+  <title>Pgpool-IIの設定</title>
   <para>
    <!--
    All the <productname>Pgpool-II</productname> configuration files
@@ -124,32 +246,31 @@
    <!--
    RHEL7/CentOS 7では、以下を一度行ってください。
    -->
-   <!--
-   Do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
-   -->
-   <productname>Pgpool-II</productname>の自動起動を設定する場合、以下を実行してください。
+   RHEL7/8/9では、<productname>Pgpool-II</productname>の自動起動を設定する場合、以下を実行してください。
    <programlisting>
-    systemctl enable pgpool.service
+systemctl enable pgpool.service
    </programlisting>
 
    <!--
-   After this, restart the whole system or do this. Please note that
+   After this, to start <productname>Pgpool-II</productname>, 
+   restart the whole system or do this. Please note that
    <productname>PostgreSQL</productname> servers must have been started
    before this.
    -->
-   この後システム全体を再起動するか、以下を実行してください。
+   この後、<productname>Pgpool-II</productname>を起動するには、システム全体を再起動するか、以下を実行してください。
    <productname>PostgreSQL</productname>サーバは、これよりも前に起動済みでなければならないことに注意してください。
    <programlisting>
-    systemctl start pgpool.service 
+systemctl start pgpool.service 
    </programlisting>
 
    <!--
    To stop <productname>Pgpool-II</productname>, do this once.
-   <productname>Pgpool-II</productname> must need to stop, before <productname>PostgreSQL</productname> is stopped.
+   Please note that <productname>Pgpool-II</productname> must be stopped
+   before stopping <productname>PostgreSQL</productname>.
    -->
    <productname>Pgpool-II</productname>を停止するには、以下を実行してください。<productname>PostgreSQL</productname>を停止する場合、<productname>Pgpool-II</productname>を先に停止する必要があります。
    <programlisting>
-    systemctl stop pgpool.service 
+systemctl stop pgpool.service 
    </programlisting>
 
    <!--
@@ -158,45 +279,5 @@
    -->
    この後、<productname>PostgreSQL</productname>サーバを停止しても構いません。
   </para>
-  <para>
-   <!--
-   On RHEL6/CentOS 6, do this once.
-   -->
-   RHEL6/CentOS 6では、以下を一度行ってください。
-
-   <programlisting>
-    chkconfig pgpool on
-   </programlisting>
-
-   <!--
-   After this, restart the whole system or:
-   -->
-   この後システム全体を再起動するか、以下を実行してください。
-   <programlisting>
-    service start pgpool
-   </programlisting>
-
-   <!--
-   Please note that <productname>PostgreSQL</productname> servers
-   must have been started before this.
-   -->
-   <productname>PostgreSQL</productname>サーバは、これよりも前に起動済みでなければならないことに注意してください。
-   <!--
-   To stop <productname>Pgpool-II</productname>:
-   -->
-   <productname>Pgpool-II</productname>を停止するには、次のようにしてください。
-
-   <programlisting>
-    service stop pgpool
-   </programlisting>
-
-   <!--
-   After this, you can stop <productname>PostgreSQL</productname>
-   servers.
-   -->
-   この後、<productname>PostgreSQL</productname>サーバを停止しても構いません。
-  </para>
-
  </sect2>
-
- </sect1>
+</sect1>
