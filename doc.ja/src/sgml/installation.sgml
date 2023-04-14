@@ -258,7 +258,7 @@
    <filename>pgpool-II-&version;.tar.gz</filename>という名前のファイルを入手してください。
    ファイルを入手したら、展開します。
    <screen>
-    <userinput>tar xf pgpool-II-&version;.tar.gz</userinput>
+<userinput>tar xf pgpool-II-&version;.tar.gz</userinput>
    </screen>
    <!--
    This will create a directory
