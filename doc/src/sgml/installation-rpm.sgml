@@ -60,7 +60,7 @@
   <productname>Pgpool-II</productname> provides separate packages for each PostgreSQL version.
   "XX" in the above package is a two-digit number representing the version of PostgreSQL.
   Choose <productname>Pgpool-II</productname> RPM corresponding to your PostgreSQL version.
-  (For example, if you are using PostgreSQL 15, you need to install <filename>pgpool-II-pg15</filename>)
+  (For example, if you are using PostgreSQL 13, you need to install <filename>pgpool-II-pg13</filename>)
  </para>
 
  <sect2 id="before-installing">
@@ -120,7 +120,7 @@ exclude=pgpool*
   </para>
 
   <para>
-   The following commands assume that you are using Pgpool-II 4.2.x for PostgreSQL 15 on RHEL8.
+   The following commands assume that you are using Pgpool-II 4.2.x for PostgreSQL 13 on RHEL8.
    If you are using other versions, replace "pgXX" with your PostgreSQL version.
   </para>
   <para>
@@ -135,10 +135,10 @@ dnf install https://www.pgpool.net/yum/rpms/4.2/redhat/rhel-8-x86_64/pgpool-II-r
    Then, install <productname>Pgpool-II</productname>.
   </para>
   <programlisting>
-dnf install pgpool-II-pg15
+dnf install pgpool-II-pg13
   </programlisting>
   <para>
-   To use online recovery feature, install <filename>pgpool-II-pg15-extensions</filename>
+   To use online recovery feature, install <filename>pgpool-II-pg13-extensions</filename>
    on <emphasis>all PostgreSQL servers</emphasis>.
    Because <filename>pgpool-II-pgXX-extensions</filename> depends on
    <filename>pgpool-II-pgXX</filename> package,
@@ -156,14 +156,14 @@ dnf install pgpool-II-pg15
    </para>
   </note>
   <programlisting>
-dnf install pgpool-II-pg15-extensions pgpool-II-pg15
+dnf install pgpool-II-pg13-extensions pgpool-II-pg13
   </programlisting>
 
   <para>
    Optionally you can install debuginfo and devel packages for developers if necessary.
   </para>
   <programlisting>
-dnf install pgpool-II-pg15-debuginfo pgpool-II-pg15-devel
+dnf install pgpool-II-pg13-debuginfo pgpool-II-pg13-devel
   </programlisting>
  </sect2>
 
