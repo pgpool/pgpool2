@@ -205,6 +205,13 @@ fi
 for i in $dirs
 do
 	cd $i
+
+	# skip the test if there's no test.sh
+	if [ ! -f test.sh ];then
+		cd ..
+		continue;
+	fi
+
 	echo -n "testing $i..."
 	clean_all
 	timeout $TIMEOUT ./test.sh > $log/$i 2>&1
