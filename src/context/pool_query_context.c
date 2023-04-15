@@ -404,8 +404,6 @@ pool_virtual_main_db_node_id(void)
 void
 pool_force_query_node_to_backend(POOL_QUERY_CONTEXT * query_context, int backend_id)
 {
-	int			i;
-
 	CHECK_QUERY_CONTEXT_IS_VALID;
 
 	ereport(DEBUG1,
