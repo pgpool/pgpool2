@@ -264,6 +264,7 @@ typedef struct
 	bool		replication_mode;	/* replication mode */
 	bool		log_connections;	/* logs incoming connections */
 	bool		log_disconnections;	/* logs closing connections */
+	bool		log_pcp_processes;	/* logs pcp processes */
 	bool		log_hostname;	/* resolve hostname */
 	bool		enable_pool_hba;	/* enables pool_hba.conf file
 									 * authentication */

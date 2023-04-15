@@ -1284,6 +1284,33 @@ local0.*    /var/log/pgpool.log
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-log-pcp-processes" xreflabel="log_pcp_processes">
+    <term><varname>log_pcp_processes</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>log_pcp_processes</varname> configuration parameter</primary>
+       -->
+      <primary><varname>log_pcp_processes</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Setting to on, enable logging about normal PCP Process
+      fork and exit statues. Default is on.
+      -->
+      onに設定されている場合、PCPプロセスの正常なforkあるいはexitした状態をログに出力します。
+      デフォルトはonです。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
     <term><varname>log_error_verbosity</varname> (<type>enum</type>)
      <indexterm>

@@ -827,6 +827,23 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-log-pcp-processes" xreflabel="log_pcp_processes">
+    <term><varname>log_pcp_processes</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>log_pcp_processes</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Setting to on, enable logging about normal PCP Process
+      fork and exit statues. Default is on.
+     </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
     <term><varname>log_error_verbosity</varname> (<type>enum</type>)
      <indexterm>

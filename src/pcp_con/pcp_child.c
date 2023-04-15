@@ -303,9 +303,10 @@ start_pcp_command_processor_process(int port, int *fds)
 	}
 	else						/* parent */
 	{
-		ereport(LOG,
-				(errmsg("forked new pcp worker, pid=%d socket=%d",
-						(int) pid, (int) port)));
+		if (pool_config->log_pcp_processes)
+			ereport(LOG,
+					(errmsg("forked new pcp worker, pid=%d socket=%d",
+							(int) pid, (int) port)));
 		/* close the port in parent process. It is only consumed by child */
 		close(port);
 		/* Add it to the list */
@@ -359,7 +360,7 @@ reaper(void)
 			if (WEXITSTATUS(status) == POOL_EXIT_FATAL)
 				ereport(LOG,
 						(errmsg("PCP worker process with pid: %d exit with FATAL ERROR.", pid)));
-			else
+			else if (pool_config->log_pcp_processes)
 				ereport(LOG,
 						(errmsg("PCP process with pid: %d exit with SUCCESS.", pid)));
 		}
@@ -369,13 +370,14 @@ reaper(void)
 			if (WTERMSIG(status) == SIGSEGV)
 				ereport(WARNING,
 						(errmsg("PCP process with pid: %d was terminated by segmentation fault", pid)));
-			else
+			else if (pool_config->log_pcp_processes)
 				ereport(LOG,
 						(errmsg("PCP process with pid: %d exits with status %d by signal %d", pid, status, WTERMSIG(status))));
 		}
-		else
+		else if (pool_config->log_pcp_processes || status != 0)
 			ereport(LOG,
 					(errmsg("PCP process with pid: %d exits with status %d", pid, status)));
+
 		ereport(DEBUG2,
 				(errmsg("going to remove pid: %d from pid list having %d elements", pid, list_length(pcp_worker_children))));
 		/* remove the pid of process from the list */
