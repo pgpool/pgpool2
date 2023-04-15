@@ -1297,7 +1297,7 @@ local0.*    /var/log/pgpool.log
      <para>
       <!--
       Setting to on, enable logging about normal PCP Process
-      fork and exit statues. Default is on.
+      fork and exit status. Default is on.
       -->
       onに設定されている場合、PCPプロセスの正常なforkあるいはexitした状態をログに出力します。
       デフォルトはonです。
