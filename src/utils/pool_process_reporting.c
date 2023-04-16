@@ -2350,7 +2350,7 @@ char *db_node_role(int node)
 	/*
 	 * Query whether the node is in recovery.
 	 */
-	if (get_query_result(slots, node, "SELECT pg_is_in_recovery()", &res))
+	if (get_query_result(slots, node, "SELECT pg_catalog.pg_is_in_recovery()", &res))
 	{
 		return "unknown";
 	}
