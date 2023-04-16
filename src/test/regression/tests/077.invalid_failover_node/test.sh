@@ -48,7 +48,7 @@ date
 
 # wait until node 1 up
 ok=ng
-u=2
+u=3
 for i in {1..30}
 do
     $PCP_NODE_INFO -w -p $PCP_PORT 1|grep waiting
