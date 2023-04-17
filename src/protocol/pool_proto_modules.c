@@ -201,6 +201,12 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	bool		error;
 	bool		use_minimal;
 
+/*
+ * If query string is shorter than this, we do not run
+ * multi_statement_query() to avoid its overhead.
+ */
+#define	LENGTHY_QUERY_STRING	1024*10
+
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
@@ -260,30 +266,47 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	query_context = pool_init_query_context();
 	MemoryContext old_context = MemoryContextSwitchTo(query_context->memory_context);
 
-	/*
-	 * Check whether the query is multi statement or not.
-	 */
-	if (multi_statement_query(contents))
+	/* Is query string long? */
+	if (len > LENGTHY_QUERY_STRING)
 	{
-		elog(DEBUG5, "multi statement query found");
-		query_context->is_multi_statement = true;
-		use_minimal = false;	/* never use minimal parser */
+		/*
+		 * Check whether the query is multi statement or not.
+		 */
+		if (multi_statement_query(contents))
+		{
+			elog(DEBUG5, "multi statement query found");
+			query_context->is_multi_statement = true;
+			use_minimal = false;	/* never use minimal parser */
+		}
+		else
+		{
+			query_context->is_multi_statement = false;
+			/*
+			 * Do not use minimal parser if we are in native replication or
+			 * snapshot isolation mode.
+			 */
+			if (REPLICATION)
+				use_minimal = false;
+			else
+				use_minimal = true;
+		}
 	}
 	else
 	{
-		query_context->is_multi_statement = false;
-		/*
-		 * Do not use minimal parser if we are in native replication or
-		 * snapshot isolation mode.
-		 */
-		if (REPLICATION)
-			use_minimal = false;
-		else
-			use_minimal = true;
+		use_minimal = false;
 	}
 
-	/* parse SQL string */
+	/* Parse SQL string */
 	parse_tree_list = raw_parser(contents, RAW_PARSE_DEFAULT, len, &error, use_minimal);
+
+	if (len <= LENGTHY_QUERY_STRING)
+	{
+		/* we have not checked whether multi-statement query or not */
+		if (list_length(parse_tree_list) > 1)
+			query_context->is_multi_statement = true;
+		else
+			query_context->is_multi_statement = false;
+	}
 
 	if (parse_tree_list == NIL)
 	{
