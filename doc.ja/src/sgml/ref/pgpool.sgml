@@ -255,6 +255,12 @@ Pgpool-II documentation
        -->
        <filename>pgpool_status</filename>ファイルを破棄し、以前の状態を復元しません。
       </para>
+      <caution>
+       <para>
+       このオプションは開発者向けテスト用の機能であり、それ以外の用途には使用しないでください。
+       <filename>pgpool_status</filename>ファイルを不用意に削除すると、<productname>Pgpool-II</productname>を再起動した時にsplit-brain状(primaryサーバが複数存在する状態)になることがあります。
+       </para>
+      </caution>
      </listitem>
     </varlistentry>
    </variablelist>
