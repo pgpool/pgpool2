@@ -184,6 +184,15 @@ Pgpool-II documentation
        Discard <filename>pgpool_status</filename> file and do not
        restore previous status.
       </para>
+      <caution>
+       <para>
+       This option is testing purpose only for developers and you
+       should not use it for other purposes.
+       If <filename>pgpool_status</filename> is accidentally
+       removed, <productname>Pgpool-II</productname> may go into
+       split-brain (there are multiple primary servers exist).
+       </para>
+      </caution>
      </listitem>
     </varlistentry>
    </variablelist>
