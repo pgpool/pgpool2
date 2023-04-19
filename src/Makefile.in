@@ -84,7 +84,7 @@ bin_PROGRAMS = pgpool$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/mkinstalldirs config/pool_config.c \
-	$(top_srcdir)/ylwrap
+	utils/psqlscan.c $(top_srcdir)/ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/docbook.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -140,7 +140,8 @@ am_pgpool_OBJECTS = main/main.$(OBJEXT) main/pool_globals.$(OBJEXT) \
 	utils/scram-common.$(OBJEXT) utils/base64.$(OBJEXT) \
 	utils/sha2.$(OBJEXT) utils/ssl_utils.$(OBJEXT) \
 	utils/statistics.$(OBJEXT) \
-	utils/pool_health_check_stats.$(OBJEXT)
+	utils/pool_health_check_stats.$(OBJEXT) \
+	utils/psqlscan.$(OBJEXT) utils/pgstrcasecmp.$(OBJEXT)
 pgpool_OBJECTS = $(am_pgpool_OBJECTS)
 pgpool_DEPENDENCIES = parser/libsql-parser.a parser/nodes.o \
 	watchdog/lib-watchdog.a
@@ -487,7 +488,7 @@ pgpool_SOURCES = main/main.c \
 	utils/mmgr/aset.c \
 	utils/error/elog.c \
 	utils/error/assert.c \
-    utils/pcp/pcp_stream.c \
+	utils/pcp/pcp_stream.c \
 	utils/regex_array.c \
 	utils/json_writer.c \
 	utils/json.c \
@@ -496,7 +497,9 @@ pgpool_SOURCES = main/main.c \
 	utils/sha2.c \
 	utils/ssl_utils.c \
 	utils/statistics.c \
-	utils/pool_health_check_stats.c
+	utils/pool_health_check_stats.c \
+	utils/psqlscan.l \
+	utils/pgstrcasecmp.c
 
 sysconf_DATA = sample/pgpool.conf.sample \
 			   sample/pcp.conf.sample \
@@ -790,6 +793,8 @@ utils/sha2.$(OBJEXT): utils/$(am__dirstamp)
 utils/ssl_utils.$(OBJEXT): utils/$(am__dirstamp)
 utils/statistics.$(OBJEXT): utils/$(am__dirstamp)
 utils/pool_health_check_stats.$(OBJEXT): utils/$(am__dirstamp)
+utils/psqlscan.$(OBJEXT): utils/$(am__dirstamp)
+utils/pgstrcasecmp.$(OBJEXT): utils/$(am__dirstamp)
 
 pgpool$(EXEEXT): $(pgpool_OBJECTS) $(pgpool_DEPENDENCIES) $(EXTRA_pgpool_DEPENDENCIES) 
 	@rm -f pgpool$(EXEEXT)
@@ -1115,6 +1120,7 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -f config/pool_config.c
+	-rm -f utils/psqlscan.c
 clean: clean-recursive
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
@@ -1206,6 +1212,9 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	uninstall-binSCRIPTS uninstall-pkgdataDATA \
 	uninstall-sysconfDATA
 
+
+utils/psqlscan.c: utils/psqlscan.l
+	$(LEX) -o'utils/psqlscan.c' $<
 
 %: %.in
 	sed -e 's#[@][@]PGPOOL_INSTALL_DIR[@][@]#$(prefix)#g' \
