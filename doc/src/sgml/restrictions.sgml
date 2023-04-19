@@ -356,6 +356,16 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>PREPARE/EXECUTE/DEALLOCATE</term>
+    <listitem>
+     <para>
+      PREPARE/EXECUTE/DEALLOCATE are always sent to primary server
+      even if the query PREPARE is processing is read only SELECT.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>
