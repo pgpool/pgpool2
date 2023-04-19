@@ -519,6 +519,15 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>PREPARE/EXECUTE/DEALLOCATE</term>
+    <listitem>
+     <para>
+      たとえPREPAREが読み取り専用のSELECTを処理の対象にしていても、PREPARE/EXECUTE/DEALLOCATEは常にプライマリサーバに送られます。
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>
