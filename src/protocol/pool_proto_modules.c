@@ -104,8 +104,6 @@ static void pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION * front
 											 POOL_CONNECTION_POOL * backend);
 static void si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node *node, bool tstate_check);
 
-static bool check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
-
 static bool multi_statement_query(char *buf);
 
 /*
@@ -298,7 +296,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	}
 
 	/* Parse SQL string */
-	parse_tree_list = raw_parser(contents, RAW_PARSE_DEFAULT, len, &error, use_minimal);
+	parse_tree_list = raw_parser(contents, len, &error, use_minimal);
 
 	if (len <= LENGTHY_QUERY_STRING)
 	{
@@ -4535,57 +4533,6 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 
 		si_snapshot_acquired();
 	}
-}
-
-/*
- * Check if the transaction is in abort status. If so, we do nothing and just
- * return error message and ready for query message to frontend, then return
- * false to caller.
- */
-static bool
-check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION * frontend,
-								  POOL_CONNECTION_POOL * backend)
-{
-	int		len;
-
-	if (TSTATE(backend, MAIN_NODE_ID) != 'E')
-		return true;
-
-	/*
-	 * Are we in failed transaction and the command is not a transaction close
-	 * command?
-	 */
-	if (pool_is_failed_transaction() && !is_commit_or_rollback_query(node))
-	{
-		StringInfoData buf;
-
-		initStringInfo(&buf);
-		appendStringInfo(&buf, "statement: %s", query);
-
-		/* send an error message to frontend */
-		pool_send_error_message(
-			frontend,
-			MAJOR(backend),
-			"25P02",
-			"current transaction is aborted, commands ignored until end of transaction block",
-			buf.data,
-			"",
-			__FILE__,
-			__LINE__);
-
-		pfree(buf.data);
-
-		/* send ready for query to frontend */
-		pool_write(frontend, "Z", 1);
-		len = 5;
-		len = htonl(len);
-		pool_write(frontend, &len, sizeof(len));
-		pool_write(frontend, "E", 1);
-		pool_flush(frontend);
-
-		return false;
-	}
-	return true;
 }
 
 /*
