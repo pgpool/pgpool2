@@ -804,7 +804,9 @@
       When some watchdog nodes start up at same time,a node with the higher <varname>wd_priority</varname>
       value is selected as a master node.
       So we should start watchdog nodes in order of <varname>wd_priority</varname> priority to prevent
-      unintended nodes from being selected as masters.
+      unintended nodes from being selected as master.
+      If <varname>wd_priority</varname> of each nodes has the same value,
+      leader node will be decided on base of starting time of watchdog.
      </para>
      <para>
       <varname>wd_priority</varname> is not available in versions prior to
