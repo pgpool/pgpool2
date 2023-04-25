@@ -80,7 +80,7 @@ Pgpool-II documentation
      <term><option>--no-password</option></term>
      <listitem>
       <para>
-       Never prompt for password. And if a password is not available
+       Never prompt for password (should happen automatically). And if a password is not available
        by a <filename>.pcppass</filename> file, the connection
        attempt will fail. This option can be useful in batch jobs
        and scripts where no user is present to enter a password.
@@ -93,7 +93,7 @@ Pgpool-II documentation
      <term><option>--password</option></term>
      <listitem>
       <para>
-       Force password prompt (should happen automatically).
+       Force password prompt.
       </para>
      </listitem>
     </varlistentry>

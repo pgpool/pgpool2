@@ -91,10 +91,10 @@
      The file <indexterm><primary><filename>.pcppass</filename></primary></indexterm> in a user's home
      directory or the file referenced by environment variable
      <indexterm><primary>PCPPASSFILE</primary></indexterm> can contain passwords to be used if no password has
-     been specified for the pcp connection and the <literal>&#45;w/&#45;-no&#45;password</literal> option is given.
+     been specified for the pcp connection (In <productname>Pgpool-II</productname> 4.4 or before, <literal>&#45;w/&#45;-no&#45;password</literal> option is needed).
      See <xref linkend="PCP-COMMON-OPTIONS"> for more details.
      -->
-     PCP 接続時にパスワードが指定されなかった場合、<literal>-w/--no-password</literal>オプションを指定することにより、ユーザのホームディレクトリに配置された<indexterm><primary>.pcppass</primary></indexterm><filename>.pcppass</filename>ファイルか、環境変数 <indexterm><primary>PCPPASSFILE</primary></indexterm>PCPPASSFILEで参照されるファイルに格納されたパスワードが使用可能です。
+     PCP 接続時にパスワードが指定されなかった場合、ユーザのホームディレクトリに配置された<indexterm><primary>.pcppass</primary></indexterm><filename>.pcppass</filename>ファイルか、環境変数 <indexterm><primary>PCPPASSFILE</primary></indexterm>PCPPASSFILEで参照されるファイルに格納されたパスワードが使用可能です(<productname>Pgpool-II</productname> 4.4以前は<literal>-w/--no-password</literal>オプションを指定する必要があります)。
      詳細は<xref linkend="PCP-COMMON-OPTIONS">を参照してください。
     </para>
     <para>

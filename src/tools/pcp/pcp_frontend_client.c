@@ -115,7 +115,7 @@ main(int argc, char **argv)
 	int			i;
 	bool		all = false;
 	bool		debug = false;
-	bool		need_password = true;
+	bool		need_password = false;
 	bool		gracefully = false;
 	bool		switchover = false;
 	bool		verbose = false;

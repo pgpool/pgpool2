@@ -105,14 +105,14 @@ Pgpool-II documentation
      <listitem>
       <para>
        <!--
-       Never prompt for password. And if a password is not available
+       Never prompt for password (should happen automatically). And if a password is not available
        by a <filename>.pcppass</filename> file, the connection
        attempt will fail. This option can be useful in batch jobs
        and scripts where no user is present to enter a password.
        -->
-       パスワード入力プロンプトを表示しません。 もしパスワードが <filename>.pcppass</filename> ファイルから
-       取得できない場合には接続は失敗します。 このオプションはバッチジョブやスクリプトなど、
-       パスワード入力が行うユーザがいない場合に有用です。
+       パスワード入力プロンプトを表示しません（自動的に選択される動作です）。
+       もしパスワードが <filename>.pcppass</filename> ファイルから取得できない場合には接続は失敗します。
+       このオプションはバッチジョブやスクリプトなど、パスワード入力が行うユーザがいない場合に有用です。
       </para>
      </listitem>
     </varlistentry>
@@ -123,9 +123,9 @@ Pgpool-II documentation
      <listitem>
       <para>
        <!--
-       Force password prompt (should happen automatically).
+       Force password prompt.
        -->
-       パスワード入力プロンプトを表示します。（自動的に選択される動作です）
+       パスワード入力プロンプトを表示します。
       </para>
      </listitem>
     </varlistentry>

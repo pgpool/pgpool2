@@ -59,7 +59,7 @@
      The file <indexterm><primary>.pcppass</primary></indexterm> <filename>.pcppass</filename> in a user's home
      directory or the file referenced by environment variable
      <indexterm><primary>PCPPASSFILE</primary></indexterm> PCPPASSFILE can contain passwords to be used if no password has
-     been specified for the pcp connection and the <literal>-w/--no-password</literal> option is given.
+     been specified for the pcp connection (In <productname>Pgpool-II</productname> 4.4 or before, <literal>-w/--no-password</literal> option is needed).
      See <xref linkend="PCP-COMMON-OPTIONS"> for more details.
     </para>
     <para>
