@@ -1449,12 +1449,15 @@
       value is selected as a leader node.
       So we should start watchdog nodes in order of <varname>wd_priority</varname> priority to prevent 
       unintended nodes from being selected as leader.
+      If <varname>wd_priority</varname> of each nodes has the same value,
+      leader node will be decided on base of starting time of watchdog.
       -->
       このパラメータによってローカルのwatchdogノードがリーダーに選ばれる優先度を上げることができます。
       古いリーダーノードが故障した状況でクラスタがリーダーノードの選択を行う際に、<varname>wd_priority</varname>が高いノードがリーダーwatchdogノードに選ばれます。
       <varname>wd_priority</varname>はクラスタの初期起動時にも有効なので、
       複数のwatchdogノードを同時に起動した場合、<varname>wd_priority</varname>が高いノードがリーダーwatchdogノードに選ばれます。
       このため、watchdogノードは意図しないノードがリーダーに選ばれることが無いように<varname>wd_priority</varname>の優先順位が高い順に起動するべきです。
+      もし<varname>wd_priority</varname>が同じなら、早いもの勝ちでリーダーになります。
      </para>
      <para>
       <!--
