@@ -1039,6 +1039,8 @@ pgpool_port2 = 9999
       value is selected as a leader node.
       So we should start watchdog nodes in order of <varname>wd_priority</varname> priority to prevent
       unintended nodes from being selected as leader.
+      If <varname>wd_priority</varname> of each nodes has the same value,
+      leader node will be decided on base of starting time of watchdog.
      </para>
      <para>
       <varname>wd_priority</varname> is not available in versions prior to
