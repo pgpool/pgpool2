@@ -238,6 +238,6 @@ do
 
 done
 
-total=`expr $ok + $fail`
+total=`expr $ok + $fail + $timeout`
 
 echo "out of $total ok:$ok failed:$fail timeout:$timeout"
