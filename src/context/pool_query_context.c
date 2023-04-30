@@ -533,34 +533,6 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 					 */
 
 					/*
-					 * As streaming replication delay is too much, if
-					 * prefer_lower_delay_standby is true then elect new
-					 * load balance node which is lowest delayed,
-					 * false then send to the primary.
-					 */
-					if (STREAM &&
-						pool_config->delay_threshold &&
-						bkinfo->standby_delay > pool_config->delay_threshold)
-					{
-						ereport(DEBUG1,
-								(errmsg("could not load balance because of too much replication delay"),
-								 errdetail("destination = %d for query= \"%s\"", dest, query)));
-
-						if (pool_config->prefer_lower_delay_standby)
-						{
-							int new_load_balancing_node = select_load_balancing_node();
-
-							session_context->load_balance_node_id = new_load_balancing_node;
-							session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
-							pool_set_node_to_be_sent(query_context, session_context->query_context->load_balance_node_id);
-						}
-						else
-						{
-							pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
-						}
-					}
-
-					/*
 					 * If system catalog is used in the SELECT, we prefer to
 					 * send to the primary. Example: SELECT * FROM pg_class
 					 * WHERE relname = 't1'; Because 't1' is a constant, it's
@@ -570,7 +542,7 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 					 * primary system catalog. Please note that this test must
 					 * be done *before* test using pool_has_temp_table.
 					 */
-					else if (pool_has_system_catalog(node))
+					if (pool_has_system_catalog(node))
 					{
 						ereport(DEBUG1,
 								(errmsg("could not load balance because systems catalogs are used"),
@@ -631,11 +603,44 @@ pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node)
 					else
 					{
 						if (pool_config->statement_level_load_balance)
+						{
 							session_context->load_balance_node_id = select_load_balancing_node();
+							bkinfo = pool_get_node_info(session_context->load_balance_node_id);
+						}
 
-						session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
-						pool_set_node_to_be_sent(query_context,
-												 session_context->query_context->load_balance_node_id);
+						/*
+						 * As streaming replication delay is too much, if
+						 * prefer_lower_delay_standby is true then elect new
+						 * load balance node which is lowest delayed,
+						 * false then send to the primary.
+						 */
+						if (STREAM &&
+							pool_config->delay_threshold &&
+							bkinfo->standby_delay > pool_config->delay_threshold)
+						{
+							ereport(DEBUG1,
+									(errmsg("could not load balance because of too much replication delay"),
+									 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
+							if (pool_config->prefer_lower_delay_standby)
+							{
+								int new_load_balancing_node = select_load_balancing_node();
+
+								session_context->load_balance_node_id = new_load_balancing_node;
+								session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
+								pool_set_node_to_be_sent(query_context, session_context->query_context->load_balance_node_id);
+							}
+							else
+							{
+								pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+							}
+						}
+						else
+						{
+							session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
+							pool_set_node_to_be_sent(query_context,
+													 session_context->query_context->load_balance_node_id);
+						}
 					}
 				}
 				else
