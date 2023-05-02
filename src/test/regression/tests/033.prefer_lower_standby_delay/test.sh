@@ -10,16 +10,22 @@ PSQL="$PGBIN/psql -X "
 version=`$PSQL --version|awk '{print $3}'`
 major_version=`echo ${version%.*} | sed 's/\([0-9]*\).*/\1/'`
 
-result=`echo "$major_version >= 10"|bc`
-if [ $result == 1 ];then
+if [ $major_version -ge 10 ];then
 	REPLAY_PAUSE="SELECT pg_wal_replay_pause();"
 	REPLAY_RESUME="SELECT pg_wal_replay_resume();"
-	REPLAY_STATE="SELECT pg_get_wal_replay_pause_state()"
 else
 	REPLAY_PAUSE="SELECT pg_xlog_replay_pause();"
 	REPLAY_RESUME="SELECT pg_xlog_replay_resume();"
-	REPLAY_STATE="SELECT pg_get_xlog_replay_pause_state()"
 fi
+
+# PostgreSQL 13 or before does not have pg_get_wal_replay_pause_state().
+# In these versions SELECT pg_wal_replay_pause() immediately pauses.
+if [ $major_version -ge 14 ];then
+	REPLAY_STATE="SELECT pg_get_wal_replay_pause_state()"
+else
+	REPLAY_STATE="SELECT 'paused'"
+fi
+
 
 # node 1 port number
 PORT1=11003
