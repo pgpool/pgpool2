@@ -30,7 +30,7 @@ do
 	# start pgpool-II
 	./startall
 
-	sleep 1
+	wait_for_pgpool_startup
 
 	# initialize tables
 	$PGBENCH -i test
