@@ -27,7 +27,7 @@ do
 	# start pgpool-II
 	./startall
 
-	sleep 1
+	wait_for_pgpool_startup
 
 	$PSQL test -p $PGPORT -c "SELECT pg_sleep(10);" &
 
