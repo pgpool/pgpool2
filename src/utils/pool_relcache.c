@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -246,6 +246,12 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 		ereport(DEBUG1,
 				(errmsg("not hit local relation cache and query cache"),
 				errdetail("query:%s", query)));
+		/*
+		 * Release lock for now so that subsequent do_query() can be executed
+		 * without the lock to avoid deadlock via table locking etc.
+		 */
+		pool_shmem_unlock();
+		POOL_SETMASK(&oldmask);
 
 		do_query(CONNECTION(backend, node_id), query, &res, MAJOR(backend));
 		/* Register cache */
@@ -253,6 +259,8 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 		/* save local catalog cache in query cache */
 	    if (pool_config->enable_shared_relcache)
 		{
+			POOL_SETMASK2(&BlockSig, &oldmask);
+			pool_shmem_lock();
 			query_cache_data = relation_cache_to_query_cache(res, &query_cache_len);
 			pool_catalog_commit_cache(backend, query, query_cache_data, query_cache_len);
 		}
