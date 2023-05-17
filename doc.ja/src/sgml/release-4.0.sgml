@@ -13,40 +13,6 @@
   <itemizedlist>
    <listitem>
     <!--
-    2023-04-18 [ea63203]
-    -->
-    <para>
-     マルチステートメントのクエリを判定するために、<literal>psqlscan</literal>のソースコードを<productname>Pgpool-II</productname>にインポートしました。(Tatsuo Ishii)
-    </para>
-    <para>
-     <literal>psqlscan</literal>は、<productname>PostgreSQL</productname>ソースツリー内のモジュールです。
-     これは本質的にPostgreSQL SQLスキャナのサブセットですが、各SQLステートメントの終わりの検出に特化しています。 
-     したがって、これを使用してクエリ文字列内のSQLステートメントの数をカウントできます。
-    </para>
-    <para>
-     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/04291.html</ulink>
-     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-April/004320.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-April/004320.html</ulink>
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2023-04-09 [f6ab7be]
-    2023-02-15 [4afb7d5]
-    -->
-    <para>
-     複数のステートメントを幅広く使用できるようにしました。 (Tatsuo Ishii)
-    </para>
-    <para>
-     このコミットは、複数のステートメント (マルチステートメント) に関する<productname>Pgpool-II</productname>の長年の制限を排除しました。
-    </para>
-    <para>
-     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
     2023-04-16 [51e6174]
     2023-03-30 [a508d33]
     2023-03-28 [687f6c0]
@@ -65,91 +31,6 @@
  <sect2>
   <title>不具合修正</title>
   <itemizedlist>
-   <listitem>
-    <!--
-    2023-05-12 [21d2945]
-    -->
-    <para>
-     共有リレーションキャッシュで発生しうるデッドロックを修正しました。(Tatsuo Ishii)
-    </para>
-    <para>
-     ユーザー定義関数がテーブルロックを取得する場合、拡張クエリプロトコルを使用して関数を呼び出すとデッドロックが発生する可能性がありました。
-     以下にシナリオを示します。
-     <itemizedlist>
-      <listitem>
-       <para>
-        (1) セッション中クライアントはparse、bind、executeリクエストをpgpoolに送信します。
-       </para>
-      </listitem>
-     </itemizedlist>
-     <itemizedlist>
-      <listitem>
-       <para>
-        (2) セッションAのPgpool-IIはリクエストをPostgreSQLに転送します。
-       </para>
-      </listitem>
-     </itemizedlist>
-     <itemizedlist>
-      <listitem>
-       <para>
-        (3) セッションAのPostgreSQLがexecuteを実行し、テーブルロックが発生します。
-       </para>
-      </listitem>
-     </itemizedlist>
-     <itemizedlist>
-      <listitem>
-       <para>
-        (4) セッションBで、クライアントは関数のparse、bind、executeリクエストをpgpoolに送信します。
-       </para>
-      </listitem>
-     </itemizedlist>
-     <itemizedlist>
-      <listitem>
-       <para>
-        (5) セッションBのPgpoolはリクエストをPostgreSQLに転送します。
-       </para>
-      </listitem>
-     </itemizedlist>
-     <itemizedlist>
-      <listitem>
-       <para>
-        (6) セッションBのPostgreSQLはbindを実行しますが、テーブルはセッションAのPostgreSQLによってすでにロックされており、ロックの解放を待ちます。
-       </para>
-      </listitem>
-     </itemizedlist>
-     <itemizedlist>
-      <listitem>
-       <para>
-        (7) セッションBのpgpoolはexecuteをPostgreSQLに転送した後、関数の揮発性をチェックするために共有リレーションキャッシュを検索するためのセマフォを取得します。
-        次に、do_queryを呼び出し、フラッシュメッセージをPostgreSQLに送信して、この時点までのPostgreSQLからの応答を取得します。
-        ただし、#6ではPostgreSQLがテーブルロックを待機しているため、pgpoolはバインド完了後のメッセージを待つ必要があります。
-       </para>
-      </listitem>
-     </itemizedlist>
-     <itemizedlist>
-      <listitem>
-       <para>
-        (8) セッションAのpgpoolがPostgreSQLにexecuteを転送した後、関数の揮発性をチェックするために共有リレーションキャッシュを検索しセマフォを取得しようとしましたが、セマフォはセッションBのpgpoolによってすでに取得されているため、セマフォの解放を待ちます。
-       </para>
-      </listitem>
-     </itemizedlist>
-     <itemizedlist>
-      <listitem>
-       <para>
-        (9) セッションAとセッションBがお互いを待機するため、デッドロックが発生します。
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-    <para>
-     これを修正するには、do_query()を呼び出す前にセマフォを解放するようにpool_search_relcache()を変更しました(ただし、セマフォはdo_query()の後に取得します)。
-     これにより、上記#8のセッションAはセマフォを取得し、先に進むことができます。
-     クライアントからsyncメッセージを受信し、PostgreSQLに転送します。
-     syncを受信すると、ユーザ定義関数は実行を終了し、テーブルロックを解放します。
-     これにより、セッションBのPostgreSQLがテーブルロックを取得できるようになります。
-    </para>
-   </listitem>
-
    <listitem>
     <!--
     2023-03-22 [f18b58a]
