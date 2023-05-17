@@ -1,6 +1,368 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-1-16">
+ <title>Release 4.1.16</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2023-05-18</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-04-18 [ea63203]
+    -->
+    <para>
+     Import <literal>psqlscan</literal> source code into <productname>Pgpool-II</productname> to judge multi statement query. (Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>Psqlscan</literal> is a module in the PostgreSQL source tree.
+     It is essentially subset of <productname>PostgreSQL</productname> SQL scanner
+     but it is specialized for detecting
+     the end of each SQL statement. Therefore we can count the number of
+     SQL statements in a query string by using it.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/04291.html</ulink>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-April/004320.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-April/004320.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-09 [f6ab7be]
+    2023-02-15 [4afb7d5]
+    -->
+    <para>
+     Allow to use multiple statements extensively. (Tatsuo Ishii)
+    </para>
+    <para>
+     This commit tries to eliminate pgpool's long standing limitations
+     regarding multiple statements (multi-statements).
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-16 [51e6174]
+    2023-03-30 [a508d33]
+    2023-03-28 [687f6c0]
+    -->
+    <para>
+     Use schema qualification for internal queries. (Tatsuo Ishii)
+    </para>
+    <para>
+     Some of objects such as function and cast did not use "pg_catalog."
+     schema qualification. This does not lead to immediate security
+     concern but using the schema qualification is always good practice.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-05-12 [e178e03]
+    -->
+    <para>
+     Fix possible dead lock with shared relation cache. (Tatsuo Ishii)
+    </para>
+    <para>
+     When a user defined function obtains table locking, call to the
+     function using extended query protocol could lead to dead lock. Here's
+     a scenario:
+     <itemizedlist>
+      <listitem>
+       <para>
+        (1) In session A client sends parse, bind, execute request for the function to pgpool.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        (2) <productname>Pgpool-II</productname> in session A forwards
+        the request to <productname>PostgreSQL</productname>.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        (3) PostgreSQL in session A performs execute, resulting in a table lock.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        (4) In session B client sends parse, bind, execute request for the
+        function to pgpool.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        (5) Pgpool in session B forwards the request to PostgreSQL.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        (6) PostgreSQL in session B performs bind but the table was already
+        locked by PostgreSQL in session A, and it waits for release of the
+        lock.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        (7) After pgpool in session B forwards the execute to PostgreSQL, it
+        acquires semaphore to search shared relation cache to check the
+        volatility of the function. Then it calls do_query and sends flush
+        message to PostgreSQL to obtain the response from PostgreSQL up to
+        this point. But since PostgreSQL is waiting for table lock in #6,
+        pgpool has to wait for messages beyond bind complete.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        (8) After pgpool in session A forwards the execute to PostgreSQL, it
+        tries to acquire semaphore to search shared relation cache to check
+        the volatility of the function but the semaphore was already
+        acquired by pgpool in session B, it waits for the release of the
+        semaphore.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        (9) Session A and session B wait for each other, resulting in a dead lock.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+    <para>
+     To fix this, modify pool_search_relcache() so that it releases
+     semaphore before calling do_query() (but acquires semaphore after
+     do_query()). By this, session A in #8 above can get semaphore, and go
+     forward. It receives sync message from client and forwards it to
+     PostgreSQL. Upon receiving sync, the user defined function will finish
+     the execution and releases the table lock. This makes PostgreSQL in
+     session B move forward because now it can obtain the table lock.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-22 [f18b58a]
+    -->
+    <para>
+     Fix compile error on systems using musl libc.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=790">bug 790</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch provided by leimaohui.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-05 [8af1024]
+    -->
+    <para>
+     Fix multiple query cache bug. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-January/004259.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-January/004259.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-05 [ad05fa5]
+    -->
+    <para>
+     Fix sr worker to not send wrong query to standby server in corner case. (Tatsuo Ishii)
+    </para>
+    <para>
+     When ALWAYS_PRIMARY flag is set, PRIMARY_NODE_ID macro returns node
+     id, rather than -1 even if the primary is down.
+     In this case streaming replication delay check worker
+     sends <literal>SELECT pg_current_wal_lsn()</literal> or
+     <literal>SELECT pg_current_xlog_location()</literal>
+     depending on <productname>PostgreSQL</productname>'s version to
+     standby which of course raises an error.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004279.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004279.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-01-31 [633bdca]
+    -->
+    <para>
+     Fix kind mimatch error with <literal>DEALLOCATE</literal>.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=780">bug 780</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     Kind mimatch error occurs when conditions below are all met:
+     <itemizedlist>
+      <listitem>
+       <para>
+        streaming replication mode
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        load balance node is other than primary
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        <literal>PREPARE</literal> is used in a multi-statement query
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-04-25 [99b5db1]
+    -->
+    <para>
+     Add explanation for <xref linkend="guc-wd-priority">. (Chen Ningwei)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-19 [8305fcc]
+    -->
+    <para>
+     Add restriction regarding <literal>PREPARE/EXECUTE/DEALLOCATE</literal>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-19 [c561d4d]
+    -->
+    <para>
+     Add caution to use <literal>-D</literal> option with pgpool. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-14 [391c91e]
+    -->
+    <para>
+     Enhancing "Installation from RPM" section. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-13 [185a4a8]
+    -->
+    <para>
+     Remove the configuration of "-D" start OPTS from "8.2. Pgpool-II + Watchdog Setup Example". (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-22 [30b2d9c]
+    -->
+    <para>
+     Mention that AES256 support requires <option>--with-openssl</option> option. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-21 [be400b9]
+    -->
+    <para>
+     Explicitly stat that it is -w option of pcp command is needed to use .pcppass. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-01 [4e3c8df]
+    -->
+    <para>
+     Enhance <xref linkend="sql-show-pool-cache">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-01-28 [aa16a94]
+    -->
+    <para>
+     Refactor 071.execute_and_deallocate/test.sh. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-12 [5ab80d6]
+    2023-04-29 [b73d6f0]
+    2023-04-16 [d8d25d5]
+    2023-04-15 [17f01a6]
+    -->
+    <para>
+     Enhance regression tests. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-13 [665ada7]
+    -->
+    <para>
+     Fix occasional 005.jdbc test failure. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-1-15">
  <title>Release 4.1.15</title>
   <note>

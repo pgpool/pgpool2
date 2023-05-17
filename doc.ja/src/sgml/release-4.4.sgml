@@ -1,6 +1,386 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-3">
+ <title>リリース 4.4.3</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2023-05-18</simpara>
+  </note>
+   
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-03-25 [77f1e64]
+    -->
+    <para>
+     マルチステートメントのクエリを判定するために、<literal>psqlscan</literal>のソースコードを<productname>Pgpool-II</productname>にインポートしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>psqlscan</literal>は、<productname>PostgreSQL</productname>ソースツリー内のモジュールです。
+     これは本質的にPostgreSQL SQLスキャナのサブセットですが、各SQLステートメントの終わりの検出に特化しています。 
+     したがって、これを使用してクエリ文字列内のSQLステートメントの数をカウントできます。
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/04291.html</ulink>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-April/004320.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-April/004320.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-12 [5f912d3]
+    2023-04-09 [7aca88c]
+    -->
+    <para>
+     複数のステートメントを幅広く使用できるようにしました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     このコミットは、複数のステートメント (マルチステートメント) に関する<productname>Pgpool-II</productname>の長年の制限を排除しました。
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-16 [ad4d966]
+    2023-03-30 [8ce860d]
+    2023-03-28 [722d4bd]
+    -->
+    <para>
+     内部クエリでスキーマ修飾を使用するように変更しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     関数やキャストなどの一部のオブジェクトは、「pg_catalog.」スキーマ修飾を使用していませんでした。 
+     これによって直ちにセキュリティ上の懸念が生じるわけではありませんが、スキーマ修飾を使用することは常に良い習慣ですので、変更しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-04-30 [eeea973]
+    -->
+    <para>
+     <xref linkend="guc-prefer-lower-delay-standby">の不具合を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=798">bug 798</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     クライアントが<productname>Pgpool-II</productname>に接続すると、スタンバイの1つがロードバランシングノードとして選択されます。 
+     セッションの継続中にスタンバイ遅延がdelay_thresholdを超えた場合、<varname>prefer_lower_delay_standby</varname>は遅延が最小のスタンバイノードを新しいロードバランシングノードとして選択し、ターゲットバックエンドをそのノードに設定します。 
+     残念ながら、SELECTクエリに書き込み機能などが含まれているかどうかを確認する前に決定が下されたため、<productname>Pgpool-II</productname>はスタンバイで実行できないSELECTを送信していました。
+     これを修正するために、<varname>prefer_lower_delay_standby</varname>の処理を書き込み関数等のチェック後に移動しました。
+    </para>
+    <para>
+     また、上記のケースを含めるように033.prefer_lower_standby_delay回帰テストも修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-22 [1618f0f]
+    -->
+    <para>
+     musl libcを使用するシステムでのコンパイルエラーを修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=790">bug 790</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     パッチはleimaohuiによって提供されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-05 [33655c3]
+    -->
+    <para>
+     複数のクエリキャッシュの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-January/004259.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-January/004259.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-05 [95ab912]
+    -->
+    <para>
+     特殊なケースでsrワーカーが間違ったクエリをスタンバイサーバに送信する不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ALWAYS_PRIMARYフラグが設定されている場合、PRIMARY_NODE_IDマクロは、プライマリがダウンしている場合でも、-1ではなくノードIDを返していました。 
+     この場合、ストリーミングレプリケーション遅延をチェックするワーカープロセスは、<productname>PostgreSQL</productname>のバージョンに応じて<literal>SELECT pg_current_wal_lsn()</literal>または<literal>SELECT pg_current_xlog_location()</literal>をスタンバイに送信し、当然エラーが発生していました。
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004279.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004279.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-01-31 [38225a7]
+    -->
+    <para>
+     <literal>DEALLOCATE</literal>による種類不一致エラーを修正しました。
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=780">bug 780</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     以下の条件がすべて満たされた場合、種類不一致エラーが発生していました。
+     <itemizedlist>
+      <listitem>
+       <para>
+        ストリーミングレプリケーションモード
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        ロードバランスノードがプライマリ以外のノード
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        <literal>PREPARE</literal>がマルチステートメントクエリで使用されている
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-01-25 [1c623f7]
+    -->
+    <para>
+     回帰テストのコンパイルエラーを修正しました。(Takuma Hoshiai)
+    </para>
+    <para>
+     gcc10を使用したタイムスタンプテストでエラーが発生していました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-01-30 [93f5585]
+    -->
+    <para>
+     共有relcacheをコミットする際に、より強力なロックを取得するように修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-18 [1f503e1]
+    -->
+    <para>
+     <literal>show pool_version</literal>で行の説明が2回表示される問題を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-04-25 [171a57c]
+    -->
+    <para>
+     <xref linkend="guc-wd-priority">の説明を追加しました。(Chen Ningwei)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-19 [a57cc11]
+    -->
+    <para>
+     <literal>PREPARE/EXECUTE/DEALLOCATE</literal>に関する制限を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-19 [a9b4f30]
+    -->
+    <para>
+     Pgpool-IIで<literal>-D</literal>オプションを使用する場合の注意点を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-14 [7a540cc]
+    -->
+    <para>
+     「RPMからのインストール」セクションを強化しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-13 [bbe5236]
+    -->
+    <para>
+     「サーバの準備と運用」の章に「PostgreSQLデータベースのバックアップ」セクションを追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-13 [eb338ff]
+    -->
+    <para>
+     「Pgpool-II + Watchdogの構築の例」から「-D」起動オプションの設定を削除しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-09 [336f50f]
+    -->
+    <para>
+     「制限事項」セクションを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        <literal>SCRAM-SHA-256</literal>認証に関する記述を追加
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        スナップショットアイソレーションモードに関する記述を追加
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-04 [33c6313]
+    2023-04-03 [75e8870]
+    -->
+    <para>
+     PostgreSQLノードのステータスが「unknown」と表示される場合の説明を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-22 [366e8e6]
+    -->
+    <para>
+     <xref linkend="pcp-promote-node">実行時に、プロモートするターゲットノードが稼働中の必要であることを記載しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-22 [85994ce]
+    -->
+    <para>
+     AES256をサポートするには<option>--with-openssl</option>オプションが必要であることを記載しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-21 [e813ed6]
+    -->
+    <para>
+     .pcppassを使用するには、pcpコマンドの-wオプションが必要であることを記載しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-15 [6bf97fd]
+    -->
+    <para>
+     「2.8 insert_lockテーブルの作成」セクションを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     スナップショットアイソレーションモードについても言及する必要があったのに、ネイティブレプリケーションモードについてのみ言及していました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-01 [6d39a7e]
+    -->
+    <para>
+     <xref linkend="sql-show-pool-cache">を強化しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>テストツール修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-03-28 [89b5129]
+    -->
+    <para>
+     設定ファイルの末尾にいくつかのパラメータを追加するように<command>pgpool_setup</command>を修正しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-01-28 [baedc51]
+    -->
+    <para>
+     071.execute_and_deallocate/test.shをリファクタリングしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-12 [8c3250e]
+    2023-04-29 [2376ab7]
+    2023-04-16 [c9e45b6]
+    2023-04-15 [1e25fd2]
+    -->
+    <para>
+     いくつかの回帰テストを強化しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-06 [89c0159]
+    -->
+    <para>
+     時折発生する005.jdbcテストの失敗を修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-2">
  <title>リリース 4.4.2</title>
   <note>

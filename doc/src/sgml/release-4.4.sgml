@@ -1,6 +1,405 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-3">
+ <title>Release 4.4.3</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2023-05-18</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-03-25 [77f1e64]
+    -->
+    <para>
+     Import <literal>psqlscan</literal> source code into <productname>Pgpool-II</productname> to judge multi statement query. (Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>Psqlscan</literal> is a module in the PostgreSQL source tree.
+     It is essentially subset of <productname>PostgreSQL</productname> SQL scanner
+     but it is specialized for detecting
+     the end of each SQL statement. Therefore we can count the number of
+     SQL statements in a query string by using it.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/04291.html</ulink>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-April/004320.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-April/004320.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-12 [5f912d3]
+    2023-04-09 [7aca88c]
+    -->
+    <para>
+     Allow to use multiple statements extensively. (Tatsuo Ishii)
+    </para>
+    <para>
+     This commit tries to eliminate pgpool's long standing limitations
+     regarding multiple statements (multi-statements).
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-16 [ad4d966]
+    2023-03-30 [8ce860d]
+    2023-03-28 [722d4bd]
+    -->
+    <para>
+     Use schema qualification for internal queries. (Tatsuo Ishii)
+    </para>
+    <para>
+     Some of objects such as function and cast did not use "pg_catalog."
+     schema qualification. This does not lead to immediate security
+     concern but using the schema qualification is always good practice.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-04-30 [eeea973]
+    -->
+    <para>
+     Fix <xref linkend="guc-prefer-lower-delay-standby"> bug.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=798">bug 798</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     When client connects to pgpool, one of standbys are chosen as the load
+     balancing node. If standby delay exceeds delay_threshold while the
+     session continues, <varname>prefer_lower_delay_standby</varname> will choose
+     the least delay standby node as the new load balancing node and set the target
+     backend to the node. Unfortunately the decision was made before the
+     checking that SELECT query includes writing function etc.,
+     <productname>Pgpool-II</productname>
+     happily sends SELECT  which cannot be executed on standby. To fix
+     this, <varname>prefer_lower_delay_standby</varname> treatment is moved
+     after the writing function etc. check.
+    </para>
+    <para>
+     Also modify 033.prefer_lower_standby_delay regression test to include the case above.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-22 [1618f0f]
+    -->
+    <para>
+     Fix compile error on systems using musl libc.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=790">bug 790</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch provided by leimaohui.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-05 [33655c3]
+    -->
+    <para>
+     Fix multiple query cache bug. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-January/004259.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-January/004259.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-05 [95ab912]
+    -->
+    <para>
+     Fix sr worker to not send wrong query to standby server in corner case. (Tatsuo Ishii)
+    </para>
+    <para>
+     When ALWAYS_PRIMARY flag is set, PRIMARY_NODE_ID macro returns node
+     id, rather than -1 even if the primary is down.
+     In this case streaming replication delay check worker
+     sends <literal>SELECT pg_current_wal_lsn()</literal> or
+     <literal>SELECT pg_current_xlog_location()</literal>
+     depending on <productname>PostgreSQL</productname>'s version to
+     standby which of course raises an error.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004279.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004279.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-01-31 [38225a7]
+    -->
+    <para>
+     Fix kind mimatch error with <literal>DEALLOCATE</literal>.
+     (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=780">bug 780</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     Kind mimatch error occurs when conditions below are all met:
+     <itemizedlist>
+      <listitem>
+       <para>
+        streaming replication mode
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        load balance node is other than primary
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        <literal>PREPARE</literal> is used in a multi-statement query
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-01-25 [1c623f7]
+    -->
+    <para>
+     Fix compile error of regression test (Takuma Hoshiai)
+    </para>
+    <para>
+     The error occurred by timestamp test using gcc10.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-01-30 [93f5585]
+    -->
+    <para>
+     Obtain stronger lock while commiting shared relcache. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-18 [1f503e1]
+    -->
+    <para>
+     Fix that <literal>show pool_version</literal> shows row description twice. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-04-25 [171a57c]
+    -->
+    <para>
+     Add explanation for <xref linkend="guc-wd-priority">. (Chen Ningwei)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-19 [a57cc11]
+    -->
+    <para>
+     Add restriction regarding <literal>PREPARE/EXECUTE/DEALLOCATE</literal>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-19 [a9b4f30]
+    -->
+    <para>
+     Add caution to use <literal>-D</literal> option with pgpool. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-14 [7a540cc]
+    -->
+    <para>
+     Enhancing "Installation from RPM" section. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-13 [bbe5236]
+    -->
+    <para>
+     Add "Backing up PostgreSQL database" section to "Server Setup and Operation" chapter. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-13 [eb338ff]
+    -->
+    <para>
+     Remove the configuration of "-D" start OPTS from "8.2. Pgpool-II + Watchdog Setup Example". (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-09 [336f50f]
+    -->
+    <para>
+     Fix restrictions section. (Tatsuo Ishii)
+    </para>
+    <para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Add mention about <literal>SCRAM-SHA-256</literal> authentication
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Add mention about snapshot isolation mode
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-04 [33c6313]
+    2023-04-03 [75e8870]
+    -->
+    <para>
+     Add explanation when pg node status is shown as "unknown". (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-22 [366e8e6]
+    -->
+    <para>
+     Mention that the target node to promote must be up and running when executing
+     <xref linkend="pcp-promote-node">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-22 [85994ce]
+    -->
+    <para>
+     Mention that AES256 support requires <option>--with-openssl</option> option. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-21 [e813ed6]
+    -->
+    <para>
+     Explicitly stat that it is -w option of pcp command is needed to use .pcppass. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-15 [6bf97fd]
+    -->
+    <para>
+     Fix "2.8 Creating insert lock table" section. (Tatsuo Ishii)
+    </para>
+    <para>
+     It only referred to the native replication where it should have referred
+     to the snapshot isolation mode.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-01 [6d39a7e]
+    -->
+    <para>
+     Enhance <xref linkend="sql-show-pool-cache">. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Test Tools</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-03-28 [89b5129]
+    -->
+    <para>
+     Change <command>pgpool_setup</command> to append some parameters to the end of the configuration file. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-01-28 [baedc51]
+    -->
+    <para>
+     Refactor 071.execute_and_deallocate/test.sh. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-12 [8c3250e]
+    2023-04-29 [2376ab7]
+    2023-04-16 [c9e45b6]
+    2023-04-15 [1e25fd2]
+    -->
+    <para>
+     Enhance regression tests. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-06 [89c0159]
+    -->
+    <para>
+     Fix occasional 005.jdbc test failure. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-2">
  <title>Release 4.4.2</title>
   <note>
