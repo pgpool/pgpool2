@@ -67,6 +67,8 @@ CREATE TABLE t1(i INTEGER);
 CREATE TABLE t2(i INTEGER);
 CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL;
 CREATE FUNCTION f2(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL;
+CREATE FUNCTION f3(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL STABLE;
+CREATE FUNCTION f4(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL STABLE;
 SELECT * FROM t1;		-- this load balances
 SELECT f1(1);			-- this does not load balance
 SELECT public.f2(1);	-- this does not load balance
@@ -115,7 +117,7 @@ EOF
 	echo "read_only_function_list = ''" >> etc/pgpool.conf
 	echo "write_function_list = ''" >> etc/pgpool.conf
 	echo "statement_level_load_balance = on" >> etc/pgpool.conf
-	echo "log_min_messages = debug1" >> etc/pgpool.conf
+	echo "log_min_messages = debug5" >> etc/pgpool.conf
 
 	./startall
 	sleep $st
@@ -171,18 +173,18 @@ EOF
 # function is regarded doing writes.
 # Since f1() and f2() were declared without volatility property, they are regarded
 # as volatile functions.
+#
+# Also check PREPARE/EXECUTE/DEALLOCATE in this test.
 # -------------------------------------------------------------------------------
 	echo "load_balance_mode = on" >> etc/pgpool.conf
 	echo "write_function_list = ''" >> etc/pgpool.conf
 	echo "read_only_function_list = ''" >> etc/pgpool.conf
-	./pgpool_reload
-	sleep $st
+	./shutdownall
+	./startall
+	wait_for_pgpool_startup
 
-	$PSQL $PSQLOPTS > result6 2>&1 <<EOF
-SELECT f1(1);
-SELECT public.f2(1);
-EOF
-	check_result 6 $PSQLVERSION
+	$PSQL $PSQLOPTS < ../sql/6.sql > result6 2>&1
+	check_result 6
 
 	echo "=== test7 started ==="
 # -------------------------------------------------------------------------------
@@ -193,7 +195,6 @@ EOF
 	# So following does not work.
 	#echo "primary_routing_query_pattern_list = ''" >> etc/pgpool.conf
 	sed -i '/^primary_routing_query_pattern_list/d' etc/pgpool.conf
-	#echo "log_min_messages = debug5" >> etc/pgpool.conf
 
 	./shutdownall
 	./startall

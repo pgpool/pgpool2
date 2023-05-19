@@ -1112,6 +1112,7 @@ reset_backend(POOL_CONNECTION_POOL * backend, int qcnt)
  *
  * For followings this function returns true:
  * - SELECT/WITH without FOR UPDATE/SHARE
+ *   (for PREPARE, this function checks its "query" member of PrepareStmt)
  * - COPY TO STDOUT
  * - EXPLAIN
  * - EXPLAIN ANALYZE and query is SELECT not including writing functions
@@ -1122,26 +1123,33 @@ reset_backend(POOL_CONNECTION_POOL * backend, int qcnt)
 bool
 is_select_query(Node *node, char *sql)
 {
+	bool	prepare = false;
+
 	if (node == NULL)
 		return false;
 
-	/*
-	 * 2009/5/1 Tatsuo says: This test is not bogus. As of 2.2, pgpool sets
-	 * Portal->sql_string to NULL for SQL command PREPARE. Usually this is ok,
-	 * since in most cases SQL command EXECUTE follows anyway. Problem is,
-	 * some applications mix PREPARE with extended protocol command "EXECUTE"
-	 * and so on. Execute() seems to think this never happens but it is not
-	 * real. Someday we should extract actual query string from
-	 * PrepareStmt->query and set it to Portal->sql_string.
-	 */
 	if (sql == NULL)
+	{
+		elog(WARNING, "is_select_query called without SQL string");
 		return false;
+	}
 
 	if (!pool_config->allow_sql_comments && pool_config->ignore_leading_white_space)
 	{
 		/* ignore leading white spaces */
 		while (*sql && isspace(*sql))
 			sql++;
+	}
+
+	/*
+	 * If it's PREPARE, then we check the actual query specified in "AS"
+	 * clause.
+	 */
+	if (IsA(node, PrepareStmt))
+	{
+		PrepareStmt *prepare_statement = (PrepareStmt *) node;
+		prepare = true;
+		node = (Node *) (prepare_statement->query);
 	}
 
 	if (IsA(node, SelectStmt))
@@ -1168,11 +1176,16 @@ is_select_query(Node *node, char *sql)
 			}
 		}
 
+		/*
+		 * If SQL comment is not allowed, the query must start with cetain characters.
+		 * However if it's PREPARE, we should skip the check.
+		 */
 		if (!pool_config->allow_sql_comments)
 			/* '\0' and ';' signify empty query */
 			return (*sql == 's' || *sql == 'S' || *sql == '(' ||
 					*sql == 'w' || *sql == 'W' || *sql == 't' || *sql == 'T' ||
-					*sql == '\0' || *sql == ';');
+					*sql == '\0' || *sql == ';' ||
+				prepare);
 		else
 			return true;
 	}

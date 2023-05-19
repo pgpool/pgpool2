@@ -1,4 +1,4 @@
-SELECT f1(1);
+SELECT f1(1);	-- no load balance because volatile function
 NOTICE:  DB node id: 0 statement: SELECT f1(1);
 NOTICE:  DB node id: 1 statement: SELECT f1(1);
  f1 
@@ -6,7 +6,7 @@ NOTICE:  DB node id: 1 statement: SELECT f1(1);
   1
 (1 row)
 
-SELECT public.f2(1);
+SELECT public.f2(1);	-- no load balance because volatile function
 NOTICE:  DB node id: 0 statement: SELECT public.f2(1);
 NOTICE:  DB node id: 1 statement: SELECT public.f2(1);
  f2 
@@ -14,3 +14,90 @@ NOTICE:  DB node id: 1 statement: SELECT public.f2(1);
   1
 (1 row)
 
+SELECT f3(1);	-- load balance because statble function
+NOTICE:  DB node id: 1 statement: SELECT f3(1);
+ f3 
+----
+  1
+(1 row)
+
+SELECT public.f4(1);	-- load balance because stable function
+NOTICE:  DB node id: 1 statement: SELECT public.f4(1);
+ f4 
+----
+  1
+(1 row)
+
+PREPARE p1 AS SELECT f1(1);	-- no load balance because volatile function
+NOTICE:  DB node id: 0 statement: PREPARE p1 AS SELECT f1(1);
+NOTICE:  DB node id: 1 statement: PREPARE p1 AS SELECT f1(1);
+EXECUTE p1;	-- no load balance because volatile function
+NOTICE:  DB node id: 0 statement: EXECUTE p1;
+NOTICE:  DB node id: 1 statement: EXECUTE p1;
+ f1 
+----
+  1
+(1 row)
+
+DEALLOCATE p1;	-- no load balance because volatile function
+NOTICE:  DB node id: 0 statement: DEALLOCATE p1;
+NOTICE:  DB node id: 1 statement: DEALLOCATE p1;
+PREPARE p2 AS SELECT f3(1);	-- load balance because stable function
+NOTICE:  DB node id: 1 statement: PREPARE p2 AS SELECT f3(1);
+EXECUTE p2;	-- load balance because stable function
+NOTICE:  DB node id: 1 statement: EXECUTE p2;
+ f3 
+----
+  1
+(1 row)
+
+DEALLOCATE p2;	-- load balance because stable function
+NOTICE:  DB node id: 1 statement: DEALLOCATE p2;
+-- PREPARE in transaction test
+BEGIN;
+NOTICE:  DB node id: 0 statement: BEGIN;
+NOTICE:  DB node id: 1 statement: BEGIN;
+PREPARE p3 AS SELECT 1;	-- load balance
+NOTICE:  DB node id: 1 statement: PREPARE p3 AS SELECT 1;
+EXECUTE p3;	-- load balance
+NOTICE:  DB node id: 1 statement: EXECUTE p3;
+ ?column? 
+----------
+        1
+(1 row)
+
+DEALLOCATE p3;	-- load balance
+NOTICE:  DB node id: 1 statement: DEALLOCATE p3;
+END;
+NOTICE:  DB node id: 1 statement: END;
+NOTICE:  DB node id: 0 statement: END;
+-- PREPARE in writing transaction test
+BEGIN;
+NOTICE:  DB node id: 0 statement: BEGIN;
+NOTICE:  DB node id: 1 statement: BEGIN;
+PREPARE p3 AS SELECT 1;	-- load balance
+NOTICE:  DB node id: 1 statement: PREPARE p3 AS SELECT 1;
+SELECT f1(1);	-- no load balance. writing transaction is set
+NOTICE:  DB node id: 0 statement: SELECT f1(1);
+NOTICE:  DB node id: 1 statement: SELECT f1(1);
+ f1 
+----
+  1
+(1 row)
+
+-- PREPARE is re-execute and EXECUTE no load balance in SL_MODE.
+-- in other mode, load balance
+EXECUTE p3;	
+NOTICE:  DB node id: 1 statement: EXECUTE p3;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- no load balance in SL_MODE.
+-- in other mode, load balance
+DEALLOCATE p3;	
+NOTICE:  DB node id: 1 statement: DEALLOCATE p3;
+END;
+NOTICE:  DB node id: 1 statement: END;
+NOTICE:  DB node id: 0 statement: END;

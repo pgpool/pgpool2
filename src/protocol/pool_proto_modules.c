@@ -92,6 +92,9 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 									 POOL_CONNECTION_POOL * backend,
 									 POOL_SENT_MESSAGE * message,
 									 POOL_SENT_MESSAGE * bind_message);
+static POOL_STATUS send_prepare(POOL_CONNECTION * frontend,
+								POOL_CONNECTION_POOL * backend,
+								POOL_SENT_MESSAGE * message);
 static int *find_victim_nodes(int *ntuples, int nmembers, int main_node, int *number_of_nodes);
 static POOL_STATUS close_standby_transactions(POOL_CONNECTION * frontend,
 											  POOL_CONNECTION_POOL * backend);
@@ -719,6 +722,9 @@ SimpleQuery(POOL_CONNECTION * frontend,
 
 			if (node)
 			{
+				/*
+				 * Take care of PREPARE/EXECUTE.
+				 */
 				POOL_SENT_MESSAGE *msg = NULL;
 
 				if (IsA(node, PrepareStmt))
@@ -727,9 +733,29 @@ SimpleQuery(POOL_CONNECTION * frontend,
 				}
 				else if (IsA(node, ExecuteStmt))
 				{
+					/*
+					 * EXECUTE needs to refer to information of PREPARE.
+					 */
 					msg = pool_get_sent_message('Q', ((ExecuteStmt *) node)->name, POOL_SENT_MESSAGE_CREATED);
 					if (!msg)
 						msg = pool_get_sent_message('P', ((ExecuteStmt *) node)->name, POOL_SENT_MESSAGE_CREATED);
+					else
+					{
+						/*
+						 * Take care the case when the previous PREPARE
+						 * message has been sent to other than primary node in
+						 * SL mode. In this case, we send a PREPARE message to
+						 * the primary node to keep up the
+						 * disable_load_balance_on_write rule.
+						 */
+						if (SL_MODE && pool_config->load_balance_mode && pool_is_writing_transaction() &&
+							TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T' &&
+							pool_config->disable_load_balance_on_write != DLBOW_OFF)
+						{
+							if (send_prepare(frontend, backend, msg) != POOL_CONTINUE)
+								return POOL_END;
+						}
+					}
 				}
 
 				/* rewrite `now()' to timestamp literal */
@@ -3810,6 +3836,114 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 		}
 	}
 
+	memcpy(qc->where_to_send, backup, sizeof(backup));
+	return POOL_CONTINUE;
+}
+
+/*
+ * Send PREPARE message to primary node and wait for reply if particular
+ * message is not yet PREPAREd on the primary node but PREPAREd on other
+ * node. Caller must provide the PREPARED message information as "message"
+ * argument.
+ */
+static POOL_STATUS send_prepare(POOL_CONNECTION * frontend,
+								POOL_CONNECTION_POOL * backend,
+								POOL_SENT_MESSAGE * message)
+{
+	int			node_id;
+	bool		backup[MAX_NUM_BACKENDS];
+	POOL_QUERY_CONTEXT *qc, *new_qc;
+	char	qbuf[1024];
+	POOL_SELECT_RESULT *res;
+
+	elog(DEBUG1, "send_prepare called");
+
+	if (!SL_MODE)
+	{
+		elog(DEBUG1, "send_prepare: not SL_MODE");
+		return POOL_CONTINUE;
+	}
+
+	/* set target backend node id */
+	node_id = PRIMARY_NODE_ID;
+
+	/* create copy of where_to_send map */
+	qc = message->query_context;
+	memcpy(backup, qc->where_to_send, sizeof(qc->where_to_send));
+
+	if (message->kind != 'Q' || qc->where_to_send[node_id])
+	{
+		ereport(DEBUG1,
+				(errmsg("send_prepare"),
+				 errdetail("no need to re-send PREPARE kind: %c where_to_send: %d", message->kind,
+						   qc->where_to_send[node_id])));
+		return POOL_CONTINUE;
+	}
+
+	/*
+	 * we are in streaming replication mode and the PREPARE message has
+	 * not been sent to primary yet.
+	 */
+
+	/*
+	 * Prepare modified query context This is a copy of original PREPARE
+	 * query context except the query sending destination is changed to
+	 * primary node.
+	 */
+	new_qc = pool_query_context_shallow_copy(qc);
+	memset(new_qc->where_to_send, 0, sizeof(new_qc->where_to_send));
+	new_qc->where_to_send[node_id] = 1;
+	new_qc->virtual_main_node_id = node_id;
+	new_qc->load_balance_node_id = node_id;
+
+	/* named statement? */
+	if (message->name[0] != '\0')
+	{
+		/*
+		 * Before sending the PREPARE message to the primary, we need to
+		 * DEALLOCATE the named statement. Otherwise we will get an error
+		 * from backend if an identical named statement already exists.
+		 */
+
+		/* check to see if the named statement exists on primary node */
+		snprintf(qbuf, sizeof(qbuf), "SELECT count(*) FROM pg_prepared_statements WHERE name = '%s'",
+				 message->name);
+
+		elog(DEBUG1, "send_prepare: %s to backend: %d", qbuf, node_id);
+		do_query(CONNECTION(backend, node_id), qbuf, &res, MAJOR(backend));
+
+		if (res && res->data[0] && strcmp(res->data[0], "0"))
+		{
+			free_select_result(res);
+			/*
+			 * The same named statement exists, We need to send DEALLOCATE
+			 * message
+			 */
+			snprintf(qbuf, sizeof(qbuf), "DEALLOCATE %s", message->name);
+
+			/* send DEALLOCATE message to primary node */
+			elog(DEBUG1, "send_prepare: %s to backend: %d", qbuf, node_id);
+			do_query(CONNECTION(backend, node_id), qbuf, &res, MAJOR(backend));
+		}
+		free_select_result(res);
+	}
+
+	/* send PREPARE message to primary node */
+	elog(DEBUG1, "send_prepare: sending PREPARE to primary node");
+	do_query(CONNECTION(backend, node_id), message->query_context->original_query,
+			 &res, MAJOR(backend));
+	free_select_result(res);
+
+	/* replace the query context of PREPARE message with new query context */
+	message->query_context = new_qc;
+
+	/*
+	 * Replace query contex in the session context with the new query context
+	 * so that subsequent EXECUTE will be sent to primary node.
+	 */
+	pool_get_session_context(true)->query_context = new_qc;
+
+	/* recover where_to_send map */
 	memcpy(qc->where_to_send, backup, sizeof(backup));
 	return POOL_CONTINUE;
 }

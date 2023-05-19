@@ -44,11 +44,9 @@ NOTICE:  DB node id: 1 statement: SAVEPOINT a;
 -- PREPARE
 PREPARE foo AS SELECT 2;
 NOTICE:  DB node id: 0 statement: PREPARE foo AS SELECT 2;
-NOTICE:  DB node id: 1 statement: PREPARE foo AS SELECT 2;
 -- EXECUTE
 EXECUTE foo;
 NOTICE:  DB node id: 0 statement: EXECUTE foo;
-NOTICE:  DB node id: 1 statement: EXECUTE foo;
  ?column? 
 ----------
         2
@@ -57,7 +55,6 @@ NOTICE:  DB node id: 1 statement: EXECUTE foo;
 -- DEALLOCATE
 DEALLOCATE foo;
 NOTICE:  DB node id: 0 statement: DEALLOCATE foo;
-NOTICE:  DB node id: 1 statement: DEALLOCATE foo;
 -- ROLLBACK TO
 ROLLBACK TO a;
 NOTICE:  DB node id: 1 statement: ROLLBACK TO a;
@@ -83,11 +80,9 @@ NOTICE:  DB node id: 1 statement: SAVEPOINT a;
 -- PREPARE
 PREPARE foo AS SELECT 2;
 NOTICE:  DB node id: 0 statement: PREPARE foo AS SELECT 2;
-NOTICE:  DB node id: 1 statement: PREPARE foo AS SELECT 2;
 -- EXECUTE
 EXECUTE foo;
 NOTICE:  DB node id: 0 statement: EXECUTE foo;
-NOTICE:  DB node id: 1 statement: EXECUTE foo;
  ?column? 
 ----------
         2
@@ -96,7 +91,6 @@ NOTICE:  DB node id: 1 statement: EXECUTE foo;
 -- DEALLOCATE
 DEALLOCATE foo;
 NOTICE:  DB node id: 0 statement: DEALLOCATE foo;
-NOTICE:  DB node id: 1 statement: DEALLOCATE foo;
 -- ROLLBACK TO
 ROLLBACK TO a;
 NOTICE:  DB node id: 1 statement: ROLLBACK TO a;

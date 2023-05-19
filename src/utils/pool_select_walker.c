@@ -59,11 +59,18 @@ static bool function_has_return_type(char *fname, char *typename);
  * Return true if this SELECT has function calls *and* supposed to
  * modify database.  We check write/read_only function list to determine
  * whether the function modifies database.
+ * If node is PrepareStmt, we look into PrepareStmt->query instead.
  */
 bool
 pool_has_function_call(Node *node)
 {
 	SelectContext ctx;
+
+	if (IsA(node, PrepareStmt))
+	{
+		PrepareStmt *prepare_statement = (PrepareStmt *) node;
+		node = (Node *) (prepare_statement->query);
+	}
 
 	if (!IsA(node, SelectStmt))
 		return false;

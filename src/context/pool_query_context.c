@@ -2151,6 +2151,13 @@ where_to_send_native_replication(POOL_QUERY_CONTEXT * query_context, char *query
 	session_context = pool_get_session_context(false);
 	backend = session_context->backend;
 
+	/*
+	 * Check to see if we can load balance the SELECT (or any read only query
+	 * from syntactical point of view).
+	 */
+	elog(DEBUG1, "Maybe: load balance mode: %d is_select_query: %d",
+			 pool_config->load_balance_mode, is_select_query(node, query));
+
 	if (pool_config->load_balance_mode &&
 		is_select_query(node, query) &&
 		MAJOR(backend) == PROTO_MAJOR_V3)
@@ -2209,9 +2216,11 @@ where_to_send_native_replication(POOL_QUERY_CONTEXT * query_context, char *query
 		}
 			
 		/*
-		 * If a writing function call is used or replicate_select is true,
-		 * we prefer to send to all nodes.
+		 * If a writing function call is used or replicate_select is true, we
+		 * have to send to all nodes since the function may modify database.
 		 */
+		elog(DEBUG1, "Maybe sent to all node: pool_has_function_call: %d pool_config->replicate_select: %d",
+			 pool_has_function_call(node), pool_config->replicate_select);
 		if (pool_has_function_call(node) || pool_config->replicate_select)
 		{
 			pool_setall_node_to_be_sent(query_context);
@@ -2228,11 +2237,17 @@ where_to_send_native_replication(POOL_QUERY_CONTEXT * query_context, char *query
 				  !pool_is_failed_transaction() &&
 				  pool_get_transaction_isolation() != POOL_SERIALIZABLE))
 		{
+			elog(DEBUG1, "load balance TSTATE: %c pool_is_writing_transaction: %d pool_is_failed_transaction: %d pool_get_transaction_isolation: %d",
+				 TSTATE(backend, MAIN_NODE_ID),
+				 pool_is_writing_transaction(),
+				 pool_is_failed_transaction(),
+				 pool_get_transaction_isolation());
 			set_load_balance_info(query_context);
 		}
 		else
 		{
 			/* only send to main node */
+			elog(DEBUG1, "unable to load balance");
 			pool_set_node_to_be_sent(query_context, REAL_MAIN_NODE_ID);
 		}
 	}
