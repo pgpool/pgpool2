@@ -43,13 +43,24 @@ do
 	init_size=`ps l $pid|tail -1|awk '{print $7}'`
 	echo "init_size: $init_size"
 
-	# run pgbench for a while
-	$PGBENCH -M extended -S -T 30 test
+	# run pgbench for a while in background.
+	echo "Starting pgbench in background"
+	date
+	$PGBENCH -M extended -S -T 30 test &
 
+	# sleep 29 seconds so that we can get the process size before
+	# pgpool process $pid accidentaly exits.
+	sleep 29
+
+	date
 	after_size=`ps l $pid|tail -1|awk '{print $7}'`
 	delta=`expr $after_size - $init_size`
 
 	echo "initial process size: $init_size after size: $after_size delta: $delta"
+
+	wait
+	echo "pgbench done."
+	date
 
 	test $delta -eq 0
 
