@@ -3,13 +3,13 @@
 
 set -o xtrace
 
-MAIN_NODE_PGDATA="$1"
-DEST_NODE_HOST="$2"
-DEST_NODE_PGDATA="$3"
-MAIN_NODE_PORT="$4"
-DEST_NODE_ID="$5"
-DEST_NODE_PORT="$6"
-MAIN_NODE_HOST="$7"
+MAIN_NODE_PGDATA="$1"              # main node dabatase cluster path
+DEST_NODE_HOST="$2"                # hostname of the DB node to be recovered
+DEST_NODE_PGDATA="$3"              # database cluster path of the DB node to be recovered
+MAIN_NODE_PORT="$4"                # main node port number
+DEST_NODE_ID="$5"                  # node id of the DB node to be recovered
+DEST_NODE_PORT="$6"                # port number of the DB node to be recovered
+MAIN_NODE_HOST="$7"                # main node hostname
 
 PGHOME=/usr/pgsql-14
 ARCHIVEDIR=/var/lib/pgsql/archivedir
