@@ -386,7 +386,7 @@ select_load_balancing_node(void)
 
 				/* Matches */
 				ereport(DEBUG1,
-						(errmsg("selecting load balance node db matched"),
+						(errmsg("selecting load balance node app name matched"),
 						 errdetail("app_name: %s index is %d dbnode is %s weight is %f", app_name, index_app,
 								   pool_config->app_name_redirect_tokens->token[index_app].right_token,
 								   pool_config->app_name_redirect_tokens->token[index_app].weight_token)));
@@ -405,12 +405,10 @@ select_load_balancing_node(void)
 		 * and prefer_lower_delay_standby are true, we choose the least delayed
 		 * node if suggested_node is standby and delayed over delay_threshold.
 		 */
-		if (STREAM &&
-			pool_config->delay_threshold &&
-			pool_config->prefer_lower_delay_standby &&
-			(suggested_node_id != PRIMARY_NODE_ID) &&
-			(((BACKEND_INFO(suggested_node_id).standby_delay_by_time == false && BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold)) ||
-			 ((BACKEND_INFO(suggested_node_id).standby_delay_by_time && BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold_by_time * 1000000))))
+		if (STREAM && pool_config->prefer_lower_delay_standby && suggested_node_id != PRIMARY_NODE_ID &&
+			((BACKEND_INFO(suggested_node_id).standby_delay_by_time && BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold_by_time * 1000000) ||
+			 (BACKEND_INFO(suggested_node_id).standby_delay_by_time == false && BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold)))
+
 		{
 			ereport(DEBUG1,
 				(errmsg("selecting load balance node"),
@@ -420,7 +418,10 @@ select_load_balancing_node(void)
 			 * The new load balancing node is seleted from the
 			 * nodes which have the lowest delay.
 			 */
-			lowest_delay = pool_config->delay_threshold;
+			if (pool_config->delay_threshold_by_time > 0)
+				lowest_delay = pool_config->delay_threshold_by_time * 1000 * 1000;
+			else
+				lowest_delay = pool_config->delay_threshold;
 
 			/* Initialize */
 			total_weight = 0.0;
@@ -562,16 +563,20 @@ select_load_balancing_node(void)
 	 * prefer_lower_delay_standby is true, we elect the most lower delayed
 	 * node if suggested_node is standby and delayed over delay_threshold.
 	 */
-	if (STREAM &&
-		pool_config->delay_threshold &&
-		pool_config->prefer_lower_delay_standby &&
-		(BACKEND_INFO(selected_slot).standby_delay > pool_config->delay_threshold))
+	if (STREAM && pool_config->prefer_lower_delay_standby &&
+		((pool_config->delay_threshold_by_time &&
+		  BACKEND_INFO(selected_slot).standby_delay > pool_config->delay_threshold_by_time*1000*1000) ||
+		 (pool_config->delay_threshold &&
+		  BACKEND_INFO(selected_slot).standby_delay > pool_config->delay_threshold)))
 	{
 		ereport(DEBUG1,
 				(errmsg("selecting load balance node"),
 				 errdetail("backend id %d is streaming delayed over delay_threshold", selected_slot)));
 
-		lowest_delay = pool_config->delay_threshold;
+		if (pool_config->delay_threshold_by_time > 0)
+			lowest_delay = pool_config->delay_threshold_by_time * 1000 * 1000;
+		else
+			lowest_delay = pool_config->delay_threshold;
 		total_weight = 0.0;
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
