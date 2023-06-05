@@ -2095,8 +2095,11 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT * query_context, char *query, Node
 					 * false then send to the primary.
 					 */
 					if (STREAM &&
-						pool_config->delay_threshold &&
-						bkinfo->standby_delay > pool_config->delay_threshold)
+						(
+							(pool_config->delay_threshold &&
+							 (bkinfo->standby_delay > pool_config->delay_threshold)) ||
+							(pool_config->delay_threshold_by_time &&
+							 (bkinfo->standby_delay > pool_config->delay_threshold_by_time*1000*1000))))
 					{
 						ereport(DEBUG1,
 								(errmsg("could not load balance because of too much replication delay"),
