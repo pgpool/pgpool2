@@ -251,7 +251,15 @@ get_config(int *nrows)
 	i++;
 
 	StrNCpy(status[i].name, "pcp_socket_dir", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->pcp_socket_dir);
+	*(status[i].value) = '\0';
+	for (j = 0; j < pool_config->num_pcp_socket_directories; j++)
+	{
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		strncat(status[i].value, pool_config->pcp_socket_dir[j], len);
+		len = POOLCONFIG_MAXVALLEN - strlen(status[i].value);
+		if (j != pool_config->num_pcp_socket_directories - 1)
+			strncat(status[i].value, ",", len);
+	}
 	StrNCpy(status[i].desc, "PCP socket directory", POOLCONFIG_MAXDESCLEN);
 	i++;
 

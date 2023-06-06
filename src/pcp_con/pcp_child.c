@@ -86,6 +86,7 @@ static void start_pcp_command_processor_process(int port, int *fds);
 static void pcp_child_will_die(int code, Datum arg);
 static void pcp_kill_all_children(int sig);
 static void reaper(void);
+static bool pcp_unix_fds_not_isset(int *fds, int num_pcp_fds, fd_set* opt);
 
 
 #define CHECK_RESTART_REQUEST \
@@ -250,7 +251,7 @@ pcp_do_accept(int *fds)
 	 * Set no delay if AF_INET socket. Not sure if this is really necessary
 	 * but PostgreSQL does this.
 	 */
-	if (!FD_ISSET(fds[0], &rmask))	/* fds[0] is UNIX domain socket */
+	if (pcp_unix_fds_not_isset(fds, pool_config->num_pcp_socket_directories, &rmask))	/* fds are UNIX domain socket for pcp process */
 	{
 		int	on;
 
@@ -267,6 +268,20 @@ pcp_do_accept(int *fds)
 	}
 
 	return afd;
+}
+
+static bool
+pcp_unix_fds_not_isset(int* fds, int num_pcp_fds, fd_set* opt)
+{
+        int             i;
+        for (i = 0; i < num_pcp_fds; i++)
+        {
+                if (!FD_ISSET(fds[i], opt))
+                        continue;
+
+                return false;
+        }
+        return true;
 }
 
 /*

@@ -863,16 +863,6 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"pcp_socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
-			"The directory to create the UNIX domain socket for accepting pgpool-II PCP connections.",
-			CONFIG_VAR_TYPE_STRING, false, 0
-		},
-		&g_pool_config.pcp_socket_dir,
-		DEFAULT_SOCKET_DIR,
-		NULL, NULL, NULL, NULL
-	},
-
-	{
 		{"wd_ipc_socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
 			"The directory to create the UNIX domain socket for accepting pgpool-II watchdog IPC connections.",
 			CONFIG_VAR_TYPE_STRING, false, 0
@@ -1408,6 +1398,19 @@ static struct config_string_list ConfigureNamesStringList[] =
 		},
 		&g_pool_config.unix_socket_directories,
 		&g_pool_config.num_unix_socket_directories,
+		(const char *) default_unix_socket_directories_list,
+		",",
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"pcp_socket_dir", CFGCXT_INIT, CONNECTION_CONFIG,
+			"The directories to create the UNIX domain socket for accepting pgpool-II PCP connections.",
+			CONFIG_VAR_TYPE_STRING_LIST, false, 0
+		},
+		&g_pool_config.pcp_socket_dir,
+		&g_pool_config.num_pcp_socket_directories,
 		(const char *) default_unix_socket_directories_list,
 		",",
 		false,

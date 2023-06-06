@@ -204,7 +204,7 @@ static void service_child_processes(void);
 static int select_victim_processes(int *process_info_idxs, int count);
 
 static struct sockaddr_un *un_addrs;	/* unix domain socket path */
-static struct sockaddr_un pcp_un_addr;	/* unix domain socket path for PCP */
+static struct sockaddr_un *pcp_un_addrs;	/* unix domain socket path for PCP */
 ProcessInfo *process_info = NULL;	/* Per child info table on shmem */
 volatile	User1SignalSlot *user1SignalSlot = NULL;	/* User 1 signal slot on
 														 * shmem */
@@ -287,9 +287,10 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 {
 	int			num_inet_fds = 0;
 	int			num_unix_fds = 0;
+	int			num_pcp_fds = 0;
 	int			*unix_fds;
 	int			*inet_fds;
-	int			pcp_unix_fd;
+	int			*pcp_unix_fds;
 	int			*pcp_inet_fds;
 	int			i;
 	char		unix_domain_socket_path[UNIXSOCK_PATH_BUFLEN + 1024];
@@ -348,24 +349,38 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 
 	/* set unix domain socket path for pgpool PCP communication */
-	memset(unix_domain_socket_path, 0, sizeof(unix_domain_socket_path));
-	snprintf(unix_domain_socket_path, sizeof(unix_domain_socket_path), "%s/.s.PGSQL.%d",
-			 pool_config->pcp_socket_dir,
-			 pool_config->pcp_port);
+	for (i = 0; i < pool_config->num_pcp_socket_directories; i++)
+	{
+		memset(unix_domain_socket_path, 0, sizeof(unix_domain_socket_path));
+		snprintf(unix_domain_socket_path, sizeof(unix_domain_socket_path), "%s/.s.PGSQL.%d",
+				pool_config->pcp_socket_dir[i],
+				pool_config->pcp_port);
 
-	if (strlen(unix_domain_socket_path) >= UNIXSOCK_PATH_BUFLEN)
+		if (strlen(unix_domain_socket_path) >= UNIXSOCK_PATH_BUFLEN)
+		{
+			ereport(WARNING,
+			(errmsg("PCP Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
+					unix_domain_socket_path,
+					(int) (UNIXSOCK_PATH_BUFLEN - 1))));
+			continue;
+		}
+		pcp_un_addrs = realloc(pcp_un_addrs, sizeof(struct sockaddr_un) * (num_pcp_fds + 1));
+		if (pcp_un_addrs == NULL)
+			ereport(FATAL,
+				(errmsg("failed to allocate memory in startup process")));
+
+		snprintf(pcp_un_addrs[i].sun_path, sizeof(pcp_un_addrs[i].sun_path), "%s", unix_domain_socket_path);
+		num_pcp_fds++;
+	}
+
+	if (num_pcp_fds == 0)
 	{
 		ereport(FATAL,
-			   (errmsg("could not create PCP Unix-domain sockets"),
-				errdetail("PCP Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
-				unix_domain_socket_path,
-				(int) (UNIXSOCK_PATH_BUFLEN - 1))));
+			   (errmsg("could not create any PCP Unix-domain sockets")));
 	}
-	snprintf(pcp_un_addr.sun_path, sizeof(pcp_un_addr.sun_path), "%s", unix_domain_socket_path);
 
 	/* set up signal handlers */
 	pool_signal(SIGPIPE, SIG_IGN);
-
 
 	/* start the log collector if enabled */
 	pgpool_logger_pid = SysLogger_Start();
@@ -560,19 +575,21 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 
 	/* create pcp unix domain socket */
-	num_unix_fds = 1;
 	num_inet_fds = 0;
 
-	pcp_unix_fd = create_unix_domain_socket(pcp_un_addr, "", 0777);
-	on_proc_exit(FileUnlink, (Datum) pcp_un_addr.sun_path);
-
-	pcp_fds = malloc(sizeof(int) * (num_unix_fds + 1));
+	pcp_unix_fds = create_unix_domain_sockets_by_list(pcp_un_addrs, "", 0777, num_pcp_fds);
+	for (i = 0; i < num_pcp_fds; i++)
+	{
+		on_proc_exit(FileUnlink, (Datum) pcp_un_addrs[i].sun_path);
+	}
+	pcp_fds = malloc(sizeof(int) * (num_pcp_fds + 1));
 	if (pcp_fds == NULL)
 		ereport(FATAL,
 				(errmsg("failed to allocate memory in startup process")));
 
-	pcp_fds[0] = pcp_unix_fd;
-	pcp_fds[num_unix_fds] = -1;
+	memcpy(pcp_fds, pcp_unix_fds, sizeof(int) * num_pcp_fds);
+	pcp_fds[num_pcp_fds] = -1;
+	free(pcp_unix_fds);
 
 	/* create inet domain socket if any */
 	pcp_inet_fds = create_inet_domain_sockets_by_list(pool_config->pcp_listen_addresses,
@@ -581,13 +598,13 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	if (num_inet_fds > 0)
 	{
-		pcp_fds = realloc(pcp_fds, sizeof(int) * (num_inet_fds + num_unix_fds + 1));
+		pcp_fds = realloc(pcp_fds, sizeof(int) * (num_inet_fds + num_pcp_fds + 1));
 		if (pcp_fds == NULL)
 			ereport(FATAL,
 				   (errmsg("failed to expand memory for pcp_fds")));
 
-		memcpy(&pcp_fds[num_unix_fds], pcp_inet_fds, sizeof(int) * num_inet_fds);
-		pcp_fds[num_inet_fds + num_unix_fds] = -1;
+		memcpy(&pcp_fds[num_pcp_fds], pcp_inet_fds, sizeof(int) * num_inet_fds);
+		pcp_fds[num_inet_fds + num_pcp_fds] = -1;
 		free(pcp_inet_fds);
 	}
 
@@ -4779,8 +4796,8 @@ exec_notice_pcp_child(FAILOVER_CONTEXT *failover_context)
 
 
 /*
- * Create UNIX domain sockets by unix_socket_directories, which is an array of
- string.  The number of elements is
+ * Create UNIX domain sockets by unix_socket_directories/pcp_socket_dir,
+ * which is an array of string. The number of elements is
  * "n_listen_addresses". "port" is the port number. A socket array is returned.
  * The number of elements in the socket array is "n_sockets".
  */
@@ -4802,7 +4819,7 @@ create_unix_domain_sockets_by_list(struct sockaddr_un *un_addrs,
 	for (i = 0; i < n_sockets; i++)
 	{
 		ereport(LOG,
-				(errmsg("unix_socket_directories[%d]: %s", i, un_addrs[i].sun_path)));
+				(errmsg("create socket files[%d]: %s", i, un_addrs[i].sun_path)));
 
 		sockets[i] = create_unix_domain_socket(un_addrs[i], group, permissions);
 	}

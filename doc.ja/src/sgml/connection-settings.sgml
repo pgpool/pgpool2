@@ -295,13 +295,15 @@
      <para>
       <!--
       The directory where the UNIX domain socket accepting connections for
-      PCP process will be
-      created. Default is <literal>/tmp</literal>. Be aware that
+      PCP process will be created. Multiple sockets can be created
+      by listing multiple directories separated by commas.
+      Default is <literal>/tmp</literal>. Be aware that
       this socket might be deleted by a cron job. We recommend
       to set this value to <literal>/var/run</literal> or such
       directory.
       -->
       PCPプロセスが接続を受け付けるUNIXドメインソケットを置くディレクトリです。
+      コンマで区切った複数のディレクトリのリストを設定すると複数のUNIXドメインソケットファイルを作成します。
       デフォルト値は<literal>/tmp</literal>です。
       このソケットは、cron によって削除されることがあるので注意してください。
       <literal>/var/run</literal>などのディレクトリに変更することをお勧めします。

@@ -73,7 +73,7 @@ backend_clustering_mode = 'streaming_replication'
                                    # Port number for pcp
                                    # (change requires restart)
 #pcp_socket_dir = '/tmp'
-                                   # Unix domain socket path for pcp
+                                   # Unix domain socket path(s) for pcp
                                    # The Debian package defaults to
                                    # /var/run/postgresql
                                    # (change requires restart)

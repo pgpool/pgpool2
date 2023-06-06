@@ -189,8 +189,9 @@
     <listitem>
      <para>
       The directory where the UNIX domain socket accepting
-      connections for PCP process will be created. Default
-      is <literal>/tmp</literal>. Be aware that this socket
+      connections for PCP process will be created. Multiple sockets
+      can be created by listing multiple directories separated by commas.
+      Default is <literal>/tmp</literal>. Be aware that this socket
       might be deleted by a cron job. We recommend to set this
       value to <literal>/var/run</literal> or such directory.
      </para>
