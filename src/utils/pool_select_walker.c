@@ -539,11 +539,11 @@ is_system_catalog(char *table_name)
 /*
  * Query to know if the target table belongs pg_catalog schema.
  */
-#define ISBELONGTOPGCATALOGQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+#define ISBELONGTOPGCATALOGQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_catalog.pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
-#define ISBELONGTOPGCATALOGQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_namespace AS n WHERE c.oid = pgpool_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+#define ISBELONGTOPGCATALOGQUERY2 "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_catalog.pg_namespace AS n WHERE c.oid = pgpool_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
-#define ISBELONGTOPGCATALOGQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_namespace AS n WHERE c.oid = pg_catalog.to_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
+#define ISBELONGTOPGCATALOGQUERY3 "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_catalog.pg_namespace AS n WHERE c.oid = pg_catalog.to_regclass('\"%s\"') AND c.relnamespace = n.oid AND n.nspname = 'pg_catalog'"
 
 	int			hasreliscatalog;
 	bool		result;
@@ -652,7 +652,7 @@ is_temp_table(char *table_name)
  * regclass (or its variant) here, because temporary tables never have
  * schema qualified name.
  */
-#define ISTEMPQUERY83 "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
+#define ISTEMPQUERY83 "SELECT count(*) FROM pg_catalog.pg_class AS c, pg_catalog.pg_namespace AS n WHERE c.relname = '%s' AND c.relnamespace = n.oid AND n.nspname ~ '^pg_temp_'"
 
 /*
  * Query to know if the target table is a temporary one.  This query
