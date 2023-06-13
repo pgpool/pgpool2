@@ -309,7 +309,8 @@ select_load_balancing_node(void)
 				r;
 	int			i;
 	int			index_db = -1,
-				index_app = -1;
+				index_app = -1,
+				index_user = -1;
 	POOL_SESSION_CONTEXT *ses = pool_get_session_context(false);
 	int			tmp;
 	int			no_load_balance_node_id = -2;
@@ -330,6 +331,33 @@ select_load_balancing_node(void)
 #endif
 
 	/*
+	 * Check user_redirect_preference_list
+	 */
+	if (SL_MODE && pool_config->redirect_usernames)
+	{
+		char	   *user = MAIN_CONNECTION(ses->backend)->sp->user;
+
+		/*
+		 * Check to see if the user matches any of
+		 * user_redirect_preference_list
+		 */
+		index_user = regex_array_match(pool_config->redirect_usernames, user);
+		if (index_user >= 0)
+		{
+			/* Matches */
+			ereport(DEBUG1,
+					(errmsg("selecting load balance node user matched"),
+					 errdetail("username: %s index is %d dbnode is %s weight is %f", user, index_user,
+							   pool_config->user_redirect_tokens->token[index_user].right_token,
+							   pool_config->user_redirect_tokens->token[index_user].weight_token)));
+
+			tmp = choose_db_node_id(pool_config->user_redirect_tokens->token[index_user].right_token);
+			if (tmp == -1 || (tmp >= 0 && VALID_BACKEND_RAW(tmp)))
+				suggested_node_id = tmp;
+		}
+	}
+
+	/*
 	 * Check database_redirect_preference_list
 	 */
 	if (SL_MODE && pool_config->redirect_dbnames)
@@ -343,6 +371,13 @@ select_load_balancing_node(void)
 		index_db = regex_array_match(pool_config->redirect_dbnames, database);
 		if (index_db >= 0)
 		{
+			/*
+			 * if the database name matches any of
+			 * database_redirect_preference_list,
+			 * user_redirect_preference_list will be ignored.
+			 */
+			index_user = -1;
+
 			/* Matches */
 			ereport(DEBUG1,
 					(errmsg("selecting load balance node db matched"),
@@ -382,6 +417,7 @@ select_load_balancing_node(void)
 				 * app_name_redirect_preference_list,
 				 * database_redirect_preference_list will be ignored.
 				 */
+				index_user = -1;
 				index_db = -1;
 
 				/* Matches */
@@ -491,7 +527,8 @@ select_load_balancing_node(void)
 		 * choose load balance node from other nodes.
 		 */
 		if ((index_db >= 0 && r <= pool_config->db_redirect_tokens->token[index_db].weight_token) ||
-			(index_app >= 0 && r <= pool_config->app_name_redirect_tokens->token[index_app].weight_token))
+			(index_app >= 0 && r <= pool_config->app_name_redirect_tokens->token[index_app].weight_token) ||
+			(index_user >= 0 && r <= pool_config->user_redirect_tokens->token[index_user].weight_token))
 		{
 			ereport(DEBUG1,
 					(errmsg("selecting load balance node"),
@@ -507,7 +544,8 @@ select_load_balancing_node(void)
 	{
 		/* If the weight is less than random rate then send to primary. */
 		if ((index_db >= 0 && r > pool_config->db_redirect_tokens->token[index_db].weight_token) ||
-			(index_app >= 0 && r > pool_config->app_name_redirect_tokens->token[index_app].weight_token))
+			(index_app >= 0 && r > pool_config->app_name_redirect_tokens->token[index_app].weight_token) ||
+			(index_user >= 0 && r > pool_config->user_redirect_tokens->token[index_user].weight_token))
 		{
 			ereport(DEBUG1,
 					(errmsg("selecting load balance node"),

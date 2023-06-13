@@ -726,6 +726,79 @@ primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, 
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-user-redirect-preference-list" xreflabel="user_redirect_preference_list">
+    <term><varname>user_redirect_preference_list</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>user_redirect_preference_list</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the list of <replaceable>"user-name:node id(ratio)"</replaceable> pairs
+      to send <acronym>SELECT</acronym> queries to a particular backend
+      node for a particular user connection at a specified load balance ratio.
+      The load balance ratio specifies a value between 0 and 1. The default is 1.0.
+     </para>
+     <para>
+      For example, by specifying "user1:1(0.5)", <productname>Pgpool-II</productname>
+      will redirect 50% <acronym>SELECT</acronym> queries to the backend node of ID 1 for
+      the connection of user <literal>user1</literal>.
+     </para>
+     <para>
+      You can specify multiple <replaceable>"user-name:node id(ratio)"</replaceable> pairs
+      by separating them using comma (,).
+     </para>
+     <para>
+      Regular expressions are also accepted for user name.
+      You can use special keywords as <replaceable>node id</replaceable>.
+      If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
+      if <emphasis>"standby"</emphasis> is specified, one of the standby nodes are selected randomly
+      based on load balance ratio.
+     </para>
+
+     <example id="example-user-redirect-list">
+      <title>Using user_redirect_preference_list</title>
+      <para>
+       If you want to configure the following <acronym>SELECT</acronym> query routing rules:
+      </para>
+
+      <itemizedlist>
+       <listitem>
+        <para>
+         Route all <acronym>SELECT</acronym> queries from the connections
+         using user <literal>postgres</literal> to the primary backend node.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Route 30% <acronym>SELECT</acronym> queries from the connections
+         using user <literal>user0</literal> or <literal>user1</literal>
+         to backend node of ID 1.
+         The other 70% <acronym>SELECT</acronym> queries will be sent to other backend nodes.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Route all <acronym>SELECT</acronym> queries from the connections
+         using user <literal>user2</literal> to standby backend nodes.
+        </para>
+       </listitem>
+
+      </itemizedlist>
+      <para>
+       then the <xref linkend="guc-user-redirect-preference-list"> will be configured as follows:
+       <programlisting>
+user_redirect_preference_list = 'postgres:primary,user[01]:1(0.3),user2:standby'
+       </programlisting>
+      </para>
+     </example>
+
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-database-redirect-preference-list" xreflabel="database_redirect_preference_list">
     <term><varname>database_redirect_preference_list</varname> (<type>string</type>)
      <indexterm>
@@ -742,16 +815,18 @@ primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, 
      <para>
       For example, by specifying "test:1(0.5)", <productname>Pgpool-II</productname>
       will redirect 50% <acronym>SELECT</acronym> queries to the backend node of ID 1 for
-      the connection to "test" database.
-      You can specify multiple <replaceable>"database name:node id"</replaceable> pair by separating them
-      using comma (,).
+      the connection to <literal>test</literal> database.
+     </para>
+     <para>
+      You can specify multiple <replaceable>"database-name:node id(ratio)"</replaceable> pairs
+      by separating them using comma (,).
      </para>
      <para>
       Regular expressions are also accepted for database name.
       You can use special keywords as <replaceable>node id</replaceable>.
       If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
       if <emphasis>"standby"</emphasis> is specified, one of the standby nodes are selected randomly
-      based on weights (<xref linkend="guc-backend-weight">).
+      based on load balance ratio.
      </para>
 
      <example id="example-database-redirect-list">
@@ -762,31 +837,31 @@ primary_routing_query_pattern_list = 'SELECT \* FROM table_name1\;;SELECT col1, 
 
       <itemizedlist>
        <listitem>
-	<para>
-	 Route all <acronym>SELECT</acronym> queries on <literal>postgres</literal>
-	 database to the primary backend node.
-	</para>
+        <para>
+         Route all <acronym>SELECT</acronym> queries on <literal>postgres</literal>
+         database to the primary backend node.
+        </para>
        </listitem>
        <listitem>
-	<para>
-	 Route 30% <acronym>SELECT</acronym> queries on <literal>mydb0</literal> or on
-	 <literal>mydb1</literal> databases to backend node of ID.
-	 The other 70% <acronym>SELECT</acronym> queries will be sent to other backend nodes.
-	</para>
+        <para>
+         Route 30% <acronym>SELECT</acronym> queries on <literal>mydb0</literal> or on
+         <literal>mydb1</literal> databases to backend node of ID 1.
+         The other 70% <acronym>SELECT</acronym> queries will be sent to other backend nodes.
+        </para>
        </listitem>
        <listitem>
-	<para>
-	 Route all <acronym>SELECT</acronym> queries on <literal>mydb2</literal>
-	 database to standby backend nodes.
-	</para>
+        <para>
+         Route all <acronym>SELECT</acronym> queries on <literal>mydb2</literal>
+         database to standby backend nodes.
+        </para>
        </listitem>
 
       </itemizedlist>
       <para>
        then the <xref linkend="guc-database-redirect-preference-list"> will be configured as follows:
-	<programlisting>
+       <programlisting>
 database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:standby'
-	</programlisting>
+       </programlisting>
       </para>
      </example>
 
@@ -808,6 +883,9 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:stan
       Specifies the list of <replaceable>"application-name:node id(ratio)"</replaceable> pairs
       to send <acronym>SELECT</acronym> queries to a particular backend
       node for a particular client application connection at a specified load balance ratio.
+      The load balance ratio specifies a value between 0 and 1. The default is 1.0.
+      You can specify multiple <replaceable>"application-name:node id(ratio)"</replaceable> pairs
+      by separating them using comma (,).
      </para>
 
      <note>
@@ -833,12 +911,11 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:stan
      </note>
 
      <para>
-      The notion of <xref linkend="guc-app-name-redirect-preference-list">
-       is same as the <xref linkend="guc-database-redirect-preference-list">
-	thus you can also use the regular expressions for application names.
-	Similarly special keyword <emphasis>"primary"</emphasis> indicates the primary node and
-	<emphasis>"standby"</emphasis> indicates one of standby nodes.
-	The load balance weight specifies a value between 0 and 1. The default is 1.0.
+      Regular expressions are also accepted for database name.
+      You can use special keywords as <replaceable>node id</replaceable>.
+      If <emphasis>"primary"</emphasis> is specified, queries are sent to the primary node, and
+      if <emphasis>"standby"</emphasis> is specified, one of the standby nodes are selected randomly
+      based on load balance ratio.
      </para>
 
      <example id="example-app-name-redirect-list">
@@ -849,37 +926,41 @@ database_redirect_preference_list = 'postgres:primary,mydb[01]:1(0.3),mydb2:stan
 
       <itemizedlist>
        <listitem>
-	<para>
-	 Route all <acronym>SELECT</acronym> from <literal>psql</literal>
-	 client to the primary backend node.
-	</para>
+        <para>
+         Route all <acronym>SELECT</acronym> from <literal>psql</literal>
+         client to the primary backend node.
+        </para>
        </listitem>
        <listitem>
-	<para>
-	 Route 30% <acronym>SELECT</acronym> queries from <literal>myapp1</literal>
-	 client to backend node of ID 1. The other 70% SELECT queries will be sent to other backend nodes.
-	</para>
+        <para>
+         Route 30% <acronym>SELECT</acronym> queries from <literal>myapp1</literal>
+         client to backend node of ID 1. The other 70% SELECT queries will be sent to other backend nodes.
+        </para>
        </listitem>
        <listitem>
-	<para>
-	 Route all <acronym>SELECT</acronym> queries from <literal>myapp2</literal>
-	 client to standby backend nodes.
-	</para>
+        <para>
+         Route all <acronym>SELECT</acronym> queries from <literal>myapp2</literal>
+         client to standby backend nodes.
+        </para>
        </listitem>
 
       </itemizedlist>
       <para>
        then the <xref linkend="guc-app-name-redirect-preference-list"> will be configured as follows:
-	<programlisting>
+       <programlisting>
 app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
-	</programlisting>
+       </programlisting>
       </para>
      </example>
 
      <note>
       <para>
-       <xref linkend="guc-app-name-redirect-preference-list"> takes precedence
-	over the <xref linkend="guc-database-redirect-preference-list">.
+       The priority of <xref linkend="guc-user-redirect-preference-list">,
+       <xref linkend="guc-database-redirect-preference-list"> and
+       <xref linkend="guc-app-name-redirect-preference-list"> are:
+       <programlisting>
+app_name_redirect_preference_list &gt; database_redirect_preference_list &gt; user_redirect_preference_list
+       </programlisting>
       </para>
       <para>
        For example, if you set
@@ -891,9 +972,11 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
 
      <note>
       <para>
-       By specifying of <xref linkend="guc-app-name-redirect-preference-list"> and
-	<xref linkend="guc-database-redirect-preference-list">, when multiple database
-	 names and application names are matched, the first setting will be used.
+       By specifying of <xref linkend="guc-user-redirect-preference-list">,
+       <xref linkend="guc-database-redirect-preference-list"> and
+       <xref linkend="guc-app-name-redirect-preference-list">,
+       when multiple database names and application names are matched,
+       the first setting will be used.
       </para>
       <para>
        For example, if you set
@@ -910,7 +993,7 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
        driver option <literal>"ApplicationName"</literal> and
        <literal>"assumeMinServerVersion=9.0"</literal>.
        So if you want to use the <xref linkend="guc-app-name-redirect-preference-list">
-	feature through <acronym>JDBC</acronym>, Use PostgreSQL-9.4 or later version of the driver.
+       feature through <acronym>JDBC</acronym>, Use PostgreSQL-9.4 or later version of the driver.
       </para>
      </caution>
 

@@ -504,6 +504,17 @@ typedef struct
 														 * pattern array */
 
 	/*
+	 * user_redirect_preference_list =
+	 * 'postgres:primary,user[0-4]:1,user[5-9]:2'
+	 */
+	char	   *user_redirect_preference_list;	/* raw string in
+													 * pgpool.conf */
+	RegArray   *redirect_usernames;	/* Precompiled regex patterns for db
+									 * preference list */
+	Left_right_tokens *user_redirect_tokens;	/* db redirect for dbname and node
+											 * string */
+
+	/*
 	 * database_redirect_preference_list =
 	 * 'postgres:primary,mydb[0-4]:1,mydb[5-9]:2'
 	 */

@@ -663,6 +663,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "follow primary command", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "user_redirect_preference_list", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->user_redirect_preference_list);
+	StrNCpy(status[i].desc, "redirect by user name", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "database_redirect_preference_list", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->database_redirect_preference_list);
 	StrNCpy(status[i].desc, "redirect by database name", POOLCONFIG_MAXDESCLEN);

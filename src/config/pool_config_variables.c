@@ -96,6 +96,7 @@ static bool get_index_in_var_name(struct config_generic *record,
 					  const char *name, int *index, int elevel);
 
 
+static bool MakeUserRedirectListRegex(char *newval, int elevel);
 static bool MakeDBRedirectListRegex(char *newval, int elevel);
 static bool MakeAppRedirectListRegex(char *newval, int elevel);
 static bool MakeDMLAdaptiveObjectRelationList(char *newval, int elevel);
@@ -817,6 +818,19 @@ static struct config_bool ConfigureNamesBool[] =
 
 static struct config_string ConfigureNamesString[] =
 {
+	{
+		{"user_redirect_preference_list", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
+			"redirect by user name.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.user_redirect_preference_list,	/* variable */
+		NULL,					/* boot value */
+		NULL,					/* assign_func */
+		NULL,					/* check_func */
+		MakeUserRedirectListRegex,	/* process func */
+		NULL					/* show hook */
+	},
+
 	{
 		{"database_redirect_preference_list", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"redirect by database name.",
@@ -5118,6 +5132,48 @@ MakeDBRedirectListRegex(char *newval, int elevel)
 			ereport(elevel,
 					(errmsg("invalid configuration for key \"database_redirect_preference_list\""),
 					 errdetail("wrong redirect dbname regular expression: \"%s\"", lrtokens->token[i].left_token)));
+			return false;
+		}
+	}
+	return true;
+}
+
+static bool
+MakeUserRedirectListRegex(char *newval, int elevel)
+{
+	/* TODO Deal with the memory */
+	int			i;
+	Left_right_tokens *lrtokens;
+
+	if (newval == NULL)
+	{
+		pool_config->redirect_usernames = NULL;
+		pool_config->user_redirect_tokens = NULL;
+		return true;
+	}
+
+	lrtokens = create_lrtoken_array();
+	extract_string_tokens2(newval, ",", ':', lrtokens);
+
+	pool_config->redirect_usernames = create_regex_array();
+	pool_config->user_redirect_tokens = lrtokens;
+
+	for (i = 0; i < lrtokens->pos; i++)
+	{
+		if (!check_redirect_node_spec(lrtokens->token[i].right_token))
+		{
+			ereport(elevel,
+					(errmsg("invalid configuration for key \"user_redirect_preference_list\""),
+					 errdetail("wrong redirect db node spec: \"%s\"", lrtokens->token[i].right_token)));
+			return false;
+		}
+
+		if (*(lrtokens->token[i].left_token) == '\0' ||
+			add_regex_array(pool_config->redirect_usernames, lrtokens->token[i].left_token))
+		{
+			ereport(elevel,
+					(errmsg("invalid configuration for key \"user_redirect_preference_list\""),
+					 errdetail("wrong redirect user name regular expression: \"%s\"", lrtokens->token[i].left_token)));
 			return false;
 		}
 	}
