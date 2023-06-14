@@ -2734,12 +2734,37 @@ static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash
 		now = time(NULL);
 		if (now > (cih->timestamp + cih->expire))
 		{
-			ereport(DEBUG1,
-					(errmsg("memcache finding item"),
-					 errdetail("cache expired: now: %ld timestamp: %ld",
-							   now, cih->timestamp + cih->expire)));
-			pool_delete_item_shmem_cache(c);
-			return NULL;
+			/*
+			 * We need to acquire an exclusive lock before removing the cache
+			 * entry.  Since a lock escalation from shared lock to exclusive
+			 * lock is not supported, we need to release the lock then acquire
+			 * an exclusive lock.
+			 */
+			pool_shmem_unlock();
+			pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
+			/*
+			 * There is a window between pool_shmem_unlock() and
+			 * pool_shmem_lock().  We need to get POOL_CACHEID and
+			 * POOL_CACHE_ITEM_HEADER again because they could have been
+			 * modified by someone else.
+			 */
+			c = pool_hash_search(query_hash);
+			if (!c)
+			{
+				return NULL;
+			}
+
+			cih = item_header(block_address(c->blockid), c->itemid);
+			now = time(NULL);
+			if (now > (cih->timestamp + cih->expire))
+			{
+				ereport(DEBUG1,
+						(errmsg("memcache finding item"),
+						 errdetail("cache expired: now: %ld timestamp: %ld",
+								   now, cih->timestamp + cih->expire)));
+				pool_delete_item_shmem_cache(c);
+				return NULL;
+			}
 		}
 	}
 
