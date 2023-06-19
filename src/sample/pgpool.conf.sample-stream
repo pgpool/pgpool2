@@ -60,15 +60,10 @@ backend_clustering_mode = 'streaming_replication'
 # - pgpool Communication Manager Connection Settings -
 
 #pcp_listen_addresses = 'localhost'
-                                   # what host name(s) or IP address(es) to listen on;
+                                   # what host name(s) or IP address(es) for pcp process to listen on;
                                    # comma-separated list of addresses;
                                    # defaults to 'localhost'; use '*' for all
                                    # (change requires restart)
-#pc_listen_addresses = 'localhost'
-                                   # what IP address(es) to listen on;
-				   # comma-separated list of addresses;
-				   # defaults to 'localhost'; use '*' for all
-				   # (change requires restart)
 #pcp_port = 9898
                                    # Port number for pcp
                                    # (change requires restart)
