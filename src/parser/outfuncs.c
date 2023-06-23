@@ -1574,11 +1574,51 @@ _outWithClause(StringInfo str, WithClause *node)
 static void
 _outCTESearchClause(StringInfo str, CTESearchClause *node)
 {
+	if (node->search_breadth_first)
+		appendStringInfoString(str, " SEARCH BREADTH FIRST BY ");
+	else
+		appendStringInfoString(str, " SEARCH DEPTH FIRST BY ");
+
+	_outList(str, node->search_col_list);
+
+	if (node->search_seq_column)
+	{
+		appendStringInfoString(str, " SET ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->search_seq_column);
+		appendStringInfoString(str, "\"");
+	}
 }
 
 static void
 _outCTECycleClause(StringInfo str, CTECycleClause *node)
 {
+	appendStringInfoString(str, " CYCLE ");
+	_outList(str, node->cycle_col_list);
+
+	if (node->cycle_mark_column)
+	{
+		appendStringInfoString(str, " SET ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->cycle_mark_column);
+		appendStringInfoString(str, "\"");
+	}
+
+	if (node->cycle_mark_value && node->cycle_mark_default)
+	{
+		appendStringInfoString(str, " TO ");
+		_outNode(str, node->cycle_mark_value);
+		appendStringInfoString(str, " DEFAULT ");
+		_outNode(str, node->cycle_mark_default);
+	}
+
+	if (node->cycle_path_column)
+	{
+		appendStringInfoString(str, " USING ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, node->cycle_path_column);
+		appendStringInfoString(str, "\"");
+	}
 }
 
 static void
@@ -1605,6 +1645,12 @@ _outCommonTableExpr(StringInfo str, CommonTableExpr *node)
 	appendStringInfoString(str, "(");
 	_outNode(str, node->ctequery);
 	appendStringInfoString(str, ")");
+
+	if (node->search_clause)
+		_outCTESearchClause(str, node->search_clause);
+
+	if (node->cycle_clause)
+		_outCTECycleClause(str, node->cycle_clause);
 }
 
 static void
