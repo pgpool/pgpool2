@@ -167,14 +167,15 @@
  <note>
   <para>
    There is a restriction in the online recovery in
-   <xref linkend="guc-replication-mode">. If
-    <productname>Pgpool-II</productname> itself is installed
-    on multiple hosts, online recovery does not work correctly,
-    because <productname>Pgpool-II</productname> has to stop all
-    the clients during the 2nd stage of online recovery.
-    If there are several <productname>Pgpool-II</productname> hosts,
-    only one of them will have received the online recovery command and will
-    block the connections from clients.
+   <xref linkend="guc-replication-mode"> and <xref linkend="guc-snapshot-isolation-mode">.
+   If <productname>Pgpool-II</productname> itself is installed
+   on multiple hosts without enabling watchdog,
+   online recovery does not work correctly,
+   because <productname>Pgpool-II</productname> has to stop all
+   the clients during the 2nd stage of online recovery.
+   If there are several <productname>Pgpool-II</productname> hosts,
+   only one of them will have received the online recovery command and will
+   block the connections from clients.
   </para>
  </note>
  <variablelist>
