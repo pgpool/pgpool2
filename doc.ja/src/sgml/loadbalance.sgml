@@ -20,8 +20,7 @@
    Queries which are sent to primary node or all backend nodes because they cannot be balanced are
    also accounted for in the load balancing algorithm.
    -->
-   負荷分散ができないためにプライマリノードまたは全バックエンドノードに送られるクエリもまた、
-   負荷分散アルゴリズムの考慮に入れられます。
+   負荷分散ができないためにプライマリノードまたは全バックエンドノードに送られるクエリもまた、   負荷分散アルゴリズムの考慮に入れられます。
   </para>
  </note>
 
@@ -59,9 +58,12 @@
     <listitem>
      <para>
       <!--
-      either in replication mode or native replication mode
+      either
+      in <xref linkend="runtime-config-streaming-replication-mode">,
+      <xref linkend="guc-replication-mode">
+      or <xref linkend="guc-snapshot-isolation-mode">
       -->
-      rawモードでない
+      <xref linkend="runtime-config-streaming-replication-mode">、<xref linkend="guc-replication-mode">、<xref linkend="guc-snapshot-isolation-mode">のどれかである。
      </para>
     </listitem>
     <listitem>
@@ -149,33 +151,34 @@
     <listitem>
      <para>
       <!--
-      in native replication mode, in addition to above, following conditions must be met:
+      in <xref linkend="runtime-config-streaming-replication-mode"> in addition to above, following conditions must be met:
       -->
-      ネィティブレプリケーションモードの場合、更に以下の条件が満たされなければなりません。
+      <xref linkend="runtime-config-streaming-replication-mode">の場合、更に以下の条件が満たされなければなりません。
      </para>
      <itemizedlist>
       <listitem>
        <para>
 	<!--
-	does not use temporary tables
+	temporary tables are not used (temporary tables are not replicated)
 	-->
-	一時テーブルを使っていない
+	一時テーブルを使っていない (一時テーブルはレプリケーションされません）
        </para>
       </listitem>
       <listitem>
        <para>
 	<!--
-	does not use unlogged tables
+	unlogged tables are not used (unlogged tables are not replicated)
 	-->
-	unloggedテーブルを使っていない
+	unloggedテーブルを使っていない (一時テーブルはレプリケーションされません）
        </para>
       </listitem>
       <listitem>
        <para>
 	<!--
-	does not use system catalogs
+	system catalogs are not used (system catalog information is
+	important and it is desirable to avoid replication delay)
 	-->
-	システムカタログを使っていない
+	システムカタログを使っていない（システムカタログは重要なので、レプリケーション遅延を避けることが望まれます）
        </para>
       </listitem>
      </itemizedlist>
