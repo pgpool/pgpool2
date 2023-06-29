@@ -1725,7 +1725,7 @@ pool_pending_message_set_flush_request(void)
 	{
 		POOL_PENDING_MESSAGE *msg = (POOL_PENDING_MESSAGE *) lfirst(msg_item);
 		msg->flush_pending = true;
-		ereport(LOG,
+		ereport(DEBUG5,
 				(errmsg("pool_pending_message_set_flush_request: msg: %s",
 						pool_pending_message_type_to_string(msg->type))));
 	}
