@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2018	Tatsuo Ishii
- * Copyright (c) 2018-2021	PgPool Global Development Group
+ * Copyright (c) 2018-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -110,6 +110,11 @@ process_parse(char *buf, PGconn *conn)
 /*
  * Send bind message. "conn" should be at the point right after the message kind
  * was read.
+ *
+ * Bind message is quite complicated. Here is an example:
+ * # portal statement_name num_format_code (0 is text) num_params param_length "param"
+ * # num_return_value_format_code return_value_format_code
+ * 'B'	""	"bar"	0	1	1	"2"	1	0
  */
 void
 process_bind(char *buf, PGconn *conn)
@@ -131,12 +136,14 @@ process_bind(char *buf, PGconn *conn)
 
 	len = sizeof(int);
 
+	/* portal name */
 	portal = buffer_read_string(buf, &bufp);
 	buf = bufp;
 	len += strlen(portal) + 1;
 
 	SKIP_TABS(buf);
 
+	/* statement name */
 	stmt = buffer_read_string(buf, &bufp);
 	buf = bufp;
 	len += strlen(stmt) + 1;
@@ -145,30 +152,30 @@ process_bind(char *buf, PGconn *conn)
 
 	SKIP_TABS(buf);
 
+	/* number of param format code */
 	ncodes = buffer_read_int(buf, &bufp);
-	len += sizeof(short) + sizeof(short) * ncodes;
+	len += sizeof(short);
 	buf = bufp;
-
 	SKIP_TABS(buf);
 
 	if (ncodes > MAXENTRIES)
 	{
-		fprintf(stderr, "Too many codes for bind message (%d)\n", ncodes);
+		fprintf(stderr, "Too many format codes for bind message (%d)\n", ncodes);
 		exit(1);
 	}
 
-	if (ncodes > 0)
+	for (i = 0; i < ncodes; i++)
 	{
-		for (i = 0; i < ncodes; i++)
-		{
-			codes[i] = buffer_read_int(buf, &bufp);
-			buf = bufp;
-			SKIP_TABS(buf);
-		}
+		/* param format code */
+		codes[i] = buffer_read_int(buf, &bufp);
+		len += sizeof(short);
+		buf = bufp;
+		SKIP_TABS(buf);
 	}
 
+	/* number of params */
 	nparams = buffer_read_int(buf, &bufp);
-	len += sizeof(short) + sizeof(short) * nparams;
+	len += sizeof(short);
 	buf = bufp;
 	SKIP_TABS(buf);
 
@@ -180,57 +187,60 @@ process_bind(char *buf, PGconn *conn)
 
 	for (i = 0; i < nparams; i++)
 	{
+		/* param length */
 		paramlens[i] = buffer_read_int(buf, &bufp);
 		len += sizeof(int);
+		buf = bufp;
+		SKIP_TABS(buf);
 
 		if (paramlens[i] > 0)
 		{
-			buf = bufp;
 			paramvals[i] = buffer_read_string(buf, &bufp);
+			len += paramlens[i];
 			buf = bufp;
 			SKIP_TABS(buf);
-			len += paramlens[i];
 		}
 	}
 
-	SKIP_TABS(buf);
-
+	/* number of result format codes */
 	nresult_formatcodes = buffer_read_int(buf, &bufp);
 	buf = bufp;
-	len += sizeof(short) + sizeof(short) * nresult_formatcodes;
+	len += sizeof(short);
 	SKIP_TABS(buf);
 
-	if (nresult_formatcodes >= 2)
+	for (i = 0; i < nresult_formatcodes; i++)
 	{
-		for (i = 0; i < nresult_formatcodes; i++)
-		{
-			result_formatcodes[i] = buffer_read_int(buf, &bufp);
-			buf = bufp;
-			SKIP_TABS(buf);
-		}
+		result_formatcodes[i] = buffer_read_int(buf, &bufp);	/* result format code */
+		buf = bufp;
+		len += sizeof(short);
+		SKIP_TABS(buf);
 	}
 	fprintf(stderr, "\n");
 
 	send_char('B', conn);
-	send_int(len, conn);
-	send_string(portal, conn);
+	send_int(len, conn);	/* message length */
+	send_string(portal, conn);	/* protal name */
 	free(portal);
-	send_string(stmt, conn);
+	send_string(stmt, conn);	/* statement name */
 	free(stmt);
-	send_int16(ncodes, conn);
+	send_int16(ncodes, conn);	/* number of format codes */
 	for (i = 0; i < ncodes; i++)
 	{
-		send_int16(codes[i], conn);
+		send_int16(codes[i], conn);	/* format code */
 	}
 
-	send_int16(nparams, conn);
+	send_int16(nparams, conn);	/* number of params */
 	for (i = 0; i < nparams; i++)
 	{
-		if (paramlens[i] != -1)
+		int	paramlen = paramlens[i];
+
+		send_int(paramlen, conn);
+
+		if (paramlen != -1)	/* NULL? */
 		{
 			if (ncodes == 0 || codes[i] == 0)
 			{
-				send_string(paramvals[i], conn);
+				send_byte(paramvals[i], paramlen, conn);
 			}
 			else
 			{
@@ -239,10 +249,10 @@ process_bind(char *buf, PGconn *conn)
 		}
 	}
 
-	send_int16(nresult_formatcodes, conn);
+	send_int16(nresult_formatcodes, conn);	/* number of result format codes */
 	for (i = 0; i < nresult_formatcodes; i++)
 	{
-		send_int16(result_formatcodes[i], conn);
+		send_int16(result_formatcodes[i], conn);	/* result format code */
 	}
 }
 
