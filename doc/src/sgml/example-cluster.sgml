@@ -368,11 +368,23 @@ host    replication     all             samenet                 scram-sha-256
    <listitem>
     <para>
      To use the automated failover and online recovery of <productname>Pgpool-II</productname>, 
-     the settings that allow <emphasis>passwordless</emphasis> SSH to all backend servers
-     between <productname>Pgpool-II</productname> execution user (default root user)
-     and <literal>postgres</literal> user and between <literal>postgres</literal> user
-     and <literal>postgres</literal> user are necessary. Execute the following command on all servers
-     to set up passwordless <literal>SSH</literal>. The generated key file name is <literal>id_rsa_pgpool</literal>.
+     it is requried to allow <emphasis>SSH public key authentication
+     (passwordless SSH login)</emphasis> to all backend servers
+     as <productname>Pgpool-II</productname> startup user
+     (default is <literal>postgres</literal>. Pgpool-II 4.0 or before, default is <literal>root</literal>)
+     and <productname>PostgreSQL</productname> startup user (default is <literal>postgres</literal>).
+    </para>
+    <para>
+     First, set <literal>postgres</literal> user's passwrod.
+    </para>
+    <programlisting>
+[all servers]# passwd postgres
+    </programlisting>
+    <para>
+     Execute the following command on all servers
+     to set up passwordless <literal>SSH</literal>.
+     In this example, we assume that the generated key file name is
+     <literal>id_rsa_pgpool</literal>.
     </para>
     <programlisting>
 [all servers]# mkdir ~/.ssh
@@ -393,11 +405,52 @@ host    replication     all             samenet                 scram-sha-256
 [all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
     </programlisting>
     <para>
-     After setting, use <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command> command to
-     make sure that you can log in without entering a password. If you fail
-     executing <command>ssh-copy-id</command>, set a password for <literal>postgres</literal> user
-     and temporarily allow password authentication for example.
+     After setting SSH, make sure that you can run
+     <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command> command
+     as <productname>Pgpool-II</productname> startup user and
+     <productname>PostgreSQL</productname> startup user to
+     log in without entering a password. 
     </para>
+
+    <note>
+     <para>
+      If you failed to login using SSH public key authentication, please check the following:
+      <itemizedlist>
+       <listitem>
+        <para>
+         Ensure the public key authentication option <literal>PubkeyAuthentication</literal> are allowed in <filename>/etc/ssh/sshd_config</filename>:
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+PubkeyAuthentication yes
+      </programlisting>
+      <itemizedlist>
+       <listitem>
+        <para>
+         if the password authentication is disabled, you can fail to run
+         <command>ssh-copy-id</command>, temporarily add the following
+         configuration in <filename>/etc/ssh/sshd_config</filename>.
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+PasswordAuthentication yes
+      </programlisting>
+      <itemizedlist>
+       <listitem>
+        <para>
+         If SELinux is enabled, SSH public key authentication (passwordless SSH) may fail.
+         You need to run the following command on all servers.
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+[all servers]# su - postgres
+[all servers]$ restorecon -Rv ~/.ssh
+      </programlisting>
+     </para>
+    </note>
    </listitem>
 
    <listitem>
