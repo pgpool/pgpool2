@@ -426,13 +426,17 @@ host    replication     all             samenet                 scram-sha-256
 
    <listitem>
     <para>
-     自動フェイルオーバ、オンラインリカバリ機能を利用するには、
-     <productname>Pgpool-II</productname>起動ユーザ(<productname>Pgpool-II</productname> 4.0以前の
-     デフォルトでは<literal>root</literal>)と<literal>postgres</literal>ユーザ間、
-     <literal>postgres</literal>ユーザと<literal>postgres</literal>ユーザ間が
-     双方向に<emphasis>パスワードなし</emphasis>で<literal>SSH</literal>接続できる状態になっている必要があります。
-     全サーバで以下のコマンドを実行し、<literal>SSH</literal>の設定を行います。
-     生成される鍵ファイル名は<literal>id_rsa_pgpool</literal>とします。
+     自動フェイルオーバ、オンラインリカバリ機能を利用するには、すべての<productname>Pgpool-II</productname>ノード間で<productname>Pgpool-II</productname>の起動ユーザ（デフォルトは<literal>postgres</literal>ユーザ。Pgpool-II 4.0以前、デフォルトは<literal>root</literal>ユーザ）および<productname>PostgreSQL</productname>の起動ユーザ（デフォルトは<literal>postgres</literal>ユーザ）として双方向にSSH公開鍵認証（パスワードなし）で接続できるように設定する必要があります。 
+    </para>
+    <para>
+     まず、全サーバで<literal>postgres</literal>ユーザのパスワードを設定します。
+    </para>
+    <programlisting>
+[全サーバ]# passwd postgres
+    </programlisting>
+    <para>
+     全サーバで以下のコマンドを実行し、SSH公開鍵の登録を行います。
+     この設定例では生成される鍵ファイル名は<literal>id_rsa_pgpool</literal>とします。
     </para>
     <programlisting>
 [全サーバ]# mkdir ~/.ssh
@@ -453,11 +457,45 @@ host    replication     all             samenet                 scram-sha-256
 [全サーバ]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
     </programlisting>
     <para>
-     設定後、<literal>root</literal>ユーザ及び<literal>postgres</literal>ユーザから
-     <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command>コマンドを実行し、
-     パスワード入力せずログインできることを確認してください。
-     <command>ssh-copy-id</command>の実行に失敗する場合は、<literal>postgres</literal> ユーザのパスワードを設定し、一時的にパスワード認証を有効化するなどしてください。
+     設定後、<productname>Pgpool-II</productname>の起動ユーザでおよび<productname>PostgreSQL</productname>の起動ユーザで<command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command>コマンドを実行し、パスワード入力せずログインできることを確認してください。
     </para>
+
+    <note>
+     <para>
+      公開鍵認証によるログインに失敗した場合には、以下を確認してください。
+      <itemizedlist>
+       <listitem>
+        <para>
+         <filename>/etc/ssh/sshd_config</filename>で公開鍵認証が許可されていることを確認します。
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+PubkeyAuthentication yes
+      </programlisting>
+      <itemizedlist>
+       <listitem>
+        <para>
+         SSHのパスワード認証を無効化している場合は、ssh-copy-idの実行に失敗するので、一時的に<filename>/etc/ssh/sshd_config</filename>内のPasswordAuthenticationをyesに変更するなどしてください。
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+PasswordAuthentication yes
+      </programlisting>
+      <itemizedlist>
+       <listitem>
+        <para>
+         SELinuxを有効化している場合は、SSH公開鍵認証(パスワードなし)が失敗する可能性があるので、すべてのサーバで以下のコマンドを実行する必要があります。
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+[全サーバ]# su - postgres
+[全サーバ]$ restorecon -Rv ~/.ssh
+      </programlisting>
+     </para>
+    </note>
    </listitem>
 
    <listitem>
