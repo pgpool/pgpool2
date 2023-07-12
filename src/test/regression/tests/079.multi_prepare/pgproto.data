@@ -1,0 +1,16 @@
+'Q'	"PREPARE mark_rels_by_node(int8) AS SELECT $1;PREPARE mark_rels_by_way(int8) AS SELECT $1"
+'Y'
+# portal statement_name num_format_code (0 is text) num_params param_length "param"
+# num_return_value_format_code return_value_format_code
+'B'	""	"mark_rels_by_node"	0	1	1	"2"	1	0
+'D'	'P'	""
+'E'	""	0
+'S'
+'Y'
+# error was: unable to bind D cannot get parse message "mark_rels_by_way"
+'B'	""	"mark_rels_by_way"	0	1	1	"1"	1	0
+'D'	'P'	""
+'E'	""	0
+'S'
+'Y'
+'X'
