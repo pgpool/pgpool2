@@ -1,0 +1,23 @@
+FE=> Query (query="PREPARE mark_rels_by_node(int8) AS SELECT $1;PREPARE mark_rels_by_way(int8) AS SELECT $1")
+<= BE CommandComplete(PREPARE)
+<= BE CommandComplete(PREPARE)
+<= BE ReadyForQuery(I)
+FE=> Bind(stmt="mark_rels_by_node", portal="")
+FE=> Describe(portal="")
+FE=> Execute(portal="")
+FE=> Sync
+<= BE BindComplete
+<= BE RowDescription
+<= BE DataRow
+<= BE CommandComplete(SELECT 1)
+<= BE ReadyForQuery(I)
+FE=> Bind(stmt="mark_rels_by_way", portal="")
+FE=> Describe(portal="")
+FE=> Execute(portal="")
+FE=> Sync
+<= BE BindComplete
+<= BE RowDescription
+<= BE DataRow
+<= BE CommandComplete(SELECT 1)
+<= BE ReadyForQuery(I)
+FE=> Terminate
