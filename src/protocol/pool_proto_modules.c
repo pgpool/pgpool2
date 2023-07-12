@@ -106,6 +106,8 @@ static void si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * b
 
 static bool multi_statement_query(char *buf);
 
+static void check_prepare(List *parse_tree_list, int len, char *contents);
+
 /*
  * This is the workhorse of processing the pg_terminate_backend function to
  * make sure that the use of function should not trigger the backend node failover.
@@ -344,6 +346,20 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			query_context->is_parse_error = true;
 		}
 	}
+
+	if (query_context->is_multi_statement)
+	{
+		/*
+		 * Check parse tree list and if it includes PREPARE statement in the
+		 * second or subsequent parse tree, create "sent_message" entry so
+		 * that bind message can find them later on (PREPARE is usually
+		 * executed by EXECUTE, but it's possible that a client feels free to
+		 * use PREPARE then bind and execute messages).  If PREPARE is in the
+		 * first parse tree, it will be processed subsequent code path.
+		 */
+		check_prepare(parse_tree_list, len, contents);
+	}
+
 	MemoryContextSwitchTo(old_context);
 
 	if (parse_tree_list != NIL)
@@ -4596,4 +4612,47 @@ bool multi_statement_query(char *queries)
 	psql_scan_destroy(sstate);
 
 	return num_semicolons > 1;
+}
+
+/*
+ * Check given parse tree list and if it is a multi statement and includes
+ * PREPARE statement in the second or subsequent parse tree, create
+ * "sent_message" entry so that bind message can find them later on.
+ * parse_tree_list: raw parse tree list (list of RawStmt)
+ * len: full query string length
+ * contents: full query string
+ */
+static void
+check_prepare(List *parse_tree_list, int len, char *contents)
+{
+	Node				*node;
+	RawStmt				*rstmt;
+	POOL_QUERY_CONTEXT	*query_context;
+	ListCell			*l;
+	POOL_SENT_MESSAGE	*message;
+
+	/* sanity check */
+	if (list_length(parse_tree_list) <= 1)
+		return;
+
+	foreach (l, parse_tree_list)
+	{
+		if (l == list_head(parse_tree_list))	/* skip the first parse tree */
+			continue;
+
+		rstmt = (RawStmt *) lfirst(l);
+		node = (Node *) rstmt->stmt;	/* pick one parse tree */
+
+		if (!IsA(node, PrepareStmt))	/* PREPARE? */
+			continue;
+
+		query_context = pool_init_query_context();	/* initialize query context */
+		query_context->is_multi_statement = true;	/* this is a multi statement query */
+		pool_start_query(query_context, contents, len, node);	/* start query context */
+		pool_where_to_send(query_context, query_context->original_query,	/* set query destination */
+						   query_context->parse_tree);
+		message = pool_create_sent_message('Q', len, contents, 0,	/* create sent message */
+										   ((PrepareStmt *) node)->name, query_context);
+		pool_add_sent_message(message);	/* add it to the sent message list */
+	}
 }
