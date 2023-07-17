@@ -3479,19 +3479,30 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 		{
 			if (kind_list[i] == 'E')
 			{
-				pool_read(CONNECTION(backend, i), &len, sizeof(len));
-				unread_len = sizeof(len);
-				unread_p = palloc(ntohl(len));
-				memcpy(unread_p, &len, sizeof(len));
-				len = ntohl(len);
-				len -= 4;
-				unread_p = repalloc(unread_p, sizeof(len) + len);
-				p = pool_read2(CONNECTION(backend, i), len);
-				memcpy(unread_p + sizeof(len), p, len);
-				unread_len += len;
-				error_stat_count_up(i, extract_error_kind(unread_p + sizeof(len), PROTO_MAJOR_V3));
-				pool_unread(CONNECTION(backend, i), unread_p, unread_len);
-				pfree(unread_p);
+				int major = MAJOR(CONNECTION(backend, i));
+
+				if (major == PROTO_MAJOR_V3)
+				{
+					pool_read(CONNECTION(backend, i), &len, sizeof(len));
+					unread_len = sizeof(len);
+					unread_p = palloc(ntohl(len));
+					memcpy(unread_p, &len, sizeof(len));
+					len = ntohl(len);
+					len -= 4;
+					unread_p = repalloc(unread_p, sizeof(len) + len);
+					p = pool_read2(CONNECTION(backend, i), len);
+					memcpy(unread_p + sizeof(len), p, len);
+					unread_len += len;
+					error_stat_count_up(i, extract_error_kind(unread_p + sizeof(len), PROTO_MAJOR_V3));
+					pool_unread(CONNECTION(backend, i), unread_p, unread_len);
+					pfree(unread_p);
+				}
+				else if (major == PROTO_MAJOR_V2)
+				{
+					unread_p = pool_read_string(CONNECTION(backend, i), &unread_len, 0);
+					error_stat_count_up(i, extract_error_kind(unread_p, PROTO_MAJOR_V2));
+					pool_unread(CONNECTION(backend, i), unread_p, unread_len);
+				}
 			}
 		}
 	}
