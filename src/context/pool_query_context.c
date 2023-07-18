@@ -37,6 +37,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 /*
  * Where to send query
@@ -326,12 +327,15 @@ pool_is_node_to_be_sent_in_current_query(int node_id)
 int
 pool_virtual_main_db_node_id(void)
 {
+	volatile POOL_REQUEST_INFO	*my_req;
 	POOL_SESSION_CONTEXT *sc;
 
 	/*
-	 * Check whether failover is in progress. If so, just abort this session.
+	 * Check whether failover is in progress and we are child process.
+	 * If so, we will wait for failover to finish.
 	 */
-	if (Req_info->switching)
+	my_req = Req_info;
+	if (processType == PT_CHILD && my_req->switching)
 	{
 #ifdef NOT_USED
 		POOL_SETMASK(&BlockSig);
@@ -341,7 +345,15 @@ pool_virtual_main_db_node_id(void)
 				 errhint("In a moment you should be able to reconnect to the database")));
 		POOL_SETMASK(&UnBlockSig);
 #endif
-		child_exit(POOL_EXIT_AND_RESTART);
+		/*
+		 * Wait for failover to finish
+		 */
+		if (wait_for_failover_to_finish() == -2)
+			/*
+			 * Waiting for failover/failback to finish was timed out.
+			 * Time to exit this process (and session disconnection).
+			 */
+			child_exit(POOL_EXIT_AND_RESTART);
 	}
 
 	sc = pool_get_session_context(true);
@@ -2268,4 +2280,34 @@ where_to_send_native_replication(POOL_QUERY_CONTEXT * query_context, char *query
 			pool_setall_node_to_be_sent(query_context);
 		}
 	}
+}
+
+/*
+ * Wait for failover/failback to finish.
+ * Return values:
+ * 0: no failover/failback occurred.
+ * -1: failover/failback occurred and finished within certain period.
+ * -2: failover/failback occurred and timed out.
+ */
+int
+wait_for_failover_to_finish(void)
+{
+#define	MAX_FAILOVER_WAIT	30	/* waiting for failover finish timeout in seconds */
+
+	volatile POOL_REQUEST_INFO	*my_req;
+	int		ret = 0;
+	int		i;
+
+	/*
+	 * Wait for failover to finish
+	 */
+	for (i = 0;i < MAX_FAILOVER_WAIT; i++)
+	{
+		my_req = Req_info;
+		if (my_req->switching == 0)
+			return ret;
+		ret = -1;	/* failover/failback finished */
+		sleep(1);
+	}
+	return -2;	/* timed out */
 }

@@ -1590,7 +1590,7 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 			{
 				ereport(ERROR,
 						(errmsg("do command failed"),
-						 errdetail("backend error: \"%s\"", string)));
+						 errdetail("backend error: \"%s\" \"%s\"", string, query)));
 			}
 		}
 	}

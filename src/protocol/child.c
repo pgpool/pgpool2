@@ -401,6 +401,14 @@ do_child(int *fds)
 			backend_timer_expired = 0;
 		}
 
+		/*
+		 * Check whether failover/failback is ongoing and wait for it to
+		 * finish. If it actually happened, update the private backend status
+		 * because it is possible that a backend maybe went down.
+		 */
+		if (wait_for_failover_to_finish() < 0)
+			pool_initialize_private_backend_status();
+
 		backend = get_backend_connection(child_frontend);
 		if (!backend)
 		{
@@ -835,17 +843,31 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 			for (i = 0; i < NUM_BACKENDS; i++)
 			{
 				if (VALID_BACKEND(i))
-					if (do_command(frontend, CONNECTION(backend, i),
+				{
+					/*
+					 * We want to catch and ignore errors in do_command if a
+					 * backend is just going down right now. Otherwise
+					 * do_command raises an error and disconnects the
+					 * connection to frontend. We can safely ignore error from
+					 * "SET application_name" command if the backend goes
+					 * down.
+					 */
+					PG_TRY();
+					{
+						do_command(frontend, CONNECTION(backend, i),
 								   command_buf, MAJOR(backend),
 								   MAIN_CONNECTION(backend)->pid,
-								   MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
-					{
-						ereport(ERROR,
-								(errmsg("unable to process command for backend connection"),
-								 errdetail("do_command returned DEADLOCK status")));
+								   MAIN_CONNECTION(backend)->key, 0);
 					}
+					PG_CATCH();
+					{
+						/* ignore the error message */
+						MemoryContextSwitchTo(oldContext);
+						FlushErrorState();
+					}
+					PG_END_TRY();
+				}
 			}
-
 			pool_add_param(&MAIN(backend)->params, "application_name", sp->application_name);
 			set_application_name_with_string(sp->application_name);
 		}
@@ -1662,6 +1684,11 @@ retry_accept:
 	{
 		pause();
 	}
+
+	/* wait for failover/failback to finish */
+	if (wait_for_failover_to_finish() < 0)
+		/* failover/failback occurred. Update private backend status */
+		pool_initialize_private_backend_status();
 
 	afd = accept(fd, (struct sockaddr *) &saddr->addr, &saddr->salen);
 

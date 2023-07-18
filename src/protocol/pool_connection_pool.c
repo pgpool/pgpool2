@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 
 #include "pool.h"
+#include "context/pool_query_context.h"
 #include "utils/pool_stream.h"
 #include "utils/palloc.h"
 #include "pool_config.h"
@@ -158,6 +159,13 @@ pool_get_cp(char *user, char *database, int protoMajor, int check_socket)
 					ereport(LOG,
 							(errmsg("connection closed."),
 							 errdetail("retry to create new connection pool")));
+					/*
+					 * It is possible that one of backend just broke.  sleep 1
+					 * second to wait for failover occurres, then wait for the
+					 * failover finishes.
+					 */
+					sleep(1);
+					wait_for_failover_to_finish();
 
 					for (j = 0; j < NUM_BACKENDS; j++)
 					{
