@@ -523,11 +523,16 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	POOL_SETMASK(&BlockSig);
 
 	if (pool_config->process_management == PM_DYNAMIC)
-		current_child_process_count = pool_config->max_spare_children;
+	{
+		if (pool_config->process_management_strategy == PM_STRATEGY_AGGRESSIVE)
+			current_child_process_count = pool_config->max_spare_children;
+		else
+			current_child_process_count = pool_config->min_spare_children;
+	}
 	else
 		current_child_process_count = pool_config->num_init_children;
-
-	/* fork the children */
+	ereport(DEBUG1,
+            (errmsg("Spawning %d child processes",current_child_process_count)));
 	for (i = 0; i < current_child_process_count; i++)
 	{
 		process_info[i].start_time = time(NULL);
