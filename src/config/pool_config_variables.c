@@ -4966,6 +4966,13 @@ config_post_processor(ConfigContext context, int elevel)
 				pool_config->max_spare_children,pool_config->min_spare_children)));
 		return false;
 	}
+	if (pool_config->num_init_children < pool_config->max_spare_children)
+	{
+		ereport(elevel,
+				(errmsg("invalid configuration, max_spare_children:%d can't be greater than num_init_children:%d",
+				pool_config->max_spare_children,pool_config->num_init_children)));
+		return false;
+	}
 	return true;
 }
 
