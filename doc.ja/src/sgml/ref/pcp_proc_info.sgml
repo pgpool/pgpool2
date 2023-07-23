@@ -151,6 +151,7 @@ test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 
     14. pgpool child process id
     15. PostgreSQL backend id
     16. process status
+    17. 1 if backend is load balance node and frontend connected, 0 othewise
     -->
     1. 接続先のデータベース名
     2. 接続先のユーザ名
@@ -168,6 +169,7 @@ test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 
     14. pgpool子プロセスID
     15. PostgreSQLバックエンドID
     16. プロセスの状態
+　　17. フロントエンドが接続中でバックエンドが負荷分散ノードならば1, そうでなければ0
    </literallayout>
   </para>
   <para>
@@ -203,6 +205,7 @@ Connected                 : 0
 PID                       : 30750
 Backend ID                : 0
 Status                    : Wait for connection
+Load balance node         : 0
 
 Database                  : test
 Username                  : postgres
@@ -220,6 +223,7 @@ Connected                 : 0
 PID                       : 30750
 Backend ID                : 1
 Status                    : Wait for connection
+Load balance node         : 0
 
 Database                  : test
 Username                  : kawamoto
@@ -237,6 +241,7 @@ Connected                 : 1
 PID                       : 30751
 Backend ID                : 0
 Status                    : Idle
+Load balance node         : 1
 
 Database                  : test
 Username                  : kawamoto
@@ -254,6 +259,7 @@ Connected                 : 1
 PID                       : 30751
 Backend ID                : 1
 Status                    : Idle
+Load balance node         : 1
   </programlisting>
  </refsect1>
 
