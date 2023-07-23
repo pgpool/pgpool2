@@ -257,11 +257,6 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	 */
 	read_status_file(discard_status);
 
-	/*
-	 * install the call back for preparation of system exit
-	 */
-	on_system_exit(system_will_go_down, (Datum) NULL);
-
 	/* set unix domain socket path for connections to pgpool */
 	memset(unix_domain_socket_path, 0, sizeof(unix_domain_socket_path));
 	snprintf(unix_domain_socket_path, sizeof(unix_domain_socket_path), "%s/.s.PGSQL.%d",
@@ -302,6 +297,12 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 				(errmsg("failed to allocate memory in startup process")));
 
 	initialize_shared_mem_objects(clear_memcache_oidmaps);
+
+	/*
+	 * install the call back for preparation of system exit
+	 */
+	on_system_exit(system_will_go_down, (Datum) NULL);
+
 	if (pool_config->use_watchdog)
 	{
 		sigset_t	mask;
