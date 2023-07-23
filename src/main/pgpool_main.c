@@ -313,11 +313,6 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	 */
 	read_status_file(discard_status);
 
-	/*
-	 * install the call back for preparation of system exit
-	 */
-	on_system_exit(system_will_go_down, (Datum) NULL);
-
 	/* set unix domain socket path for connections to pgpool */
 	for (i = 0; i < pool_config->num_unix_socket_directories; i++)
 	{
@@ -393,6 +388,11 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	syslogPipe[0] = -1;
 
 	initialize_shared_mem_objects(clear_memcache_oidmaps);
+
+	/*
+	 * install the callback for preparation of system exit
+	 */
+	on_system_exit(system_will_go_down, (Datum) NULL);
 
 	/* setup signal handlers */
 	pool_signal(SIGCHLD, reap_handler);
