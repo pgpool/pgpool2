@@ -84,7 +84,8 @@ int * pool_report_pools_offsets(int *n)
 		offsetof(POOL_REPORT_POOLS, pool_counter),
 		offsetof(POOL_REPORT_POOLS, pool_backendpid),
 		offsetof(POOL_REPORT_POOLS, pool_connected),
-		offsetof(POOL_REPORT_POOLS, status)
+		offsetof(POOL_REPORT_POOLS, status),
+		offsetof(POOL_REPORT_POOLS, load_balance_node)
 	};
 
 	*n = sizeof(offsettbl)/sizeof(int);

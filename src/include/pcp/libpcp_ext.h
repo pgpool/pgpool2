@@ -262,6 +262,7 @@ typedef struct
 	char		pool_backendpid[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		pool_connected[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		status[POOLCONFIG_MAXPROCESSSTATUSLEN + 1];
+	char		load_balance_node[POOLCONFIG_MAXPROCESSSTATUSLEN + 1];
 }			POOL_REPORT_POOLS;
 
 /* version struct */

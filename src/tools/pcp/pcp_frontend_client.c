@@ -721,13 +721,14 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		"Database", "Username", "Start time", "Client connection count",
 		"Major", "Minor", "Backend connection time", "Client connection time",
 		"Client idle duration", "Client disconnection time", "Pool Counter", "Backend PID",
-		"Connected", "PID", "Backend ID", "Status"
+		"Connected", "PID", "Backend ID", "Status", "Load balance node"
 	};
 	const char *types[] = {
 		"s", "s", "s", "s",
 		"s", "s", "s", "s",
 		"s", "s", "s", "s",
-		"s", "s", "s", "s"
+		"s", "s", "s", "s",
+		"s"
 	};
 
 
@@ -735,7 +736,7 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		format = format_titles(titles, types, sizeof(titles)/sizeof(char *));
 	else
 	{
-		format = "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n";
+		format = "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n";
 	}
 
 	for (i = 0; i < array_size; i++)
@@ -764,7 +765,8 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 			   pools->pool_connected,
 			   pools->pool_pid,
 			   pools->backend_id,
-			   pools->status);
+			   pools->status,
+			   pools->load_balance_node);
 	}
 	if (printed == false)
 		printf("No process information available\n\n");

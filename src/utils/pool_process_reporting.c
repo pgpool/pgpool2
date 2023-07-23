@@ -1552,6 +1552,7 @@ get_pools(int *nrows)
 		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
 			int idle_duration = pi->connection_info[pool * MAX_NUM_BACKENDS].client_idle_duration;
+			int load_balancing_node_id = pi->connection_info[pool * MAX_NUM_BACKENDS].load_balancing_node;
 			int cliet_idle_time = pool_config->client_idle_limit;
 
 			if (pool_config->client_idle_limit > 0)
@@ -1675,6 +1676,10 @@ get_pools(int *nrows)
 						*(pools[lines].status) = '\0';
 				}
 
+				if (pi->connection_info[poolBE].connected && backend_id == load_balancing_node_id)
+					StrNCpy(pools[lines].load_balance_node, "1", POOLCONFIG_MAXPROCESSSTATUSLEN);
+				else
+					StrNCpy(pools[lines].load_balance_node, "0", POOLCONFIG_MAXPROCESSSTATUSLEN);
 				lines++;
 			}
 		}
@@ -1694,7 +1699,8 @@ pools_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	static char *field_names[] = {"pool_pid", "start_time", "client_connection_count", "pool_id",
 								  "backend_id", "database", "username", "backend_connection_time",
 								  "client_connection_time", "client_disconnection_time", "client_idle_duration",
-								  "majorversion", "minorversion", "pool_counter", "pool_backendpid", "pool_connected", "status"};
+								  "majorversion", "minorversion", "pool_counter", "pool_backendpid", "pool_connected",
+								  "status", "load_balance_node"};
 	int		n;
 	int		*offsettbl;
 	int		nrows;
