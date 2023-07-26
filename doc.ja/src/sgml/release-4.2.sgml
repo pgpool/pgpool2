@@ -847,15 +847,6 @@
 
    <listitem>
     <!--
-    2022-07-10 [a070748b]
-    -->
-    <para>
-     pgpool_recovery拡張のスクリプトを修正しました。(Tatsuo Ishii)
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
     2022-07-06 [da33d44b]
     2022-07-05 [aa4e8577]
     2022-07-04 [a1d839f8]
