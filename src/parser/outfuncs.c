@@ -3,20 +3,13 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2022, PgPool Global Development Group
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2023, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
  *	  src/backend/nodes/outfuncs.c
- *
- * NOTES
- *	  Every node type that can appear in stored rules' parsetrees *must*
- *	  have an output function defined here (as well as an input function
- *	  in readfuncs.c).	For use in debugging, we also provide output
- *	  functions for nodes that appear in raw parsetrees, path, and plan trees.
- *	  These nodes however need not have input functions.
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +20,6 @@
 #include "utils/palloc.h"
 #include "utils/elog.h"
 #include "parser.h"
-#include "extensible.h"
 #include "pg_list.h"
 #include "parsenodes.h"
 #include "pg_class.h"
@@ -1926,6 +1918,11 @@ _outBitString(StringInfo str, const BitString *node)
 {
     /* internal representation already has leading 'b' */
     appendStringInfoString(str, node->bsval);
+}
+
+static void
+_outBitmapset(StringInfo str, const Bitmapset *bms)
+{
 }
 
 /*
@@ -4572,8 +4569,6 @@ _outGrantRoleStmt(StringInfo str, GrantRoleStmt *node)
 	else
 	{
 		appendStringInfoString(str, "REVOKE ");
-		if (node->admin_opt == true)
-			appendStringInfoString(str, "ADMIN OPTION FOR ");
 	}
 
 	_outIdList(str, node->granted_roles);
@@ -4581,9 +4576,6 @@ _outGrantRoleStmt(StringInfo str, GrantRoleStmt *node)
 	appendStringInfoString(str, node->is_grant == true ? " TO " : " FROM ");
 
 	_outIdList(str, node->grantee_roles);
-
-	if (node->admin_opt == true && node->is_grant == true)
-		appendStringInfoString(str, "  WITH ADMIN OPTION");
 
 	if (node->grantor != NULL)
 	{
@@ -5839,7 +5831,8 @@ _outNode(StringInfo str, void *obj)
 
 	if (obj == NULL)
 		return;
-	else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList))
+	else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList) ||
+			 IsA(obj, XidList))
 		_outList(str, obj);
 	/* nodeRead does not want to see { } around these! */
 	else if (IsA(obj, Integer))
@@ -5852,6 +5845,8 @@ _outNode(StringInfo str, void *obj)
 		_outString(str, (String *) obj);
 	else if (IsA(obj, BitString))
 		_outBitString(str, (BitString *) obj);
+	else if (IsA(obj, Bitmapset))
+		_outBitmapset(str, (Bitmapset *) obj);
 	else
 	{
 		switch (nodeTag(obj))

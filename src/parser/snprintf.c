@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2003-2019, PgPool Global Development Group
+ * Copyright (c) 2003-2023, PgPool Global Development Group
  * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -815,12 +815,8 @@ find_arguments(const char *format, va_list args,
 	int			longflag;
 	int			fmtpos;
 	int			i;
-	int			last_dollar;
-	PrintfArgType argtypes[PG_NL_ARGMAX + 1];
-
-	/* Initialize to "no dollar arguments known" */
-	last_dollar = 0;
-	MemSet(argtypes, 0, sizeof(argtypes));
+	int			last_dollar = 0;	/* Init to "no dollar arguments known" */
+	PrintfArgType argtypes[PG_NL_ARGMAX + 1] = {0};
 
 	/*
 	 * This loop must accept the same format strings as the one in dopr().
@@ -1061,8 +1057,8 @@ fmtptr(const void *value, PrintfTarget *target)
 	int			vallen;
 	char		convert[64];
 
-	/* we rely on regular C library's sprintf to do the basic conversion */
-	vallen = sprintf(convert, "%p", value);
+	/* we rely on regular C library's snprintf to do the basic conversion */
+	vallen = snprintf(convert, sizeof(convert), "%p", value);
 	if (vallen < 0)
 		target->failed = true;
 	else
@@ -1212,11 +1208,11 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 	int			padlen;			/* amount to pad with spaces */
 
 	/*
-	 * We rely on the regular C library's sprintf to do the basic conversion,
+	 * We rely on the regular C library's snprintf to do the basic conversion,
 	 * then handle padding considerations here.
 	 *
 	 * The dynamic range of "double" is about 1E+-308 for IEEE math, and not
-	 * too wildly more than that with other hardware.  In "f" format, sprintf
+	 * too wildly more than that with other hardware.  In "f" format, snprintf
 	 * could therefore generate at most 308 characters to the left of the
 	 * decimal point; while we need to allow the precision to get as high as
 	 * 308+17 to ensure that we don't truncate significant digits from very
@@ -1268,14 +1264,14 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 			fmt[2] = '*';
 			fmt[3] = type;
 			fmt[4] = '\0';
-			vallen = sprintf(convert, fmt, prec, value);
+			vallen = snprintf(convert, sizeof(convert), fmt, prec, value);
 		}
 		else
 		{
 			fmt[0] = '%';
 			fmt[1] = type;
 			fmt[2] = '\0';
-			vallen = sprintf(convert, fmt, value);
+			vallen = snprintf(convert, sizeof(convert), fmt, value);
 		}
 		if (vallen < 0)
 			goto fail;
@@ -1404,7 +1400,7 @@ pg_strfromd(char *str, size_t count, int precision, double value)
 			fmt[2] = '*';
 			fmt[3] = 'g';
 			fmt[4] = '\0';
-			vallen = sprintf(convert, fmt, precision, value);
+			vallen = snprintf(convert, sizeof(convert), fmt, precision, value);
 			if (vallen < 0)
 			{
 				target.failed = true;

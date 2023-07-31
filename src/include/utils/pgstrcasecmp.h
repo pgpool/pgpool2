@@ -12,6 +12,11 @@
 #ifndef POOL_PGSTRCASECMP
 #define POOL_PGSTRCASECMP
 
+/* msb for char */
+#define HIGHBIT                 (0x80)
+#define IS_HIGHBIT_SET(ch)      ((unsigned char)(ch) & HIGHBIT)
+
+
 /* Portable SQL-like case-independent comparisons and conversions */
 extern int	pg_strcasecmp(const char *s1, const char *s2);
 extern int	pg_strncasecmp(const char *s1, const char *s2, size_t n);

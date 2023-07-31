@@ -11,8 +11,8 @@
  * be handled easily in a simple depth-first traversal.
  *
  *
- * Portions Copyright (c) 2003-2022, PgPool Global Development Group
- * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2023, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -2498,12 +2498,6 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_SCALAR_FIELD(lateral);
 	COPY_SCALAR_FIELD(inh);
 	COPY_SCALAR_FIELD(inFromCl);
-	COPY_SCALAR_FIELD(requiredPerms);
-	COPY_SCALAR_FIELD(checkAsUser);
-	COPY_BITMAPSET_FIELD(selectedCols);
-	COPY_BITMAPSET_FIELD(insertedCols);
-	COPY_BITMAPSET_FIELD(updatedCols);
-	COPY_BITMAPSET_FIELD(extraUpdatedCols);
 	COPY_NODE_FIELD(securityQuals);
 
 	return newnode;
@@ -3496,7 +3490,7 @@ _copyGrantRoleStmt(const GrantRoleStmt *from)
 	COPY_NODE_FIELD(granted_roles);
 	COPY_NODE_FIELD(grantee_roles);
 	COPY_SCALAR_FIELD(is_grant);
-	COPY_SCALAR_FIELD(admin_opt);
+	COPY_SCALAR_FIELD(opt);
 	COPY_NODE_FIELD(grantor);
 	COPY_SCALAR_FIELD(behavior);
 
@@ -3718,9 +3712,9 @@ _copyIndexStmt(const IndexStmt *from)
 	COPY_NODE_FIELD(excludeOpNames);
 	COPY_STRING_FIELD(idxcomment);
 	COPY_SCALAR_FIELD(indexOid);
-	COPY_SCALAR_FIELD(oldNode);
+	COPY_SCALAR_FIELD(oldNumber);
 	COPY_SCALAR_FIELD(oldCreateSubid);
-	COPY_SCALAR_FIELD(oldFirstRelfilenodeSubid);
+	COPY_SCALAR_FIELD(oldFirstRelfilelocatorSubid);
 	COPY_SCALAR_FIELD(unique);
 	COPY_SCALAR_FIELD(nulls_not_distinct);
 	COPY_SCALAR_FIELD(primary);
@@ -4839,7 +4833,7 @@ _copyPartitionSpec(const PartitionSpec *from)
 {
 	PartitionSpec *newnode = makeNode(PartitionSpec);
 
-	COPY_STRING_FIELD(strategy);
+	COPY_SCALAR_FIELD(strategy);
 	COPY_NODE_FIELD(partParams);
 	COPY_LOCATION_FIELD(location);
 

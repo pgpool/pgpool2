@@ -18,19 +18,16 @@
  * C library thinks the locale is.
  *
  *
- * Portions Copyright (c) 2023, PgPool Global Development Group
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
  *
  * src/port/pgstrcasecmp.c
  *
  *-------------------------------------------------------------------------
  */
-//#include "c.h"
 
-#include <ctype.h>
-#include <stddef.h>
+#include <unistd.h>
+#include "pool.h"
 #include "utils/pgstrcasecmp.h"
-#include "parser/pool_parser.h"
 
 /*
  * Case-independent comparison of two null-terminated strings.
