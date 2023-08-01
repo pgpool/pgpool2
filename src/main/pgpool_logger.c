@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1078,7 +1078,6 @@ logfile_getname(pg_time_t timestamp, const char *suffix)
 	len = strlen(filename);
 
 	/* treat pool_config->log_filename as a strftime pattern */
-//	strftime(strbuf, 128, "%Y-%m-%d %H:%M:%S", localtime(&now));
 	strftime(filename + len, MAXPGPATH - len, pool_config->log_filename,
 				localtime(&timestamp));
 
@@ -1160,7 +1159,6 @@ sigHupHandler(int sig)
 	int			save_errno = errno;
 
 	got_SIGHUP = true;
-//	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
@@ -1172,7 +1170,6 @@ sigUsr1Handler(int sig)
 	int			save_errno = errno;
 
 	rotation_requested = true;
-//	SetLatch(MyLatch);
 
 	errno = save_errno;
 }
