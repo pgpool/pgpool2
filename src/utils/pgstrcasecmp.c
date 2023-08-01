@@ -26,6 +26,7 @@
  */
 
 #include <unistd.h>
+#include <ctype.h>
 #include "pool.h"
 #include "utils/pgstrcasecmp.h"
 
