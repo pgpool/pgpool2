@@ -55,6 +55,7 @@ Pgpool-II documentation
 	<listitem><para>f, fast : fast mode </para></listitem>
 	<listitem><para>i, immediate : immediate mode </para></listitem>
        </itemizedlist>
+       Regarding the meaning of each mode, please refer to <xref linkend="pgpool"> manual.
       </para>
      </listitem>
     </varlistentry>
