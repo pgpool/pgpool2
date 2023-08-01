@@ -81,7 +81,7 @@ Pgpool-II documentation
        </itemizedlist>
       </para>
       <para>
-       ※ 現在は fast モードと immediate シャットダウンの処理に区別はありません。 命令を送った時点でクライアントがいる・いないに関わらずシャットダウン処理を即座に行います。
+       それぞれのモードの意味については、<xref linkend="pgpool">マニュアルをご覧ください。
       </para>
      </listitem>
     </varlistentry>
