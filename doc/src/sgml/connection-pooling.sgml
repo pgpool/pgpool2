@@ -1024,6 +1024,11 @@
 	 <entry>health_check%d (%d is replaced with backend node id)</entry>
 	</row>
 
+	<row>
+	 <entry>logger process</entry>
+	 <entry>logger (Note that the application name "logger" will not be output to the log file managed by logger process)</entry>
+	</row>
+
        </tbody>
       </tgroup>
      </table>
