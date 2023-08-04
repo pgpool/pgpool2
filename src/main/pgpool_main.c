@@ -3567,7 +3567,7 @@ find_primary_node(void)
 														 bkinfo->backend_port,
 														 pool_config->sr_check_database,
 														 pool_config->sr_check_user,
-														 password ? password : "", true);
+														 password ? password : "", false);
 		if (!slots[i])
 		{
 			ereport(LOG,
@@ -3615,7 +3615,8 @@ find_primary_node(void)
 static int
 find_primary_node_repeatedly(void)
 {
-	int			sec;
+	time_t      search_primary_expiration;
+	time_t      now;
 	int			node_id = -1;
 	int			i;
 
@@ -3654,13 +3655,29 @@ find_primary_node_repeatedly(void)
 	 */
 	ereport(LOG,
 			(errmsg("find_primary_node_repeatedly: waiting for finding a primary node")));
-	for (sec = 0; (pool_config->search_primary_node_timeout == 0 ||
-				   sec < pool_config->search_primary_node_timeout); sec++)
-	{
-		node_id = find_primary_node();
-		if (node_id != -1)
+
+	/* set expiration time for searching the primary node */
+	search_primary_expiration = time(NULL) + pool_config->search_primary_node_timeout;
+
+	for (;;) 
+	{    
+		now = time(NULL);
+
+		if (pool_config->search_primary_node_timeout == 0 || search_primary_expiration > now)
+		{
+			node_id = find_primary_node();
+			if (node_id != -1)
+				break;
+			pool_sleep(1);
+		}
+		else
+		{
+			ereport(LOG,
+					(errmsg("failed to find primary node"),
+					 errdetail("find_primary_node_repeatedly: expired after %d seconds",
+								pool_config->search_primary_node_timeout)));
 			break;
-		pool_sleep(1);
+		}
 	}
 	return node_id;
 }
