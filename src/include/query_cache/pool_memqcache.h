@@ -110,7 +110,7 @@ typedef struct
 {
 	unsigned int total_length;	/* total length in bytes including myself */
 	time_t		timestamp;		/* cache creation time */
-	int			expire;			/* cache expire	duration in seconds */
+	int64		expire;			/* cache expire	duration in seconds */
 }			POOL_CACHE_ITEM_HEADER;
 
 typedef struct
