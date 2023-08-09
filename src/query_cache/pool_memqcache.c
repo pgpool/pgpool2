@@ -2726,7 +2726,7 @@ static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash
 	if (cih->expire > 0)
 	{
 		now = time(NULL);
-		if (now > (cih->timestamp + cih->expire))
+		if (difftime(now, cih->timestamp) > cih->expire)
 		{
 			ereport(DEBUG1,
 					(errmsg("memcache finding item"),
