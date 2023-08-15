@@ -1,6 +1,222 @@
 <!-- doc/src/sgml/release-4.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-3-7">
+ <title>リリース 4.3.7</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2023-08-17</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-07-23 [2cbc61e]
+    -->
+    <para>
+     共有メモリの初期化後にのみ、システム終了コールバックを呼び出すようにしました。(Muhammad Usama)
+    </para>
+    <para>
+     共有メモリの取得に失敗して、終了時コールバックが呼び出された場合、クリーンアップ関数は、共有メモリに存在するprocess_infoにアクセスする際にセグメンテーション違反を引き起こす可能性がありました。
+     process_infoがNULLのときに終了コールバックからの中断で修正することもできますが、共有メモリの初期化に成功した後に関数をインストールする方がより良いアプローチです。
+     なぜなら、システムの残りの部分は常にprocess_infoがNULLになることはないと想定しており、また、子プロセスが生成される前にクリーンアップをする必要はないからです。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-12 [7ff642f]
+    -->
+    <para>
+     一部のシステムカタログ照会関数にスキーマ修飾を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-08-09 [30db44e]
+    -->
+    <para>
+     Coverityの警告を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     クエリキャッシュのモジュールで、time_tの値がint32変数に割り当てられる問題を修正しました。
+     Coverityの指摘に従いまして、変数の型をint64に変更しました。
+     また、time_tの差分を計算するためにdifftime()を使用しました。これは推奨される方法です。
+     <ulink url="https://www.jpcert.or.jp/sc-rules/c-msc05-c.html">https://www.jpcert.or.jp/sc-rules/c-msc05-c.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-08-04 [1633f61]
+    -->
+    <para>
+     find_primary_node_repeatedlyが<xref linkend="guc-search-primary-node-timeout">指定時間内で終了しない問題を修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-17 [cd03751]
+    -->
+    <para>
+     v2プロトコルを利用する場合のクラッシュを修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=807">bug 807</ulink>)(Tatsuo Ishii)
+    </para>
+    <para>
+     read_kind_from_backend()で統計データを蓄積する際、v2プロトコルのケースには対応していませんでした。
+    </para>
+    <para>
+     MCanivezからバグ報告とパッチを提供いただきました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-12 [1f5b7c8]
+    -->
+    <para>
+     マルチステートメントにおける<literal>PREPARE</literal>の利用を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     マルチステートメントの二番目以降の位置に<literal>PREPARE</literal>が含まれている場合、その後のbindメッセージでプリペアドステートメントを利用すると、送信されたメッセージにプリペアドステートメントが保存されな
+いため、「unable to bind」エラーが発生していました。
+    </para>
+    <para>
+     この問題を修正するために、ステートメントを解析した後にそのようなケースが見つかった場合、名前付きステートメントのクエリコンテキストを作成し、送信メッセージのリストに追加するようにしました。
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2023-July/008931.html">https://www.pgpool.net/pipermail/pgpool-general/2023-July/008931.html</ulink>
+    </para>
+    <para>
+     この修正のため、リグレッションテスト079..multi_prepareを追加しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-09 [e62c5a7]
+    -->
+    <para>
+     <literal>pgproto</literal>をパラメータを使用するbindメッセージを処理できるようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前、<literal>pgproto</literal>はパラメータを持たないbindメッセージしか処理できませんでした。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-30 [f388140]
+    -->
+    <para>
+     サンプルスクリプトreplication_mode_recovery_2nd_stage.sample内の変数名が間違っていたため修正しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-08-03 [5bf4ede]
+    -->
+    <para>
+     loggerプロセスのアプリケーション名記載漏れを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-08-01 [65e2760]
+    -->
+    <para>
+     停止モードの意味を明確にしました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-26 [dda631f]
+    -->
+    <para>
+     4.2.10リリースノートにあった誤った情報を削除しました。(Bo Peng)
+    </para>
+    <para>
+     「pgpool_recovery拡張のスクリプトを修正しました。 (Tatsuo Ishii)」の記載を削除しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-11 [ddbcead]
+    -->
+    <para>
+     「8.2. Pgpool-II + Watchdogの構築の例」のSSH公開鍵認証の説明を補足しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-29 [fcac3fb]
+    2023-06-28 [9adee42]
+    -->
+    <para>
+     負荷分散章の説明を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     一部の文章で「ストリーミングレプリケーションモード」と記述されるべきの箇所が「ネイティブレプリケーションモード」となっていました。
+     また、ストリーミングレプリケーションモードにおける負荷分散の追加要件に関する説明を改善しました。
+     いくつかのインデックスを追加しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-27 [fc0747a]
+    -->
+    <para>
+     オンラインリカバリーの説明を改善しました。(Bo Peng)
+    </para>
+    <para>
+     複数のpgpoolノードでwatchdogが有効になっていない場合、オンラインリカバリーのセカンドステージが適切に機能しないことについて言及しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-05-22 [29f7861]
+    -->
+    <para>
+     時折発生する069.memory_leak_extendedテストの失敗を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     偶発するテストの失敗の原因は、pgbenchが終了した後にpsコマンドを実行する前にpgpoolの子プロセスが消えてしまうことにあると判明しました。
+     これにより、「DISCARD ALL cannot be executed within a pipeline」というkind mismatchのFATALエラーが発生していました。
+     これを修正するために、pgbenchをバックグラウンドで実行し、pgbenchが終了する前にプロセスのサイズを取得するようにしました。
+    </para>
+    <para>
+     議論: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004338.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004338.html</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-3-6">
  <title>リリース 4.3.6</title>
   <note>
