@@ -1,6 +1,360 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-4">
+ <title>Release 4.4.4</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2023-08-17</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-07-23 [2cbc61e]
+    -->
+    <para>
+     Install system exit callback only after initialization of shared memory. (Muhammad Usama)
+    </para>
+    <para>
+     When the on-exit callback gets called because of a failure to acquire
+	 shared memory. The cleanup function can produce a segfault while accessing
+	 process_info, that lives in shared memory.
+	 Although we can also fix this by bailing out from the exit callback when
+	 process_info is NULL but installing the function after successful initialization
+	 of shared memory is a better approach as the rest of the system always assumes
+	 the process_info can never be NULL, and also, there is nothing to
+	 clean up before child processes are spawned.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-23 [379b24e]
+    2023-07-22 [e59d034]
+    -->
+    <para>
+     Disallowing setting the <xref linkend="guc-max-spare-children"> greater than <xref linkend="guc-num-init-children"> when <xref linkend="guc-process-management-mode"> is set to "dynamic". (Muhammad Usama)
+    </para>
+    <para>
+     Config post-processing stage now throws an error if <varname>num_init_children</varname> is
+	 smaller than <varname>max_spare_children</varname>.
+	 Commit also adjusts the number of child processes spawned at startup based on
+	 the configured process management strategy.
+	 For the Aggressive strategy, <varname>max_spare_children</varname> number of processes is spawned;
+	 for the other two strategies, <varname>min_spare_children</varname> number of children gets
+	 created at startup.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-29 [13e73bc]
+    -->
+    <para>
+     Downgrade log message. (Tatsuo Ishii)
+    </para>
+    <para>
+     It is pointed out in <ulink url="https://www.pgpool.net/mantisbt/view.php?id=806">https://www.pgpool.net/mantisbt/view.php?id=806</ulink>
+	 that there are log entries in the log file:
+	</para>
+	<para>
+	 LOG: pool_pending_message_set_flush_request: msg: Parse
+	</para>
+	<para>
+	 The messages were for debugging and the log level should have been a
+	 DEBUG*. So I changed the log level from LOG to DEBUG5.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-12 [7ff642f]
+    -->
+    <para>
+     Add schema qualification to some system catalog inquiry functions. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-08-09 [30db44e]
+    -->
+    <para>
+     Fix covery warning. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix query cache module assigned time_t value to int32 variable. Change
+     the variable type to int64. Per Coverity.  Also use difftime() to
+     calculate time_t difference. This is a recommended practice.
+     <ulink url="https://www.jpcert.or.jp/sc-rules/c-msc05-c.html">https://www.jpcert.or.jp/sc-rules/c-msc05-c.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-08-04 [1633f61]
+    -->
+    <para>
+     Fix find_primary_node_repeatedly doesn't terminate within <xref linkend="guc-search-primary-node-timeout">. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-17 [cd03751]
+    -->
+    <para>
+     Fix crash when v2 protocol is used.(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=807">bug 807</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     When read_kind_from_backend() accumulates statistics data, it was not prepared for v2 protocol case.
+    </para>
+    <para>
+	 Bug report and patch from MCanivez. Slightly modified by me.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-12 [1f5b7c8]
+    -->
+    <para>
+     Fix <literal>PREPARE</literal> in multi-statement case. (Tatsuo Ishii)
+    </para>
+    <para>
+     If multi-statement query includes <literal>PREPARE</literal> in the second or latter
+	 position, and subsequent bind message uses the prepared statement, it
+	 fails with "unable to bind" error because the prepared statement is not
+	 saved in sent messages.
+    </para>
+    <para>
+	 To fix this if such a case found after parsing the statement, create a
+	 query context for the named statement and add it to the sent message list.
+    </para>
+    <para>
+	 Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2023-July/008931.html">https://www.pgpool.net/pipermail/pgpool-general/2023-July/008931.html</ulink>
+    </para>
+    <para>
+	 For this new regression test 079..multi_prepare is added.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-09 [e62c5a7]
+    -->
+    <para>
+     Fix pgproto to work with bind message using params. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously pgproto can only process bind messages without params.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-05 [5049e59]
+    -->
+    <para>
+     Fix typo in log message. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-23 [571fbd9]
+    -->
+    <para>
+     Fix missing CTE SEARCH and CYCLE rewrites. (Bo Peng)
+    </para>
+    <para>
+     In native replication mode, <productname>Pgpool-II</productname> need to rewrite Date/Time functions to timestamp in WRITE queries.
+	 CTE SEARCH and CYCLE rewrites were missing.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-19 [8e4bf20]
+    -->
+    <para>
+     Removed duplicate pcp_listen_address setting in src/sample/pgpool.conf.sample-stream. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-14 [a091bcb]
+    -->
+    <para>
+     Prevent query cache update under shared lock. (Tatsuo Ishii)
+    </para>
+    <para>
+     In <ulink url="https://www.pgpool.net/mantisbt/view.php?id=795">bug 795</ulink> it was pointed out
+	 that expired query cache entry can be modified under shared lock. This
+	 could cause shared memory corruption used by query cache. In order to
+	 fix this, we temporarily release the shared lock and then acquire an
+	 exclusive lock before modifying the cache entry. This could create a
+	 window and we need to get the cache entry meta data again to make sure
+	 that the meta data has not been modified by someone else.
+    </para>
+    <para>
+	 Back-patch to V4.4 stable where shared locking for query cache was introduced.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-05 [6aebf24]
+    -->
+    <para>
+     Fix <xref linkend="guc-delay-threshold-by-time"> and <xref linkend="guc-prefer-lower-delay-standby">. (Tatsuo Ishii)
+    </para>
+	<para>
+     They were broken since <varname>delay_threshold_by_time</varname> was introduced in 4.4.
+	</para>
+    <itemizedlist>
+	 <listitem>
+	  <para>
+	   <varname>delay_threshold_by_time</varname> was not checked in where_to_send. This broke
+	   load balancing when replication is delayed.
+	  </para>
+	 </listitem>
+    </itemizedlist>
+    <itemizedlist>
+	 <listitem>
+	  <para>
+	   select_load_balancing_node was broken if both <varname>delay_threshold_by_time</varname>
+       and <varname>prefer_lower_standby_delay</varname> were enabled.
+	  </para>
+	 </listitem>
+    </itemizedlist>
+	<para>
+	 In order to fix the issue, where_to_send and
+	 select_load_balancing_node are fixed. Also add test case for
+	 <varname>delay_threshold_by_time</varname> are added to 033.prefer_lower_standby_delay.
+    </para>
+    <para>
+	 Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2023-June/008864.html">https://www.pgpool.net/pipermail/pgpool-general/2023-June/008864.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-30 [f388140]
+    -->
+    <para>
+     Fix the wrong variable names in replication_mode_recovery_2nd_stage.sample sample script. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-08-03 [5bf4ede]
+    -->
+    <para>
+     Fix the missing "logger" application name. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-08-01 [65e2760]
+    -->
+    <para>
+     Clarify the meaning of stop mode. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-26 [dda631f]
+    -->
+    <para>
+     Remove the incorrect information from release note 4.2.10. (Bo Peng)
+    </para>
+    <para>
+     Remove "Fix pgpool_recovery extension script. (Tatsuo Ishii)" from release note 4.2.10.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-11 [ddbcead]
+    -->
+    <para>
+     Enhance SSH public key authentication setting section in "8.2. Pgpool-II + Watchdog Setup Example". (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-29 [fcac3fb]
+    2023-06-28 [9adee42]
+    -->
+    <para>
+     Fix load balance mode chapter. (Tatsuo Ishii)
+    </para>
+    <para>
+     In some places "streaming replication mode" was written as "native
+	 replication mode".  Also enhance description regarding additional
+	 requirements for load balancing in the streaming replication mode.
+	 Add some indexes.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-27 [fc0747a]
+    -->
+    <para>
+     Enhance online recovery documentation. (Bo Peng)
+    </para>
+    <para>
+     Mention that 2nd stage of online recovery does not work properly only for multiple pgpool nodes without watchdog enabled.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-05-22 [29f7861]
+    -->
+    <para>
+     Fix occasional 069.memory_leak_extended test failure. (Tatsuo Ishii)
+    </para>
+    <para>
+     It turned out that reason of the occasional test failure is, pgpool
+	 child process is gone before running ps command after pgbench
+	 finishes. The cause is a kind mismatch FATAL error, "DISCARD ALL
+	 cannot be executed within a pipeline". To fix this, run pgbench in
+	 background and get the process size before pgbench finishes.
+    </para>
+    <para>
+	 Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004338.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004338.html</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-3">
  <title>Release 4.4.3</title>
   <note>
