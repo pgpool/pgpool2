@@ -1,6 +1,123 @@
 <!-- doc/src/sgml/release-4.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-0-24">
+ <title>Release 4.0.24</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2023-08-17</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-07-23 [2cbc61e]
+    -->
+    <para>
+     Install system exit callback only after initialization of shared memory. (Muhammad Usama)
+    </para>
+    <para>
+     When the on-exit callback gets called because of a failure to acquire
+     shared memory. The cleanup function can produce a segfault while accessing
+     process_info, that lives in shared memory.
+     Although we can also fix this by bailing out from the exit callback when
+     process_info is NULL but installing the function after successful initialization
+     of shared memory is a better approach as the rest of the system always assumes
+     the process_info can never be NULL, and also, there is nothing to
+     clean up before child processes are spawned.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-12 [7ff642f]
+    -->
+    <para>
+     Add schema qualification to some system catalog inquiry functions. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-08-04 [1633f61]
+    -->
+    <para>
+     Fix find_primary_node_repeatedly doesn't terminate within <xref linkend="guc-search-primary-node-timeout">. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-09 [e62c5a7]
+    -->
+    <para>
+     Fix pgproto to work with bind message using params. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously pgproto can only process bind messages without params.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-08-01 [65e2760]
+    -->
+    <para>
+     Clarify the meaning of stop mode. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-27 [fc0747a]
+    -->
+    <para>
+     Enhance online recovery documentation. (Bo Peng)
+    </para>
+    <para>
+     Mention that 2nd stage of online recovery does not work properly only for multiple pgpool nodes without watchdog enabled.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-05-22 [29f7861]
+    -->
+    <para>
+     Fix occasional 069.memory_leak_extended test failure. (Tatsuo Ishii)
+    </para>
+    <para>
+     It turned out that reason of the occasional test failure is, pgpool
+     child process is gone before running ps command after pgbench
+     finishes. The cause is a kind mismatch FATAL error, "DISCARD ALL
+     cannot be executed within a pipeline". To fix this, run pgbench in
+     background and get the process size before pgbench finishes.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004338.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004338.html</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-0-23">
  <title>Release 4.0.23</title>
   <note>
