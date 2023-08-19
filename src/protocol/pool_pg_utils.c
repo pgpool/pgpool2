@@ -441,10 +441,9 @@ select_load_balancing_node(void)
 		 * and prefer_lower_delay_standby are true, we choose the least delayed
 		 * node if suggested_node is standby and delayed over delay_threshold.
 		 */
-		if (STREAM && pool_config->prefer_lower_delay_standby && suggested_node_id != PRIMARY_NODE_ID &&
-			((BACKEND_INFO(suggested_node_id).standby_delay_by_time && BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold_by_time * 1000000) ||
-			 (BACKEND_INFO(suggested_node_id).standby_delay_by_time == false && BACKEND_INFO(suggested_node_id).standby_delay > pool_config->delay_threshold)))
-
+		if (STREAM && pool_config->prefer_lower_delay_standby &&
+			suggested_node_id != PRIMARY_NODE_ID &&
+			check_replication_delay(suggested_node_id) < 0)
 		{
 			ereport(DEBUG1,
 				(errmsg("selecting load balance node"),
@@ -455,7 +454,7 @@ select_load_balancing_node(void)
 			 * nodes which have the lowest delay.
 			 */
 			if (pool_config->delay_threshold_by_time > 0)
-				lowest_delay = pool_config->delay_threshold_by_time * 1000 * 1000;
+				lowest_delay = pool_config->delay_threshold_by_time * 1000;	/* convert from milli seconds to micro seconds */
 			else
 				lowest_delay = pool_config->delay_threshold;
 
@@ -602,17 +601,14 @@ select_load_balancing_node(void)
 	 * node if suggested_node is standby and delayed over delay_threshold.
 	 */
 	if (STREAM && pool_config->prefer_lower_delay_standby &&
-		((pool_config->delay_threshold_by_time &&
-		  BACKEND_INFO(selected_slot).standby_delay > pool_config->delay_threshold_by_time*1000*1000) ||
-		 (pool_config->delay_threshold &&
-		  BACKEND_INFO(selected_slot).standby_delay > pool_config->delay_threshold)))
+		check_replication_delay(selected_slot) < 0)
 	{
 		ereport(DEBUG1,
 				(errmsg("selecting load balance node"),
 				 errdetail("backend id %d is streaming delayed over delay_threshold", selected_slot)));
 
 		if (pool_config->delay_threshold_by_time > 0)
-			lowest_delay = pool_config->delay_threshold_by_time * 1000 * 1000;
+			lowest_delay = pool_config->delay_threshold_by_time * 1000;
 		else
 			lowest_delay = pool_config->delay_threshold;
 		total_weight = 0.0;
@@ -1097,3 +1093,40 @@ si_commit_done(void)
 		session->si_state = SI_NO_SNAPSHOT;
 	}
 }
+
+/*
+ * Check replication delay and returns the status.
+ * Return values:
+ * 0: no delay or not in streaming repplication mode or
+ * delay_threshold(_by_time) is set to 0
+ * -1: delay exceeds delay_threshold_by_time
+ * -2: delay exceeds delay_threshold
+ */
+int	check_replication_delay(int node_id)
+{
+	BackendInfo *bkinfo;
+
+	if (!STREAM)
+		return 0;
+
+	bkinfo = pool_get_node_info(node_id);
+
+	/*
+	 * Check delay_threshold_by_time.  bkinfo->standby_delay is in
+	 * microseconds while delay_threshold_by_time is in milliseconds. We need
+	 * to multiply delay_threshold_by_time by 1000 to normalize.
+	 */
+	if (pool_config->delay_threshold_by_time > 0 &&
+		bkinfo->standby_delay > pool_config->delay_threshold_by_time*1000)
+		return -1;
+
+	/*
+	 * Check delay_threshold.
+	 */
+	if (pool_config->delay_threshold > 0 &&
+		bkinfo->standby_delay > pool_config->delay_threshold)
+		return -2;
+
+	return 0;
+}
+

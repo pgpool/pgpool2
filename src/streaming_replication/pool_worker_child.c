@@ -495,7 +495,7 @@ check_replication_time_lag(void)
 						{
 							bkinfo->standby_delay = atol(s);
 							ereport(DEBUG1,
-									(errmsg("standby delay in seconds * 1000000: " UINT64_FORMAT "", bkinfo->standby_delay)));
+									(errmsg("standby delay in milli seconds * 1000: " UINT64_FORMAT "", bkinfo->standby_delay)));
 						}
 						else
 							bkinfo->standby_delay = 0;
@@ -545,7 +545,7 @@ check_replication_time_lag(void)
 			{
 				lag = bkinfo->standby_delay;
 				delay_threshold_by_time = pool_config->delay_threshold_by_time;
-				delay_threshold_by_time *= 1000000;
+				delay_threshold_by_time *= 1000;	/* convert from milli seconds to micro seconds */
 
 				/* Log delay if necessary */
 				if ((pool_config->log_standby_delay == LSD_ALWAYS && lag > 0) ||

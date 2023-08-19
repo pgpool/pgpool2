@@ -2295,7 +2295,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"delay_threshold_by_time", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
 			"standby delay threshold by time.",
-			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_S,
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_MS,
 		},
 		&g_pool_config.delay_threshold_by_time,
 		0,

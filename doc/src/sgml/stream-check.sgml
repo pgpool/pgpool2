@@ -212,9 +212,10 @@
    <listitem>
 
     <para>
-     Specifies the maximum tolerance level of replication delay in
-     seconds on the standby server against the primary server.  If the
-     specified value is greater than
+     Specifies the maximum tolerance level of replication delay 
+     on the standby server against the primary server.
+     If this value is specified without units, it is taken as milliseconds.
+     If the specified value is greater than
      0, <xref linkend="guc-delay-threshold"> is ignored.  If the delay
      exceeds this configured level,
      <productname>Pgpool-II</productname> stops sending the <acronym>

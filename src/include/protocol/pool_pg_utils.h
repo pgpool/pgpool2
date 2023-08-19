@@ -60,5 +60,6 @@ extern void si_acquire_snapshot(void);
 extern void si_snapshot_acquired(void);
 extern void si_commit_request(void);
 extern void si_commit_done(void);
+extern int	check_replication_delay(int node_id);
 
 #endif /* pool_pg_utils_h */

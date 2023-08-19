@@ -90,6 +90,7 @@ echo "delay_threshold = 10" >> etc/pgpool.conf
 echo "sr_check_period = 1" >> etc/pgpool.conf
 echo "log_standby_delay = 'always'" >> etc/pgpool.conf
 echo "log_min_messages = 'DEBUG1'" >> etc/pgpool.conf
+echo "log_error_verbosity = verbose" >> etc/pgpool.conf
 # force load balance node to be 1.
 echo "backend_weight0 = 0" >> etc/pgpool.conf
 echo "backend_weight2 = 0" >> etc/pgpool.conf
@@ -130,7 +131,8 @@ echo === Test2: delay_threshold_by_time with prefer_lower_delay_standby disabled
 # ----------------------------------------------------------------------------------------
 echo Start testing delay_threshold_by_time with prefer_lower_delay_standby disabled
 echo "delay_threshold = 0" >> etc/pgpool.conf
-echo "delay_threshold_by_time = 1" >> etc/pgpool.conf
+echo "delay_threshold_by_time = 1000" >> etc/pgpool.conf
+
 ./startall
 wait_for_pgpool_startup
 # pause replay on node 1

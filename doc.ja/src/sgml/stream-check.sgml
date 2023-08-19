@@ -270,9 +270,10 @@
 
     <para>
      <!--
-     Specifies the maximum tolerance level of replication delay in
-     seconds on the standby server against the primary server.  If the
-     specified value is greater than
+     Specifies the maximum tolerance level of replication delay 
+     on the standby server against the primary server.
+     If this value is specified without units, it is taken as milliseconds.
+     If the specified value is greater than
      0, <xref linkend="guc-delay-threshold"> is ignored.  If the delay
      exceeds this configured level,
      <productname>Pgpool-II</productname> stops sending the <acronym>
@@ -283,7 +284,9 @@
       This delay threshold check is performed every <xref linkend="guc-sr-check-period">.
        Default is 0.
      -->
-     プライマリサーバに対するスタンバイサーバのレプリケーション遅延の許容度を秒単位で指定します。
+     プライマリサーバに対するスタンバイサーバのレプリケーション遅延の許容時間を指定します。
+     この値が単位無しで指定された場合は、マイクロ秒単位であると見なします。
+       0よりも大きい値が指定されると、<xref linkend="guc-delay-threshold">は無視されます。
      <productname>Pgpool-II</productname>は、スタンバイサーバの遅延がこの設定レベルを超えた場合には、 <xref linkend="guc-load-balance-mode">が有効であっても、プライマリに追いつくまでそのスタンバイノードには<acronym>SELECT</acronym>クエリを送信せず、全てプライマリサーバに送るようにします。
       このパラメータが0の場合は、遅延のチェックを行ないません。
       この遅延閾値のチェックは<xref linkend="guc-sr-check-period">毎に行われます。

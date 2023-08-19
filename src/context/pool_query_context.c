@@ -2018,8 +2018,6 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT * query_context, char *query, Node
 				 !pool_is_failed_transaction() &&
 				 pool_get_transaction_isolation() != POOL_SERIALIZABLE))
 			{
-				BackendInfo *bkinfo = pool_get_node_info(session_context->load_balance_node_id);
-
 				/*
 				 * Load balance if possible
 				 */
@@ -2097,7 +2095,6 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT * query_context, char *query, Node
 					if (pool_config->statement_level_load_balance)
 					{
 						session_context->load_balance_node_id = select_load_balancing_node();
-						bkinfo = pool_get_node_info(session_context->load_balance_node_id);
 					}
 
 					/*
@@ -2106,12 +2103,7 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT * query_context, char *query, Node
 					 * load balance node which is lowest delayed,
 					 * false then send to the primary.
 					 */
-					if (STREAM &&
-						(
-							(pool_config->delay_threshold &&
-							 (bkinfo->standby_delay > pool_config->delay_threshold)) ||
-							(pool_config->delay_threshold_by_time &&
-							 (bkinfo->standby_delay > pool_config->delay_threshold_by_time*1000*1000))))
+					if (STREAM && check_replication_delay(session_context->load_balance_node_id))
 					{
 						ereport(DEBUG1,
 								(errmsg("could not load balance because of too much replication delay"),
