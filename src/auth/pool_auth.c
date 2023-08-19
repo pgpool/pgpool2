@@ -1450,6 +1450,9 @@ authenticate_frontend_SCRAM(POOL_CONNECTION * backend, POOL_CONNECTION * fronten
 	frontend->frontend_authenticated = true;
 }
 
+/*
+ * Authenticate frontend using pool_hba.conf
+ */
 void
 authenticate_frontend(POOL_CONNECTION * frontend)
 {

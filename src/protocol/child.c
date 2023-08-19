@@ -409,6 +409,10 @@ do_child(int *fds)
 		if (wait_for_failover_to_finish() < 0)
 			pool_initialize_private_backend_status();
 
+		/*
+		 * Connect to backend. Also do authentication between
+		 * frontend <--> pgpool and pgpool <--> backend.
+		 */
 		backend = get_backend_connection(child_frontend);
 		if (!backend)
 		{
@@ -999,6 +1003,10 @@ found:
 	}
 }
 
+/*
+ * Copy startup packet and return it.
+ * palloc is used.
+ */
 static StartupPacket *
 StartupPacketCopy(StartupPacket *sp)
 {
@@ -1028,6 +1036,10 @@ StartupPacketCopy(StartupPacket *sp)
 	return new_sp;
 }
 
+/*
+ * Create a new connection to backend.
+ * Authentication is performed if requested by backend.
+ */
 static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION * frontend)
 {
 	POOL_CONNECTION_POOL *backend;
@@ -1087,6 +1099,7 @@ static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION
 																ALLOCSET_DEFAULT_SIZES);
 		oldContext = MemoryContextSwitchTo(frontend_auth_cxt);
 
+		/* do authentication against backend */
 		pool_do_auth(frontend, backend);
 
 		MemoryContextSwitchTo(oldContext);
@@ -1252,6 +1265,9 @@ static RETSIGTYPE authentication_timeout(int sig)
 	child_exit(POOL_EXIT_AND_RESTART);
 }
 
+/*
+ * Enable authtentication timeout.
+ */
 static void
 enable_authentication_timeout(void)
 {
@@ -1261,6 +1277,9 @@ enable_authentication_timeout(void)
 	alarm_enabled = true;
 }
 
+/*
+ * Disable authtentication timeout.
+ */
 static void
 disable_authentication_timeout(void)
 {
@@ -1271,7 +1290,9 @@ disable_authentication_timeout(void)
 	}
 }
 
-
+/*
+ * Send parameter status message to frontend.
+ */
 static void
 send_params(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
@@ -1337,6 +1358,10 @@ child_will_go_down(int code, Datum arg)
 	if (pool_connection_pool)
 		close_all_backend_connections();
 }
+
+/*
+ * Exit child process. Can be called from signal handlers.
+ */
 void
 child_exit(int code)
 {
@@ -1506,7 +1531,6 @@ check_restart_request(void)
  * to connect, on successful connection returns the socket descriptor
  * and returns -1 if timeout has occurred
  */
-
 static int
 wait_for_new_connections(int *fds, SockAddr *saddr)
 {
@@ -1937,6 +1961,10 @@ get_connection(int front_end_fd, SockAddr *saddr)
 	return cp;
 }
 
+/*
+ * Connect to backend. Also do authentication between client <--> pgpool and
+ * pgpool <--> backend.
+ */
 static POOL_CONNECTION_POOL *
 get_backend_connection(POOL_CONNECTION * frontend)
 {
@@ -1998,6 +2026,9 @@ retry_startup:
 										ALLOCSET_DEFAULT_SIZES);
 		MemoryContext oldContext = MemoryContextSwitchTo(frontend_auth_cxt);
 
+		/*
+		 * Do frontend <-> pgpool authentication based on pool_hba.conf.
+		 */
 		ClientAuthentication(frontend);
 
 		MemoryContextSwitchTo(oldContext);
@@ -2074,7 +2105,10 @@ retry_startup:
 
 	if (backend == NULL)
 	{
-		/* create a new connection to backend */
+		/*
+		 * Create a new connection to backend.
+		 * Authentication is performed if requested by backend.
+		 */
 		backend = connect_backend(sp, frontend);
 	}
 	else

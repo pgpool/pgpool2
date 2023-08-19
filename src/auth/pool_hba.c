@@ -1312,6 +1312,7 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 	if (status == POOL_CONTINUE)
 	{
 		sendAuthRequest(frontend, AUTH_REQ_OK);
+		/* do authentication against frontend */
 		authenticate_frontend(frontend);
 	}
 	else
