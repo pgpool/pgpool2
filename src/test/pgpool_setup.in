@@ -206,15 +206,17 @@ new_main_db_cluster=${10}
 mydir=__MYDIR__
 log=$mydir/log/failover.log
 pg_ctl=__PGBIN__/pg_ctl
-cluster0=$mydir/data0
-cluster1=$mydir/data1
 PCP_PORT=__PCPPORT__
 pgversion=__PGVERSION__
 export PCPPASSFILE=__PCPPASSFILE__
 PGPOOL_BIN=__PGPOOL_INSTALL_DIR__/bin
 
 date >> $log
-echo "failed_node_id $failed_node_id failed_host_name $failed_host_name failed_port $failed_port failed_db_cluster $failed_db_cluster new_main_id $new_main_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_main_port_number $new_main_port_number new_main_db_cluster $new_main_db_cluster" >> $log
+echo "failover script started for node: $failed_node_id" >> $log
+echo "failed_node_id: $failed_node_id failed_host_name: $failed_host_name failed_port: $failed_port" >> $log
+echo "failed_db_cluster: $failed_db_cluster new_main_id: $new_main_id old_main_id: $old_main_id" >> $log
+echo "new_main_host_name: $new_main_host_name old_primary_node_id: $old_primary_node_id" >> $log
+echo "new_main_port_number: $new_main_port_number new_main_db_cluster: $new_main_db_cluster" >> $log
 
 # check if all node is down
 if [ $new_main_id = "-1" ];then
@@ -228,6 +230,8 @@ if [ a"$failed_node_id" = a"$old_primary_node_id" -o a"$old_primary_node_id" = a
 	$pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 	sleep 2
 fi
+date >> $log
+echo "failover script ended" >> $log
 EOF
 
 #-------------------------------------------
@@ -302,17 +306,16 @@ new_primary_db_cluster=${10}
 mydir=__MYDIR__
 log=$mydir/log/failover.log
 pg_ctl=__PGBIN__/pg_ctl
-cluster0=$mydir/data0
-cluster1=$mydir/data1
-cluster2=$mydir/data2
 PCP_PORT=__PCPPORT__
 pgversion=__PGVERSION__
 export PCPPASSFILE=__PCPPASSFILE__
 PGPOOL_BIN=__PGPOOL_INSTALL_DIR__/bin
 
-echo "follow primary script started" >> $log
+echo "follow primary script started for node: $node_id" >> $log
 date >> $log
-echo "node_id $node_id host_name $host_name port $port db_cluster $db_cluster new_primary_id $new_primary_id old_main_id $old_main_id new_main_host_name $new_main_host_name old_primary_node_id $old_primary_node_id new_primary_port_number $new_primary_port_number new_primary_db_cluster $new_primary_db_cluster" >> $log
+echo "node_id: $node_id host_name: $host_name port: $port db_cluster: $db_cluster" >> $log
+echo "new_primary_id: $new_primary_id old_main_id: $old_main_id new_main_host_name: $new_main_host_name" >> $log
+echo "old_primary_node_id: $old_primary_node_id: new_primary_port_number: $new_primary_port_number new_primary_db_cluster: $new_primary_db_cluster" >> $log
 
 # Skip the target standby node if it's not running
 $pg_ctl -D $db_cluster status >/dev/null 2>&1
@@ -340,7 +343,7 @@ then
     if [ $? != 0 ]
     then
         echo "restarting $db_cluster failed" >>$log
-        echo "fail back to pcp_recovery_node" >>$log
+        echo "fallback to pcp_recovery_node" >>$log
         $PGPOOL_BIN/pcp_recovery_node -w -h localhost -p $PCP_PORT -n $node_id >> $log 2>&1
     else
         # attach the node
@@ -349,7 +352,8 @@ then
 else
     echo "$db_cluster is not running. skipping follow primary command." >> $log
 fi
-echo "follow primary script ended" >> $log
+echo "follow primary script ended." >> $log
+date >> $log
 EOF
 
 #-------------------------------------------
