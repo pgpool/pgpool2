@@ -498,9 +498,19 @@ if (we need to executed follow primary command)
       reason to be stopped: for example, it's broken by hardware
       problems or administrator is maintaining the node.  If the
       node is stopped, skip the node. If the node is running, stop
-      the node first and recovery it.  A
-      complete <varname>follow_primary_command</varname> example
-      can be found in <xref linkend="example-cluster">.
+      the node first and recovery it.
+      Although it is possible to recover by directly
+      executing <command>pg_basebackup</command> or other commands
+      instead of <xref linkend="PCP-RECOVERY-NODE">, you need to
+      execute <xref linkend="PCP-ATTACH-NODE"> to
+      notice <productname>Pgpool-II</productname> that the standby
+      server is ready to use. Otherwise the standby server remains in
+      down status. (Since <xref linkend="PCP-RECOVERY-NODE">
+      internally executes <xref linkend="PCP-ATTACH-NODE">, you don't
+      need to execute <xref linkend="PCP-ATTACH-NODE"> after
+      recovering.
+      A complete <varname>follow_primary_command</varname> example can
+      be found in <xref linkend="example-cluster">.
      </para>
      <para>
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.

@@ -659,6 +659,9 @@ if (we need to executed follow primary command)
        たとえば、そのノードはハードウェア障害で停止しているかも知れませんし、管理者が保守のために停止しているのかも知れません。
        ノードが停止している場合は、そのノードをスキップしてください。
        ノードが動いている場合は、まずそのノードを停止してからリカバリしてください。
+       <xref linkend="PCP-RECOVERY-NODE">コマンドを呼ばずに、直接<command>pg_basebackup</command>などを呼び出してリカバリすることも可能ですが、その場合は、リカバリ後に<xref linkend="PCP-ATTACH-NODE">を呼び出して、スタンバイサーバが利用可能になったことを<productname>Pgpool-II</productname>に通知してください。
+	そうでないとそのスタンバイサーバはダウン状態のままになってしまいます。
+       (<xref linkend="PCP-RECOVERY-NODE">コマンドは内部で<xref linkend="PCP-ATTACH-NODE">を呼び出しているので、リカバリ後にスクリプトの中で<xref linkend="PCP-ATTACH-NODE">を呼び出す必要はありません。)
        <varname>follow_primary_command</varname>の完全な例は、<xref linkend="example-cluster">にあります。
      </para>
      <para>
