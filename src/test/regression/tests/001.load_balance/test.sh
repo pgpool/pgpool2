@@ -8,6 +8,7 @@ PSQL=$PGBIN/psql
 PSQLOPTS="-a -q -X"
 PGPOOLBIN=$PGPOOL_INSTALL_DIR/bin
 export PGDATABASE=test
+export CHECK_TIME_WAIT=true
 
 # sleep time after reload in seconds
 st=10
