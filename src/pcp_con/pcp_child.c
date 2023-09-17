@@ -406,6 +406,7 @@ static RETSIGTYPE
 pcp_exit_handler(int sig)
 {
 	pid_t		wpid;
+	ListCell   *lc;
 
 	POOL_SETMASK(&AuthBlockSig);
 
@@ -420,15 +421,17 @@ pcp_exit_handler(int sig)
 
 	POOL_SETMASK(&UnBlockSig);
 
-	if (list_length(pcp_worker_children) > 0)
+	foreach(lc, pcp_worker_children)
 	{
+		int		pid;
+
 		do
 		{
-			wpid = wait(NULL);
-		} while (wpid > 0 || (wpid == -1 && errno == EINTR));
-
-		list_free(pcp_worker_children);
+			wpid = (pid_t) lfirst_int(lc);
+			pid = waitpid(wpid, NULL, WNOHANG);
+		} while (pid == -1 && errno == EINTR);
 	}
+
 	pcp_worker_children = NULL;
 
 	exit(0);
