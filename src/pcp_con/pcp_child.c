@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -153,6 +153,11 @@ pcp_main(int *fds)
 	}
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
+
+	/*
+	 * Unblock signals
+	 */
+	POOL_SETMASK(&UnBlockSig);
 
 	ereport(DEBUG1,
 			(errmsg("I am PCP child with pid:%d", getpid())));

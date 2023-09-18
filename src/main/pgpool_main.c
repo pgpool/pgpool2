@@ -812,7 +812,6 @@ pcp_fork_a_child(int *fds, char *pcp_conf_file)
 		close(pipe_fds[1]);
 
 		/* call PCP child main */
-		POOL_SETMASK(&UnBlockSig);
 		health_check_timer_expired = 0;
 		reload_config_request = 0;
 		pcp_main(fds);
