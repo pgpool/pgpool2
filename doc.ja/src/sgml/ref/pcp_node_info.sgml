@@ -137,7 +137,7 @@ $ pcp_node_info -w -p 11001 -n 1
 3. ステータス
 4. ロードバランスウェイト
 5. バックエンド状態名
-6. 実際のバックエンドの状態 (Pgpool-II 4.3以降。pg_isreadyで取得)
+6. 実際のバックエンドの状態 (Pgpool-II 4.3以降。PQpingParamsで取得)
 7. バックエンドの役割
 8. 実際のバックエンドの役割(Pgpool-II 4.3以降。pg_is_in_recoveryで取得)
 9. レプリケーションの遅延
