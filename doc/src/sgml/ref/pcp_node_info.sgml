@@ -90,9 +90,9 @@ $ pcp_node_info -w -p 11001 -n 1
 3. status
 4. load balance weight
 5. status name
-6. actual backend status
+6. actual backend status (obtained using PQpingParams. Pgpool-II 4.3 or later)
 7. backend role
-8. actual backend role (taken from pg_is_in_recovery. Pgpool-II 4.3 or later)
+8. actual backend role (obtained using pg_is_in_recovery. Pgpool-II 4.3 or later)
 9. replication delay
 10. replication state (taken from pg_stat_replication. Pgpool-II 4.1 or later)
 11. sync replication state (taken from pg_stat_replication. Pgpool-II 4.1 or later)
