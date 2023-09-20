@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * Copyright (c) 2006-2015, pgpool Global Development Group
+ * Copyright (c) 2006-2023, pgpool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -29,16 +29,6 @@ extern int	server_version_num;
 
 /* from include/postgresql_ext.h */
 #define InvalidOid		((Oid) 0)
-
-/* from include/pg_config_manual.h */
-/*
- * NAMEDATALEN is the max length for system identifiers (e.g. table names,
- * attribute names, function names, etc).  It must be a multiple of
- * sizeof(int) (typically 4).
- *
- * NOTE that databases with different NAMEDATALEN's cannot interoperate!
- */
-#define NAMEDATALEN 64
 
 /* from include/c.h */
 

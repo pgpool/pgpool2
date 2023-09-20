@@ -1217,7 +1217,7 @@ select_table_walker(Node *node, void *context)
 			num_oids = ctx->num_oids++;
 
 			ctx->table_oids[num_oids] = oid;
-			strlcpy(ctx->table_names[num_oids], table, POOL_NAMEDATALEN);
+			strlcpy(ctx->table_names[num_oids], table, NAMEDATALEN);
 
 			ereport(DEBUG1,
 					(errmsg("extracting table oids from SELECT statement"),
@@ -1280,11 +1280,11 @@ make_table_name_from_rangevar(RangeVar *rangevar)
 {
 	/*
 	 * Table name. Max size is calculated as follows: schema
-	 * name(POOL_NAMEDATALEN byte) + quotation marks for schmea name(2 byte) +
-	 * period(1 byte) + table name (POOL_NAMEDATALEN byte) + quotation marks
+	 * name(NAMEDATALEN byte) + quotation marks for schema name(2 byte) +
+	 * period(1 byte) + table name (NAMEDATALEN byte) + quotation marks
 	 * for table name(2 byte) + NULL(1 byte)
 	 */
-	static char tablename[POOL_NAMEDATALEN * 2 + 1 + 2 * 2 + 1];
+	static char tablename[NAMEDATALEN * 2 + 1 + 2 * 2 + 1];
 
 	if (rangevar == NULL)
 	{
@@ -1306,7 +1306,7 @@ make_table_name_from_rangevar(RangeVar *rangevar)
 	if (rangevar->schemaname)
 	{
 		strcat(tablename, "\"");
-		strncat(tablename, rangevar->schemaname, POOL_NAMEDATALEN);
+		strncat(tablename, rangevar->schemaname, NAMEDATALEN);
 		strcat(tablename, "\"");
 		strcat(tablename, ".");
 	}
@@ -1320,7 +1320,7 @@ make_table_name_from_rangevar(RangeVar *rangevar)
 	}
 
 	strcat(tablename, "\"");
-	strncat(tablename, rangevar->relname, POOL_NAMEDATALEN);
+	strncat(tablename, rangevar->relname, NAMEDATALEN);
 	strcat(tablename, "\"");
 
 	ereport(DEBUG1,
