@@ -1321,7 +1321,7 @@ select_table_walker(Node *node, void *context)
 			num_oids = ctx->num_oids++;
 
 			ctx->table_oids[num_oids] = oid;
-			strlcpy(ctx->table_names[num_oids], table, POOL_NAMEDATALEN);
+			strlcpy(ctx->table_names[num_oids], table, NAMEDATALEN);
 
 			ereport(DEBUG1,
 					(errmsg("extracting table oids from SELECT statement"),
@@ -1384,11 +1384,11 @@ make_function_name_from_funccall(FuncCall *fcall)
 {
 	/*
 	 * Function name. Max size is calculated as follows: schema
-	 * name(POOL_NAMEDATALEN byte) + quotation marks for schema name(2 byte) +
-	 * period(1 byte) + table name (POOL_NAMEDATALEN byte) + quotation marks
+	 * name(NAMEDATALEN byte) + quotation marks for schema name(2 byte) +
+	 * period(1 byte) + table name (NAMEDATALEN byte) + quotation marks
 	 * for table name(2 byte) + NULL(1 byte)
 	 */
-	static char funcname[POOL_NAMEDATALEN * 2 + 1 + 2 * 2 + 1];
+	static char funcname[NAMEDATALEN * 2 + 1 + 2 * 2 + 1];
 	List 	   *names;
 
 	if(fcall == NULL)
@@ -1405,29 +1405,29 @@ make_function_name_from_funccall(FuncCall *fcall)
 	{
 		case 1:
 			strcat(funcname, "\"");
-			strncat(funcname, strVal(linitial(names)), POOL_NAMEDATALEN);
+			strncat(funcname, strVal(linitial(names)), NAMEDATALEN);
 			strcat(funcname, "\"");
 			break;
 		case 2:
 			strcat(funcname, "\"");
-			strncat(funcname, strVal(linitial(names)), POOL_NAMEDATALEN);
+			strncat(funcname, strVal(linitial(names)), NAMEDATALEN);
 			strcat(funcname, "\"");
 
 			strcat(funcname, ".");
 
 			strcat(funcname, "\"");
-			strncat(funcname, strVal(lsecond(names)), POOL_NAMEDATALEN);
+			strncat(funcname, strVal(lsecond(names)), NAMEDATALEN);
 			strcat(funcname, "\"");
 			break;
 		case 3:
 			strcat(funcname, "\"");
-			strncat(funcname, strVal(lsecond(names)), POOL_NAMEDATALEN);
+			strncat(funcname, strVal(lsecond(names)), NAMEDATALEN);
 			strcat(funcname, "\"");
 
 			strcat(funcname, ".");
 
 			strcat(funcname, "\"");
-			strncat(funcname, strVal(lthird(names)), POOL_NAMEDATALEN);
+			strncat(funcname, strVal(lthird(names)), NAMEDATALEN);
 			strcat(funcname, "\"");
 
 			break;
@@ -1453,11 +1453,11 @@ make_table_name_from_rangevar(RangeVar *rangevar)
 {
 	/*
 	 * Table name. Max size is calculated as follows: schema
-	 * name(POOL_NAMEDATALEN byte) + quotation marks for schema name(2 byte) +
-	 * period(1 byte) + table name (POOL_NAMEDATALEN byte) + quotation marks
+	 * name(NAMEDATALEN byte) + quotation marks for schema name(2 byte) +
+	 * period(1 byte) + table name (NAMEDATALEN byte) + quotation marks
 	 * for table name(2 byte) + NULL(1 byte)
 	 */
-	static char tablename[POOL_NAMEDATALEN * 2 + 1 + 2 * 2 + 1];
+	static char tablename[NAMEDATALEN * 2 + 1 + 2 * 2 + 1];
 
 	if (rangevar == NULL)
 	{
@@ -1479,7 +1479,7 @@ make_table_name_from_rangevar(RangeVar *rangevar)
 	if (rangevar->schemaname)
 	{
 		strcat(tablename, "\"");
-		strncat(tablename, rangevar->schemaname, POOL_NAMEDATALEN);
+		strncat(tablename, rangevar->schemaname, NAMEDATALEN);
 		strcat(tablename, "\"");
 		strcat(tablename, ".");
 	}
@@ -1493,7 +1493,7 @@ make_table_name_from_rangevar(RangeVar *rangevar)
 	}
 
 	strcat(tablename, "\"");
-	strncat(tablename, rangevar->relname, POOL_NAMEDATALEN);
+	strncat(tablename, rangevar->relname, NAMEDATALEN);
 	strcat(tablename, "\"");
 
 	ereport(DEBUG1,

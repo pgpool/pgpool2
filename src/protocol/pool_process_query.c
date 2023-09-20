@@ -42,6 +42,7 @@
 
 #include "pool.h"
 #include "pool_config.h"
+#include "pg_config_manual.h"
 #include "rewrite/pool_timestamp.h"
 #include "main/pool_internal_comms.h"
 #include "protocol/pool_process_query.h"
