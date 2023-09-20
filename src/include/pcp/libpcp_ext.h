@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2023	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -29,6 +29,8 @@
 #include <signal.h>
 #include <stdio.h>
 
+#include "pg_config_manual.h"
+
 /*
  * startup packet definitions (v2) stolen from PostgreSQL
  */
@@ -49,7 +51,6 @@
 #define MAX_CONNECTION_SLOTS MAX_NUM_BACKENDS
 #define MAX_DB_HOST_NAMELEN	 MAX_FDQN_HOSTNAME_LEN
 #define MAX_PATH_LENGTH 256
-#define NAMEDATALEN 64
 
 typedef enum
 {
