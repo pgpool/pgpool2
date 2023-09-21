@@ -31,15 +31,6 @@
 #define PG_PRINTF_ATTRIBUTE printf
 #endif
 
-/* from postgresql/src/include/c.h */
-/* GCC and XLC support format attributes */
-#if defined(__GNUC__) || defined(__IBMC__)
-#define pg_attribute_format_arg(a) __attribute__((format_arg(a)))
-#define pg_attribute_printf(f,a) __attribute__((format(PG_PRINTF_ATTRIBUTE, f, a)))
-#else
-#define pg_attribute_format_arg(a)
-#define pg_attribute_printf(f,a)
-#endif
 /*
  * This is the default value for wal_segment_size to be used when initdb is run
  * without the --wal-segsize option.  It must be a valid segment size.

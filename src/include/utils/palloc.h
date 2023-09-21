@@ -29,7 +29,10 @@
 #define PALLOC_H
 
 #include <stdarg.h>
+
 #include "parser/pg_config_manual.h"
+#include "parser/pool_parser.h"
+
 /*
  * Type MemoryContextData is declared in nodes/memnodes.h.  Most users
  * of memory allocation should just treat it as an abstract type, so we

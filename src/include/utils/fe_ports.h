@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #ifndef FE_PORTS
 #define FE_PORTS
+#include "parser/pool_parser.h"
 #include "parser/pg_config_manual.h"
 #include "pool_type.h"
 

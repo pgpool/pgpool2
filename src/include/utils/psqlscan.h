@@ -20,6 +20,7 @@
 #ifndef PSQLSCAN_H
 #define PSQLSCAN_H
 
+#include "parser/pool_parser.h"
 #include "pqexpbuffer.h"
 
 
