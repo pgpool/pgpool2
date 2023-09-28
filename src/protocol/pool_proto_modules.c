@@ -110,6 +110,8 @@ static bool multi_statement_query(char *buf);
 
 static void check_prepare(List *parse_tree_list, int len, char *contents);
 
+static POOL_QUERY_CONTEXT *create_dummy_query_context(void);
+
 /*
  * This is the workhorse of processing the pg_terminate_backend function to
  * make sure that the use of function should not trigger the backend node failover.
@@ -1759,14 +1761,22 @@ Describe(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 					(errmsg("Describe message from frontend."),
 					 errdetail("portal: \"%s\"", contents + 1)));
 		msg = pool_get_sent_message('B', contents + 1, POOL_SENT_MESSAGE_CREATED);
-		if (!msg)
-			ereport(FATAL,
-					(return_code(2),
-					 errmsg("unable to execute Describe"),
-					 errdetail("unable to get the bind message")));
 	}
 
-	query_context = msg->query_context;
+	query_context = NULL;
+
+	if (msg)
+		query_context = msg->query_context;
+
+	else if (!msg && *contents == 'P')
+	{
+		/*
+		 * It is possible that client wants to use the portal created by
+		 * DECLARE CUSOR or pl/pgSQL function. If so, the describe message
+		 * should only be sent to primary node.
+		 */
+		query_context = create_dummy_query_context();
+	}
 
 	if (query_context == NULL)
 		ereport(FATAL,
@@ -4739,4 +4749,30 @@ check_prepare(List *parse_tree_list, int len, char *contents)
 										   ((PrepareStmt *) node)->name, query_context);
 		pool_add_sent_message(message);	/* add it to the sent message list */
 	}
+}
+
+/*
+ * Create a dummy query context using get_dummy_insert_query_node().  The
+ * query destination is also set.  As a side effect, query in progress flag is
+ * set.
+ */
+static
+POOL_QUERY_CONTEXT *create_dummy_query_context(void)
+{
+	POOL_QUERY_CONTEXT *query_context;
+	Node	*node;
+	MemoryContext old_context;
+	char	*query = "UNKNOWN QUERY";
+
+	query_context = pool_init_query_context();
+	old_context = MemoryContextSwitchTo(query_context->memory_context);
+
+	node = get_dummy_insert_query_node();
+	pool_start_query(query_context, query, strlen(query), node);
+	pool_where_to_send(query_context, query_context->original_query,
+					   query_context->parse_tree);
+
+	MemoryContextSwitchTo(old_context);
+
+	return query_context;
 }
