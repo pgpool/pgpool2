@@ -1,0 +1,34 @@
+FE=> Query (query="BEGIN")
+<= BE CommandComplete(BEGIN)
+<= BE ReadyForQuery(T)
+FE=> Query (query="DECLARE "serverside-cursor-broken" CURSOR FOR SELECT 3")
+<= BE CommandComplete(DECLARE CURSOR)
+<= BE ReadyForQuery(T)
+FE=> Describe(portal="serverside-cursor-broken")
+FE=> Sync
+<= BE RowDescription
+<= BE ReadyForQuery(T)
+FE=> Query (query="END")
+<= BE CommandComplete(COMMIT)
+<= BE ReadyForQuery(I)
+FE=> Sync
+<= BE ReadyForQuery(I)
+FE=> Query (query="BEGIN")
+<= BE CommandComplete(BEGIN)
+<= BE ReadyForQuery(T)
+FE=> Parse(stmt="", query="DECLARE "serverside-cursor-broken" CURSOR FOR SELECT 3")
+FE=> Bind(stmt="", portal="")
+FE=> Execute(portal="")
+FE=> Describe(portal="serverside-cursor-broken")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE CommandComplete(DECLARE CURSOR)
+<= BE RowDescription
+<= BE ReadyForQuery(T)
+FE=> Query (query="END")
+<= BE CommandComplete(COMMIT)
+<= BE ReadyForQuery(I)
+FE=> Sync
+<= BE ReadyForQuery(I)
+FE=> Terminate

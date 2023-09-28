@@ -1,0 +1,28 @@
+# test for simple query DECLARE
+'Q'	"BEGIN"
+'Y'
+'Q'	"DECLARE "serverside-cursor-broken" CURSOR FOR SELECT 3"
+'Y'
+# Describe message should return RowDescription without error
+'D'	'P'	"serverside-cursor-broken"
+'S'
+'Y'
+'Q'	"END"
+'Y'
+'S'
+'Y'
+# test for extended query DECLARE
+'Q'	"BEGIN"
+'Y'
+'P'	""	"DECLARE "serverside-cursor-broken" CURSOR FOR SELECT 3"	0
+'B'	""	""	0	0	0
+'E'	""	0
+# Describe message should return RowDescription without error
+'D'	'P'	"serverside-cursor-broken"
+'S'
+'Y'
+'Q'	"END"
+'Y'
+'S'
+'Y'
+'X'
