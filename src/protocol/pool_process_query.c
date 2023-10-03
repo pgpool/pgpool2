@@ -42,7 +42,7 @@
 
 #include "pool.h"
 #include "pool_config.h"
-#include "pg_config_manual.h"
+#include "parser/pg_config_manual.h"
 #include "rewrite/pool_timestamp.h"
 #include "protocol/pool_proto_modules.h"
 #include "protocol/protocol_defs.h"

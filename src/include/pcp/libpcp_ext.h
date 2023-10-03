@@ -29,7 +29,7 @@
 #include <signal.h>
 #include <stdio.h>
 
-#include "pg_config_manual.h"
+#include "parser/pg_config_manual.h"
 
 /*
  * startup packet definitions (v2) stolen from PostgreSQL
