@@ -374,7 +374,6 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 			pool_temp_tables_remove_pending();
 
 			/* Forget a transaction was started by multi statement query */
-			elog(LOG, "unset_tx_started_by_multi_statement_query is called in CommandComplete");
 			unset_tx_started_by_multi_statement_query();
 		}
 	}
