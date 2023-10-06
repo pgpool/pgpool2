@@ -50,7 +50,7 @@
     <thead>
      <row>
       <entry>ホスト名</entry>
-      <entry>IPアドバイス</entry>
+      <entry>IPアドレス</entry>
       <entry>仮想IP</entry>
      </row>
     </thead>
@@ -1071,7 +1071,7 @@ DEVICE=enp0s8
    <note>
     <para>
      <literal>use_watchdog = on</literal>の場合は、<productname>Pgpool-II</productname>ノード番号を
-     <filename>pgpool_node_id</filename>に設定する必要yu-があります。
+     <filename>pgpool_node_id</filename>に設定する必要があります。
      詳細は<xref linkend="example-cluster-pgpool-node-id">を参照ください。
     </para>
    </note>
