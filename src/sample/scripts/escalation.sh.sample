@@ -20,7 +20,7 @@ for pgpool in "${PGPOOLS[@]}"; do
         /usr/bin/sudo /sbin/ip addr del ${VIP}/24 dev ${DEVICE}
     "
     if [ $? -ne 0 ]; then
-        echo failed to release VIP on ${pgpool}.
+        echo ERROR: escalation.sh: failed to release VIP on ${pgpool}.
     fi
 done
 exit 0
