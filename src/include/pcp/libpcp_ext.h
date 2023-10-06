@@ -29,7 +29,9 @@
 #include <signal.h>
 #include <stdio.h>
 
+#ifndef PGPOOL_ADM
 #include "parser/pg_config_manual.h"
+#endif
 
 /*
  * startup packet definitions (v2) stolen from PostgreSQL
