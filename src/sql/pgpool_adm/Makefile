@@ -2,7 +2,7 @@
 
 MODULE_big = pgpool_adm
 OBJS = pgpool_adm.o
-PG_CPPFLAGS = -I$(libpq_srcdir) -I../../include/pcp
+PG_CPPFLAGS = -I$(libpq_srcdir) -I../../include/pcp -DPGPOOL_ADM
 
 EXTENSION = pgpool_adm
 DATA = pgpool_adm--1.0.sql pgpool_adm--1.1.sql pgpool_adm--1.2.sql pgpool_adm--1.3.sql \
