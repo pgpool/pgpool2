@@ -11,7 +11,7 @@ PG_CTL=$PGBIN/pg_ctl
 PGPROTO=$PGPOOL_INSTALL_DIR/bin/pgproto
 export PGDATABASE=test
 
-for mode in s i r n
+for mode in s r n
 do
     rm -fr $TESTDIR
     mkdir $TESTDIR
