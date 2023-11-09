@@ -1,0 +1,490 @@
+<sect1 id="release-4-5-0">
+ <title>Release 4.5.0</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2023-XX-XX</simpara>
+ </note>
+
+ <sect2>
+  <title>Overview</title>
+  <para>
+   This release resolves several long-standing issues,
+   including support for multiple statements and session disconnections
+   issue in some cases. Many enhancements are also added for easier
+   configuration and administration.
+  </para>
+
+  <para>
+   Major enhancements are as follows:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Allow to use multiple statements in a query string.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Allow to set <xref linkend="guc-delay-threshold-by-time"> in milliseconds.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Avoid session disconnection issue in failover/failback/backend error in some cases.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Allow to route queries to a specific backend node for a specific user connection.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Support multiple directories specification for <xref linkend="guc-pcp-socket-dir">.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Import PostgreSQL 16's SQL parser.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2 id="migration-4-5-0">
+  <title>Migration to Version 4.5</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2023-11-09 [4bfca73]
+    -->
+    <para>
+     The following normal ERROR messages are downgraded to DEBUG messages. (Bo Peng)
+    </para>
+    <para>
+    </para>
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       These two messages are caused when the client did not send a
+       terminate message before disconnecting to pgpool.
+       For example, when the client process was forcefully terminated, this error occurs.
+       Although they are harmless, it may sometimes confuse users.
+      </para>
+      <programlisting>
+ERROR:unable to flush data to frontend
+      </programlisting>
+      <programlisting>
+ERROR:  unable to read data from frontend
+DETAIL:  EOF encountered with frontend
+      </programlisting>
+     </listitem>
+     <listitem>
+      <para>
+       If <xref linkend="guc-client-idle-limit"> is set to a non-zero value,
+       the connection will be disconnected if it remains idle since the last query.
+       Because the disconnection is caused by Pgpool-II settings,
+       <productname>Pgpool-II</productname> should handle it as "DEBUG" instead of "ERROR".
+      </para>
+      <programlisting>
+ERROR:  unable to read data
+DETAIL:  child connection forced to terminate due to client_idle_limit:30 is reached
+      </programlisting>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-25 [6ec851b]
+    -->
+    <para>
+     Change default behavior of pcp commands for searching password file. (Chen Ningwei)
+    </para>
+    <para>
+     Previously pcp command does not searching for .pcppass/PCPPASSFILE
+     if <option>-w/--no-password</option> option is not given,
+     which is inconsistent with psql.
+    </para>
+    <para>
+     In the release, the default behavior is changed.
+     Since this release, <option>-w/--no-password</option> option is
+     not required to read the pcp commands password from .pcppass/PCPPASSFILE.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+<sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2023-10-06 [d436949]
+    -->
+    <para>
+     Add SSH timeout in escalation.sh.sample. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-08-19 [2efc59e]
+    -->
+    <para>
+     Allow to set <xref linkend="guc-delay-threshold-by-time"> in milliseconds. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously it was allowed only in seconds. Also put some
+     refactoring.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-August/004372.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-August/004372.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-10-30 [91369ea]
+    2023-08-01 [8d31e90]
+    2023-07-31 [ca300f8]
+    -->
+    <para>
+     Import PostgreSQL 16 new parser. (Chen Ningwei)
+    </para>
+    <para>
+     Major changes of PostgreSQL 16 parser include:
+    </para>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Add new option DEFAULT to COPY FROM
+      </para>
+      <programlisting>
+COPY ... FROM stdin WITH (default 'xx');
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow the STORAGE type to be specified by CREATE TABLE
+      </para>
+      <programlisting>
+CREATE TABLE t1 (
+   c1 VARCHAR(10) STORAGE PLAIN,
+   c2 TEXT STORAGE EXTENDED
+);
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add EXPLAIN option GENERIC_PLAN to display the generic plan for a parameterized query
+      </para>
+      <programlisting>
+EXPLAIN (GENERIC_PLAN) SELECT ...;
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow subqueries in the FROM clause to omit aliases
+      </para>
+      <programlisting>
+SELECT COUNT(*) FROM (SELECT ... FROM ...);
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add SQL/JSON constructors
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Add VACUUM options
+       SKIP_DATABASE_STATS, ONLY_DATABASE_STATS to skip or update all frozen statistics
+       PROCESS_MAIN to only process TOAST tables
+      </para>
+      <programlisting>
+VACUUM (SKIP_DATABASE_STATS);
+VACUUM (PROCESS_MAIN FALSE) t1 ;
+      </programlisting>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-24 [44fa732]
+    2023-07-23 [4658f84]
+    -->
+    <para>
+     Add new field <literal>load_balance_node</literal> to <xref linkend="sql-show-pool-pools"> and <xref linkend="pcp-proc-info">. (Tatsuo Ishii)
+    </para>
+    <para>
+     The new field is "1" if pgpool process is connected by a client and
+     the session uses the backend id as a load balance node. Users can
+     execute the commands to find out if there's any session that uses the
+     backend as the load balance node. If so, shutting down the backend may
+     cause session disconnection.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-July/004353.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-July/004353.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-18 [4aa657e]
+    -->
+    <para>
+     Mitigate session disconnection issue in failover/failback/backend error. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously <productname>Pgpool-II</productname> disconnected client
+     sessions in various cases. This commit tries to avoid some of cases,
+     especially when a backend goes down and the backend is not either
+     primary (or main node) nor load balance node.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-July/004352.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-July/004352.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-13 [36d695d]
+    -->
+    <para>
+     Allow to route queries to a specific backend node for a specific user connection. (Bo Peng)
+    </para>
+    <para>
+     This commit adds a new parameter
+     <xref linkend="guc-user-redirect-preference-list"> to
+     allow to send SELECT queries to a specific backend node for a
+     specific user connection.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-06 [e7e0315]
+    -->
+    <para>
+     Support multiple directories specification for <xref linkend="guc-pcp-socket-dir">. (Chen Ningwei)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-19 [66fa78e]
+    -->
+    <para>
+     Allow to load balance <literal>PREPARE/EXECUTE/DEALLOCATE</literal>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously <literal>PREPARE/EXECUTE/DEALLOCATE</literal> are
+     not load balanced. In streaming replication/logical replication
+     mode, they were sent to always primary node.
+     In native replication/snapshot isolation mode,
+     they were always sent to all nodes.
+    </para>
+    <para>
+     Now they can be load balanced if the SQL statement prepared by PREPARE
+     command is a read only SELECT.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004334.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004334.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-15 [df69dba]
+    2023-04-15 [84d6699]
+    -->
+    <para>
+     Add new config parameter <xref linkend="guc-log-pcp-processes">. (Tatsuo Ishii)
+    </para>
+    <para>
+     This allows to disable logging about normal PCP Process fork and exit
+     status. When pcp command is executed, pgpool logs its fork/exit event
+     even if there's no error. This could fill up the pgpool log.
+    </para>
+    <para>
+     Abnormal fork/exit event will be logged even if the parameter is
+     disabled.
+    </para>
+    <para>
+     Patch is created by Maximilien Cuony and reviewed by Tatsuo Ishii.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-25 [48da871]
+    -->
+    <para>
+     Import <literal>psqlscan</literal> source code into <productname>Pgpool-II</productname> to judge multi statement query. (Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>Psqlscan</literal> is a module in the PostgreSQL source tree.
+     It is essentially subset of <productname>PostgreSQL</productname>
+     SQL scanner but it is specialized for detecting
+     the end of each SQL statement. Therefore we can count the number of
+     SQL statements in a query string by using it.
+    </para>
+    <para>
+     Discussion: https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-15 [fd32f5e]
+    2023-02-23 [7d4dde0]
+    2023-04-09 [3bd5f35]
+    -->
+    <para>
+     Allow to use multiple statements extensively. (Tatsuo Ishii)
+    </para>
+    <para>
+     This commit tries to eliminate pgpool's long standing limitations
+     regarding multiple statements (multi-statements).
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-10 [31669e9]
+    2023-02-07 [85ce852]
+    -->
+    <para>
+     Add new configuration parameter <xref linkend="guc-notice-per-node-statement">. (Tatsuo Ishii)
+    </para>
+    <para>
+     The new GUC variable allows to emit NOTICE message of queries per
+     backend basis.  It's similar to <xref linkend="guc-log-per-node-statement">
+     but as the log level is NOTICE, the log is printed on client's terminal,
+     thus users can know where their queries go to without looking into pgpool
+     log files.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004276.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004276.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-15 [57751f2]
+    -->
+    <para>
+     Enhance status file reading log. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously only if <filename>pgpool_status</filename> exists and
+     the status is down, a log message was printed. However it is more
+     useful no matter what the status (up or unused) is because it also
+     represents that pgpool_status exists and it is read while pgpool
+     starting up, which is useful information.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-19 [6ce39ed]
+    -->
+    <para>
+     Remove <filename>pool_config.c</filename> and <filename>scan.c</filename>
+     from git repository. (Tatsuo Ishii)
+    </para>
+    <para>
+     They are generated files and we should not keep in the git repository.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-14 [a493ed7]
+    2022-12-14 [85b7e62]
+    2022-12-13 [caeb3a8]
+    -->
+    <para>
+     Remove <filename>Makefile.in</filename> etc. generated by autoconf. (Tatsuo Ishii)
+    </para>
+    <para>
+     Also update some .ignore files and add some new .gitignore files.  Now
+     developers need to run autoconf/autoreconf before compiling since the
+     generated files are not provided by git anymore.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-09-18 [b377b1d]
+    -->
+    <para>
+     Fix race condition with <productname>Pgpool-II</productname> main and pcp child process. (Tatsuo Ishii)
+    </para>
+    <para>
+     When pcp child process is forked off, pgpool main process unblock all
+     signals. This could lead to a race condition if a signal is sent to
+     the pcp process before it sets up signal handlers. Fix is, do not
+     unblock signals until the signal handlers are set up.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-September/004398.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-September/004398.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     This release fixes the same bugs as other minor releases.
+     See <xref linkend="release"> for more details of those fixes.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-09-17 [2ee5011]
+    2023-09-13 [fb0800e]
+    -->
+    <para>
+     Attempt to fix 001.load_balance test timeout. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-17 [c94123a]
+    2023-02-12 [f8c3d7b]
+    -->
+    <para>
+     Enhance regression 001.load_balance. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+</sect1>
