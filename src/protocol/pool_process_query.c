@@ -571,8 +571,8 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 				pool_write(frontend, DUMMY_VALUE, sizeof(DUMMY_VALUE));
 				if (pool_flush_it(frontend) < 0)
 				{
-					ereport(FRONTEND_ERROR,
-							(errmsg("unable to to flush data to frontend"),
+					ereport(FRONTEND_DEBUG,
+							(errmsg("unable to flush data to frontend"),
 							 errdetail("frontend error occurred while waiting for backend reply")));
 				}
 
@@ -595,8 +595,8 @@ wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, i
 				pool_write(frontend, notice_message, strlen(notice_message) + 1);
 				if (pool_flush_it(frontend) < 0)
 				{
-					ereport(FRONTEND_ERROR,
-							(errmsg("unable to to flush data to frontend"),
+					ereport(FRONTEND_DEBUG,
+							(errmsg("unable to flush data to frontend"),
 							 errdetail("frontend error occurred while waiting for backend reply")));
 
 				}
@@ -4922,7 +4922,7 @@ SELECT_RETRY:
 
 			if (idle_count > pool_config->client_idle_limit)
 			{
-				ereport(FRONTEND_ERROR,
+				ereport(FRONTEND_DEBUG,
 						(pool_error_code("57000"),
 						 errmsg("unable to read data"),
 						 errdetail("child connection forced to terminate due to client_idle_limit:%d is reached",
@@ -4935,7 +4935,7 @@ SELECT_RETRY:
 
 			if (idle_count_in_recovery > pool_config->client_idle_limit_in_recovery)
 			{
-				ereport(FRONTEND_ERROR,
+				ereport(FRONTEND_DEBUG,
 						(pool_error_code("57000"),
 						 errmsg("unable to read data"),
 						 errdetail("child connection forced to terminate due to client_idle_limit_in_recovery:%d is reached", pool_config->client_idle_limit_in_recovery)));
@@ -4947,7 +4947,7 @@ SELECT_RETRY:
 			 * If we are in recovery and client_idle_limit_in_recovery is -1,
 			 * then exit immediately.
 			 */
-			ereport(FRONTEND_ERROR,
+			ereport(FRONTEND_DEBUG,
 					(pool_error_code("57000"),
 					 errmsg("connection terminated due to online recovery"),
 					 errdetail("child connection forced to terminate due to client_idle_limit:-1")));

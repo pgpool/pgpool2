@@ -202,9 +202,14 @@ static inline bool should_output_to_client(int elevel);
 static bool
 is_log_level_output(int elevel, int log_min_level)
 {
-	if (elevel == LOG || elevel == COMMERROR || elevel == FRONTEND_ONLY_ERROR)
+	if (elevel == LOG || elevel == COMMERROR || elevel == FRONTEND_ONLY_ERROR || elevel == FRONTEND_LOG)
 	{
 		if (log_min_level == LOG || log_min_level <= ERROR)
+			return true;
+	}
+	else if (elevel == FRONTEND_DEBUG)
+	{
+		if (log_min_level <= DEBUG1)
 			return true;
 	}
 	else if (log_min_level == LOG)
@@ -313,6 +318,10 @@ errstart(int elevel, const char *filename, int lineno,
 		frontend_invalid = true;
 		elevel = ERROR;
 	}
+	else if (elevel == FRONTEND_DEBUG || elevel == FRONTEND_LOG)
+	{
+		frontend_invalid = true;
+	}
 
 	if (elevel >= ERROR && elevel != FRONTEND_ONLY_ERROR)
 	{
@@ -328,7 +337,7 @@ errstart(int elevel, const char *filename, int lineno,
 		 * proc_exit's responsibility to see that this doesn't turn into
 		 * infinite recursion!)
 		 */
-		if (elevel == ERROR)
+		if (elevel == ERROR || elevel == FRONTEND_LOG || elevel == FRONTEND_DEBUG)
 		{
 			if (PG_exception_stack == NULL ||
 				proc_exit_inprogress)
@@ -477,7 +486,7 @@ errfinish(int dummy,...)
 	 * If ERROR (not more nor less) we pass it off to the current handler.
 	 * Printing it and popping the stack is the responsibility of the handler.
 	 */
-	if (elevel == ERROR)
+	if (elevel == ERROR || elevel == FRONTEND_LOG || elevel == FRONTEND_DEBUG)
 	{
 		/*
 		 * We do some minimal cleanup before longjmp'ing so that handlers can
@@ -1691,6 +1700,8 @@ write_eventlog(int level, const char *line, int len)
 		case DEBUG1:
 		case LOG:
 		case COMMERROR:
+		case FRONTEND_LOG:
+		case FRONTEND_DEBUG:
 		case INFO:
 		case NOTICE:
 			eventlevel = EVENTLOG_INFORMATION_TYPE;
@@ -2325,11 +2336,13 @@ send_message_to_server_log(ErrorData *edata)
 			case DEBUG3:
 			case DEBUG2:
 			case DEBUG1:
+			case FRONTEND_DEBUG:
 				syslog_level = LOG_DEBUG;
 				break;
 			case LOG:
 			case COMMERROR:
 			case INFO:
+			case FRONTEND_LOG:
 				syslog_level = LOG_INFO;
 				break;
 			case NOTICE:
@@ -2472,10 +2485,12 @@ error_severity(int elevel, bool for_frontend)
 		case DEBUG3:
 		case DEBUG4:
 		case DEBUG5:
+		case FRONTEND_DEBUG:
 			prefix = _("DEBUG");
 			break;
 		case LOG:
 		case COMMERROR:
+		case FRONTEND_LOG:
 			prefix = _("LOG");
 			break;
 		case INFO:

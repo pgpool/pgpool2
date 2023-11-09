@@ -118,10 +118,12 @@ error_severity(int elevel)
 		case DEBUG3:
 		case DEBUG4:
 		case DEBUG5:
+		case FRONTEND_DEBUG:
 			prefix = "DEBUG";
 			break;
 		case LOG:
 		case COMMERROR:
+		case FRONTEND_LOG:
 			prefix = "LOG";
 			break;
 		case INFO:

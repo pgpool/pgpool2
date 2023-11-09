@@ -113,8 +113,10 @@ extern void errfinish(int dummy,...);
 #define FATAL		21			/* fatal error - abort process */
 #define PANIC		22			/* take down the other backends with me */
 
-#define FRONTEND_ERROR			23	/* transformed to ERROR at errstart */
-#define FRONTEND_ONLY_ERROR		24	/* this is treated as LOG message
+#define FRONTEND_DEBUG			23	/* transformed to DEBUG at errstart */
+#define FRONTEND_LOG			24	/* transformed to LOG at errstart */
+#define FRONTEND_ERROR			25	/* transformed to ERROR at errstart */
+#define FRONTEND_ONLY_ERROR		26	/* this is treated as LOG message
 									 * internally for pgpool-II but forwarded
 									 * to frontend clients just like normal
 									 * errors followed by readyForQuery

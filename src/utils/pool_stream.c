@@ -256,7 +256,7 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 			}
 			else
 			{
-				ereport(FRONTEND_ERROR,
+				ereport(FRONTEND_DEBUG,
 						(errmsg("unable to read data from frontend"),
 						 errdetail("socket read failed with error \"%m\"")));
 			}
@@ -281,7 +281,7 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 				 * if backend offers authentication method, frontend could
 				 * close connection
 				 */
-				ereport(FRONTEND_ERROR,
+				ereport(FRONTEND_DEBUG,
 						(errmsg("unable to read data from frontend"),
 						 errdetail("EOF encountered with frontend")));
 			}
@@ -776,7 +776,7 @@ pool_flush(POOL_CONNECTION * cp)
 						(errmsg("unable to flush data to frontend"),
 						 errdetail("pgpool is in replication mode, ignoring error to keep consistency among backends")));
 			else
-				ereport(FRONTEND_ERROR,
+				ereport(FRONTEND_DEBUG,
 						(errmsg("unable to flush data to frontend")));
 
 		}
