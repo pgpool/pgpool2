@@ -10,7 +10,7 @@ SSH_OPTIONS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.s
 SSH_TIMEOUT=5
 PGPOOLS=(server1 server2 server3)
 
-VIP=192.168.137.150
+VIP=192.168.100.50
 DEVICE=enp0s8
 
 for pgpool in "${PGPOOLS[@]}"; do

@@ -7,7 +7,7 @@
   servers to create a robust cluster system and avoid the single point of failure or split brain.
  </para>
  <para>
-  <productname>PostgreSQL</productname> 15 is used in this configuration example.
+  <productname>PostgreSQL</productname> 16 is used in this configuration example.
   All scripts have been tested with <productname>PostgreSQL</productname> 10 and later.
  </para>
  <sect2 id="example-cluster-requirement">
@@ -20,8 +20,9 @@
  <sect2 id="example-cluster-structure">
   <title>Cluster System Configuration</title>
   <para>
-   We use 3 servers with CentOS 7.9 installed. Let these servers be <literal>server1</literal>
-   <literal>server2</literal>, <literal>server3</literal>.
+   We use three servers with Rocky Linux 8 installed and
+   the hostnames of the three servers are <literal>server1</literal>
+   <literal>server2</literal> and <literal>server3</literal> respectively.
    We install <productname>PostgreSQL</productname> and <productname>Pgpool-II</productname> on each server.
   </para>
   <para>
@@ -36,7 +37,7 @@
   </para>
   <note>
    <para>
-    The roles of <literal>Active</literal>, <literal>Standby</literal>, <literal>Primary</literal>,
+    The roles of <literal>Leader</literal>, <literal>Standby</literal>, <literal>Primary</literal>,
     <literal>Standby</literal> are not fixed and may be changed by further operations.
    </para>
   </note>
@@ -53,16 +54,16 @@
     <tbody>
      <row>
       <entry>server1</entry>
-      <entry>192.168.137.101</entry>
-      <entry morerows="2">192.168.137.150</entry>
+      <entry>192.168.100.51</entry>
+      <entry morerows="2">192.168.100.50</entry>
      </row>
      <row>
       <entry>server2</entry>
-      <entry>192.168.137.102</entry>
+      <entry>192.168.100.52</entry>
      </row>
      <row>
       <entry>server3</entry>
-      <entry>192.168.137.103</entry>
+      <entry>192.168.100.53</entry>
      </row>
     </tbody>
    </tgroup>
@@ -81,7 +82,7 @@
     <tbody>
      <row>
       <entry>PostgreSQL Version</entry>
-      <entry>15.0</entry>
+      <entry>16.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -91,7 +92,7 @@
      </row>
      <row>
       <entry>$PGDATA</entry>
-      <entry>/var/lib/pgsql/15/data</entry>
+      <entry>/var/lib/pgsql/16/data</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -121,7 +122,7 @@
     <tbody>
      <row>
       <entry>Pgpool-II Version</entry>
-      <entry>4.3.0</entry>
+      <entry>4.5.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -147,9 +148,9 @@
       <entry>Pgpool-II config file</entry>
      </row>
      <row>
-      <entry>Pgpool-II start user</entry>
+      <entry>User running Pgpool-II</entry>
       <entry>postgres (Pgpool-II 4.1 or later)</entry>
-      <entry>Pgpool-II 4.0 or before, the default startup user is root</entry>
+      <entry>Pgpool-II 4.0 or before, the default user running Pgpool-II is root</entry>
      </row>
      <row>
       <entry>Running mode</entry>
@@ -178,26 +179,26 @@
     <tbody>
      <row>
       <entry morerows='1'>Failover</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/failover.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/failover.sh.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-FAILOVER-COMMAND"> to perform failover</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/follow_primary.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/follow_primary.sh.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> to synchronize the Standby with the new Primary after failover.</entry>
      </row>
      <row>
       <entry morerows='1'>Online recovery</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/recovery_1st_stage.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/recovery_1st_stage.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> to recovery a Standby node</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/pgpool_remote_start.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/pgpool_remote_start.sample</ulink></entry>
       <entry>Run after <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> to start the Standby node</entry>
      </row>
      <row>
       <entry morerows='1'>Watchdog</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_4_STABLE">/etc/pgpool-II/sample_scripts/escalation.sh.sample</ulink></entry>
-      <entry>Run by <xref linkend="guc-wd-escalation-command"> to switch the Active/Standby Pgpool-II safely</entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/escalation.sh.sample</ulink></entry>
+      <entry>Optional Configuration. Run by <xref linkend="guc-wd-escalation-command"> to switch the Leader/Standby Pgpool-II safely</entry>
      </row>
     </tbody>
    </tgroup>
@@ -217,8 +218,9 @@
    Install <productname>PostgreSQL</productname> from <productname>PostgreSQL</productname> YUM repository.
   </para>
   <programlisting>
-[all servers]# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-[all servers]# yum install -y postgresql15-server
+[all servers]# dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+[all servers]# dnf -qy module disable postgresql
+[all servers]# dnf install -y postgresql16-server
   </programlisting>
   <para>
    Since <productname>Pgpool-II</productname> related packages are also included in <productname>PostgreSQL</productname> YUM repository,
@@ -233,6 +235,10 @@
   </para>
   <programlisting>
 [pgdg-common]
+...
+exclude=pgpool*
+
+[pgdg16]
 ...
 exclude=pgpool*
 
@@ -255,18 +261,14 @@ exclude=pgpool*
 [pgdg11]
 ...
 exclude=pgpool*
-
-[pgdg10]
-...
-exclude=pgpool*
   </programlisting>
 
   <para>
    Install <productname>Pgpool-II</productname> from Pgpool-II YUM repository.
   </para>
   <programlisting>
-[all servers]# yum install -y https://www.pgpool.net/yum/rpms/4.4/redhat/rhel-7-x86_64/pgpool-II-release-4.4-1.noarch.rpm
-[all servers]# yum install -y pgpool-II-pg15-*
+[all servers]# dnf install -y https://www.pgpool.net/yum/rpms/4.5/redhat/rhel-8-x86_64/pgpool-II-release-4.5-1.noarch.rpm
+[all servers]# dnf install -y pgpool-II-pg16-*
   </programlisting>
  </sect2>
 
@@ -276,28 +278,28 @@ exclude=pgpool*
    Before you start the configuration process, please check the following prerequisites.
   </para>
 
-  <itemizedlist>
-   <listitem>
-    <para>
-     Set up <productname>PostgreSQL</productname> streaming replication on the primary server.
-     In this example, we use WAL archiving.
-    </para>
-    <para>
-     First, we create the directory <filename>/var/lib/pgsql/archivedir</filename> to store
-     <acronym>WAL</acronym> segments on all servers. In this example, only Primary node archives
-     <acronym>WAL</acronym> locally.
-    </para>
-    <programlisting>
+  <sect3 id="example-cluster-before-starting-primary">
+   <title>Setting up streaming replication on Primary</title>
+   <para>
+    Set up <productname>PostgreSQL</productname> streaming replication on the primary server.
+    In this example, we use WAL archiving.
+   </para>
+   <para>
+    First, we create the directory <filename>/var/lib/pgsql/archivedir</filename> to store
+    <acronym>WAL</acronym> segments on all servers. In this example, only Primary node archives
+    <acronym>WAL</acronym> locally.
+   </para>
+   <programlisting>
 [all servers]# su - postgres
 [all servers]$ mkdir /var/lib/pgsql/archivedir
-    </programlisting>
+   </programlisting>
 
-    <para>
-     Initialize <productname>PostgreSQL</productname> on the primary server.
-    </para>
-    <programlisting>
+   <para>
+    Initialize <productname>PostgreSQL</productname> on the primary server.
+   </para>
+   <programlisting>
 [server1]# su - postgres
-[server1]$ /usr/pgsql-15/bin/initdb -D $PGDATA
+[server1]$ /usr/pgsql-16/bin/initdb -D $PGDATA
     </programlisting>
 
     <para>
@@ -317,15 +319,50 @@ hot_standby = on
 wal_log_hints = on
     </programlisting>
     <para>
-     We use the online recovery functionality of <productname>Pgpool-II</productname> to setup standby server after the primary server is started.
+     Start PostgreSQL primary server on <literal>server1</literal>.
     </para>
-   </listitem>
+   <programlisting>
+[server1]# su - postgres
+[server1]$ /usr/pgsql-16/bin/pg_ctl start -D $PGDATA
+    </programlisting>
+  </sect3>
 
-   <listitem>
-    <para>
-     Because of the security reasons, we create a user <literal>repl</literal> solely used
-     for replication purpose, and a user <literal>pgpool</literal> for streaming
-     replication delay check and health check of <productname>Pgpool-II</productname>.
+  <sect3 id="example-cluster-before-starting-standby">
+   <title>Setting up streaming replication on Standby</title>
+   <para>
+    There are multiple methods to setup a standby server, such as:
+    <itemizedlist>
+     <listitem>
+      <para>
+       use pg_basebackup to backup the data directory of the primary from the standby.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       use <productname>Pgpool-II</productname>'s online recovery feature
+       (<xref linkend="runtime-online-recovery">) to automatically
+       setup a standby server.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+   <para>
+    In this example, we use <productname>Pgpool-II</productname>'s
+    online recovery to setup the standby server 
+    in section <xref linkend="example-cluster-verify-standby">
+    after the configuration of <productname>Pgpool-II</productname>
+    is completed.
+   </para>
+  </sect3>
+
+  <sect3 id="example-cluster-before-starting-users">
+   <title>Setting up PostgreSQL users</title>
+   <para>
+    Because of the security reasons, we create a dedicated user named <literal>repl</literal>
+    for replication and a dedicated user named <literal>pgpool</literal> for streaming
+    replication delay check and health check of <productname>Pgpool-II</productname>.
+    Because online recovery feature requires superuser privilege,
+    we use <literal>postgres</literal> user here.
     </para>
 
     <table id="example-cluster-user">
@@ -333,21 +370,21 @@ wal_log_hints = on
      <tgroup cols="3">
       <thead>
        <row>
-	<entry>User Name</entry>
-	<entry>Password</entry>
-	<entry>Detail</entry>
+	    <entry>User Name</entry>
+	    <entry>Password</entry>
+	    <entry>Detail</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>repl</entry>
-	<entry>repl</entry>
-	<entry>PostgreSQL replication user</entry>
+	    <entry>repl</entry>
+	    <entry>repl</entry>
+	    <entry>PostgreSQL replication user</entry>
        </row>
        <row>
-	<entry>pgpool</entry>
-	<entry>pgpool</entry>
-	<entry>Pgpool-II health check (<xref linkend="GUC-HEALTH-CHECK-USER">) and replication delay check (<xref linkend="GUC-SR-CHECK-USER">) user</entry>
+	    <entry>pgpool</entry>
+	    <entry>pgpool</entry>
+	    <entry>Pgpool-II health check (<xref linkend="GUC-HEALTH-CHECK-USER">) and replication delay check (<xref linkend="GUC-SR-CHECK-USER">) user</entry>
        </row>
        <row>
 	<entry>postgres</entry>
@@ -369,11 +406,13 @@ postgres=# \password postgres
     </programlisting>
 
     <para>
-     If you want to show "replication_state" and "replication_sync_state" column in
-     <xref linkend="SQL-SHOW-POOL-NODES"> command result, role <literal>pgpool</literal>
-      needs to be PostgreSQL super user or or in <literal>pg_monitor</literal> group 
-      (<productname>Pgpool-II</productname> 4.1 or later). Grant <literal>pg_monitor</literal>
-      to <literal>pgpool</literal>:
+     To show <literal>replication_state</literal> and
+     <literal>replication_sync_state</literal> column in
+     <xref linkend="SQL-SHOW-POOL-NODES"> command result, role
+     <literal>pgpool</literal> needs to be PostgreSQL superuser or in
+     <literal>pg_monitor</literal> group (<productname>Pgpool-II</productname> 4.1 or later).
+     Grant <literal>pg_monitor</literal>
+     to <literal>pgpool</literal>:
     </para>
     <programlisting>
 GRANT pg_monitor TO pgpool;
@@ -381,8 +420,8 @@ GRANT pg_monitor TO pgpool;
     <note>
      <para>
       If you plan to use <xref linkend="guc-detach-false-primary">(<productname>Pgpool-II</productname> 4.0 or later),
-       role "pgpool" needs to be <productname>PostgreSQL</productname> super user or
-       or in "pg_monitor" group to use this feature.
+      role "pgpool" needs to be <productname>PostgreSQL</productname> superuser
+      or in <literal>pg_monitor</literal> group to use this feature.
      </para>
     </note>
     <para>
@@ -391,108 +430,99 @@ GRANT pg_monitor TO pgpool;
      enable <literal>scram-sha-256</literal> authentication method.
     </para>
     <programlisting>
-host    all             all             samenet                 scram-sha-256
-host    replication     all             samenet                 scram-sha-256
+host    all             pgpool             samenet                 scram-sha-256
+host    all             postgres           samenet                 scram-sha-256
+host    replication     repl               samenet                 scram-sha-256
     </programlisting>
-   </listitem>
+  </sect3>
 
-   <listitem>
-    <para>
-     To use the automated failover and online recovery of <productname>Pgpool-II</productname>, 
-     it is requried to allow <emphasis>SSH public key authentication
-     (passwordless SSH login)</emphasis> to all backend servers
-     as <productname>Pgpool-II</productname> startup user
-     (default is <literal>postgres</literal>. Pgpool-II 4.0 or before, default is <literal>root</literal>)
-     and <productname>PostgreSQL</productname> startup user (default is <literal>postgres</literal>).
-    </para>
-    <para>
-     First, set <literal>postgres</literal> user's passwrod.
-    </para>
-    <programlisting>
-[all servers]# passwd postgres
-    </programlisting>
-    <para>
-     Execute the following command on all servers
-     to set up passwordless <literal>SSH</literal>.
-     In this example, we assume that the generated key file name is
-     <literal>id_rsa_pgpool</literal>.
-    </para>
-    <programlisting>
-[all servers]# mkdir ~/.ssh
-[all servers]# chmod 700 ~/.ssh
-[all servers]# cd ~/.ssh
-[all servers]# ssh-keygen -t rsa -f id_rsa_pgpool
-[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
-[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
-[all servers]# ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
-
+  <sect3 id="example-cluster-before-starting-ssh">
+   <title>Setting up SSH public key authentication</title>
+   <para>
+    To use the automated failover and online recovery of <productname>Pgpool-II</productname>, 
+    it is requried to configure <emphasis>SSH public key authentication
+    (passwordless SSH login)</emphasis> to all backend servers using
+    <literal>postgres</literal> user (the default user Pgpool-II is running as.
+    Pgpool-II 4.0 or before, the default user is <literal>root</literal>).
+   </para>
+   <para>
+    Execute the following command on all servers to generate a key pair using
+    the RSA algorithm. In this example, we assume that the generated key file
+    name is <literal>id_rsa_pgpool</literal>.
+   </para>
+   <programlisting>
 [all servers]# su - postgres
 [all servers]$ mkdir ~/.ssh
 [all servers]$ chmod 700 ~/.ssh
 [all servers]$ cd ~/.ssh
 [all servers]$ ssh-keygen -t rsa -f id_rsa_pgpool
-[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
-[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
-[all servers]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
-    </programlisting>
-    <para>
-     After setting SSH, make sure that you can run
-     <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command> command
-     as <productname>Pgpool-II</productname> startup user and
-     <productname>PostgreSQL</productname> startup user to
-     log in without entering a password. 
-    </para>
+   </programlisting>
+   <para>
+    Then add the public key <filename>id_rsa_pgpool.pub</filename> to
+    <filename>/var/lib/pgsql/.ssh/authorized_keys</filename> file
+    on each server.
+   </para>
+   <para>
+    After setting SSH, make sure that you can run
+    <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command> command
+    as <literal>postgres</literal> user to login to each server
+    without entering a password. 
+   </para>
 
-    <note>
-     <para>
-      If you failed to login using SSH public key authentication, please check the following:
-      <itemizedlist>
-       <listitem>
-        <para>
-         Ensure the public key authentication option <literal>PubkeyAuthentication</literal> are allowed in <filename>/etc/ssh/sshd_config</filename>:
-        </para>
-       </listitem>
-      </itemizedlist>
-      <programlisting>
+   <note>
+    <para>
+     If you failed to login using SSH public key authentication, please check the following:
+     <itemizedlist>
+      <listitem>
+       <para>
+        Ensure the public key authentication option <literal>PubkeyAuthentication</literal> are allowed in <filename>/etc/ssh/sshd_config</filename>:
+       </para>
+      </listitem>
+     </itemizedlist>
+     <programlisting>
 PubkeyAuthentication yes
-      </programlisting>
-      <itemizedlist>
-       <listitem>
-        <para>
+     </programlisting>
+     <itemizedlist>
+      <listitem>
+       <para>
          if the password authentication is disabled, you can fail to run
          <command>ssh-copy-id</command>, temporarily add the following
          configuration in <filename>/etc/ssh/sshd_config</filename>.
-        </para>
-       </listitem>
-      </itemizedlist>
-      <programlisting>
+       </para>
+      </listitem>
+     </itemizedlist>
+     <programlisting>
 PasswordAuthentication yes
-      </programlisting>
-      <itemizedlist>
-       <listitem>
-        <para>
-         If SELinux is enabled, SSH public key authentication (passwordless SSH) may fail.
-         You need to run the following command on all servers.
-        </para>
-       </listitem>
-      </itemizedlist>
-      <programlisting>
+     </programlisting>
+     <itemizedlist>
+      <listitem>
+       <para>
+        If SELinux is enabled, SSH public key authentication (passwordless SSH) may fail.
+        You need to run the following command on all servers.
+       </para>
+      </listitem>
+     </itemizedlist>
+    <programlisting>
 [all servers]# su - postgres
 [all servers]$ restorecon -Rv ~/.ssh
-      </programlisting>
-     </para>
-    </note>
-   </listitem>
-
-   <listitem>
-    <para>
-     To allow <literal>repl</literal> user without specifying password for streaming 
-     replication and online recovery, and execute <application>pg_rewind</application>
-     using <literal>postgres</literal>, we create the <filename>.pgpass</filename> file 
-     in <literal>postgres</literal> user's home directory and change the permission to
-     <literal>600</literal> on each <productname>PostgreSQL</productname> server.
+    </programlisting>
     </para>
-    <programlisting>
+   </note>
+  </sect3>
+
+  <sect3 id="example-cluster-before-starting-pgpass">
+   <title>Creating .pgpass</title>
+   <para>
+    To allow <literal>repl</literal> user without specifying password for streaming 
+    replication and online recovery, and execute <application>pg_rewind</application>
+    using <literal>postgres</literal>, we
+    Create the <filename>.pgpass</filename> file in <literal>postgres</literal>
+    user's home directory and change the permission to <literal>600</literal>
+    on each <productname>PostgreSQL</productname> server.
+    This file allows <literal>repl</literal> user and <literal>postgres</literal>
+    user without providing a password for streaming replication and failover.
+   </para>
+   <programlisting>
 [all servers]# su - postgres
 [all servers]$ vi /var/lib/pgsql/.pgpass
 server1:5432:replication:repl:&lt;repl user password&gt;
@@ -501,21 +531,21 @@ server3:5432:replication:repl:&lt;repl user password&gt;
 server1:5432:postgres:postgres:&lt;postgres user password&gt;
 server2:5432:postgres:postgres:&lt;postgres user password&gt;
 server3:5432:postgres:postgres:&lt;postgres user password&gt;
-[all servers]$ chmod 600  /var/lib/pgsql/.pgpass
-    </programlisting>
-   </listitem>
+[all servers]$ chmod 600 /var/lib/pgsql/.pgpass
+   </programlisting>
+  </sect3>
 
-   <listitem>
-    <para>
-     When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>CentOS/RHEL7</systemitem>.
-    </para>
-    <programlisting>
+  <sect3 id="example-cluster-before-starting-firewall">
+   <title>Setting up firewall</title>
+   <para>
+    When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>Rocky Linux 8/RHEL 8</systemitem>.
+   </para>
+   <programlisting>
 [all servers]# firewall-cmd --permanent --zone=public --add-service=postgresql
 [all servers]# firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/udp
 [all servers]# firewall-cmd --reload
-    </programlisting>
-   </listitem>
-  </itemizedlist>
+   </programlisting>
+  </sect3>
  </sect2>
 
  <sect2 id="example-cluster-pgpool-node-id">
@@ -558,6 +588,28 @@ server3:5432:postgres:postgres:&lt;postgres user password&gt;
   </itemizedlist>
  </sect2>
 
+ <sect2 id="pcp-authentication">
+  <title>PCP connection authentication</title>
+  <para>
+   To use PCP commands PCP user names and md5 encrypted passwords must be
+   declared in <filename>pcp.conf</filename> in format
+   "<literal>username:encrypted password</literal>".
+  </para>
+  <para>
+   In this example, we set PCP username to "<literal>pgpool</literal>"
+   and password to "<literal>pgpool_password</literal>".
+   Use <xref linkend="PG-MD5"> to create the encrypted password entry for
+   <literal>pgpool</literal> user as below:
+  </para>
+  <programlisting>
+[all servers]# echo 'pgpool:'`pg_md5 pgpool_password` &gt;&gt; /etc/pgpool-II/pcp.conf
+
+[all servers]# cat /etc/pgpool-II/pcp.conf
+# USERID:MD5PASSWD
+pgpool:4aa0cb9673e84b06d4c8a848c80eb5d0
+  </programlisting>
+ </sect2>
+
  <sect2 id="example-cluster-pgpool-config">
   <title><productname>Pgpool-II</productname> Configuration</title>
   <para>
@@ -586,10 +638,12 @@ backend_clustering_mode = 'streaming_replication'
   <sect3 id="example-cluster-pgpool-config-listen-addresses">
    <title>listen_addresses</title>
    <para>
-    To allow Pgpool-II to accept all incoming connections, we set <varname>listen_addresses = '*'</varname>.
+    To allow Pgpool-II and PCP to accept all incoming connections, set the following
+    parameters to <literal>'*'</literal>.
    </para>
    <programlisting>
 listen_addresses = '*'
+pcp_listen_addresses = '*'
    </programlisting>
   </sect3>
 
@@ -651,25 +705,31 @@ health_check_max_retries = 3
 backend_hostname0 = 'server1'
 backend_port0 = 5432
 backend_weight0 = 1
-backend_data_directory0 = '/var/lib/pgsql/15/data'
+backend_data_directory0 = '/var/lib/pgsql/16/data'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname1 = 'server2'
 backend_port1 = 5432
 backend_weight1 = 1
-backend_data_directory1 = '/var/lib/pgsql/15/data'
+backend_data_directory1 = '/var/lib/pgsql/16/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname2 = 'server3'
 backend_port2 = 5432
 backend_weight2 = 1
-backend_data_directory2 = '/var/lib/pgsql/15/data'
+backend_data_directory2 = '/var/lib/pgsql/16/data'
 backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
    <para>
-    To show "replication_state" and "replication_sync_state" column in <xref linkend="SQL-SHOW-POOL-NODES">
-     command result, <xref linkend="GUC-BACKEND-APPLICATION-NAME"> parameter is required.
-      Here we specify each backend's hostname in these parameters. (<productname>Pgpool-II</productname> 4.1 or later)
+    To show <literal>replication_state</literal> and
+    <literal>replication_sync_state</literal> column in
+    <xref linkend="SQL-SHOW-POOL-NODES"> command result,
+    <xref linkend="GUC-BACKEND-APPLICATION-NAME"> parameter is required.
+    Here we specify each backend's hostname in these parameters
+    (<productname>Pgpool-II</productname> 4.1 or later).
+    Make sure that the value set in <varname>backend_application_nameX</varname>
+    matches the value set in <varname>application_name</varname>
+    of <varname>primary_conninfo</varname>.
    </para>
    <programlisting>
 ...
@@ -684,19 +744,21 @@ backend_application_name2 = 'server3'
   <sect3 id="example-cluster-pgpool-config-failover">
    <title>Failover configuration</title>
    <para>
-    Specify failover.sh script to be executed after failover in <varname>failover_command</varname>
-    parameter. 
-    If we use 3 PostgreSQL servers, we need to specify follow_primary_command to run after failover on the primary node failover.
-    In case of two PostgreSQL servers, follow_primary_command setting is not necessary.
+    Specify the script that will be executed when failover occurs in
+    <xref linkend="GUC-FAILOVER-COMMAND">. When using three or more
+    PostgreSQL servers, it's required to specify
+    <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> to synchronize the standby
+    with the new primary. In case of two PostgreSQL servers, the setting of
+    <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> is not required.
    </para>
    <para>
     <productname>Pgpool-II</productname> replaces the following special characters with the backend specific
     information while executing the scripts. 
-    See <xref linkend="GUC-FAILOVER-COMMAND"> for more details about each character.
+    See <xref linkend="GUC-FAILOVER-COMMAND"> and <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> for more details about each character.
    </para>
    <programlisting>
 failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
-follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R
+follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R'
    </programlisting>
    <note>
     <para>
@@ -705,8 +767,8 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
     </para>
    </note>
    <para>
-    Sample scripts <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_4_STABLE">failover.sh</ulink>
-    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_4_STABLE">follow_primary.sh</ulink>
+    Sample scripts <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_5_STABLE">failover.sh</ulink>
+    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_5_STABLE">follow_primary.sh</ulink>
     are installed in <filename>/etc/pgpool-II/</filename>. Create failover scripts using these sample files.
    </para>
    <programlisting>
@@ -715,28 +777,25 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
 [all servers]# chown postgres:postgres /etc/pgpool-II/{failover.sh,follow_primary.sh}
    </programlisting>
    <para>
-    Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
+    Basically, it should work if you change <emphasis>PGHOME</emphasis> according to
+    PostgreSQL installation directory.
    </para>
    <programlisting>
 [all servers]# vi /etc/pgpool-II/failover.sh
 ...
-PGHOME=/usr/pgsql-15
+PGHOME=/usr/pgsql-16
 ...
 
 [all servers]# vi /etc/pgpool-II/follow_primary.sh
 ...
-PGHOME=/usr/pgsql-15
+PGHOME=/usr/pgsql-16
 ...
    </programlisting>
 
    <para>
-    Since user authentication is required to use the <literal>PCP</literal> command in
-    <varname>follow_primary_command</varname> script,
-    we need to specify user name and md5 encrypted password in <filename>pcp.conf</filename>
-    in format "<literal>username:encrypted password</literal>".
-   </para>
-   <para>
-    if <literal>pgpool</literal> user is specified in <varname>PCP_USER</varname> in <filename>follow_primary.sh</filename>,
+    Make sure the entry of the PCP user specified in <varname>PCP_USER</varname> in
+    <filename>follow_primary.sh</filename> is created in <filename>pcp.conf</filename>.
+    In this example, we have created in <xref linkend="PCP-AUTHENTICATION">
    </para>
    <programlisting>
 # cat /etc/pgpool-II/follow_primary.sh
@@ -745,19 +804,20 @@ PCP_USER=pgpool
 ...
    </programlisting>
    <para>
-    then we use <xref linkend="PG-MD5"> to create the encrypted password entry for <literal>pgpool</literal> user as below:
+    Since <filename>follow_primary.sh</filename> script must execute PCP command without
+    entering a password, we need to create <filename>.pcppass</filename> in
+    <literal>postgres</literal> user's home directory on each server
+    (the home directory of the user Pgpool-II is running as).
+    The format of <filename>.pcppass</filename> is
+    "<literal>hostname:port:username:password</literal>".
    </para>
-   <programlisting>
-[all servers]# echo 'pgpool:'`pg_md5 PCP password` &gt;&gt; /etc/pgpool-II/pcp.conf
-   </programlisting>
    <para>
-    Since <filename>follow_primary.sh</filename> script must execute PCP command without entering a
-    password, we need to create <filename>.pcppass</filename> in the home directory of
-    <productname>Pgpool-II</productname> startup user (postgres user) on each server.
+    In this example, we assume that the PCP user is <literal>pgpool</literal>
+    and the password is <literal>pgpool_password</literal>.
    </para>
    <programlisting>
 [all servers]# su - postgres
-[all servers]$ echo 'localhost:9898:pgpool:&lt;pgpool user password&gt;' &gt; ~/.pcppass
+[all servers]$ echo 'localhost:9898:pgpool:pgpool_password' &gt; ~/.pcppass
 [all servers]$ chmod 600 ~/.pcppass
    </programlisting>
    <note>
@@ -771,14 +831,13 @@ PCP_USER=pgpool
   <sect3 id="example-cluster-pgpool-config-online-recovery">
    <title>Pgpool-II Online Recovery Configurations</title>
    <para>
-    Next, in order to perform online recovery with <productname>Pgpool-II</productname> we specify
-    the <productname>PostgreSQL</productname> user name and online recovery command 
-    <command>recovery_1st_stage</command>.
+    Next, configure the required parameters to perform online recovery.
     Because <emphasis>Superuser</emphasis> privilege in <productname>PostgreSQL</productname>
-    is required for performing online recovery, we specify <literal>postgres</literal> user in <xref linkend="GUC-RECOVERY-USER">.
-     Then, we create <filename>recovery_1st_stage</filename> and <filename>pgpool_remote_start</filename>
-     in database cluster directory of <productname>PostgreSQL</productname> primary server (server1), and add execute permission.
-
+    is required for performing online recovery, we specify <literal>postgres</literal>
+    user in <xref linkend="GUC-RECOVERY-USER">. In this example, we leave
+    <xref linkend="GUC-RECOVERY-PASSWORD"> empty, and create the entry in
+    <xref linkend="GUC-POOL-PASSWD">. See <xref linkend="example-cluster-pgpool-config-auth">
+    for how to create the entry in <xref linkend="GUC-POOL-PASSWD">.
    </para>
    <programlisting>
 recovery_user = 'postgres'
@@ -786,27 +845,32 @@ recovery_password = ''
 recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
-    Online recovery sample scripts<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_4_STABLE">recovery_1st_stage</ulink>
-    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_4_STABLE">pgpool_remote_start</ulink>
+    Then, we create <filename>recovery_1st_stage</filename> and <filename>pgpool_remote_start</filename>
+    in database cluster directory of <productname>PostgreSQL</productname>
+    primary server (server1).
+   </para>
+   <para>
+    The sample scripts of online recovery <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_5_STABLE">recovery_1st_stage</ulink>
+    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_5_STABLE">pgpool_remote_start</ulink>
     are installed in <filename>/etc/pgpool-II/</filename>. Copy these files to the data directory of the primary server (server1).
    </para>
    <programlisting>
-[server1]# cp -p /etc/pgpool-II/sample_scripts/recovery_1st_stage.sample /var/lib/pgsql/15/data/recovery_1st_stage
-[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/15/data/pgpool_remote_start
-[server1]# chown postgres:postgres /var/lib/pgsql/15/data/{recovery_1st_stage,pgpool_remote_start}
+[server1]# cp -p /etc/pgpool-II/sample_scripts/recovery_1st_stage.sample /var/lib/pgsql/16/data/recovery_1st_stage
+[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/16/data/pgpool_remote_start
+[server1]# chown postgres:postgres /var/lib/pgsql/16/data/{recovery_1st_stage,pgpool_remote_start}
    </programlisting>
    <para>
     Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
    </para>
    <programlisting>
-[server1]# vi /var/lib/pgsql/15/data/recovery_1st_stage
+[server1]# vi /var/lib/pgsql/16/data/recovery_1st_stage
 ...
-PGHOME=/usr/pgsql-15
+PGHOME=/usr/pgsql-16
 ...
 
-[server1]# vi /var/lib/pgsql/15/data/pgpool_remote_start
+[server1]# vi /var/lib/pgsql/16/data/pgpool_remote_start
 ...
-PGHOME=/usr/pgsql-15
+PGHOME=/usr/pgsql-16
 ...
    </programlisting>
 
@@ -845,12 +909,16 @@ PGHOME=/usr/pgsql-15
 enable_pool_hba = on
    </programlisting>
    <para>
-    The format of <filename>pool_hba.conf</filename> file follows very closely PostgreSQL's 
-    <filename>pg_hba.conf</filename> format. Set <literal>pgpool</literal> and <literal>postgres</literal> user's authentication method to <literal>scram-sha-256</literal>.
+    The format of <filename>pool_hba.conf</filename> file follows
+    PostgreSQL's <filename>pg_hba.conf</filename> format very closely.
+    Set <literal>pgpool</literal> and <literal>postgres</literal> user's
+    authentication method to <literal>scram-sha-256</literal>. In this example,
+    it is assumed that the application connecting to <productname>Pgpool-II</productname>
+    is in the same subnet.
    </para>
    <programlisting>
-host    all         pgpool           0.0.0.0/0          scram-sha-256
-host    all         postgres         0.0.0.0/0          scram-sha-256
+host    all         pgpool           samenet          scram-sha-256
+host    all         postgres         samenet          scram-sha-256
    </programlisting>
    <note>
     <para>
@@ -861,11 +929,11 @@ host    all         postgres         0.0.0.0/0          scram-sha-256
    </note>
    <para>
     The default password file name for authentication is <xref linkend="GUC-POOL-PASSWD">.
-     To use <literal>scram-sha-256</literal> authentication, the decryption key to decrypt the passwords
-     is required. We create the <literal>.pgpoolkey</literal> file in <productname>Pgpool-II</productname>
-     start user <literal>postgres</literal>'s (<productname>Pgpool-II</productname> 4.1 or later) home directory.
-     (<productname>Pgpool-II</productname> 4.0 or before, by default <productname>Pgpool-II</productname>
-     is started as <literal>root</literal>)
+     To use <literal>scram-sha-256</literal> authentication, the decryption key to
+     decrypt the passwords is required. We create the <literal>.pgpoolkey</literal>
+     file in <literal>postgres</literal> user's home directory
+     (the user Pgpool-II is running as. <productname>Pgpool-II</productname> 4.0 or before,
+     <productname>Pgpool-II</productname> is running as <literal>root</literal> by default)
      <programlisting>
 [all servers]# su - postgres
 [all servers]$ echo 'some string' > ~/.pgpoolkey
@@ -900,12 +968,11 @@ postgres:AESHs/pWL5rtXy2IwuzroHfqg==
 use_watchdog = on
    </programlisting>
    <para>
-    Specify virtual IP address that accepts connections from clients on 
-    <literal>server1</literal>, <literal>server2</literal>, <literal>server3</literal>. 
-    Ensure that the IP address set to virtual IP isn't used yet.
+    Set virtual IP address to <xref linkend="GUC-DELEGATE-IP">.
+    Ensure that the IP address isn't used yet.
    </para>
    <programlisting>
-delegate_ip = '192.168.137.150'
+delegate_ip = '192.168.100.50'
    </programlisting>
 
    <para>
@@ -913,7 +980,8 @@ delegate_ip = '192.168.137.150'
     The network interface used in this example is "enp0s8".
     Since root privilege is required to execute <varname>if_up/down_cmd</varname> or
     <varname>arping_cmd</varname> command, use setuid on these command or allow
-    <productname>Pgpool-II</productname> startup user, <literal>postgres</literal> user (Pgpool-II 4.1 or later) to run <command>sudo</command> command without a password.
+    <literal>postgres</literal> user (the user Pgpool-II is running as) to run
+    <command>sudo</command> command without a password.
    </para>
    <note>
     <para>
@@ -937,7 +1005,7 @@ arping_cmd = '/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I enp0s8'
    <note>
     <para>
      If "Defaults requiretty" is set in the <filename>/etc/sudoers</filename>,
-     please ensure that the <productname>pgpool</productname> startup user can execute the <command>if_up_cmd</command>, <command>if_down_cmd</command> and <command>arping_cmd</command> command without a tty.
+     please ensure that the user that <productname>Pgpool-II</productname> is running as can execute the <command>if_up_cmd</command>, <command>if_down_cmd</command> and <command>arping_cmd</command> command without a tty.
     </para>
    </note>
    <para>
@@ -968,7 +1036,7 @@ wd_port2 = 9000
 pgpool_port2 = 9999
    </programlisting>
    <para>
-    Specify the method of lifecheck <xref linkend="guc-wd-lifecheck-method">
+    Configure the method of lifecheck <xref linkend="guc-wd-lifecheck-method">
     and the lifecheck interval <xref linkend="guc-wd-interval">.
     Here, we use <literal>heartbeat</literal> method to perform watchdog lifecheck.
    </para>
@@ -991,7 +1059,7 @@ heartbeat_port2 = 9694
 heartbeat_device2 = ''
    </programlisting>
    <para>
-    If the <xref linkend="guc-wd-lifecheck-method"> is set to <literal>heartbeat</literal>,
+    If <xref linkend="guc-wd-lifecheck-method"> is set to <literal>heartbeat</literal>,
     specify the time to detect a fault <xref linkend="guc-wd-heartbeat-deadtime"> and
     the interval to send heartbeat signals <xref linkend="guc-wd-heartbeat-deadtime">.
    </para>
@@ -1001,14 +1069,18 @@ wd_heartbeat_deadtime = 30
    </programlisting>
 
    <para>
-     When <literal>Watchdog</literal> process is abnormally terminated, the virtual IP may be "up" on both of the old and new active pgpool nodes.
-     To prevent this, configure <xref linkend="guc-wd-escalation-command"> to bring down the virtual IP on other pgpool nodes before bringing up the virtual IP on the new active pgpool node.
+     This setting is optional.
+     When <literal>Watchdog</literal> process is abnormally terminated,
+     the virtual IP may be "up" on both of the old and new active pgpool nodes.
+     To prevent this, configure <xref linkend="guc-wd-escalation-command">
+     to bring down the virtual IP on other Pgpool-II nodes before
+     bringing up the virtual IP on the new leader Pgpool-II node.
    </para>
     <programlisting>
 wd_escalation_command = '/etc/pgpool-II/escalation.sh'
     </programlisting>
    <para>
-    The sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_4_STABLE">escalation.sh</ulink> is installed in <filename>/etc/pgpool-II/</filename>.
+    The sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_5_STABLE">escalation.sh</ulink> is installed in <filename>/etc/pgpool-II/</filename>.
    </para>
     <programlisting>
 [all servers]# cp -p /etc/pgpool-II/sample_scripts/escalation.sh.sample /etc/pgpool-II/escalation.sh
@@ -1017,15 +1089,15 @@ wd_escalation_command = '/etc/pgpool-II/escalation.sh'
 
    <para>
     Basically, it should work if you change the following variables according to your environment.
-    PGPOOL is tha array of the hostname that running Pgpool-II.
-    VIP is the virtual IP address that you set as delegate_ip.
+    PGPOOLS is a list of hostnames where Pgpool-II is running.
+    VIP is the virtual IP address that is set to <xref linkend="guc-delegate-ip">.
     DEVICE is the network interface for the virtual IP.
    </para>
     <programlisting>
 [all servers]# vi /etc/pgpool-II/escalation.sh
 ...
 PGPOOLS=(server1 server2 server3)
-VIP=192.168.137.150
+VIP=192.168.100.50
 DEVICE=enp0s8
 ...
     </programlisting>
@@ -1037,8 +1109,8 @@ DEVICE=enp0s8
    </note>
    <note>
     <para>
-     If use_watchdog = on, please make sure the pgpool node number is specified
-     in <filename>pgpool_node_id</filename> file.
+     If <varname>use_watchdog = on</varname>, please make sure the pgpool
+     node number is specified in <filename>pgpool_node_id</filename> file.
      See <xref linkend="example-cluster-pgpool-node-id"> for details.
     </para>
    </note>
@@ -1068,8 +1140,9 @@ log_rotation_size = 10MB
    </programlisting>
 
   <para>
-   The configuration of <filename>pgpool.conf</filename> on server1 is completed. Copy the <filename>pgpool.conf</filename>
-   to other <productname>Pgpool-II</productname> nodes (server2 and server3).
+   The configuration of <filename>pgpool.conf</filename> on server1 is completed.
+   Copy the <filename>pgpool.conf</filename> to other
+   <productname>Pgpool-II</productname> nodes (server2 and server3).
   </para>
   <programlisting>
 [server1]# scp -p /etc/pgpool-II/pgpool.conf root@server2:/etc/pgpool-II/pgpool.conf
@@ -1078,132 +1151,154 @@ log_rotation_size = 10MB
   </sect3>
  </sect2>
 
- <sect2 id="example-cluster-start-stop">
-  <title>Starting/Stopping Pgpool-II</title>
-  <para>
-   Next we start <productname>Pgpool-II</productname>. Before starting
-   <productname>Pgpool-II</productname>, please start
-   <productname>PostgreSQL</productname> servers first.
-   Also, when stopping <productname>PostgreSQL</productname>, it is necessary to
-   stop Pgpool-II first.
-  </para>
-  <itemizedlist>
-   <listitem>
-    <para>
-     Starting <productname>Pgpool-II</productname>
-    </para>
-    <para>
-     In section <link linkend="EXAMPLE-CLUSTER-PRE-SETUP">Before Starting</link>,
-     we already set the auto-start of <productname>Pgpool-II</productname>. To start
-     <productname>Pgpool-II</productname>, restart the whole system or execute the following command.
-    </para>
-    <programlisting>
-# systemctl start pgpool.service
-    </programlisting>
-   </listitem>
-   <listitem>
-    <para>
-     Stopping <productname>Pgpool-II</productname>
-    </para>
-    <programlisting>
-# systemctl stop pgpool.service
-    </programlisting>
-   </listitem>
-  </itemizedlist>
- </sect2>
-
  <sect2 id="example-cluster-verify">
   <title>How to use</title>
   <para>
    Let's start to use <productname>Pgpool-II</productname>.
-   First, we start the primary <productname>PostgreSQL</productname>.
   </para>
-  <programlisting>
+  <sect3 id="example-cluster-verify-starting-stopping">
+   <title>Starting/Stopping Pgpool-II</title>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Starting <productname>Pgpool-II</productname>
+     </para>
+     <para>
+      First, let's start <productname>Pgpool-II</productname>.
+     </para>
+     <para>
+      Before starting <productname>Pgpool-II</productname>,
+      the PostgreSQL primary server must be already running.
+      If PostgreSQL primary server is not running, start it first
+      using the following command.
+     </para>
+     <programlisting>
 [server1]# su - postgres
-[server1]$ /usr/pgsql-15/bin/pg_ctl start -D $PGDATA
-  </programlisting>
-  <para>
-   Then let's start <productname>Pgpool-II</productname> on <literal>server1</literal>,
-   <literal>server2</literal>, <literal>server3</literal> by using the following command.
-  </para>
-  <programlisting>
-# systemctl start pgpool.service
-  </programlisting>
+[server1]$ /usr/pgsql-16/bin/pg_ctl start -D $PGDATA
+     </programlisting>
+     <para>
+      Start <productname>Pgpool-II</productname> on <literal>server1</literal>,
+      <literal>server2</literal>, <literal>server3</literal> by using the following command.
+     </para>
+     <programlisting>
+[all servers]# systemctl start pgpool.service
+     </programlisting>
+    </listitem>
+    <listitem>
+     <para>
+      Stopping <productname>Pgpool-II</productname>
+     </para>
+     <para>
+      When stopping <productname>PostgreSQL</productname>,
+      <productname>Pgpool-II</productname> must be stopped first.
+     </para>
+     <programlisting>
+[all servers]# systemctl stop pgpool.service
+     </programlisting>
+    </listitem>
+   </itemizedlist>
+  </sect3>
 
   <sect3 id="example-cluster-verify-standby">
-   <title>Set up PostgreSQL standby server</title>
+   <title>Setting up PostgreSQL standby server</title>
    <para>
     First, we should set up <productname>PostgreSQL</productname> standby server by
-    using <productname>Pgpool-II</productname> online recovery functionality. Ensure
-    that <filename>recovery_1st_stage</filename> and <filename>pgpool_remote_start</filename>
-    scripts used by <command>pcp_recovery_node</command> command are in database
-    cluster directory of <productname>PostgreSQL</productname> primary server (<literal>server1</literal>).
+    using <productname>Pgpool-II</productname> online recovery functionality.
+   </para>
+   <para>
+    Connect to Pgpool-II via virtual IP to check the status of backend nodes.
+    As shown in the result, primary server is running on <literal>server1</literal>,
+    standby servers on <literal>server2</literal> and <literal>server3</literal>
+    are in "down" status.
    </para>
    <programlisting>
-# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 1
+[any server]# psql -h 192.168.100.50 -p 9999 -U pgpool postgres -c "show pool_nodes"
+Password for user pgpool: 
+ node_id | hostname | port | status | pg_status | lb_weight |  role   | pg_role | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+---------+----------+------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+ 0       | server1  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | true              | 0                 |                   |                        | 2023-11-10 15:30:14
+ 1       | server2  | 5432 | down   | down      | 0.333333  | standby | unknown | 0          | false             | 0                 |                   |                        | 2023-11-10 15:30:14
+ 2       | server3  | 5432 | down   | down      | 0.333333  | standby | unknown | 0          | false             | 0                 |                   |                        | 2023-11-10 15:30:14
+(3 rows)
+   </programlisting>
+   <para>
+    Before running <xref linkend="pcp-recovery-node"> command,
+    ensure that <filename>recovery_1st_stage</filename> and
+    <filename>pgpool_remote_start</filename> scripts exist in the
+    data directory of <productname>PostgreSQL</productname>
+    primary server (<literal>server1</literal>).
+   </para>
+   <programlisting>
+[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 1 -W
 Password:
 pcp_recovery_node -- Command Successful
 
-# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 2
+[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 2 -W
 Password:
 pcp_recovery_node -- Command Successful
    </programlisting>
    <para>
     After executing <command>pcp_recovery_node</command> command,
-    verify that <literal>server2</literal> and <literal>server3</literal>
-    are started as <productname>PostgreSQL</productname> standby server.
+    verify that <productname>PostgreSQL</productname> standby servers
+    are running on <literal>server2</literal> and <literal>server3</literal>.
    </para>
    <programlisting>
-# psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
+[any server]# psql -h 192.168.100.50 -p 9999 -U pgpool postgres -c "show pool_nodes"
 Password for user pgpool
  node_id | hostname | port | status | pg_status | lb_weight |  role   | pg_role | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change
 ---------+----------+------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
- 0       | server1  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2021-10-19 07:00:57
- 1       | server2  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2021-10-19 07:00:57
- 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | false             | 0                 | streaming         | async                  | 2021-10-19 07:00:57
+ 0       | server1  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2023-11-10 15:30:14
+ 1       | server2  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2023-11-10 16:32:33
+ 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | false             | 0                 | streaming         | async                  | 2023-11-10 16:33:08
 (3 rows)
    </programlisting>
   </sect3>
 
   <sect3 id="example-cluster-verify-watchdog">
-   <title>Switching active/standby watchdog</title>
+   <title>Switching leader/standby watchdog</title>
    <para>
-    Confirm the watchdog status by using <command>pcp_watchdog_info</command>. The <command>Pgpool-II</command> server which is started first run as <literal>LEADER</literal>.
+    Confirm the watchdog status by using <command>pcp_watchdog_info</command>. The <command>Pgpool-II</command> server which is started first runs as <literal>LEADER</literal>.
    </para>
    <programlisting>
-# pcp_watchdog_info -h 192.168.137.150 -p 9898 -U pgpool
+[any server]# pcp_watchdog_info -h 192.168.100.50 -p 9898 -U pgpool -W
 Password:
 3 3 YES server1:9999 Linux server1 server1
 
-server1:9999 Linux server1 server1 9999 9000 4 LEADER 0 MEMBER #The Pgpool-II server started first became "LEADER".
-server2:9999 Linux server2 server2 9999 9000 7 STANDBY 0 MEMBER #run as standby
-server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER #run as standby
+server1:9999 Linux server1 server1 9999 9000 4 LEADER 0 MEMBER  # The Pgpool-II server started first becames "LEADER".
+server2:9999 Linux server2 server2 9999 9000 7 STANDBY 0 MEMBER # running as STANDBY
+server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER # running as STANDBY
    </programlisting>
    <para>
-    Stop active server <literal>server1</literal>, then <literal>server2</literal> or 
-    <literal>server3</literal> will be promoted to active server. To stop 
-    <literal>server1</literal>, we can stop <productname>Pgpool-II</productname> 
-    service or shutdown the whole system. Here, we stop <productname>Pgpool-II</productname> service.
+    If the <literal>LEADER</literal> <productname>Pgpool-II</productname>
+    on <literal>server1</literal> goes down, standby
+    <productname>Pgpool-II</productname> on <literal>server2</literal> or 
+    <literal>server3</literal> will become the new <literal>LEADER</literal>.
+   </para>
+   <para>
+    To verify this behavior, you may stop <productname>Pgpool-II</productname> 
+    service or shutdown the whole system. Here, we stop
+    <productname>Pgpool-II</productname> service.
    </para>
    <programlisting>
 [server1]# systemctl stop pgpool.service
 
-# pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
+[server1]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool -W
 Password:
 3 3 YES server2:9999 Linux server2 server2
 
-server2:9999 Linux server2 server2 9999 9000 4 LEADER 0 MEMBER    #server2 is promoted to LEADER
-server1:9999 Linux server1 server1 9999 9000 10 SHUTDOWN 0 MEMBER #server1 is stopped
-server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER   #server3 runs as STANDBY
+server2:9999 Linux server2 server2 9999 9000 4 LEADER 0 MEMBER    # server2 becomes LEADER
+server1:9999 Linux server1 server1 9999 9000 10 SHUTDOWN 0 MEMBER # server1 is stopped
+server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER   # server3 is running as a STANDBY
    </programlisting>
    <para>
-    Start <productname>Pgpool-II</productname> (<literal>server1</literal>) which we have stopped again,
-    and verify that <literal>server1</literal> runs as a standby.
+    Restart the stopped <productname>Pgpool-II</productname>
+    on <literal>server1</literal> and verify that it is running
+    as a <literal>STANDBY</literal>.
    </para>
    <programlisting>
 [server1]# systemctl start pgpool.service
 
-[server1]# pcp_watchdog_info -p 9898 -h 192.168.137.150 -U pgpool
+[server1]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool -W
 Password: 
 3 3 YES server2:9999 Linux server2 server2
 
@@ -1216,43 +1311,48 @@ server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER
   <sect3 id="example-cluster-verify-failover">
    <title>Failover</title>
    <para>
-    First, use <command>psql</command> to connect to <productname>PostgreSQL</productname> via virtual IP,
+    First, use <command>psql</command> to connect to
+    <productname>PostgreSQL</productname> via virtual IP,
     and verify the backend information.
    </para>
    <programlisting>
-# psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
+# psql -h 192.168.100.50 -p 9999 -U pgpool postgres -c "show pool_nodes"
 Password for user pgpool:
  node_id | hostname | port | status | pg_status | lb_weight |  role   | pg_role | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change
 ---------+----------+------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
- 0       | server1  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2021-10-19 07:08:14
- 1       | server2  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | false             | 0                 | streaming         | async                  | 2021-10-19 07:08:14
- 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2021-10-19 07:08:14
+ 0       | server1  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2023-11-10 15:30:14
+ 1       | server2  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | false             | 0                 | streaming         | async                  | 2023-11-10 16:32:33
+ 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2023-11-10 16:33:08
 (3 rows)
    </programlisting>
    <para>
-    Next, stop primary <productname>PostgreSQL</productname> server 
-    <literal>server1</literal>, and verify automatic failover.
+    Next, stop the primary <productname>PostgreSQL</productname> server 
+    on <literal>server1</literal> and verify that failover is performed
+    automatically.
    </para>
    <programlisting>
-[server1]$ pg_ctl -D /var/lib/pgsql/15/data -m immediate stop
+[server1]$ pg_ctl -D /var/lib/pgsql/16/data -m immediate stop
    </programlisting>
    <para>
-    After stopping <productname>PostgreSQL</productname> on <literal>server1</literal>,
-    failover occurs and <productname>PostgreSQL</productname> on 
-    <literal>server2</literal> becomes new primary DB.
+    After stopping <productname>PostgreSQL</productname> on
+    <literal>server1</literal>, failover occurs.
+    <productname>PostgreSQL</productname> on 
+    <literal>server2</literal> becomes the new primary and
+    the standby server on <literal>server3</literal>
+    is configured as a standby of the new primary.
    </para>
    <programlisting>
-# psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
+# psql -h 192.168.100.50 -p 9999 -U pgpool postgres -c "show pool_nodes"
 Password for user pgpool:
  node_id | hostname | port | status | pg_status | lb_weight |  role   | pg_role | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change
 ---------+----------+------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
- 0       | server1  | 5432 | down   | down      | 0.333333  | standby | unknown | 0          | false             | 0                 |                   |                        | 2021-10-19 07:10:01
- 1       | server2  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2021-10-19 07:10:01
- 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2021-10-19 07:10:03
+ 0       | server1  | 5432 | down   | down      | 0.333333  | standby | unknown | 0          | false             | 0                 |                   |                        | 2023-11-10 17:05:40
+ 1       | server2  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2023-11-10 17:05:40
+ 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2023-11-10 17:05:51
 (3 rows)
    </programlisting>
    <para>
-    <literal>server3</literal> is running as standby of new primary <literal>server2</literal>.
+    <literal>server3</literal> is running as a standby of new primary <literal>server2</literal>.
    </para>
 
    <programlisting>
@@ -1272,10 +1372,10 @@ pid              | 7198
 usesysid         | 16385
 usename          | repl
 application_name | server3
-client_addr      | 192.168.137.103
+client_addr      | 192.168.100.53
 client_hostname  |
 client_port      | 40916
-backend_start    | 2021-10-19 07:10:03.067241+00
+backend_start    | 2023-11-10 17:10:03.067241+00
 backend_xmin     |
 state            | streaming
 sent_lsn         | 0/12000260
@@ -1287,35 +1387,34 @@ flush_lag        |
 replay_lag       |
 sync_priority    | 0
 sync_state       | async
-reply_time       | 2021-10-19 07:11:53.886477+00
+reply_time       | 2023-11-10 17:17:23.886477+00
    </programlisting>
   </sect3>
 
   <sect3 id="example-cluster-verify-online-recovery">
    <title>Online Recovery</title>
    <para>
-    Here, we use <productname>Pgpool-II</productname> online recovery functionality to
-    restore <literal>server1</literal> (old primary server) as a standby. Before
-    restoring the old primary server, please ensure that
-    <filename>recovery_1st_stage</filename> and <filename>pgpool_remote_start</filename> scripts
-    exist in database cluster directory of current primary server <literal>server2</literal>.
+    Here, we use <productname>Pgpool-II</productname> online recovery
+    feature to restore the former primary on <literal>server1</literal>
+    as a standby.
    </para>
    <programlisting>
-# pcp_recovery_node -h 192.168.137.150 -p 9898 -U pgpool -n 0
+[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 0 -W
 Password: 
 pcp_recovery_node -- Command Successful
    </programlisting>
    <para>
-    Then verify that <literal>server1</literal> is started as a standby.
+    Then verify that PostgreSQL on <literal>server1</literal> is
+    running as a standby.
    </para>
    <programlisting>
-# psql -h 192.168.137.150 -p 9999 -U pgpool postgres -c "show pool_nodes"
+[any server]# psql -h 192.168.100.50 -p 9999 -U pgpool postgres -c "show pool_nodes"
 Password for user pgpool:
 node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
 ---------+----------+------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
- 0       | server1  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2021-10-19 07:14:06
- 1       | server2  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2021-10-19 07:10:01
- 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | false             | 0                 | streaming         | async                  | 2021-10-19 07:10:03
+ 0       | server1  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2023-11-10 17:22:03
+ 1       | server2  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2023-11-10 17:05:40
+ 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | false             | 0                 | streaming         | async                  | 2023-11-10 17:05:51
 (3 rows)
    </programlisting>
   </sect3>
