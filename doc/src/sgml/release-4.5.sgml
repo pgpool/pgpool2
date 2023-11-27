@@ -63,8 +63,6 @@
     <para>
      The following normal ERROR messages are downgraded to DEBUG messages. (Bo Peng)
     </para>
-    <para>
-    </para>
 
     <itemizedlist>
      <listitem>
@@ -102,17 +100,12 @@ DETAIL:  child connection forced to terminate due to client_idle_limit:30 is rea
     2023-04-25 [6ec851b]
     -->
     <para>
-     Change default behavior of pcp commands for searching password file. (Chen Ningwei)
+     <option>-w/--no-password</option> option is not required to read the pcp command password from the password file (~/.pcppass). (Chen Ningwei)
     </para>
     <para>
-     Previously pcp command does not searching for .pcppass/PCPPASSFILE
+     Previously pcp command didn't read the pcp command password from the password file (~/.pcppass)
      if <option>-w/--no-password</option> option is not given,
      which is inconsistent with psql.
-    </para>
-    <para>
-     In the release, the default behavior is changed.
-     Since this release, <option>-w/--no-password</option> option is
-     not required to read the pcp commands password from .pcppass/PCPPASSFILE.
     </para>
    </listitem>
 
@@ -128,7 +121,8 @@ DETAIL:  child connection forced to terminate due to client_idle_limit:30 is rea
     2023-10-06 [d436949]
     -->
     <para>
-     Add SSH timeout in escalation.sh.sample. (Bo Peng)
+     Add SSH timeout in sample script <filename>escalation.sh.sample</filename>
+     which is set in <xref linkend="guc-wd-escalation-command"> parameter. (Bo Peng)
     </para>
    </listitem>
 
@@ -209,9 +203,9 @@ SELECT COUNT(*) FROM (SELECT ... FROM ...);
 
      <listitem>
       <para>
-       Add VACUUM options
+       Add VACUUM options:
        SKIP_DATABASE_STATS, ONLY_DATABASE_STATS to skip or update all frozen statistics
-       PROCESS_MAIN to only process TOAST tables
+       and PROCESS_MAIN to only process TOAST tables.
       </para>
       <programlisting>
 VACUUM (SKIP_DATABASE_STATS);
@@ -230,7 +224,8 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
      Add new field <literal>load_balance_node</literal> to <xref linkend="sql-show-pool-pools"> and <xref linkend="pcp-proc-info">. (Tatsuo Ishii)
     </para>
     <para>
-     The new field is "1" if pgpool process is connected by a client and
+     The new field <literal>load_balance_node</literal> is "1"
+     if pgpool process is connected by a client and
      the session uses the backend id as a load balance node. Users can
      execute the commands to find out if there's any session that uses the
      backend as the load balance node. If so, shutting down the backend may
@@ -250,7 +245,7 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
     </para>
     <para>
      Previously <productname>Pgpool-II</productname> disconnected client
-     sessions in various cases. This commit tries to avoid some of cases,
+     sessions in various cases. This release tries to avoid some of cases,
      especially when a backend goes down and the backend is not either
      primary (or main node) nor load balance node.
     </para>
@@ -264,13 +259,7 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
     2023-06-13 [36d695d]
     -->
     <para>
-     Allow to route queries to a specific backend node for a specific user connection. (Bo Peng)
-    </para>
-    <para>
-     This commit adds a new parameter
-     <xref linkend="guc-user-redirect-preference-list"> to
-     allow to send SELECT queries to a specific backend node for a
-     specific user connection.
+     Add new parameter <xref linkend="guc-user-redirect-preference-list"> to allow to send SELECT queries to a specific backend node for a specific user connection. (Bo Peng)
     </para>
    </listitem>
 
@@ -312,12 +301,11 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
     2023-04-15 [84d6699]
     -->
     <para>
-     Add new config parameter <xref linkend="guc-log-pcp-processes">. (Tatsuo Ishii)
+     Add new config parameter <xref linkend="guc-log-pcp-processes"> to allow disable logging normal PCP Process fork and exit status. (Tatsuo Ishii)
     </para>
     <para>
-     This allows to disable logging about normal PCP Process fork and exit
-     status. When pcp command is executed, pgpool logs its fork/exit event
-     even if there's no error. This could fill up the pgpool log.
+     When pcp command is executed, pgpool logs its fork/exit event
+     even if there's no error.
     </para>
     <para>
      Abnormal fork/exit event will be logged even if the parameter is
@@ -357,8 +345,12 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
      Allow to use multiple statements extensively. (Tatsuo Ishii)
     </para>
     <para>
-     This commit tries to eliminate pgpool's long standing limitations
+     This release tries to eliminate pgpool's long standing limitations
      regarding multiple statements (multi-statements).
+    </para>
+    <para>
+     Although this is a new feature, it is also meant to be a bug fix,
+     so it has been backported to versions 4.1 to 4.4.
     </para>
     <para>
      Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
@@ -424,7 +416,7 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
      Remove <filename>Makefile.in</filename> etc. generated by autoconf. (Tatsuo Ishii)
     </para>
     <para>
-     Also update some .ignore files and add some new .gitignore files.  Now
+     Also update some .gitignore files and add some new .gitignore files.  Now
      developers need to run autoconf/autoreconf before compiling since the
      generated files are not provided by git anymore.
     </para>
@@ -457,6 +449,20 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
     <para>
      This release fixes the same bugs as other minor releases.
      See <xref linkend="release"> for more details of those fixes.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-27 [1f22c43]
+    -->
+    <para>
+     Update Configuration Example "8.2. Pgpool-II + Watchdog Setup Example" to Pgpool-II 4.5 and PostgreSQL 16. (Bo Peng)
     </para>
    </listitem>
   </itemizedlist>
