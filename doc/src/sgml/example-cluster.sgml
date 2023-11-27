@@ -102,7 +102,18 @@
      </row>
      <row>
       <entry>Replication Slots</entry>
-      <entry>Enable</entry>
+      <entry>Enabled</entry>
+      <entry>In this configuration example, replication slots are
+       automatically created or deleted in the scripts which are executed
+       during failover or online recovery. 
+       These scripts use the hostname specified in backend_hostnameX as
+       the replication slot name.
+       See <xref linkend="example-cluster-table-sample-scripts"> for
+       more information about the scripts.</entry>
+     </row>
+     <row>
+      <entry>Async/Sync Replication</entry>
+      <entry>Async</entry>
       <entry>-</entry>
      </row>
     </tbody>
@@ -358,11 +369,22 @@ wal_log_hints = on
   <sect3 id="example-cluster-before-starting-users">
    <title>Setting up PostgreSQL users</title>
    <para>
-    Because of the security reasons, we create a dedicated user named <literal>repl</literal>
-    for replication and a dedicated user named <literal>pgpool</literal> for streaming
-    replication delay check and health check of <productname>Pgpool-II</productname>.
+    A PostgreSQL user is required to use <productname>Pgpool-II</productname>'s
+    health check and replication delay check features.
+    Because of the security reasons, we create a dedicated user named
+    <literal>pgpool</literal> for streaming replication delay check and
+    health check.
+    And create a dedicated user named <literal>repl</literal> for replication.
     Because online recovery feature requires superuser privilege,
     we use <literal>postgres</literal> user here.
+    </para>
+    <para>
+     Since <productname>Pgpool-II</productname> 4.0,
+     <acronym>scram-sha-256</acronym> authentication is supported. 
+     This configuration example uses <acronym>scram-sha-256</acronym>
+     authentication method. 
+     First, set <literal>password_encryption = 'scram-sha-256'</literal>
+     and then created the users.
     </para>
 
     <table id="example-cluster-user">
@@ -481,18 +503,6 @@ host    replication     repl               samenet                 scram-sha-256
      </itemizedlist>
      <programlisting>
 PubkeyAuthentication yes
-     </programlisting>
-     <itemizedlist>
-      <listitem>
-       <para>
-         if the password authentication is disabled, you can fail to run
-         <command>ssh-copy-id</command>, temporarily add the following
-         configuration in <filename>/etc/ssh/sshd_config</filename>.
-       </para>
-      </listitem>
-     </itemizedlist>
-     <programlisting>
-PasswordAuthentication yes
      </programlisting>
      <itemizedlist>
       <listitem>
@@ -1126,7 +1136,7 @@ DEVICE=enp0s8
 log_destination = 'stderr'
 logging_collector = on
 log_directory = '/var/log/pgpool_log'
-log_filename = 'pgpool-%Y-%m-%d_%H%M%S.log'
+log_filename = 'pgpool-%a.log'
 log_truncate_on_rotation = on
 log_rotation_age = 1d
 log_rotation_size = 10MB
@@ -1342,7 +1352,7 @@ Password for user pgpool:
     is configured as a standby of the new primary.
    </para>
    <programlisting>
-# psql -h 192.168.100.50 -p 9999 -U pgpool postgres -c "show pool_nodes"
+[any server]# psql -h 192.168.100.50 -p 9999 -U pgpool postgres -c "show pool_nodes"
 Password for user pgpool:
  node_id | hostname | port | status | pg_status | lb_weight |  role   | pg_role | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change
 ---------+----------+------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
