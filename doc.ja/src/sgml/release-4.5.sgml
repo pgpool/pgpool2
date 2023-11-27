@@ -1,0 +1,469 @@
+<!-- doc/src/sgml/release-4.4.sgml -->
+<!-- See header comment in release.sgml about typical markup -->
+
+<sect1 id="release-4-5-0">
+ <title>リリース 4.5.0</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2022-XX-XX</simpara>
+ </note>
+
+ <sect2>
+  <title>概要</title>
+  <para>
+   このリリースでは、マルチステートメントのサポートや一部のセッション切断問題など、いくつかの長年の問題が解決されました。
+   また、構成と管理を容易にするために、多くの機能拡張も追加されています。
+  </para>
+
+  <para>
+   主な機能拡張は以下の通りです。
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     クエリ文字列内でマルチステートメントを使用できるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-delay-threshold-by-time">をミリ秒単位で設定できるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     フェイルオーバ、フェイルバック、およびバックエンドエラー発生時の一部のセッション切断問題を改善しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     特定のユーザ接続からの参照クエリを特定のバックエンドノードに振り分けできるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-pcp-socket-dir">で複数のディレクトリを指定できるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     PostgreSQL 16のSQLパーサを取り込みました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+
+ </sect2>
+
+ <sect2 id="migration-4-5-0">
+  <title>バージョン4.5への移行</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-09 [4bfca73]
+    -->
+    <para>
+     次の通常のERRORメッセージをDEBUGメッセージにダウングレードしました。(Bo Peng)
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       次の2つのメッセージは、クライアントがpgpoolへの接続を切断する前に終了メッセージを送信しなかった場合に発生します。
+       たとえば、クライアントプロセスが強制終了された場合に、このエラーが発生します。これらのメッセージは無害ですが、場合によってはユーザを混乱させる可能性があります。
+      </para>
+      <programlisting>
+ERROR:unable to flush data to frontend
+      </programlisting>
+      <programlisting>
+ERROR:  unable to read data from frontend
+DETAIL:  EOF encountered with frontend
+      </programlisting>
+     </listitem>
+     <listitem>
+      <para>
+       <xref linkend="guc-client-idle-limit">がゼロ以外の値に設定されている場合、クライアントが前回のクエリからアイドル状態のままでいるときに、コネクションは切断されます。
+       このコネクションの切断はPgpool-IIの設定によるものなので、ERRORではなくDEBUGとして処理すべきです。
+      </para>
+      <programlisting>
+ERROR:  unable to read data
+DETAIL:  child connection forced to terminate due to client_idle_limit:30 is reached
+      </programlisting>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-25 [6ec851b]
+    -->
+    <para>
+     PCPコマンドで-w/--no-passwordオプションを指定しなくても、パスワードファイル (~/.pcppass) に格納されたパスワードを使用するように動作を変更しました。(Chen Ningwei)
+    </para>
+    <para>
+     以前はパスワードファイル (~/.pcppass) に格納されたパスワードを使用するために、<option>-w/--no-password</option>オプションを指定する必要があり、PostgreSQLの動作と一致していませんでした。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2023-10-06 [d436949]
+    -->
+    <para>
+     パラメータ<xref linkend="guc-wd-escalation-command">用のサンプルスクリプトescalation.sh.sampleでSSH接続時のタイムアウト時間を指定するようにしました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-08-19 [2efc59e]
+    -->
+    <para>
+     <xref linkend="guc-delay-threshold-by-time">をミリ秒単位で設定できるようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前は秒単位での設定のみが許可されていました。リファクタリングも行いました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-August/004372.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-August/004372.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-10-30 [91369ea]
+    2023-08-01 [8d31e90]
+    2023-07-31 [ca300f8]
+    -->
+    <para>
+     PostgreSQL 16の新しいパーサーを取り込みました。(Chen Ningwei)
+    </para>
+    <para>
+     PostgreSQL 16パーサーの主な変更点は次のとおりです。
+    </para>
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       COPY FROMに新しいオプションDEFAULTが追加されました。
+      </para>
+      <programlisting>
+COPY ... FROM stdin WITH (default 'xx');
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       CREATE TABLEでSTORAGEタイプを指定できるようになりました。
+      </para>
+      <programlisting>
+CREATE TABLE t1 (
+   c1 VARCHAR(10) STORAGE PLAIN,
+   c2 TEXT STORAGE EXTENDED
+);
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       パラメータ化されたクエリの汎用プランを表示するために、EXPLAINオプションGENERIC_PLANが追加されました。
+      </para>
+      <programlisting>
+EXPLAIN (GENERIC_PLAN) SELECT ...;
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       FROM句のサブクエリでエイリアスを省略できるようになりました。
+      </para>
+      <programlisting>
+SELECT COUNT(*) FROM (SELECT ... FROM ...);
+      </programlisting>
+     </listitem>
+
+     <listitem>
+      <para>
+       SQL/JSONコンストラクターが追加されました。
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       VACUUMオプションが追加されました。
+       凍結されたすべての統計情報をスキップまたは更新するVACUUMオプションSKIP_DATABASE_STATS、ONLY_DATABASE_STATSが追加されました。
+       TOASTテーブルのみを処理するVACUUMオプションPROCESS_MAINが追加されました。
+      </para>
+      <programlisting>
+VACUUM (SKIP_DATABASE_STATS);
+VACUUM (PROCESS_MAIN FALSE) t1 ;
+      </programlisting>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-24 [44fa732]
+    2023-07-23 [4658f84]
+    -->
+    <para>
+     新しいフィールド<literal>load_balance_node</literal>を<xref linkend="sql-show-pool-pools">と<xref linkend="pcp-proc-info">に追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     クライアントセッションがロードバランスノードとして使用されている場合は、<literal>load_balance_node</literal>フィールドが「1」になります。
+     これらのコマンドを実行することで、バックエンドをロードバランスノードとして使用するセッションであるかどうかを確認できます。
+     その場合は、バックエンドをシャットダウンするとセッションが切断される可能性があります。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-July/004353.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-July/004353.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-07-18 [4aa657e]
+    -->
+    <para>
+     フェイルオーバ、フェイルバック、およびバックエンドエラー発生時の一部のセッション切断の問題を軽減しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前は、<productname>Pgpool-II</productname>はさまざまな場合にクライアントセッションを切断していました。
+     このリリースでは、フェイルオーバ、フェイルバック、およびバックエンドエラーの発生時に、ダウンしたバックエンドがプライマリまたはメインノードではなく、ロードバランスノードでもない一部の場合に、セッションを切断しないようになりました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-July/004352.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-July/004352.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-13 [36d695d]
+    -->
+    <para>
+     特定のユーザからの参照クエリを特定のバックエンドノードに振り分けできるように、<xref linkend="guc-user-redirect-preference-list">設定パラメータを追加しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-06-06 [e7e0315]
+    -->
+    <para>
+     <xref linkend="guc-pcp-socket-dir">で複数のディレクトリ指定できるようになりました。(Chen Ningwei)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-19 [66fa78e]
+    -->
+    <para>
+     <literal>PREPARE/EXECUTE/DEALLOCATE</literal>の負荷分散が可能になりました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前は、PREPARE/EXECUTE/DEALLOCATEは負荷分散されませんでした。
+     ストリーミングレプリケーション/論理レプリケーションモードでは、常にプライマリノードに送信されていました。
+     ネイティブレプリケーション/スナップショットアイソレーションモードでは、常にすべてのノードに送信されていました。
+    </para>
+    <para>
+     このリリースでは、PREPAREおよびEXECUTEコマンドによるプリペアドステートメントで読み取りのみの場合に負荷分散できるようになりました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004334.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-May/004334.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-04-15 [df69dba]
+    2023-04-15 [84d6699]
+    -->
+    <para>
+     PCPプロセスの正常な起動および停止ログの出力を無効にする<xref linkend="guc-log-pcp-processes">設定パラメータを追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前はpcpコマンドを実行するたびに、エラーがなくても、fork/exitログが記録されていました。
+    </para>
+    <para>
+     パラメータが無効になっている場合でも、異常なfork/exitイベントはログに記録されます。
+    </para>
+    <para>
+     パッチはMaximilien Cuonyによって作成され、Tatsuo Ishiiによってレビューされました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-25 [48da871]
+    -->
+    <para>
+     マルチステートメントのクエリを判定するために、<literal>psqlscan</literal>のソースコードを<productname>Pgpool-II</productname>にインポートしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>psqlscan</literal>は、PostgreSQLソースツリー内のモジュールです。 
+     これは本質的に<productname>PostgreSQL</productname>SQLスキャナのサブセットですが、各SQLステートメントの終わりの検出に特化しています。
+     したがって、これを使用してクエリ文字列内のSQLステートメントの数をカウントできます。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-15 [fd32f5e]
+    2023-02-23 [7d4dde0]
+    2023-04-09 [3bd5f35]
+    -->
+    <para>
+     マルチステートメントを幅広く使用できるようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     このリリースでは、複数のステートメント（マルチステートメント）に関するPgpool-IIの長年の制限を排除しました。
+    </para>
+    <para>
+     この機能は新機能であるが、バグ修正の意味合いもあるので、4.4～4.1にバックポートしています。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-03-10 [31669e9]
+    2023-02-07 [85ce852]
+    -->
+    <para>
+     新しい設定パラメータ<xref linkend="guc-notice-per-node-statement">を追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     この新しいパラメータを有効にすると、バックエンドごとにクエリのNOTICEメッセージを発行できます。
+     これは<xref linkend="guc-log-per-node-statement">に似ていますが、ログレベルがNOTICEであるため、ログはクライアントの端末に出力されるため、ユーザはpgpoolログファイルを調べなくてもクエリの宛先を知ることができます。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004276.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004276.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-15 [57751f2]
+    -->
+    <para>
+     ステータスファイルの読み込みに関するログを強化しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前は<filename>pgpool_status</filename>が存在し、ステータスがダウンの場合にのみ、ログメッセージが出力されていました。
+     しかし、ステータス（稼働中または未使用）に関係なく、<filename>pgpool_status</filename>が存在し、pgpoolの起動時に読み取られたことが有用な情報です。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-05-19 [6ce39ed]
+    -->
+    <para>
+     gitリポジトリから<filename>pool_config.c</filename>と<filename>scan.c</filename>を削除しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     これらは自動的に生成されるファイルなので、gitリポジトリに保存すべきではありません。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2022-12-14 [a493ed7]
+    2022-12-14 [85b7e62]
+    2022-12-13 [caeb3a8]
+    -->
+    <para>
+     autoconfで生成される<filename>Makefile.in</filename>などを削除しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     また、いくつかの .gitignoreファイルを更新し、いくつかの新しい.gitignoreファイルを追加しました。
+     生成されたファイルはgitによって提供されなくなったため、開発者はコンパイル前にautoconf/autoreconfを実行する必要があります。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>バグ修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-09-18 [b377b1d]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>メインプロセスとpcp子プロセスの競合状態を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     pcp子プロセスがフォークされると、pgpoolメインプロセスはすべてのシグナルのブロックを解除します。
+     これにより、シグナルハンドラーが設定される前にシグナルがpcpプロセスに送信されると、競合状態が発生する可能性がありました。
+     シグナルハンドラーがセットアップされるまでシグナルのブロックを解除しないように修正しました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-September/004398.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-September/004398.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     このリリースでは、4.3.xと同じバグ修正がすでに適用されています。これらの修正の詳細については、<xref linkend="release">を参照してください。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメントの変更</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-27 [1f22c43]
+    -->
+    <para>
+     設定例「8.2. Pgpool-II + Watchdog Setup Example」をPgpool-II 4.5とPostgreSQL 16に更新しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-09-17 [2ee5011]
+    2023-09-13 [fb0800e]
+    -->
+    <para>
+     001.load_balanceテストのタイムアウトを修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-02-17 [c94123a]
+    2023-02-12 [f8c3d7b]
+    -->
+    <para>
+     001.load_balanceを強化しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+</sect1>
