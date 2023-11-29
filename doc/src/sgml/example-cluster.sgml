@@ -503,10 +503,11 @@ server3:5432:postgres:postgres:&lt;postgres user password&gt;
 # cp -p /etc/pgpool-II/pgpool.conf.sample-stream /etc/pgpool-II/pgpool.conf
    </programlisting>
    <para>
-    To allow Pgpool-II to accept all incoming connections, we set <varname>listen_addresses = '*'</varname>.
+    To allow Pgpool-II and PCP to accept all incoming connections, we set <varname>listen_addresses = '*'</varname>.
    </para>
    <programlisting>
 listen_addresses = '*'
+pcp_listen_addresses = '*'
    </programlisting>
    <para>
     Specify replication delay check user and password. In this example, we leave 
