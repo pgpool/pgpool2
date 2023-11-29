@@ -1,6 +1,28 @@
 <!-- doc/src/sgml/release-4.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-0-25">
+ <title>リリース 4.0.25</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2023-11-30</simpara>
+  </note>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-29 [42dc580]
+    -->
+    <para>
+     PCPがすべてのアドレスをリッスンするには<varname>pcp_listen_addresses = '*'</varname>の設定が必要である旨を「Pgpool-II + Watchdogの構築の例」に記載しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-0-24">
  <title>リリース 4.0.24</title>
   <note>
