@@ -623,11 +623,12 @@ backend_clustering_mode = 'streaming_replication'
   <sect3 id="example-cluster-pgpool-config-listen-addresses">
    <title>listen_addresses</title>
    <para>
-    <productname>Pgpool-II</productname>が全てのIPアドレスから接続を受け付けるように、
+    <productname>Pgpool-II</productname>およびPCPが全てのIPアドレスから接続を受け付けるように、
     <xref linkend="GUC-LISTEN-ADDRESSES">パラメータに<literal>'*'</literal>を設定します。
    </para>
    <programlisting>
 listen_addresses = '*'
+pcp_listen_addresses = '*'
    </programlisting>
   </sect3>
 
