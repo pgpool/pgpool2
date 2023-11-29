@@ -1,6 +1,148 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-15">
+ <title>リリース 4.2.15</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2023-11-30</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-17 [823cfd9]
+    -->
+    <para>
+     大文字のホスト名をサポートするようにサンプルスクリプトのレプリケーションスロット名の変換処理を変更しました。(Bo Peng)
+    </para>
+    <para>
+     フェイルオーバやオンラインリカバリの時に実行されるスクリプトで、自動的にレプリケーションスロットを削除/作成しています。
+     レプリケーションスロット名には大文字を使用できないため、ホスト名を小文字に変換するようにこれらのスクリプトを修正しました。
+    </para>
+    <para>
+     パッチはSheikh Wasiu Al Hasibによって作成され、Bo Pengによって修正されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-10-06 [5c9b377]
+    -->
+    <para>
+     パラメータ<xref linkend="guc-wd-escalation-command">用のサンプルスクリプト<filename>escalation.sh.sample</filename>でSSH接続時のタイムアウト時間を指定するようにしました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-10-04 [6075d59]
+    -->
+    <para>
+     不要なログ行を削除しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     デバッグメッセージ「unset_tx_started_by_multi_statement_query is called in CommandComplete」が誤って残っていました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-09-29 [72a171c]
+    2023-09-29 [2036eac]
+    -->
+    <para>
+     <command>DECLARE</command>によって作成されたポータルでアボートしないように<function>Describe()</function>を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <command>DECLARE foo CURSOR FOR</command>を実行すると、<productname>PostgreSQL</productname>によって「foo」という名前のポータルが自動的に作成されます。
+     このポータルは<productname>Pgpool-II</productname>によって管理されないため、<command>Describe foo</command>メッセージは「unable to execute Describe. unable to get the bind message」エラーで失敗していました。
+    </para>
+    <para>
+     これを修正するため、<function>Describe()</function>でダミーの書き込みクエリコンテキストを作成し、<command>Desribe</command>メッセージをプライマリ（ストリーミングレプリケーションモード）またはすべてのノード（レプリケーション/スナップショットアイソレーションモード）に送信するようにしました。
+    </para>
+    <para>
+     新たなテストケース080も追加しました。
+    </para>
+    <para>
+     この問題はHeather Lapointeによって報告・分析されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2023-September/008995.html">https://www.pgpool.net/pipermail/pgpool-general/2023-September/008995.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-10-03 [9b95270]
+    2023-10-07 [f6b8228]
+    2023-09-20 [3763441]
+    -->
+    <para>
+     <varname>NAMEDATALEN</varname>の重複定義を削除しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <filename>src/include/pg_config_manual.h</filename>のみで<varname>NAMEDATALEN</varname>を定義するようにしました。
+     また、<filename>src/utils/pool_select_walker.c</filename>内の<varname>POOL_NAMEDATALEN</varname>を<varname>NAMEDATALEN</varname>に置き換えました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-August/004366.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-August/004366.html</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-29 [42dc580]
+    -->
+    <para>
+     PCPがすべてのアドレスをリッスンするには<varname>pcp_listen_addresses = '*'</varname>の設定が必要である旨を「Pgpool-II + Watchdogの構築の例」に記載しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-08-21 [d7256e1]
+    -->
+    <para>
+     <xref linkend="guc-follow-primary-command">のドキュメントの説明を強化しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="pcp-recovery-node">を使用しない場合は、<xref linkend="pcp-attach-node">の実行が必要である旨を記載しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-08-21 [957f983]
+    -->
+    <para>
+     <command>pgpool_setup</command>を強化しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     フェイルオーバスクリプトおよびフォロープライマリスクリプトでより適切なログを出力できるように<command>pgpool_setup</command>を改善しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-14">
  <title>リリース 4.2.14</title>
   <note>

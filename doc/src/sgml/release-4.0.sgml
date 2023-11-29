@@ -1,6 +1,30 @@
 <!-- doc/src/sgml/release-4.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-0-25">
+ <title>Release 4.0.25</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2023-11-30</simpara>
+  </note>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-29 [42dc580]
+    -->
+    <para>
+     Modify "Pgpool-II + Watchdog Setup Example" to mention that
+     <varname>pcp_listen_addresses = '*'</varname> is required to
+     allow PCP to listen on all addresses.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-0-24">
  <title>Release 4.0.24</title>
   <note>
