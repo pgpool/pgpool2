@@ -700,7 +700,7 @@ backend_clustering_mode = 'streaming_replication'
 
 # - Watchdog communication Settings -
 
-hostname0 = ''
+#hostname0 = ''
                                     # Host name or IP address of pgpool node
                                     # for watchdog connection
                                     # (change requires restart)
