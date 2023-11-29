@@ -586,10 +586,11 @@ backend_clustering_mode = 'streaming_replication'
   <sect3 id="example-cluster-pgpool-config-listen-addresses">
    <title>listen_addresses</title>
    <para>
-    To allow Pgpool-II to accept all incoming connections, we set <varname>listen_addresses = '*'</varname>.
+    To allow Pgpool-II and PCP to accept all incoming connections, we set <varname>listen_addresses = '*'</varname>.
    </para>
    <programlisting>
 listen_addresses = '*'
+pcp_listen_addresses = '*'
    </programlisting>
   </sect3>
 
@@ -696,7 +697,7 @@ backend_application_name2 = 'server3'
    </para>
    <programlisting>
 failover_command = '/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S'
-follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R
+follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R'
    </programlisting>
    <note>
     <para>
