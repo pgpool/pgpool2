@@ -1,6 +1,123 @@
 <!-- doc/src/sgml/release-4.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-1-18">
+ <title>Release 4.1.18</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2023-11-30</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-17 [823cfd9]
+    -->
+    <para>
+     Modify the replication slot name conversion in sample scripts
+     to support for the hostname in uppercase. (Bo Peng)
+    </para>
+    <para>
+     Replication slots are automatically created or deleted in the scripts
+     which are executed during failover or online recovery.
+     Since uppercase can't be used for a replication slot name, modify these scripts
+     to convert the hostname to lowercase.
+    </para>
+    <para>
+     Patch is created by Sheikh Wasiu Al Hasib and modified by Bo Peng.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-10-04 [6075d59]
+    -->
+    <para>
+     Remove unnecessary logging line. (Tatsuo Ishii)
+    </para>
+    <para>
+     Debug message "unset_tx_started_by_multi_statement_query is called in CommandComplete" was accidentally left.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-09-29 [72a171c]
+    2023-09-29 [2036eac]
+    -->
+    <para>
+     Fix <function>Describe()</function> so that it does not abort with portal created by <command>DECLARE</command>. (Tatsuo Ishii)
+    </para>
+    <para>
+     When <command>DECLARE foo CURSOR FOR</command> is executed,
+     a portal named "foo" is automatically created by PostgreSQL.
+     As the portal is not managed by Pgpool-II, 
+     "Describe foo" message failed with "unable to execute Describe.
+     unable to get the bind message" error.
+    </para>
+    <para>
+     To fix this, make <function>Describe()</function> create a dummy write query
+     context so that the describe message is sent to primary (streaming replication
+     mode) or all nodes (replication/snapshot isolation mode).
+    </para>
+    <para>
+     Also add test case 080 for this commit.
+    </para>
+    <para>
+     This problem was reported and analyzed by Heather Lapointe.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2023-September/008995.html">https://www.pgpool.net/pipermail/pgpool-general/2023-September/008995.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2023-10-03 [9b95270]
+    2023-10-07 [f6b8228]
+    2023-09-20 [3763441]
+    -->
+    <para>
+     Remove duplication definitions of <varname>NAMEDATALEN</varname>. (Tatsuo Ishii)
+    </para>
+    <para>
+     The definition for <varname>NAMEDATALEN</varname> is now in
+     <filename>src/include/pg_config_manual.h</filename> only.
+     Also replace <varname>POOL_NAMEDATALEN</varname> with
+     <varname>NAMEDATALEN</varname> in
+     <filename>src/utils/pool_select_walker.c</filename>.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-August/004366.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-August/004366.html</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2023-11-29 [42dc580]
+    -->
+    <para>
+     Modify "Pgpool-II + Watchdog Setup Example" to mention that
+     <varname>pcp_listen_addresses = '*'</varname> is required to
+     allow PCP to listen on all addresses.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-1-17">
  <title>Release 4.1.17</title>
   <note>
