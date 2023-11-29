@@ -638,7 +638,7 @@ ping_path = '/bin'
 
 # - Watchdog communication Settings -
 
-hostname0 = ''
+#hostname0 = ''
                                     # Host name or IP address of pgpool node
                                     # for watchdog connection
                                     # (change requires restart)
