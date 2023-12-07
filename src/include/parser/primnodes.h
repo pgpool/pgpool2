@@ -24,7 +24,6 @@
  * include/c.h
  */
 typedef uint32 SubTransactionId;
-typedef uint32 TransactionId;
 #define InvalidSubTransactionId     ((SubTransactionId) 0)
 
 /* ----------------------------------------------------------------
