@@ -8,10 +8,10 @@
  <sect2>
   <title>Overview</title>
   <para>
-   This release resolves several long-standing issues,
-   including support for multiple statements and session disconnections
-   issue in some cases. Many enhancements are also added for easier
-   configuration and administration.
+   This release resolves several long-standing issues, including
+   lacking support for some types of queries in multiple statements
+   and session disconnections issue in some cases. Many enhancements
+   are also added for easier configuration and administration.
   </para>
 
   <para>
@@ -21,7 +21,12 @@
   <itemizedlist>
    <listitem>
     <para>
-     Allow to use multiple statements in a query string.
+     Allow to use more kind of multiple statements in a query string.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Allow to load balance <literal>PREPARE/EXECUTE/DEALLOCATE</literal>.
     </para>
    </listitem>
    <listitem>
@@ -318,6 +323,35 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
 
    <listitem>
     <!--
+    2023-02-15 [fd32f5e]
+    2023-02-23 [7d4dde0]
+    2023-04-09 [3bd5f35]
+    -->
+    <para>
+     Allow to use multiple statements extensively. (Tatsuo Ishii)
+    </para>
+    <para>
+     This release tries to eliminate pgpool's long standing limitations
+     regarding multiple statements (multi-statements).
+     For example, previously following queries raised errors.
+     <programlisting>
+     BEGIN;SELECT;
+     SAVEPOINT foo;
+     </programlisting>
+     Please note that each query in multi-statement is not still load balanced.
+    </para>
+    <para>
+     Although this is a new feature, it is also meant to be a bug fix,
+     so it has been backported to versions 4.1 to 4.4.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
+    </para>
+   </listitem>
+
+
+   <listitem>
+    <!--
     2023-03-25 [48da871]
     -->
     <para>
@@ -332,28 +366,6 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
     </para>
     <para>
      Discussion: https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2023-02-15 [fd32f5e]
-    2023-02-23 [7d4dde0]
-    2023-04-09 [3bd5f35]
-    -->
-    <para>
-     Allow to use multiple statements extensively. (Tatsuo Ishii)
-    </para>
-    <para>
-     This release tries to eliminate pgpool's long standing limitations
-     regarding multiple statements (multi-statements).
-    </para>
-    <para>
-     Although this is a new feature, it is also meant to be a bug fix,
-     so it has been backported to versions 4.1 to 4.4.
-    </para>
-    <para>
-     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
     </para>
    </listitem>
 
