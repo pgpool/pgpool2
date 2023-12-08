@@ -11,7 +11,7 @@
  <sect2>
   <title>概要</title>
   <para>
-   このリリースでは、マルチステートメントのサポートや一部のセッション切断問題など、いくつかの長年の問題が解決されました。
+   このリリースでは、マルチステートメントの適用範囲や、一部のセッション切断問題など、いくつかの長年の問題が解決されました。
    また、構成と管理を容易にするために、多くの機能拡張も追加されています。
   </para>
 
@@ -22,7 +22,13 @@
   <itemizedlist>
    <listitem>
     <para>
-     クエリ文字列内でマルチステートメントを使用できるようになりました。
+     クエリ文字列内でより多くの場合にマルチステートメントを使用できるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>PREPARE/EXECUTE/DEALLOCATE</literal>の負荷分散が可能になりました。
     </para>
    </listitem>
 
@@ -305,6 +311,34 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
 
    <listitem>
     <!--
+    2023-02-15 [fd32f5e]
+    2023-02-23 [7d4dde0]
+    2023-04-09 [3bd5f35]
+    -->
+    <para>
+     マルチステートメントを幅広く使用できるようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     このリリースでは、複数のステートメント（マルチステートメント）に関するPgpool-IIの長年の制限を排除しました。
+     たとえば、以下のようなクエリは以前はエラーになっていました。
+     <programlisting>
+     BEGIN;SELECT;
+     SAVEPOINT foo;
+     </programlisting>
+    </para>
+    <para>
+     なお、依然として、マルチステートメントの各クエリは負荷分散されないことに留意してください。
+    </para>
+    <para>
+     この機能は新機能ですが、バグ修正の意味合いもあるので、4.4～4.1にバックポートしています。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
     2023-03-25 [48da871]
     -->
     <para>
@@ -317,26 +351,6 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
     </para>
     <para>
      ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004291.html</ulink>
-    </para>
-   </listitem>
-
-   <listitem>
-    <!--
-    2023-02-15 [fd32f5e]
-    2023-02-23 [7d4dde0]
-    2023-04-09 [3bd5f35]
-    -->
-    <para>
-     マルチステートメントを幅広く使用できるようにしました。(Tatsuo Ishii)
-    </para>
-    <para>
-     このリリースでは、複数のステートメント（マルチステートメント）に関するPgpool-IIの長年の制限を排除しました。
-    </para>
-    <para>
-     この機能は新機能であるが、バグ修正の意味合いもあるので、4.4～4.1にバックポートしています。
-    </para>
-    <para>
-     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html">https://www.pgpool.net/pipermail/pgpool-hackers/2023-February/004287.html</ulink>
     </para>
    </listitem>
 
