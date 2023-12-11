@@ -5,7 +5,7 @@
  <title>リリース 4.5.0</title>
  <note>
   <title>リリース日</title>
-  <simpara>2022-XX-XX</simpara>
+  <simpara>2023-12-12</simpara>
  </note>
 
  <sect2>
@@ -322,8 +322,8 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
      このリリースでは、複数のステートメント（マルチステートメント）に関するPgpool-IIの長年の制限を排除しました。
      たとえば、以下のようなクエリは以前はエラーになっていました。
      <programlisting>
-     BEGIN;SELECT;
-     SAVEPOINT foo;
+BEGIN;SELECT;
+SAVEPOINT foo;
      </programlisting>
     </para>
     <para>

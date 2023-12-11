@@ -2,7 +2,7 @@
  <title>Release 4.5.0</title>
  <note>
   <title>Release Date</title>
-  <simpara>2023-XX-XX</simpara>
+  <simpara>2023-12-12</simpara>
  </note>
 
  <sect2>
@@ -335,8 +335,8 @@ VACUUM (PROCESS_MAIN FALSE) t1 ;
      regarding multiple statements (multi-statements).
      For example, previously following queries raised errors.
      <programlisting>
-     BEGIN;SELECT;
-     SAVEPOINT foo;
+BEGIN;SELECT;
+SAVEPOINT foo;
      </programlisting>
      Please note that each query in multi-statement is not still load balanced.
     </para>
