@@ -25,10 +25,18 @@ source ./bashrc.ports
 PCP_DETACH_NODE="$PGPOOL_INSTALL_DIR/bin/pcp_detach_node -w -h localhost -p $PCP_PORT 2"
 
 # customize pgpool.conf. disable load balance to node 2.
+# Also modify health check parameters so that health check detects
+# backend down earlier.
 cat >> etc/pgpool.conf <<EOF
 backend_weight2 = 0
 log_per_node_statement = off
 log_error_verbosity = verbose
+health_check_period0 = 1
+health_check_max_retries0 = 0
+health_check_period1 = 1
+health_check_max_retries1 = 0
+health_check_period2 = 1
+health_check_max_retries2 = 0
 EOF
 
 ./startall
@@ -47,8 +55,10 @@ $PG_CTL -D data2 stop
 wait $!
 if [ $? != 0 ];then
     echo "pgbench exited with error. test1 failed."
-    ./shutdownall
-    exit 1
+    r1=fail
+else
+    echo "pgbench suceeded. test1 ok."
+    r1=ok
 fi
 ./shutdownall
 
@@ -68,8 +78,10 @@ $PG_CTL -D data2 stop
 wait $!
 if [ $? != 0 ];then
     echo "pgbench exited with error. test2 failed."
-    ./shutdownall
-    exit 1
+    r2=fail
+else
+    echo "pgbench suceeded. test2 ok."
+    r2=ok
 fi
 
 ./shutdownall
@@ -87,12 +99,15 @@ wait_for_pgpool_startup
 
 ($PGBENCH -n -S -c 10 -T 5)&
 sleep 1
-$PG_CTL -D data2 stop
+#$PG_CTL -D data2 stop
+$PCP_DETACH_NODE
 wait $!
 if [ $? != 0 ];then
     echo "pgbench exited with error. test3 failed."
-    ./shutdownall
-    exit 1
+    r3=fail
+else
+    echo "pgbench suceeded. test3 ok."
+    r3=ok
 fi
 ./shutdownall
 
@@ -113,10 +128,19 @@ $PG_CTL -D data2 stop
 wait $!
 if [ $? != 0 ];then
     echo "pgbench exited with error. test4 failed."
-    ./shutdownall
+    r4=fail
+else
+    echo "pgbench suceeded. test4 ok."
+    r4=ok
+fi
+
+if [ $r1 = ok -a $r2 = ok -a $r3 = ok -a $r4 = ok ]; then
+    echo "all test succeeded"
+    exit 0
+else
+    echo "some tests failed"
+    echo "test1: $r1 test2: $r2 test3: $r3 test4: $r4"
     exit 1
 fi
 
 ./shutdownall
-
-exit 0
