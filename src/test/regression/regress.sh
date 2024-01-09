@@ -217,6 +217,7 @@ do
 	check_segfault
 	if [ $? -eq 0 ];then
 		echo "fail: Segmentation fault detected" >> $log/$i
+		segfault=1
 		rtn=1
 	fi
 
@@ -227,7 +228,11 @@ do
 		echo "timeout."
 		timeout=`expr $timeout + 1`
 	else
-		echo ${CRED}"failed."${CNORM}
+		if [ "$segfault" = "1" ];then
+			echo ${CRED}"segfault."${CNORM}
+		else
+			echo ${CRED}"failed."${CNORM}
+		fi
 		fail=`expr $fail + 1`
 	fi
 
