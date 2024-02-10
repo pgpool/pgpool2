@@ -479,6 +479,11 @@
 	 DEALLOCATE ALL
 	</para>
        </listitem>
+       <listitem>
+	<para>
+	 SAVEPOINT (そしてRELEASE SAVEPOINTのような関連コマンド)
+	</para>
+       </listitem>
       </itemizedlist>
      </para>
     </listitem>
@@ -1468,7 +1473,7 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
     <listitem>
      <para>
       <!--
-      When set to on, the load balancing node is decided for each read query.
+      When set to on and <xref linkend="guc-load-balance-mode"> is set to on, the load balancing node is decided for each read query.
       When set to off, load balancing node is decided at the session start time
       and will not be changed until the session ends.
       For example, in applications that use connection pooling remain connections
@@ -1478,13 +1483,32 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
       it is possible to decide load balancing node per query, not per session.
       The default is off.
       -->
-      onに設定すると、参照クエリごとに負荷分散先を決めます。
+      onに設定し、<xref linkend="guc-load-balance-mode">がonに設定されていると、参照クエリごとに負荷分散先を決めます。
       offに設定すると、セッションが始まるときに決められた負荷分散先がセッションが終了するまで変更されません。
       例えば、コネクションプールを利用し、バックエンドサーバに接続したままのようなアプリケーションの場合、
       セッションが長い間保持される可能性があるので、セッションが終了するまで負荷分散先のノードが変わりません。
       このようなアプリケーションでは、<varname>statement_level_load_balance</varname>を有効にすると、
       セッションごとではなく、クエリごとに負荷分散先を決めることが可能です。デフォルトはoffです。
      </para>
+     <note>
+      <para>
+<!--
+       In streaming replication mode, certain kind of queries such as
+       BEGIN/END/COMMIT/ABORT/SET/SAVEPOINT/RELEASE
+       SAVEPOINT/DEALLOCATE ALL/DISCARD are sent to primary node and
+       load balance node. If
+       <xref linkend="guc-statement-level-load-balance"> is on, such
+       queries are sent to all standby nodes as well. This is not
+       usually a problem. But when one of standbys are in remote
+       network, the network latency may cause significant slow down in
+       case of such queries.
+-->
+       streaming replication modeでは、BEGIN/END/COMMIT/ABORT/SET/SAVEPOINT/RELEASE SAVEPOINT/DEALLOCATE ALL/DISCARDのようなクエリはプライマリノードとロードバランスノードに送られます。
+       <xref linkend="guc-statement-level-load-balance">がonなら、そうしたクエリはすべてのスタンバイノードにも送られます
+       これは通常問題になりません。
+       しかしスタンバイノードの一つが遠隔ネットワークにあると、ネットワーク遅延のためにこうしたクエリで大きな速度低下を起こすことがあります。
+      </para>
+     </note>
      <para>
       <!--
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
