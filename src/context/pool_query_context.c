@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -236,14 +236,28 @@ pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT * query_context)
 		if (private_backend_status[i] == CON_UP ||
 			(private_backend_status[i] == CON_CONNECT_WAIT))
 		{
-			/*
-			 * In streaming replication mode, if the node is not primary node
-			 * nor load balance node, there's no point to send query.
-			 */
-			if (SL_MODE && !pool_config->statement_level_load_balance &&
-				i != PRIMARY_NODE_ID && i != sc->load_balance_node_id)
+			if (SL_MODE)
 			{
-				continue;
+				/*
+				 * If load balance mode is disabled, only send to the primary node.
+				 * or send to the main node if primary node does not exist.
+				 */
+				if (!pool_config->load_balance_mode)
+				{
+					if (i == PRIMARY_NODE_ID ||
+						(PRIMARY_NODE_ID < 0 && MAIN_NODE_ID == i))
+						query_context->where_to_send[i] = true;
+					break;
+				}
+				else
+					/*
+					 * If the node is not primary node nor load balance node,
+					 * there's no point to send query except statement load
+					 * balance is enabled.
+					 */
+					if (!pool_config->statement_level_load_balance &&
+						i != PRIMARY_NODE_ID && i != sc->load_balance_node_id)
+						continue;
 			}
 			query_context->where_to_send[i] = true;
 		}

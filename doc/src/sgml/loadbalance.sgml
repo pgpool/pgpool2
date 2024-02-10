@@ -398,6 +398,11 @@
 	 DEALLOCATE ALL
 	</para>
        </listitem>
+       <listitem>
+	<para>
+	 SAVEPOINT (and related commands such as RELEASE SAVEPOINT)
+	</para>
+       </listitem>
       </itemizedlist>
      </para>
     </listitem>
@@ -1082,16 +1087,29 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
     </term>
     <listitem>
      <para>
-      When set to on, the load balancing node is decided for each read query.
+      When set to on and <xref linkend="guc-load-balance-mode"> is set to on, the load balancing node is decided for each read query.
       When set to off, load balancing node is decided at the session start time
       and will not be changed until the session ends.
       For example, in applications that use connection pooling remain connections
       open to the backend server, because the session may be held for a long time,
       the load balancing node does not change until the session ends.
-      In such applications, When <varname>statement_level_load_balance</varname> is enabled,
+      In such applications, when <varname>statement_level_load_balance</varname> is enabled,
       it is possible to decide load balancing node per query, not per session.
       The default is off.
      </para>
+
+     <note>
+      <para>
+       In streaming replication mode, certain kind of queries such as
+       BEGIN/END/COMMIT/ABORT/SET/SAVEPOINT/RELEASE SAVEPOINT/DEALLOCATE ALL/DISCARD are sent to
+       primary node and load balance node. If
+       <xref linkend="guc-statement-level-load-balance"> is on, such
+       queries are sent to all standby nodes as well. This is not
+       usually a problem. But when one of standbys are in remote
+       network, the network latency may cause significant slow down in
+       case of such queries.
+      </para>
+     </note>
      <para>
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
      </para>
