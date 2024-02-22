@@ -3555,12 +3555,13 @@ sync_backend_from_watchdog(void)
 	int			down_node_ids[MAX_NUM_BACKENDS];
 	int			down_node_ids_index = 0;
 	int			i;
+	WDPGBackendStatus *backendStatus;
 
 	/*
 	 * Ask the watchdog to get all the backend states from the
 	 * Leader/Coordinator Pgpool-II node
 	 */
-	WDPGBackendStatus *backendStatus = get_pg_backend_status_from_leader_wd_node();
+	backendStatus = get_pg_backend_status_from_leader_wd_node();
 
 	if (!backendStatus)
 	{
@@ -3573,7 +3574,7 @@ sync_backend_from_watchdog(void)
 	{
 		/*
 		 * -ve node count is returned by watchdog when the node itself is a
-		 * leader and in that case we need to use the loacl backend node
+		 * leader and in that case we need to use the local backend node
 		 * status
 		 */
 		ereport(LOG,
