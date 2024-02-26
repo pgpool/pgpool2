@@ -590,7 +590,7 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.failover_on_backend_shutdown,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 
@@ -1006,7 +1006,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.recovery_user,
-		"",
+		"nobody",
 		NULL, NULL, NULL, NULL
 	},
 
