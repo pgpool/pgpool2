@@ -470,10 +470,10 @@
      <para>
       Although there are many similarities in quarantine and failover operations, but they both differ in a very
       fundamental way. The quarantine operations does not executes the <xref linkend="guc-failover-command">
-       and silently detaches the problematic node, So in the case when the master backend node is quarantined, the
-       <productname>Pgpool-II</productname> will not promote the standby to take over the master responsibilities
-       and until the master node is quarantined the <productname>Pgpool-II</productname> will not have
-       any usable master backend node.
+       and silently detaches the problematic node, so in the case when the primary backend node is quarantined, the
+       <productname>Pgpool-II</productname> will not promote the standby to take over the primary node responsibilities
+       and until the primary node is quarantined the <productname>Pgpool-II</productname> will not have
+       any usable primary backend node.
      </para>
      <para>
       Moreover, unlike for the failed
