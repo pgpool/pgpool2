@@ -329,7 +329,7 @@ backend_clustering_mode = 'streaming_replication'
                                    # replicate_select is higher priority than
                                    # load_balance_mode.
 
-#insert_lock = off
+#insert_lock = on
                                    # Automatically locks a dummy row or a table
                                    # with INSERT statements to keep SERIAL data
                                    # consistency
@@ -577,7 +577,7 @@ backend_clustering_mode = 'streaming_replication'
 
 #failover_on_backend_shutdown = off
                                    # Initiates failover when backend is shutdown,
-				   # or backend process is killed.
+                                   # or backend process is killed.
                                    # If set to off, pgpool will report an
                                    # error and disconnect the session.
 
