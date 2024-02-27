@@ -1,6 +1,117 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-6">
+ <title>Release 4.4.6</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2024-02-29</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-02-27 [aea5a51]
+    -->
+    <para>
+     Remove restore_command from sample scripts. (Bo Peng)
+    </para>
+    <para>
+     Restore_command is not required because replication slot is enabled.
+     It causes occasional failover failure.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-02-26 [5a25a29]
+    -->
+    <para>
+     Fixed the default values of <xref linkend="guc-recovery-user">,
+     <xref linkend="guc-failover-on-backend-shutdown"> and
+     <xref linkend="guc-insert-lock">. (Bo Peng)
+    </para>
+    <para>
+     Because the default value of <varname>recovery_user</varname>
+     should be same as <xref linkend="guc-health-check-user"> and
+     <xref linkend="guc-sr-check-user">, I changed the default value
+     from '' to 'nobody'.
+    </para>
+    <para>
+     The correct default value of <varname>failover_on_backend_shutdown</varname>
+     should be "false" and the correct default value of <varname>insert_lock</varname>
+     should be "on".
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-02-10 [85570e1]
+    -->
+    <para>
+     Fixed <xref linkend="guc-statement-level-load-balance"> with BEGIN etc. (Tatsuo Ishii)
+    </para>
+    <para>
+     When <varname>statement_level_load_balance</varname> is enabled,
+     BEGIN/END/COMMIT/ABORT/SET/SAVEPOINT/RELEASE SAVEPOINT/DEALLOCATE
+     ALL/DISCARD were sent to primary node and all standby nodes even if
+     <xref linkend="guc-load-balance-mode"> is off.
+     This is not only plain wrong but caused slow
+     down if one of the standby nodes are in remote network.
+    </para>
+    <para>
+     Fix this in that pgpool sends such queries to primary node only when
+     <varname>load_balance_mode</varname> is off.
+    </para>
+    <para>
+     Reported: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-January/009059.html">https://www.pgpool.net/pipermail/pgpool-general/2024-January/009059.html</ulink>
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-February/004423.html">https://www.pgpool.net/pipermail/pgpool-hackers/2024-February/004423.html</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-02-26 [ed49149]
+    -->
+    <para>
+     Fix Japanese watchdog document. (Tatsuo Ishii)
+    </para>
+    <para>
+     It mistakenly used "master" watchdog node instead of "leader".
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-02-26 [99c657f]
+    -->
+    <para>
+     Fix English watchdog document. (Tatsuo Ishii)
+    </para>
+    <para>
+     It mistakenly used "main" PostgreSQL node instead of "primary".
+
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-5">
  <title>Release 4.4.5</title>
   <note>
