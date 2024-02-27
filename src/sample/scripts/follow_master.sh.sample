@@ -96,7 +96,6 @@ ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@${NODE_HOST} "
     cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT} user=${REPLUSER} application_name=${NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
-restore_command = 'scp ${SSH_OPTIONS} ${NEW_MASTER_NODE_HOST}:${ARCHIVEDIR}/%f %p'
 primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 
@@ -127,7 +126,6 @@ if [ $? -ne 0 ]; then
         cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${NEW_MASTER_NODE_HOST} port=${NEW_MASTER_NODE_PORT} user=${REPLUSER} application_name=${NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
-restore_command = 'scp ${SSH_OPTIONS} ${NEW_MASTER_NODE_HOST}:${ARCHIVEDIR}/%f %p'
 primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 

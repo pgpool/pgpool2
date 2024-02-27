@@ -56,7 +56,6 @@ ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@$DEST_NODE_HOST "
     cat > ${RECOVERYCONF} << EOT
 primary_conninfo = 'host=${PRIMARY_NODE_HOST} port=${PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${DEST_NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
 recovery_target_timeline = 'latest'
-restore_command = 'scp ${SSH_OPTIONS} ${PRIMARY_NODE_HOST}:${ARCHIVEDIR}/%f %p'
 primary_slot_name = '${REPL_SLOT_NAME}'
 EOT
 
