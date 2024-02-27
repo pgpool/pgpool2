@@ -1,6 +1,110 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-6">
+ <title>リリース 4.4.6</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2024-02-29</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-02-27 [aea5a51]
+    -->
+    <para>
+     サンプルスクリプトからrestore_commandの設定を削除しました。 (Bo Peng)
+    </para>
+    <para>
+     レプリケーションスロットが有効になっているため、restore_commandは不要です。
+     この設定により、フェールオーバーが失敗するケースがあるからです。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-02-26 [5a25a29]
+    -->
+    <para>
+     <xref linkend="guc-recovery-user">,
+     <xref linkend="guc-failover-on-backend-shutdown">および
+     <xref linkend="guc-insert-lock">のデフォルト値を修正しました。 (Bo Peng)
+    </para>
+    <para>
+     <varname>recovery_user</varname>デフォルト値は<xref linkend="guc-health-check-user">や<xref linkend="guc-sr-check-user">と同じである必要があるため、
+     デフォルト値を''から'nobody'に変更しました。
+    </para>
+    <para>
+     <varname>failover_on_backend_shutdown</varname>の正しいデフォルト値は「false」、
+     <varname>insert_lock</varname>の正しいデフォルト値は「on」であるため、修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-02-10 [85570e1]
+    -->
+    <para>
+     BEGINなどでの<xref linkend="guc-statement-level-load-balance">の不具合を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     <varname>statement_level_load_balance</varname>が有効な場合、
+     <xref linkend="guc-load-balance-mode">が無効であっても、
+     BEGIN/END/COMMIT/ABORT/SET/SAVEPOINT/RELEASE SAVEPOINT/DEALLOCATE ALL/DISCARDがプライマリノードとすべてのスタンバイノードに送信されていました。
+     これは明らかに間違っているだけでなく、スタンバイノードの1つがリモートネットワークにある場合、速度が低下する原因となります。
+    </para>
+    <para>
+     <varname>load_balance_mode</varname>がオフの場合、
+     Pgpool-IIはそのようなクエリをプライマリノードにのみ送信するように修正しました。
+    </para>
+    <para>
+     Reported: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-January/009059.html">https://www.pgpool.net/pipermail/pgpool-general/2024-January/009059.html</ulink>
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-February/004423.html">https://www.pgpool.net/pipermail/pgpool-hackers/2024-February/004423.html</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-02-26 [ed49149]
+    -->
+    <para>
+     日本語のWatchdogドキュメントを修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     Watchdog「リーダー」ではなく「マスター」を誤って使用していました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-02-26 [99c657f]
+    -->
+    <para>
+     英語のWatchdogドキュメントを修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     PostgreSQL「プライマリ」ではなく「メイン」を誤って使用していました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-5">
  <title>リリース 4.4.5</title>
   <note>
