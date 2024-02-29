@@ -52,11 +52,16 @@ public abstract class PgpoolTest {
 
     public void check() {
 	try {
-	    String command_line = "diff -u expected/" + getTestName() + " result/" +
-		getTestName();
 	    Process proc;
 
-	    proc = Runtime.getRuntime().exec(command_line);
+	    proc = Runtime.getRuntime().exec(new String[]{
+	    	"diff",
+	    	"-u",
+	    	"expected/",
+	    	getTestName(),
+	    	"result/",
+	    	getTestName()
+	    });
 	    proc.waitFor();
 	    System.out.print(getTestName() + ": ");
 	    if (proc.exitValue() == 0)
