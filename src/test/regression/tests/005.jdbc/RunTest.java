@@ -25,7 +25,7 @@ public class RunTest {
 	    // setup database
 	    Process proc = Runtime.getRuntime().exec(new String[]{
 	    	"psql", "-f", "prepare.sql",
-	    	"-h", host, "-p ", port,
+	    	"-h", host, "-p", port,
 	    	"-U", user, dbname
 	    });
 	    proc.waitFor();
