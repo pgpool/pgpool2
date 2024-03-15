@@ -23,10 +23,11 @@ public class RunTest {
 	    String dbname = prop.getProperty("pgpooltest.dbname");
 
 	    // setup database
-	    String command_line = "psql -f prepare.sql";
-	    command_line = command_line + " -h " + host + " -p " + port +
-		" -U " + user + " " + dbname;
-	    Process proc = Runtime.getRuntime().exec(command_line);
+	    Process proc = Runtime.getRuntime().exec(new String[]{
+	    	"psql", "-f", "prepare.sql",
+	    	"-h", host, "-p", port,
+	    	"-U", user, dbname
+	    });
 	    proc.waitFor();
 
 	    StringTokenizer tokenizer = new StringTokenizer(tests, " ");
