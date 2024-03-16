@@ -54,7 +54,7 @@ public abstract class PgpoolTest {
 	try {
 	    Process proc;
 
-	    proc = Runtime.getRuntime().exec(new String[]
+	    proc = Runtime.getRuntime().exec(new String[]{
 	    	"diff",
 	    	"-u",
 	    	"expected/" + getTestName(),
