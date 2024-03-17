@@ -934,12 +934,6 @@ if (we need to executed follow primary command)
       </para>
      </note>
 
-     <note>
-      <para>
-       watchdogが有効な場合、不正なプライマリの切り離しは、リーダーwatchdogでのみ実施されます。
-       たとえ<xref linkend="guc-failover-require-consensus">がオンでも、この機能によるプライマリの切り離しは、リーダーwatchdogの判断だけで行われ、多数派の承認は必要とされません。
-      </para>
-     </note>
      <para>
       <!--
       This parameter is only applicable in the streaming replication mode.

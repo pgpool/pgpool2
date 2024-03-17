@@ -698,17 +698,6 @@ if (we need to executed follow primary command)
       the <productname>Pgpool-II</productname> configurations.
      </para>
 
-     <note>
-      <para>
-       if watchdog is enabled, detaching false primary is only done by
-       leader watchdog node. Even
-       if <xref linkend="guc-failover-require-consensus"> is on,
-       detaching the false primary being performed is solely by the
-       judgment of the leader watchdog. No majority consensus is
-       required.
-      </para>
-     </note>
-
      <para>
       <figure>
        <title>Detecting false primaries</title>
