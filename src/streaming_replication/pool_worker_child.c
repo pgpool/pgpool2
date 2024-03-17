@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -162,7 +162,8 @@ do_worker_child(void)
 	{
 		MemoryContextSwitchTo(WorkerMemoryContext);
 		MemoryContextResetAndDeleteChildren(WorkerMemoryContext);
-		WD_STATES	wd_status;
+		bool	watchdog_leader;	/* true if I am the watchdog leader */
+
 
 		CHECK_REQUEST;
 
@@ -176,9 +177,45 @@ do_worker_child(void)
 		 */
 		if (pool_config->use_watchdog)
 		{
+			WD_STATES	wd_status;
+			WDPGBackendStatus	*backendStatus;
+
 			wd_status = wd_internal_get_watchdog_local_node_state();
 			ereport(DEBUG1,
 					(errmsg("watchdog status: %d", wd_status)));
+			/*
+			 * Ask the watchdog to get all the backend states from the
+			 * Leader/Coordinator Pgpool-II node.
+			 */
+			watchdog_leader = false;
+			backendStatus = get_pg_backend_status_from_leader_wd_node();
+
+			if (!backendStatus)
+				/*
+				 * Couldn't get leader status.
+				 */
+				watchdog_leader = false;
+			else
+			{
+				int	quorum = wd_internal_get_watchdog_quorum_state();
+				int	node_count = backendStatus->node_count;
+
+				ereport(DEBUG1,
+						(errmsg("quorum: %d node_count: %d",
+								quorum, node_count)));
+				if (quorum >= 0 && backendStatus->node_count <= 0)
+				{
+					/*
+					 * Quorum exists and node_count <= 0.
+					 * Definitely I am the leader.
+					 */
+					watchdog_leader = true;
+				}
+				else
+					watchdog_leader = false;
+
+				pfree(backendStatus);
+			}
 		}
 
 		/*
@@ -227,8 +264,33 @@ do_worker_child(void)
 							 */
 							if (pool_config->detach_false_primary)
 							{
-								n = i;
-								degenerate_backend_set(&n, 1, REQ_DETAIL_SWITCHOVER);
+								/*
+								 * However if watchdog is enabled and I am not
+								 * the leader, do not detach the invalid node
+								 * because the information to determine the
+								 * false primary might be outdated or
+								 * temporarily inconsistent.  See
+								 * [pgpool-hackers: 4431] for more details.
+								 */
+								if (!pool_config->use_watchdog ||
+									(pool_config->use_watchdog && watchdog_leader))
+								{
+									n = i;
+									/*
+									 * In the case watchdog enabled, we need
+									 * to add REQ_DETAIL_CONFIRMED, which
+									 * means no quorum consensus is
+									 * required. If we do not add this, the
+									 * target node will remain quarantine
+									 * state since other node does not request
+									 * failover.
+									 */
+									degenerate_backend_set(&n, 1,
+														   REQ_DETAIL_SWITCHOVER|REQ_DETAIL_CONFIRMED);
+								}
+								else if (pool_config->use_watchdog)
+									ereport(LOG,
+											(errmsg("do not detach invalid node %d because I am not the leader or quorum does not exist", i)));
 							}
 						}
 					}
