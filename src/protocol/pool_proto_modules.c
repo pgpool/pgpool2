@@ -220,6 +220,20 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	/* save last query string for logging purpose */
 	strlcpy(query_string_buffer, contents, sizeof(query_string_buffer));
 
+	/*
+	 * Check if extended query protocol message ended.  If not, reject the
+	 * query and raise an error to terminate the session to avoid hanging up.
+	 */
+	if (SL_MODE)
+	{
+		if (pool_is_doing_extended_query_message() ||
+			pool_pending_message_head_message())
+
+			ereport(FATAL,
+					(errmsg("simple query \"%s\" arrived before ending an extended query message",
+							query_string_buffer)));
+	}
+
 	/* show ps status */
 	query_ps_status(contents, backend);
 
