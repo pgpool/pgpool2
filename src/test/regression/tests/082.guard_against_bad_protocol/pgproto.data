@@ -1,0 +1,7 @@
+'P'	""	"BEGIN"	0
+'B'	""	""	0	0	0
+'E'	""	0
+'Q'	"SAVEPOINT PGJDBC_AUTOSAVE"
+'Y'
+'P'	""	"SELECT 1"	0
+'X'
