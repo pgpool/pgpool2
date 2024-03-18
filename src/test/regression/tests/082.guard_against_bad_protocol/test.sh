@@ -34,6 +34,7 @@ wait_for_pgpool_startup
 timeout 1 $PGPROTO -d $PGDATABASE -p $PGPOOL_PORT -f ../pgproto.data |& grep 'simple query "SAVEPOINT PGJDBC_AUTOSAVE" arrived '
 
 if [ $? != 0 ];then
+# timeout happened or pgproto returned non 0 status
     echo "test failed."
     ./shutdownall
     exit 1
