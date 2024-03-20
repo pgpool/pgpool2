@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -177,6 +177,7 @@ process_pg_terminate_backend_func(POOL_QUERY_CONTEXT * query_context)
 /*
  * Process Query('Q') message
  * Query messages include an SQL string.
+ * If frontend == NULL, we are called in case of reset queries.
  */
 POOL_STATUS
 SimpleQuery(POOL_CONNECTION * frontend,
@@ -219,11 +220,14 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	/*
 	 * Check if extended query protocol message ended.  If not, reject the
 	 * query and raise an error to terminate the session to avoid hanging up.
+	 * However if we are processing a reset query (frontend == NULL), we skip
+	 * the check as we don't want to raise a error.
 	 */
 	if (SL_MODE)
 	{
-		if (pool_is_doing_extended_query_message() ||
-			pool_pending_message_head_message())
+		if (frontend != NULL &&
+			(pool_is_doing_extended_query_message() ||
+			 pool_pending_message_head_message()))
 
 			ereport(FATAL,
 					(errmsg("simple query \"%s\" arrived before ending an extended query message",
