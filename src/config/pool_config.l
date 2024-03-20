@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2016	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -361,7 +361,9 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 	if (calling_file == NULL || is_absolute_path(config_file))
 	{
 		/* absolute path is taken as-is */
-		config_filepath = pstrdup(config_file);
+		config_filepath = (char *) palloc(strlen(config_file) + 1);
+		strcpy(config_filepath, config_file);
+		config_filepath[strlen(config_file)] = '\0';
 	}
 	else
 	{
@@ -456,6 +458,8 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 
 parse_error:
 
+	if (key)
+		pfree(key);
 	fclose(fd);
 	FreeConfigVariables(*head_p);
 	*head_p = NULL;
