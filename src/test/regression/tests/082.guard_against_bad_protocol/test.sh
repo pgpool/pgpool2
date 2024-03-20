@@ -26,6 +26,7 @@ source ./bashrc.ports
 ./startall
 wait_for_pgpool_startup
 
+# test1:
 # Wait for 1 seconds before pgproto ended.
 # Usually 1 seconds should be enough to finish pgproto.
 # If test suceeded, pgpool emits an error message:
@@ -35,9 +36,21 @@ timeout 1 $PGPROTO -d $PGDATABASE -p $PGPOOL_PORT -f ../pgproto.data |& grep 'si
 
 if [ $? != 0 ];then
 # timeout happened or pgproto returned non 0 status
-    echo "test failed."
+    echo "test1 failed."
     ./shutdownall
     exit 1
 fi
+
+# test2:
+# Check if reset queries can be executed even if extended query messages
+# do not end.
+timeout 1 $PGPROTO -d $PGDATABASE -p $PGPOOL_PORT -f ../pgproto2.data
+if [ $? != 0 ];then
+# timeout happened or pgproto returned non 0 status
+    echo "test2 failed."
+    ./shutdownall
+    exit 1
+fi
+
 ./shutdownall
 exit 0
