@@ -335,7 +335,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 	FILE *fd;
 	YY_BUFFER_STATE lex_buffer;
 	int token;
-	char *key;
+	char *key = NULL;
 	char *val;
 	ConfigVariable *item;
 	char buf[POOLMAXPATHLEN + 1];
