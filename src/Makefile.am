@@ -70,6 +70,9 @@ pgpool_SOURCES = main/main.c \
 utils/psqlscan.c: utils/psqlscan.l
 	$(LEX) -o'utils/psqlscan.c' $<
 
+config/pool_config.c: config/pool_config.l
+	$(LEX) -o'config/pool_config.c' $<
+
 DEFS = @DEFS@ \
 	-DDEFAULT_CONFIGDIR=\"$(sysconfdir)\" \
 	-DPGSQL_BIN_DIR=\"$(PGSQL_BIN_DIR)\"
