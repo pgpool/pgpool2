@@ -3,7 +3,7 @@
  * fe_memutils.c
  *	  memory management support for frontend code
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -23,7 +23,7 @@
 #include "utils/fe_ports.h"
 
 void *
-pg_malloc(size_t size)
+pg_malloc(Size size)
 {
 	void	   *tmp;
 
@@ -40,7 +40,7 @@ pg_malloc(size_t size)
 }
 
 void *
-pg_malloc0(size_t size)
+pg_malloc0(Size size)
 {
 	void	   *tmp;
 
@@ -50,7 +50,7 @@ pg_malloc0(size_t size)
 }
 
 void *
-pg_realloc(void *ptr, size_t size)
+pg_realloc(void *ptr, Size size)
 {
 	void	   *tmp;
 
@@ -101,13 +101,13 @@ pg_free(void *ptr)
  * programs that compile backend files.
  */
 void *
-palloc(unsigned int size)
+palloc(Size size)
 {
 	return pg_malloc(size);
 }
 
 void *
-palloc0(unsigned int size)
+palloc0(Size size)
 {
 	return pg_malloc0(size);
 }
@@ -125,7 +125,7 @@ pstrdup(const char *in)
 }
 
 void *
-repalloc(void *pointer, unsigned int size)
+repalloc(void *pointer, Size size)
 {
 	return pg_realloc(pointer, size);
 }
