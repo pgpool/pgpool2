@@ -2,7 +2,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -162,9 +162,8 @@ nowsec(void)
 	return strbuf;
 }
 
-int
-errstart(int elevel, const char *filename, int lineno,
-		 const char *funcname)
+bool errstart(int elevel, const char *filename, int lineno,
+		 const char *funcname, const char *domain)
 {
 	_fe_error_level = elevel;
 
