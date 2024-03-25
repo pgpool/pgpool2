@@ -46,7 +46,7 @@ serialize_accept = off
 reserved_connections = 0
                                    # Number of reserved connections.
                                    # Pgpool-II does not accept connections if over
-                                   # num_init_chidlren - reserved_connections.
+                                   # num_init_children - reserved_connections.
 
 # - pgpool Communication Manager Connection Settings -
 
@@ -323,17 +323,17 @@ black_query_pattern_list = ''
                                    # Semicolon separated list of query patterns
                                    # that should be sent to primary node
                                    # Regexp are accepted
-                                   # valid for streaming replicaton mode only.
+                                   # valid for streaming replication mode only.
 
 database_redirect_preference_list = ''
                                    # comma separated list of pairs of database and node id.
                                    # example: postgres:primary,mydb[0-4]:1,mydb[5-9]:2'
-                                   # valid for streaming replicaton mode only.
+                                   # valid for streaming replication mode only.
 
 app_name_redirect_preference_list = ''
                                    # comma separated list of pairs of app name and node id.
                                    # example: 'psql:primary,myapp[0-4]:1,myapp[5-9]:standby'
-                                   # valid for streaming replicaton mode only.
+                                   # valid for streaming replication mode only.
 allow_sql_comments = off
                                    # if on, ignore SQL comments when judging if load balance or
                                    # query cache is possible.
@@ -377,7 +377,7 @@ sr_check_period = 0
                                    # Disabled (0) by default
 sr_check_user = 'nobody'
                                    # Streaming replication check user
-                                   # This is neccessary even if you disable streaming
+                                   # This is necessary even if you disable streaming
                                    # replication delay check by sr_check_period = 0
 
 sr_check_password = ''
@@ -439,7 +439,7 @@ connect_timeout = 10000
                                    # Default is 10000 ms (10 second). Flaky network user may want to increase
                                    # the value. 0 means no timeout.
                                    # Note that this value is not only used for health check,
-                                   # but also for ordinary conection to backend.
+                                   # but also for ordinary connection to backend.
 
 #------------------------------------------------------------------------------
 # HEALTH CHECK PER NODE PARAMETERS (OPTIONAL)
@@ -498,7 +498,7 @@ failover_on_backend_error = on
 
 detach_false_primary = off
                                    # Detach false primary if on. Only
-                                   # valid in streaming replicaton
+                                   # valid in streaming replication
                                    # mode and with PostgreSQL 9.6 or
                                    # after.
 
@@ -509,7 +509,7 @@ search_primary_node_timeout = 300
                                    # for a primary node forever.
 
 auto_failback = off
-                                   # Dettached backend node reattach automatically
+                                   # Detached backend node reattach automatically
                                    # if replication_state is 'streaming'.
 auto_failback_interval = 60
                                    # Min interval of executing auto_failback in
@@ -761,7 +761,7 @@ relcache_expire = 0
 relcache_size = 256
                                    # Number of relation cache
                                    # entry. If you see frequently:
-                                   # "pool_search_relcache: cache replacement happend"
+                                   # "pool_search_relcache: cache replacement happened"
                                    # in the pgpool log, you might want to increate this number.
 
 check_temp_table = catalog
