@@ -52,6 +52,7 @@
 #include "protocol/pool_process_query.h"
 
 #ifdef USE_LDAP
+#define LDAP_DEPRECATED 1
 #include <ldap.h>
 #endif
 
@@ -168,6 +169,7 @@ static POOL_CONNECTION * pam_frontend_kludge;	/* Workaround for passing
 #endif							/* USE_PAM */
 
 #ifdef USE_LDAP
+#define LDAP_DEPRECATED 1
 #include <ldap.h>
 
 static POOL_STATUS CheckLDAPAuth(POOL_CONNECTION *frontend);
