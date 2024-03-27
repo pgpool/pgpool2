@@ -727,6 +727,14 @@ backend_application_name2 = 'server3'
     <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">はプライマリノードのフェイルオーバ後に実行されます。
     <productname>PostgreSQL</productname>サーバが2台の場合、<xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">の設定は不要です。
    </para>
+   <note>
+    <para>
+     <productname>Pgpool-II</productname> 4.3で追加された<xref linkend="PCP-PROMOTE-NODE">の
+     <option>switchover</option>オプションでスイッチオーバを行う時に、
+     古いプライマリを自動でスタンバイにする場合は<productname>PostgreSQL</productname>サーバが2台であっても、
+     <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">の設定が必要になります。
+    </para>
+   </note>
    <para>
     それぞれの実行スクリプトの引数は、それぞれ実行時に<productname>Pgpool-II</productname>
     によってバックエンドの具体的な情報に置き換えられます。
