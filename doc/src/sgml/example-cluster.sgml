@@ -690,6 +690,15 @@ backend_application_name2 = 'server3'
     If we use 3 PostgreSQL servers, we need to specify follow_primary_command to run after failover on the primary node failover.
     In case of two PostgreSQL servers, follow_primary_command setting is not necessary.
    </para>
+   <note>
+    <para>
+     When performing a switchover using <xref linkend="PCP-PROMOTE-NODE">
+     with <option>switchover</option> option added in <productname>Pgpool-II</productname> 4.3,
+     if you want to turn the former primary into standby automatically,
+     <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> is required to be set
+     even if there are two PostgreSQL servers.
+    </para>
+   </note>
    <para>
     <productname>Pgpool-II</productname> replaces the following special characters with the backend specific
     information while executing the scripts. 
