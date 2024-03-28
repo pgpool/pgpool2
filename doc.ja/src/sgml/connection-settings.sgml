@@ -1702,7 +1702,7 @@
 	 <entry>ストリーミングレプリケーションでのみ有効です。
 	  ストリーミングレプリケーションモードについては<xref linkend="running-mode">をご覧ください。
 	   このフラグがバックエンドのどれかにセットされていると、<productname>Pgpool-II</productname>はバックエンドにアクセスしてプライマリノードを探すのではなく、このフラグがセットされているノードをプライマリノードと見なします。
-	   これは、<productname>Amazon Aurora for PostgreSQL Compatibility</productname>のような、マスターサーバに固定のホスト名が割り当てられるシステムで有用です。
+	   これは、<productname>Amazon Aurora for PostgreSQL Compatibility</productname>のような、プライマリサーバに固定のホスト名が割り当てられるシステムで有用です。
 	   設定例については<xref linkend="example-Aurora">をご覧ください。
 	 </entry>
 	</row>
