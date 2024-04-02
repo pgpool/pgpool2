@@ -227,20 +227,23 @@ pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT * query_context)
 			{
 				/*
 				 * If load balance mode is disabled, only send to the primary node.
-				 * or send to the main node if primary node does not exist.
+				 * If primary node does not exist, send to the main node.
 				 */
 				if (!pool_config->load_balance_mode)
 				{
 					if (i == PRIMARY_NODE_ID ||
 						(PRIMARY_NODE_ID < 0 && MASTER_NODE_ID == i))
+					{
 						query_context->where_to_send[i] = true;
-					break;
+						break;
+					}
+					continue;
 				}
 				else
 					/*
 					 * If the node is not primary node nor load balance node,
-					 * there's no point to send query except statement load
-					 * balance is enabled.
+					 * there's no point to send query except statement level
+					 * load balance is enabled.
 					 */
 					if (!pool_config->statement_level_load_balance &&
 						i != PRIMARY_NODE_ID && i != sc->load_balance_node_id)
