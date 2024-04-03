@@ -207,6 +207,17 @@ pgpool_port2 = 9999
  <sect2 id="config-watchdog-upstream-connections">
   <title>Upstream server connection</title>
 
+  <para>
+   Upstream servers are the clients (DB clients) served by
+   <productname>Pgpool-II</productname>.
+   Even if <productname>Pgpool-II</productname> is alive and
+   connected to <productname>PostgreSQL</productname>, 
+   if the link with the upstream server is broken,
+   <productname>Pgpool-II</productname> cannot provide services.
+   Therefore, the watchdog also monitors connections to upstream servers
+   from the <productname>Pgpool-II</productname>.
+  </para>
+
   <variablelist>
 
    <varlistentry id="guc-trusted-servers" xreflabel="trusted_servers">
@@ -217,7 +228,9 @@ pgpool_port2 = 9999
     </term>
     <listitem>
      <para>
-      Specifies the list of trusted servers to check the up stream connections.
+      Specifies the list of trusted servers to check the upstream connections.
+      For example, the list of upstream servers or routers between
+      <productname>Pgpool-II</productname> and upstream servers.
       Each server in the list is required to respond to ping.
       Specify a comma separated list of servers such as
       <literal>"hostA,hostB,hostC"</literal>.
