@@ -636,7 +636,7 @@ backend_clustering_mode = 'streaming_replication'
                                     # Activates watchdog
                                     # (change requires restart)
 
-# -Connection to up stream servers -
+# -Connection to upstream servers -
 
 #trusted_servers = ''
                                     # trusted server list which are used
