@@ -176,7 +176,24 @@
   <!--
   <title>Upstream server connection</title>
   -->
-  <title>上流サーバへの接続</title>
+  <title>上位サーバへの接続</title>
+
+  <para>
+   <!--
+   Upstream servers are the clients (DB clients) served by
+   <productname>Pgpool-II</productname>.
+   Even if <productname>Pgpool-II</productname> is alive and
+   connected to <productname>PostgreSQL</productname>, 
+   if the link with the upstream server is broken,
+   <productname>Pgpool-II</productname> cannot provide services.
+   Therefore, the watchdog also monitors connections to upstream servers
+   from the <productname>Pgpool-II</productname>.
+   -->
+   <productname>Pgpool-II</productname>のサービス提供先（DB クライアント）のサーバを上位サーバと呼びます。 
+   <productname>Pgpool-II</productname>が生きていて<productname>PostgreSQL</productname>と繋がっている場合でも、
+   上位サーバとのリンクが切れていれば、<productname>Pgpool-II</productname>はサービスを提供できません。
+   そのため、watchdogは上位サーバとのリンクが繋がっているかどうかも監視します。
+  </para>
 
   <variablelist>
 
@@ -192,7 +209,9 @@
     <listitem>
      <para>
       <!--
-      Specifies the list of trusted servers to check the up stream connections.
+      Specifies the list of trusted servers to check the upstream connections.
+      For example, a list of upstream servers or routers between
+      <productname>Pgpool-II</productname> and upstream servers.
       Each server in the list is required to respond to ping.
       Specify a comma separated list of servers such as
       <literal>"hostA,hostB,hostC"</literal>.
@@ -201,7 +220,8 @@
       Therefore, it is recommended to specify multiple servers.
       Please note that you should not assign PostgreSQL servers to this parameter.
       -->
-      上位接続を確認するための信頼できるサーバのリストを指定します。
+      上位サーバとの接続を確認するための信頼できるサーバのリストを指定します。
+      例えば、上位サーバ、あるいは上位サーバへの経路上にあるルーターのリストを指定します。
       リスト中の各サーバは、pingの応答に答える必要があります。
       <literal>"hostA,hostB,hostC"</literal>のようにカンマで区切って複数のサーバを指定できます。
       全てのサーバに到達できなくなると、watchdogは<productname>Pgpool-II</productname>に障害が発生したと判断します。
