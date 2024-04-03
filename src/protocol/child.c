@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -721,7 +721,7 @@ read_startup_packet(POOL_CONNECTION * cp)
 		case 1234:				/* cancel or SSL request */
 			/* set dummy database, user info */
 			sp->database = palloc0(1);
-			sp->user = palloc(1);
+			sp->user = palloc0(1);
 			break;
 
 		default:
