@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2601,7 +2601,7 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 
 				for (j = 0; j < NUM_BACKENDS; j++)
 				{
-					if (pool_node_status[j] == POOL_NODE_STATUS_STANDBY)
+					if (pool_node_status[j] == POOL_NODE_STATUS_STANDBY && slots[j])
 					{
 						ereport(DEBUG1,
 								(errmsg("verify_backend_node_status: %d is standby", j)));
