@@ -134,6 +134,8 @@ else
     r4=ok
 fi
 
+./shutdownall
+
 if [ $r1 = ok -a $r2 = ok -a $r3 = ok -a $r4 = ok ]; then
     echo "all test succeeded"
     exit 0
@@ -142,5 +144,3 @@ else
     echo "test1: $r1 test2: $r2 test3: $r3 test4: $r4"
     exit 1
 fi
-
-./shutdownall
