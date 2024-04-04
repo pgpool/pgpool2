@@ -2555,6 +2555,9 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT * *slots)
 			if (!VALID_BACKEND(i))
 				continue;
 
+			if (!slots[i])
+				continue;
+
 			if (get_server_version(slots, i) >= 90600)
 			{
 				check_connectivity = true;
