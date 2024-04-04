@@ -162,6 +162,12 @@ do_worker_child(void)
 	{
 		MemoryContextSwitchTo(WorkerMemoryContext);
 		MemoryContextResetAndDeleteChildren(WorkerMemoryContext);
+		/*
+		 * Since WorkerMemoryContext is used for "slots", we need to clear it
+		 * so that new slots are allocated later on.
+		 */
+		memset(slots, 0, sizeof(slots));
+		
 		bool	watchdog_leader;	/* true if I am the watchdog leader */
 
 
