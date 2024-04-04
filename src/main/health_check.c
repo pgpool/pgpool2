@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -175,6 +175,12 @@ do_health_check_child(int *node_id)
 	{
 		MemoryContextSwitchTo(HealthCheckMemoryContext);
 		MemoryContextResetAndDeleteChildren(HealthCheckMemoryContext);
+		/*
+		 * Since HealthCheckMemoryContext is used for "slot", we need to clear it
+		 * so that new slot is allocated later on.
+		 */
+		slot = NULL;
+
 		bool	skipped = false;
 
 		CHECK_REQUEST;

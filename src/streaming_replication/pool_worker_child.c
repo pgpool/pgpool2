@@ -163,9 +163,15 @@ do_worker_child(void)
 
 	for (;;)
 	{
+		WD_STATES	wd_status;
+
 		MemoryContextSwitchTo(WorkerMemoryContext);
 		MemoryContextResetAndDeleteChildren(WorkerMemoryContext);
-		WD_STATES	wd_status;
+		/*
+		 * Since WorkerMemoryContext is used for "slots", we need to clear it
+		 * so that new slots are allocated later on.
+		 */
+		memset(slots, 0, sizeof(slots));
 
 		CHECK_REQUEST;
 
