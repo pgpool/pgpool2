@@ -187,7 +187,7 @@ install -d %{buildroot}%{_sysconfdir}/sysconfig
 
 # install sudoers.d to allow postgres user to run ip and arping with root privileges without a password
 install -d %{buildroot}%{_sysconfdir}/sudoers.d
-install -m 0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/sudoers.d/pgpool
+install -m 0440 %{SOURCE6} %{buildroot}%{_sysconfdir}/sudoers.d/pgpool
 
 # nuke libtool archive and static lib
 rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
