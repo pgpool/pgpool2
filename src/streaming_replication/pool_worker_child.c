@@ -181,6 +181,7 @@ do_worker_child(void)
 		/*
 		 * Get watchdog status if watchdog is enabled.
 		 */
+		watchdog_leader = false;
 		if (pool_config->use_watchdog)
 		{
 			WD_STATES	wd_status;
