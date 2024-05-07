@@ -152,7 +152,7 @@ dnf install pgpool-II-pg16
     <emphasis>on the PostgreSQL servers</emphasis>.
     If <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname>
     are installed on separate servers,
-    it is not requried to install it on the servers where <productname>Pgpool-II</productname> are running.
+    it is not required to install it on the servers where <productname>Pgpool-II</productname> are running.
    </para>
   </note>
   <programlisting>
