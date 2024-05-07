@@ -399,7 +399,7 @@ host    replication     all             samenet                 scram-sha-256
    <listitem>
     <para>
      To use the automated failover and online recovery of <productname>Pgpool-II</productname>, 
-     it is requried to allow <emphasis>SSH public key authentication
+     it is required to allow <emphasis>SSH public key authentication
      (passwordless SSH login)</emphasis> to all backend servers
      as <productname>Pgpool-II</productname> startup user
      (default is <literal>postgres</literal>. Pgpool-II 4.0 or before, default is <literal>root</literal>)
