@@ -3078,6 +3078,19 @@ get_list_from_string(const char *str, const char *delimi, int *n)
 
 	for (token = strtok(temp_string, delimi); token != NULL; token = strtok(NULL, delimi))
 	{
+		int i;
+
+		/* skip leading whitespace */
+		while (isspace(*token))
+			token++;
+
+		/* skip trailing whitespace */
+		i = strlen(token) - 1;
+		while (i >= 0 && isspace(token[i])) {
+			token[i] = '\0';
+			i--;
+		}
+
 		tokens[*n] = pstrdup(token);
 		ereport(DEBUG3,
 				(errmsg("initializing pool configuration"),

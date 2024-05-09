@@ -107,13 +107,15 @@
       <!--
       The directory where the UNIX domain socket(s) accepting connections for
       <productname>Pgpool-II</productname> will be created. Multiple sockets
-      can be created by listing multiple directories separated by commas. Default
-      is <literal>/tmp</literal>. Be aware that this sockets might be deleted
-      by a cron job. We recommend to set this value to <literal>/var/run</literal>
-      or such directory.
+      can be created by listing multiple directories separated by commas.
+      Leading and trailing spaces in each setting value will be automatically
+      removed. Default is <literal>/tmp</literal>. Be aware that this sockets
+      might be deleted by a cron job. We recommend to set this value to
+      <literal>/var/run</literal> or such directory.
       -->
       <productname>Pgpool-II</productname>が接続を受け付けるUNIXドメインソケットを置くディレクトリです。
       コンマで区切った複数のディレクトリのリストを設定すると複数のUNIXドメインソケットファイルを作成します。
+      各設定値の先頭と末尾に空白が入っている場合は、自動的に削除されます。
       デフォルト値は<literal>/tmp</literal>です。
       このソケットは、cron によって削除されることがあるので注意してください。
       <literal>/var/run</literal>などのディレクトリに変更することをお勧めします。
@@ -297,6 +299,8 @@
       The directory where the UNIX domain socket accepting connections for
       PCP process will be created. Multiple sockets can be created
       by listing multiple directories separated by commas.
+      Leading and trailing spaces in each setting value will be
+      automatically removed.
       Default is <literal>/tmp</literal>. Be aware that
       this socket might be deleted by a cron job. We recommend
       to set this value to <literal>/var/run</literal> or such
@@ -304,6 +308,7 @@
       -->
       PCPプロセスが接続を受け付けるUNIXドメインソケットを置くディレクトリです。
       コンマで区切った複数のディレクトリのリストを設定すると複数のUNIXドメインソケットファイルを作成します。
+      各設定値の先頭と末尾に空白が入っている場合は、自動的に削除されます。
       デフォルト値は<literal>/tmp</literal>です。
       このソケットは、cron によって削除されることがあるので注意してください。
       <literal>/var/run</literal>などのディレクトリに変更することをお勧めします。
