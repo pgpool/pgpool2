@@ -1,6 +1,213 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-17">
+ <title>Release 4.2.17</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2024-05-16</simpara>
+  </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-05-01 [afa710e]
+    -->
+    <para>
+     Fix compiler error with <literal>-Werror=implicit-function-declaration</literal>. (Bo Peng)
+    </para>
+    <para>
+     Add <literal>LDAP_DEPRECATED</literal> to include prototypes for deprecated ldap functions.
+     Also Add missing header files in autoconf check.
+    </para>
+    <para>
+     Patch is created by Vladimir Petko.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-04-04 [57d7985]
+    -->
+    <para>
+     Fix assorted causes of segmentation fault. (Tatsuo Ishii)
+    </para>
+    <para>
+     It is reported that pgpool and its child process segfault in certain
+     cases when failover involved.
+    </para>
+    <para>
+     Problem is reported and analyzed by Emond Papegaaij.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-April/009131.html">https://www.pgpool.net/pipermail/pgpool-general/2024-April/009131.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-04-03 [bb1b7eb]
+    -->
+    <para>
+     Fix uninitialized memory error. (Tatsuo Ishii)
+    </para>
+    <para>
+     It was reported that valgrind found several errors including an
+     uninitialized memory error in read_startup_packet. It allocates memory
+     for user name in a startup packet in case cancel or SSL request using
+     palloc, and later on the memory is used by pstrdup. Since memory
+     allocated by palloc is undefined, this should have been palloc0.
+    </para>
+    <para>
+     Problem is reported and analyzed by Emond Papegaaij.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-April/009126.html">https://www.pgpool.net/pipermail/pgpool-general/2024-April/009126.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-04-02 [4550b68]
+    -->
+    <para>
+     Fix errors/hung up when load_balance_mode is off. (Tatsuo Ishii)
+    </para>
+    <para>
+     Commit <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=3f3c1656">3f3c1656</ulink>
+     brought errors/hung up when load_balance_mode is off, primary node id
+     is not 0 and queries are BEGIN etc.
+    </para>
+    <para>
+     Bug found and analyzed by Emond Papegaaij.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-March/009113.html">https://www.pgpool.net/pipermail/pgpool-general/2024-March/009113.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-25 [f3dd0c1]
+    -->
+    <para>
+     Fix compile errors with certain CFLAGS. (Tatsuo Ishii)
+    </para>
+    <para>
+     <ulink url="https://github.com/pgpool/pgpool2/issues/42">https://github.com/pgpool/pgpool2/issues/42</ulink>
+     reported that with CFLAGS
+     -flto=4 -Werror=odr -Werror=lto-type-mismatch -Werror=strict-aliasing
+     gcc emits errors.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-March/004443.html">https://www.pgpool.net/pipermail/pgpool-hackers/2024-March/004443.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-25 [38ee4ae]
+    -->
+    <para>
+     Fix comments in sample pgpool.conf. (Bo Peng)
+    </para>
+    <para>
+     The default value for <varname>sr_check_period</varname> should be 10 seconds.
+     Also fixed some typos in comments.
+    </para>
+    <para>
+     Patch is created by hiroin and modified by Bo Peng.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-21 [ff43279]
+    -->
+    <para>
+     Allow reset queries to run even if extended queries do not end. (Tatsuo Ishii)
+    </para>
+    <para>
+     Commit <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=240c668d">240c668d</ulink>
+     caused reset queries fail if extended query messages do not end. This commit
+     fix that by checking whether we are running reset queries in
+     SimpleQuery(). Also add the test case for this.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-18 [9d6561a]
+    -->
+    <para>
+     Guard against inappropriate protocol data. (Tatsuo Ishii)
+    </para>
+    <para>
+     If a simple query message arrives before a sequence of extended query
+     messages ends pgpool could hang.  This is because the query context in
+     the session context for the simple query is overwritten by the query
+     contexts of the extended query messages.
+    </para>
+    <para>
+     This commit implements a guard in SimpleQuery() by checking whether
+     extended query protocol messages ended. If they do not end, raise a
+     FATAL error. A known example detected by this checking is JDBC
+     driver's "autosave=always" option. This means pgpool will not accept
+     the option after this commit until the issue (sending a simple
+     protocol message before ending extended query message protocol) is
+     fixed by the JDBC driver side.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-February/004428.html">https://www.pgpool.net/pipermail/pgpool-hackers/2024-February/004428.html</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-04-03 [8986a8b]
+    -->
+    <para>
+     Enhance "Upstream server connection" documentation. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-28 [02fb8ea]
+    -->
+    <para>
+     Language cleanup in Japanese document. (Masaya Kawamoto)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-03-16 [527ad4c]
+    2024-03-15 [65fc6c7]
+    -->
+    <para>
+     Fixed regression test 005.jdbc to avoid Java 21 deprecation warnings. (Bo Peng)
+    </para>
+    <para>
+     Replace Runtime.exec(String) with Runtime.exec(String[]) to avoid Java 21 deprecation warnings.
+     Patch is created by Vladimir Petko and modified by Bo Peng.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-16">
  <title>Release 4.2.16</title>
   <note>
