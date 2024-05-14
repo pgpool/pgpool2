@@ -1,6 +1,201 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-17">
+ <title>リリース 4.2.17</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2024-05-16</simpara>
+  </note>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-05-01 [afa710e]
+    -->
+    <para>
+     <literal>-Werror=implicit-function-declaration</literal>オプションで発生するコンパイルエラーを修正しました。(Bo Peng)
+    </para>
+    <para>
+     非推奨のldap関数のプロトタイプを含めるために<literal>LDAP_DEPRECATED</literal>を追加しました。
+     また、autoconfチェックで不足していたヘッダーファイルを追加しました。
+    </para>
+    <para>
+     パッチはVladimir Petkoによって作成されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-04-04 [57d7985]
+    -->
+    <para>
+     セグメンテーション違反のさまざまな原因を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     フェイルオーバーが関与している特定のケースでは、Pgpool-IIとその子プロセスのセグメント違反が発生していました。
+    </para>
+    <para>
+     この問題は、Emond Papegaaijによって報告・分析されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-April/009131.html">https://www.pgpool.net/pipermail/pgpool-general/2024-April/009131.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-04-03 [bb1b7eb]
+    -->
+    <para>
+     初期化されていないメモリエラーを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     read_startup_packetの初期化されていないメモリエラーを含むいくつかのエラーが<literal>valgrind</literal>によって報告されました。 
+     <literal>valgrind</literal>は、キャンセルまたはSSL要求の場合にpallocを使用してスタートアップパケット内のユーザー名にメモリを割り当て、その後、そのメモリがpstrdupによって使用されます。 
+     pallocによって割り当てられたメモリは未定義であったため、これをpalloc0に修正しました。
+    </para>
+    <para>
+     この問題は、Emond Papegaaijによって報告・分析されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-April/009126.html">https://www.pgpool.net/pipermail/pgpool-general/2024-April/009126.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-04-02 [4550b68]
+    -->
+    <para>
+     <varname>load_balance_mode</varname>がオフの場合に発生するエラー/ハングアップを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     load_balance_modeがオフで、プライマリノードIDが0でない場合には、BEGINなどクエリでエラー/ハングアップが発生していました。
+     コミット <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=3f3c1656">3f3c1656</ulink>の修正によって導入された問題です。
+    </para>
+    <para>
+     バグはEmond Papegaaijによって発見・分析されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-March/009113.html">https://www.pgpool.net/pipermail/pgpool-general/2024-March/009113.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-25 [1a15495]
+    -->
+    <para>
+     特定のCFLAGSによるコンパイルエラーを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <ulink url="https://github.com/pgpool/pgpool2/issues/42">https://github.com/pgpool/pgpool2/issues/42</ulink>によって報告されました。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-March/004443.html">https://www.pgpool.net/pipermail/pgpool-hackers/2024-March/004443.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-25 [38ee4ae]
+    -->
+    <para>
+     サンプルpgpool.conf内のコメントを修正しました。(Bo Peng)
+    </para>
+    <para>
+     <varname>sr_check_period</varname>のデフォルト値は10秒であるため、修正しました。コメント内のいくつかのタイポも修正しました。
+    </para>
+    <para>
+     パッチはhiroinによって作成され、Bo Pengによって修正されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-21 [ff43279]
+    -->
+    <para>
+     拡張クエリが終了していない場合でもリセットクエリを実行できるようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     コミット<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=240c668d">240c668d</ulink>が原因で、拡張クエリメッセージが終了していない場合、リセットクエリが失敗していました。
+     このコミットでは、SimpleQuery()でリセットクエリを実行しているかどうかをチェックすることで、この問題を修正しました。
+     また、テストケースも追加しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-18 [9d6561a]
+    -->
+    <para>
+     不適切なプロトコルデータから保護するように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     拡張クエリメッセージのシーケンスが終了する前にシンプルクエリメッセージが到着すると、<productname>Pgpool-II</productname>がハングする可能性がありました。
+     これは、シンプルクエリのセッションコンテキスト内のクエリコンテキストが、拡張クエリメッセージのクエリコンテキストによって上書きされたためです。
+    </para>
+    <para>
+     このコミットでは、拡張クエリプロトコルメッセージが終了したかどうかをチェックするように実装しました。
+     終了していない場合は、FATALエラーを発生させます。このチェックによって検出された既知の例は、JDBCドライバーの「autosave=always」オプションです。
+     つまり、このコミットの後、問題（拡張クエリメッセージプロトコルが終了する前にシンプルプロトコルメッセージを送信する）がJDBCドライバー側で修正されるまで、
+     <productname>Pgpool-II</productname>はこのオプションを受け入れません。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-February/004428.html">https://www.pgpool.net/pipermail/pgpool-hackers/2024-February/004428.html</ulink>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-04-03 [8986a8b]
+    -->
+    <para>
+     「上位サーバへの接続」ドキュメントを改善します。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-03-28 [02fb8ea]
+    -->
+    <para>
+     日本語ドキュメントの言語クリーンアップしました。(Masaya Kawamoto)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-03-16 [527ad4c]
+    2024-03-15 [65fc6c7]
+    -->
+    <para>
+     Java 21での非推奨警告を回避するために回帰テスト005.jdbcを修正しました。(Bo Peng)
+    </para>
+    <para>
+     Java 21での非推奨警告を回避するには、Runtime.exec(String)をRuntime.exec(String[])に置き換えました。
+    </para>
+    <para>
+     パッチはVladimir Petkoによって作成され、Bo Pengによって修正されました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-16">
  <title>リリース 4.2.16</title>
   <note>
