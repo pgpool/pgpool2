@@ -358,6 +358,9 @@ fi
 %endif
 
 %changelog
+* Thu May 16 2024 Bo Peng <pengbo@sraoss.co.jp> 4.4.7
+- Change permission of /etc/sudoers.d/pgpool to 0440
+
 * Wed Nov 2 2022 Bo Peng <pengbo@sraoss.co.jp> 4.4.0
 - Change /lib/tmpfiles.d/ file from /var/run to /run
 - Install /etc/sudoers.d/pgpool
