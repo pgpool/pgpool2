@@ -760,8 +760,6 @@ _outJoinExpr(String * str, JoinExpr *node)
 		else
 			string_append_char(str, " JOIN ");
 	}
-	else if (node->jointype == JOIN_INNER)
-		string_append_char(str, " JOIN ");
 	else if (node->jointype == JOIN_LEFT)
 		string_append_char(str, " LEFT OUTER JOIN ");
 	else if (node->jointype == JOIN_FULL)
