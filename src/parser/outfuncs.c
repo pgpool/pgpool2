@@ -777,8 +777,6 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 		else
 			appendStringInfoString(str, " JOIN ");
 	}
-	else if (node->jointype == JOIN_INNER)
-		appendStringInfoString(str, " JOIN ");
 	else if (node->jointype == JOIN_LEFT)
 		appendStringInfoString(str, " LEFT OUTER JOIN ");
 	else if (node->jointype == JOIN_FULL)
