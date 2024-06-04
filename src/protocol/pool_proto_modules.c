@@ -4826,9 +4826,17 @@ bool multi_statement_query(char *queries)
 	int		num_semicolons = 0;
 	bool	done = false;
 
+	/*
+	 * callback functions for our flex lexer.  need this to prevent crash when
+	 * psqlscan tries to parse psql variable statements (:variable).
+	 */
+	const PsqlScanCallbacks psqlscan_callbacks = {
+		NULL
+	};
+
 	initPQExpBuffer(&lbuf);	/* initialize line buffer */
 
-	sstate = psql_scan_create(NULL);	/* create scan state */
+	sstate = psql_scan_create(&psqlscan_callbacks);	/* create scan state */
 
 	/* add the query string to the scan state */
 	psql_scan_setup(sstate, queries, strlen(queries), 0, true);
