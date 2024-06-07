@@ -142,7 +142,7 @@ get_pool_config_from_json(char *json_data, int data_len)
 	}
 
 	value = json_get_value_for_key(root, "health_check_params");
-	/* We don't get seperate health check params from older version
+	/* We don't get separate health check params from older version
 	 * so be kind if the JSON does not contain one
 	 */
 	if (value != NULL && value->type == json_array)
@@ -970,7 +970,7 @@ parse_wd_exec_cluster_command_json(char *json_data, int data_len,
 			WDExecCommandArg *command_arg = palloc0(sizeof(WDExecCommandArg));
 			/*
 			 * Append to list right away, so that deep freeing the list also
-			 * get rid of half cooked argumnts in case of an error
+			 * get rid of half cooked arguments in case of an error
 			 */
 			*args_list = lappend(*args_list,command_arg);
 

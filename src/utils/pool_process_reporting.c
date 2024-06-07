@@ -1529,11 +1529,11 @@ get_pools(int *nrows)
 		for (pool = 0; pool < pool_config->max_pool; pool++)
 		{
 			int idle_duration = pi->connection_info[pool * MAX_NUM_BACKENDS].client_idle_duration;
-			int cliet_idle_time = pool_config->client_idle_limit;
+			int client_idle_time = pool_config->client_idle_limit;
 
 			if (pool_config->client_idle_limit > 0)
 			{
-				cliet_idle_time = pool_config->client_idle_limit - idle_duration;
+				client_idle_time = pool_config->client_idle_limit - idle_duration;
 			}
 
 			for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
@@ -1598,8 +1598,8 @@ get_pools(int *nrows)
 				{
 					snprintf(pools[lines].client_idle_duration, sizeof(pools[lines].client_idle_duration),
 							 "%d (%d:%02d before client disconnected)", idle_duration,
-							 cliet_idle_time / 60,
-							 cliet_idle_time % 60);
+							 client_idle_time / 60,
+							 client_idle_time % 60);
 				}
 				else
 					snprintf(pools[lines].client_idle_duration, sizeof(pools[lines].client_idle_duration),

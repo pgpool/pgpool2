@@ -20,7 +20,7 @@
     </para>
     <para>
      サーバサイドのSSLネゴシエーションの実装において、任意のSQLコマンドを実行できる中間者攻撃が可能でした。
-     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hotssl + trust認証の場合に可能でした。
+     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hostssl + trust認証の場合に可能でした。
      PostgreSQLのCVE-2021-23214と似た脆弱性です。
     </para>
     <para>
@@ -1116,7 +1116,7 @@
     -->
     <para>
      <!--
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
      -->
      起動時のbind()エラーを回避するために、ソケットファイルが存在するかどうかを確認し、
      PIDファイルが存在しない場合、それらのソケットファイルを削除するように修正しました。(Bo Peng)
@@ -1341,7 +1341,7 @@
     -->
     <para>
      <!--
-     Doc: mention that VIP will not be brougt up if quorum does not exist. (Tatsuo Ishii)
+     Doc: mention that VIP will not be brought up if quorum does not exist. (Tatsuo Ishii)
      -->
 	 Doc: クォーラムが存在しない場合、VIPは起動されないことをドキュメントに追加しました。(Tatsuo Ishii)
     </para>
@@ -1575,7 +1575,7 @@
     -->
     <para>
      <!--
-     Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
+     Fix segfault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
      -->
      クエリキャッシュが有効な場合に発生するセグメンテーション違反を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
     </para>
@@ -1796,7 +1796,7 @@
     </para>
     <para>
      <!--
-     When all backend nodes are down, <productname>Pgpool-II</> throws an uncorrect
+     When all backend nodes are down, <productname>Pgpool-II</> throws an incorrect
      error message "ERROR: connection cache is full". Change the error
      message to "all backend nodes are down, pgpool requires at least one valid node".
      -->
@@ -2634,7 +2634,7 @@
     <para>
      <!--
      In a explicit transaction, the <literal>SELECT</literal> results are cached in temporary buffer.
-     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffe should be reset.
+     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffer should be reset.
      -->
      明示的なトランザクションでは、<literal>SELECT</literal>の結果は一時バッファにキャッシュされます。
      テーブルを変更する書込み<acronym>SQL</acronym>が送信されると、一時的なバッファをリセットしなければなりません。
@@ -3459,7 +3459,7 @@
     </para>
     <para>
      <!--
-     Removeing "Type=forking" and add OPTS=" -n" to
+     Removing "Type=forking" and add OPTS=" -n" to
      run Pgpool-II with non-daemon mode, because we need to redirect logs.
      Using "journalctl" command to see Pgpool-II systemd log.
      -->
@@ -3715,7 +3715,7 @@
      <!--
      But the problem with this technique is that, for the instance when the node has
      announced itself as a master/coordinator of the cluster and is waiting for
-     the standby nodes to recognise it as a Master node. For that period of time
+     the standby nodes to recognize it as a Master node. For that period of time
      the watchdog state of the node is Master/coordinator, but it is yet not fully
      capable of handling the failover and failover-locking requests.
      -->
@@ -4456,7 +4456,7 @@
     2017-04-14 [50fb9a4]
     -->
     <para>
-     pool_config_vatiable.cから「定義されたが未使用の関数」という警告を削除しました。(Muhammad Usama)
+     pool_config_variable.cから「定義されたが未使用の関数」という警告を削除しました。(Muhammad Usama)
     </para>
    </listitem>
 
@@ -4568,7 +4568,7 @@
     2017-04-06 [d87f93d]
     -->
     <para>
-     リグレッションの失敗を防ぐために、サポートされていないJavaメソッドを新しいJDBCドライバでコメントアウトしました。(Tatsu Ishii)
+     リグレッションの失敗を防ぐために、サポートされていないJavaメソッドを新しいJDBCドライバでコメントアウトしました。(Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -5499,7 +5499,7 @@
     -->
     <para>
      <!--
-     Sync inconsitent status
+     Sync inconsistent status
      of <productname>PostgreSQL</productname> nodes
      in <productname>Pgpool-II</productname> instances after
      restart. (Muhammad Usama)
@@ -5771,7 +5771,7 @@
     </para>
     <para>
      <!--
-     This commit tries to remove the data inconsitency in
+     This commit tries to remove the data inconsistency in
      replication mode found
      in <ulink url="http://www.pgpool.net/pipermail/pgpool-general/2015-August/003974.html">[pgpool-general:
      3918]</ulink> by not recording the status file when all
@@ -6266,11 +6266,11 @@
    </listitem>
    <listitem>
     <!--
-    2016-08-01 [024eaea]  Fix for 215: pgpool doesnt escalate ip in case of another node inavailability
+    2016-08-01 [024eaea]  Fix for 215: pgpool doesn't escalate ip in case of another node unavailability
     -->
     <para>
      <!--
-     Fix <productname>Pgpool-II</productname> doesn't escalate ip in case of another node inavailability. (bug 215) (Muhammad Usama)
+     Fix <productname>Pgpool-II</productname> doesn't escalate ip in case of another node unavailability. (bug 215) (Muhammad Usama)
      -->
      他のノードが利用できない場合、<productname>Pgpool-II</productname> が
      IPアドレスをエスカレートしない不具合を修正しました。(bug 215) (Muhammad Usama)
@@ -6546,20 +6546,20 @@
    </listitem>
    <listitem>
     <!--
-    2016-06-08 [294cf4a]  Fix a posible hang during health checking
+    2016-06-08 [294cf4a]  Fix a possible hang during health checking
     -->
     <para>
      <!--
-     Fix a posible hang during health checking. (bug 204) (Yugo Nagata)
+     Fix a possible hang during health checking. (bug 204) (Yugo Nagata)
      -->
      ヘルスチェックで発生し得るハングアップを修正しました。(bug 204) (Yugo Nagata)
     </para>
     <para>
      <!--
-     Helath checking was hang when any data wasn't sent
+     Health checking was hang when any data wasn't sent
      from backend after <function>connect(2)</function> succeeded. To fix this,
      <function>pool_check_fd()</function> returns 1 when <function>select(2)</function> exits with
-     EINTR due to SIGALRM while health checkking is performed.
+     EINTR due to SIGALRM while health checking is performed.
      -->
      <function>connect(2)</function> が成功し、
      その後バックエンドからデータが送信されない場合、ヘルスチェックがハングしていました。
@@ -6680,17 +6680,17 @@
    </listitem>
    <listitem>
     <!--
-    2016-05-11 [de905f6]  Fix documetation bug about raw mode
+    2016-05-11 [de905f6]  Fix documentation bug about raw mode
     -->
     <para>
      <!--
-     Fix  Japanese and Chinese documetation bug about raw mode. (Yugo Nagata, Bo Peng)
+     Fix  Japanese and Chinese documentation bug about raw mode. (Yugo Nagata, Bo Peng)
      -->
      日本語と中国語ドキュメントのraw モードに関する内容の誤りを修正しました。(Yugo Nagata, Bo Peng)
     </para>
     <para>
      <!--
-     Connection pool is avalilable in raw mode.
+     Connection pool is available in raw mode.
      -->
      raw モードでも、コネクションプーリングが有効です。
     </para>
@@ -6868,7 +6868,7 @@
     </para>
     <para>
      <!--
-     This could happend if we execute an extended protocol query and it fails.
+     This could happened if we execute an extended protocol query and it fails.
      -->
      これは拡張プロトコル問い合わせを実行しそれが失敗したときに発生し得ました。
     </para>

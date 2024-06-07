@@ -534,7 +534,7 @@ stop_me(void)
 
 	for (;;)
 	{
-		int		cnt = 5;	/* sending sinal retry interval */
+		int		cnt = 5;	/* sending signal retry interval */
 
 		if (kill(pid, stop_sig) == -1)
 		{

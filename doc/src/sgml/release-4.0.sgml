@@ -223,11 +223,11 @@
     2023-01-31 [633bdca]
     -->
     <para>
-     Fix kind mimatch error with <literal>DEALLOCATE</literal>.
+     Fix kind mismatch error with <literal>DEALLOCATE</literal>.
      (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=780">bug 780</ulink>) (Tatsuo Ishii)
     </para>
     <para>
-     Kind mimatch error occurs when conditions below are all met:
+     Kind mismatch error occurs when conditions below are all met:
      <itemizedlist>
       <listitem>
        <para>
@@ -652,7 +652,7 @@
     <para>
      To deal with idle_session_timeout detect_idle_session_timeout_error()
      is added to detect the error code for idle_session_timeout. If the
-     error is detected, Pgpool-II returns the error code to frondend as a
+     error is detected, Pgpool-II returns the error code to frontend as a
      fatal error and disconnects the session.  This is a similar fix
      implemented for idle_in_transaction_session_timeout.
      <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=3f5986eee360f12e6a0bb77aa46f95abf5f6bc10">3f5986eee360f12e6a0bb77aa46f95abf5f6bc10</ulink>
@@ -1092,7 +1092,7 @@
     2022-04-17 [72d31b0]
     -->
     <para>
-     Enhance regression test 074.bug700_memqcache_segfault to avoid the timeut error. (Tatsuo Ishii)
+     Enhance regression test 074.bug700_memqcache_segfault to avoid the timeout error. (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -1494,7 +1494,7 @@
      Fix the incorrect display of load balancing node in raw mode. (Bo Peng)
     </para>
     <para>
-     In raw mode, <productname>Pgpool-II</productname> sends all queies to main node.
+     In raw mode, <productname>Pgpool-II</productname> sends all queries to main node.
      This is harmless, but it may confuse users.
     </para>
    </listitem>
@@ -1520,7 +1520,7 @@
     2021-10-06 [42a77d8c]
     -->
     <para>
-     Doc: fix documentaion typos. (Bo Peng)
+     Doc: fix documentation typos. (Bo Peng)
     </para>
    </listitem>
 

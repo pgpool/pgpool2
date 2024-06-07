@@ -409,7 +409,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"failover_require_consensus", CFGCXT_INIT, FAILOVER_CONFIG,
-			"Only do failover when majority aggrees.",
+			"Only do failover when majority agrees.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.failover_require_consensus,
@@ -1911,7 +1911,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"num_init_children", CFGCXT_INIT, CONNECTION_POOL_CONFIG,
-			"Maximim number of child processs to handle client connections.",
+			"Maximim number of child process to handle client connections.",
 			CONFIG_VAR_TYPE_INT, false, 0
 		},
 		&g_pool_config.num_init_children,

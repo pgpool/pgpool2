@@ -185,7 +185,7 @@
     </para>
     <para>
      <!--
-     Removeing "Type=forking" and add OPTS=" -n" to
+     Removing "Type=forking" and add OPTS=" -n" to
      run Pgpool-II with non-daemon mode, because we need to redirect logs.
      Using "journalctl" command to see Pgpool-II systemd log.
      -->
