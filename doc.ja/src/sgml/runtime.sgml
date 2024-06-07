@@ -301,7 +301,7 @@
    </para>
 
    <para>
-    <firstterm>ストリーミングレプリケーションモード</firstterm>はストリーミングレプリケーションを使用する<productname>PostgreSQL</>サーバ(AWSのAuroa、RDSを含みます)と一緒に使うことができます。
+    <firstterm>ストリーミングレプリケーションモード</firstterm>はストリーミングレプリケーションを使用する<productname>PostgreSQL</>サーバ(AWSのAurora、RDSを含みます)と一緒に使うことができます。
     このモードでは、<productname>PostgreSQL</>がデータベースを同期する責任を持ちます。
     このモードは広く使われており、最も推奨される<productname>Pgpool-II</>の使用法です。
     このモードでは負荷分散が可能です。
@@ -340,7 +340,7 @@ default_transaction_isolation = 'repeatable read'
     responsible for synchronizing tables. Load balancing is possible
     in the mode. Since logical replication does not replicate all
     tables, it's user's responsibility to replicate the table which
-    could be load balanced. <productname>Pgpool-II</> load balaces
+    could be load balanced. <productname>Pgpool-II</> load balances
     all tables. This means that if a table is not
     replicated, <productname>Pgpool-II</> may lookup outdated tables
     in the subscriber side.
@@ -377,7 +377,7 @@ default_transaction_isolation = 'repeatable read'
     <!--
     In the raw mode, <productname>Pgpool-II</> does not care about the database
     synchronization. It's user's responsibility to make the whole
-    system does a meaningfull thing. Load balancing
+    system does a meaningful thing. Load balancing
     is <emphasis>not</emphasis> possible in the mode.
     -->
     <firstterm>rawモード</firstterm>では、<productname>Pgpool-II</>はデータベースの同期に関しては関与しません。
@@ -444,7 +444,7 @@ default_transaction_isolation = 'repeatable read'
    backend servers, you need to configure <varname>backend*</varname>
    in <filename>pgpool.conf</filename>.  For starters, at
    least <xref linkend="guc-backend-hostname">
-   and <xref linkend="guc-backend-port"> paramters are required to
+   and <xref linkend="guc-backend-port"> parameters are required to
    be set up to start <productname>Pgpool-II</> server.
    -->
    <productname>Pgpool-II</>が<productname>PostgreSQL</>バックエンドサーバを認識するために、<filename>pgpool.conf</filename>の<varname>backend*</varname>を設定する必要があります。

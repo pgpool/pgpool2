@@ -600,7 +600,7 @@
     2023-08-09 [30db44e]
     -->
     <para>
-     Fix covery warning. (Tatsuo Ishii)
+     Fix coverity warning. (Tatsuo Ishii)
     </para>
     <para>
      Fix query cache module assigned time_t value to int32 variable. Change
@@ -1011,11 +1011,11 @@
     2023-01-31 [38225a7]
     -->
     <para>
-     Fix kind mimatch error with <literal>DEALLOCATE</literal>.
+     Fix kind mismatch error with <literal>DEALLOCATE</literal>.
      (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=780">bug 780</ulink>) (Tatsuo Ishii)
     </para>
     <para>
-     Kind mimatch error occurs when conditions below are all met:
+     Kind mismatch error occurs when conditions below are all met:
      <itemizedlist>
       <listitem>
        <para>
@@ -1057,7 +1057,7 @@
     2023-01-30 [93f5585]
     -->
     <para>
-     Obtain stronger lock while commiting shared relcache. (Tatsuo Ishii)
+     Obtain stronger lock while committing shared relcache. (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -1741,8 +1741,8 @@
     <para>
      Configuration parameter <literal>delegate_IP</literal> is renamed
      to <xref linkend="guc-delegate-ip">.  For compatibility with the
-     old versions, the old paramter delegate_IP can still work.  If
-     the old paramter delegate_IP is
+     old versions, the old parameter delegate_IP can still work.  If
+     the old parameter delegate_IP is
      used, <productname>Pgpool-II</productname> will set the value to
      delegate_ip and throw a warning message.
     </para>

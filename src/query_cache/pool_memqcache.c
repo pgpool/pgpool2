@@ -3005,7 +3005,7 @@ pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 	}
 
 #ifdef LOCK_TRACE
-		elog(LOG, "LOCK TRACE: try to aquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK? "LOCK_EX" : "LOCK_SH");
+		elog(LOG, "LOCK TRACE: try to acquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK? "LOCK_EX" : "LOCK_SH");
 #endif
 	if (pool_is_shmem_cache() && !is_shmem_locked)
 	{
@@ -3018,7 +3018,7 @@ pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 		}
 
 #ifdef LOCK_TRACE
-		elog(LOG, "LOCK TRACE: aquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK? "LOCK_EX" : "LOCK_SH");
+		elog(LOG, "LOCK TRACE: acquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK? "LOCK_EX" : "LOCK_SH");
 #endif
 		is_shmem_locked = true;
 	}

@@ -148,7 +148,7 @@ typedef struct
 	 */
 	bool		flush_pending;
 
-	bool		is_tx_started_by_multi_statement; /* true if an explicit transaction has been strated by
+	bool		is_tx_started_by_multi_statement; /* true if an explicit transaction has been started by
 													 multi statement query */
 }			POOL_PENDING_MESSAGE;
 

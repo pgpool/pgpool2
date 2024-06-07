@@ -1283,7 +1283,7 @@ Password for user pgpool
 Password:
 3 3 YES server1:9999 Linux server1 server1
 
-server1:9999 Linux server1 server1 9999 9000 4 LEADER 0 MEMBER  # The Pgpool-II server started first becames "LEADER".
+server1:9999 Linux server1 server1 9999 9000 4 LEADER 0 MEMBER  # The Pgpool-II server started first becomes "LEADER".
 server2:9999 Linux server2 server2 9999 9000 7 STANDBY 0 MEMBER # running as STANDBY
 server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER # running as STANDBY
    </programlisting>

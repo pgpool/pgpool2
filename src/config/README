@@ -37,7 +37,7 @@ defined above to src/include/pool_config.h.
 							 * will not be load balanced until the session ends.
 							 */
 
-Step3: Add config_emum_entry array to src/config/pool_config.c.
+Step3: Add config_enum_entry array to src/config/pool_config.c.
 ================================================================
 
 static const struct config_enum_entry disable_load_balance_on_write_options[] = {

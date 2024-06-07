@@ -3206,7 +3206,7 @@ read_status_file(bool discard_status)
 	}
 
 	/*
-	 * Frist try out with old format file.
+	 * First try out with old format file.
 	 */
 	is_old_format = true;
 
@@ -4079,7 +4079,7 @@ pool_release_follow_primary_lock(bool remote_request)
 				/*
 				 * Ideally this should not happen.
 				 * yet if for some reason our local node is trying to release a lock
-				 * that is heald by remote node. Just produce a LOG message and release
+				 * that is held by remote node. Just produce a LOG message and release
 				 * the lock
 				 */
 				ereport(LOG,
@@ -4192,7 +4192,7 @@ handle_failback_request(FAILOVER_CONTEXT *failover_context, int node_id)
 	else
 	{
 		/*
-		 * The request is a proper failbak request and not because of
+		 * The request is a proper failback request and not because of
 		 * the update status of quarantined node
 		 */
 		(void) write_status_file();
@@ -4426,7 +4426,7 @@ exec_failover_command(FAILOVER_CONTEXT *failover_context, int new_main_node_id, 
 		{
 			if (failover_context->nodes[i])
 			{
-				/* If this is prmoting specified node, new_main_node
+				/* If this is promoting specified node, new_main_node
 				 * should be replaced by the requested node. The requested
 				 * node should be REAL_PRIMARY_NODE_ID.
 				 */
@@ -4518,7 +4518,7 @@ determine_new_primary_node(FAILOVER_CONTEXT *failover_context, int node_id)
 }
 
 /*
- * Execute follow primary command if neccessary.
+ * Execute follow primary command if necessary.
  * return new main node id if it needs to be changed.
  * If not changed, -1 will be returned.
  */

@@ -133,7 +133,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 
 	/*
 	 * Obtain database name and node id to be sent query.  If
-	 * relcache_query_target is RELQTARGET_LOADL_BALANCE_NODE, we consider
+	 * relcache_query_target is RELQTARGET_LOAD_BALANCE_NODE, we consider
 	 * load balance node id to be used to send queries.
 	 * 
 	 * Note that we need to use VALID_BACKEND_RAW, rather than VALID_BACKEND
@@ -260,9 +260,9 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 			query_cache_data = relation_cache_to_query_cache(res, &query_cache_len);
 			/*
 			 * So far, we have already obtained a lock. But to register
-			 * a query cache entry, we need to aquire an exclusive lock.
+			 * a query cache entry, we need to acquire an exclusive lock.
 			 * Unfortunately:
-			 * (1) we don't know if we already aquired an exclusive or not.
+			 * (1) we don't know if we already acquired an exclusive or not.
 			 * (2) we cannot escalate a shared lock to an exclusive lock.
 			 * So we release the lock and obtain an exclusive lock.  This may
 			 * create a window and thus we might try to register duplicate

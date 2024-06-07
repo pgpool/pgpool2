@@ -197,7 +197,7 @@ make_persistent_db_connection_noerror(
 		 * receives an ERROR, it stops processing and terminates, which is not
 		 * good. This is problematic especially with pcp_node_info, since it
 		 * calls db_node_role(), and db_node_role() calls this function. So if
-		 * the target PostgreSQL is down, EmitErrorRepor() sends ERROR message
+		 * the target PostgreSQL is down, EmitErrorReport() sends ERROR message
 		 * to pcp frontend and it stops (see process_pcp_response() in
 		 * src/libs/pcp/pcp.c. To fix this, just eliminate calling
 		 * EmitErrorReport(). This will suppress ERROR message but as you can
@@ -450,7 +450,7 @@ select_load_balancing_node(void)
 				 errdetail("suggested backend %d is streaming delayed over delay_threshold", suggested_node_id)));
 
 			/*
-			 * The new load balancing node is seleted from the
+			 * The new load balancing node is selected from the
 			 * nodes which have the lowest delay.
 			 */
 			if (pool_config->delay_threshold_by_time > 0)

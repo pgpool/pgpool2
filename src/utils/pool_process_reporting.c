@@ -451,7 +451,7 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "log_pcp_processes", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_pcp_processes);
-	StrNCpy(status[i].desc, "if true, print PCP process forks and anormal exit status to the log", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].desc, "if true, print PCP process forks and a normal exit status to the log", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	StrNCpy(status[i].name, "log_hostname", POOLCONFIG_MAXNAMELEN);
@@ -1553,11 +1553,11 @@ get_pools(int *nrows)
 		{
 			int idle_duration = pi->connection_info[pool * MAX_NUM_BACKENDS].client_idle_duration;
 			int load_balancing_node_id = pi->connection_info[pool * MAX_NUM_BACKENDS].load_balancing_node;
-			int cliet_idle_time = pool_config->client_idle_limit;
+			int client_idle_time = pool_config->client_idle_limit;
 
 			if (pool_config->client_idle_limit > 0)
 			{
-				cliet_idle_time = pool_config->client_idle_limit - idle_duration;
+				client_idle_time = pool_config->client_idle_limit - idle_duration;
 			}
 
 			for (backend_id = 0; backend_id < NUM_BACKENDS; backend_id++)
@@ -1622,8 +1622,8 @@ get_pools(int *nrows)
 				{
 					snprintf(pools[lines].client_idle_duration, sizeof(pools[lines].client_idle_duration),
 							 "%d (%d:%02d before client disconnected)", idle_duration,
-							 cliet_idle_time / 60,
-							 cliet_idle_time % 60);
+							 client_idle_time / 60,
+							 client_idle_time % 60);
 				}
 				else
 					snprintf(pools[lines].client_idle_duration, sizeof(pools[lines].client_idle_duration),

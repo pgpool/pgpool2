@@ -1447,7 +1447,7 @@ _pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully, bool switchov
 
 	pcp_write(pcpConn->pcpConn, sendchar, 1);
 
-	/* caluculate send buffer size */
+	/* calculate send buffer size */
 	wsize = sizeof(char);	/* protocol. 'j' or 'J' */
 	wsize += strlen(node_id);	/* node id + space */
 	wsize += sizeof(char);	/* promote option */
