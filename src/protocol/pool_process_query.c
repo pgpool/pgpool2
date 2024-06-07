@@ -970,7 +970,7 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	}
 	else
 		ereport(ERROR,
-				(errmsg("ParameterStatus: failed to obatain parameter name, value from the main node.")));
+				(errmsg("ParameterStatus: failed to obtain parameter name, value from the main node.")));
 	return status;
 }
 

@@ -129,7 +129,7 @@
      <row>
       <entry><literal>free_cache_entries_size</literal></entry>
       <entry>
-       The size in bytes of the unsed cache.  As this value approaches
+       The size in bytes of the unused cache.  As this value approaches
        0, it removes the registered cache and registers a new cache,
        which does not cause an error, but reduces performance.
        Consider to increase <xref linkend="guc-memqcache-total-size">.

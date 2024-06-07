@@ -129,7 +129,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 
 	/*
 	 * Obtain database name and node id to be sent query.  If
-	 * relcache_query_target is RELQTARGET_LOADL_BALANCE_NODE, we consider
+	 * relcache_query_target is RELQTARGET_LOAD_BALANCE_NODE, we consider
 	 * load balance node id to be used to send queries.
 	 * 
 	 * Note that we need to use VALID_BACKEND_RAW, rather than VALID_BACKEND

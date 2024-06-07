@@ -667,7 +667,7 @@
     </para>
     <para>
      サーバサイドのSSLネゴシエーションの実装において、任意のSQLコマンドを実行できる中間者攻撃が可能でした。
-     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hotssl + trust認証の場合に可能でした。
+     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hostssl + trust認証の場合に可能でした。
      PostgreSQLのCVE-2021-23214と似た脆弱性です。
     </para>
     <para>
@@ -1942,7 +1942,7 @@
     -->
     <para>
      <!--
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
      -->
      起動時のbind()エラーを回避するために、ソケットファイルが存在するかどうかを確認し、
      PIDファイルが存在しない場合、それらのソケットファイルを削除するように修正しました。(Bo Peng)
@@ -2265,7 +2265,7 @@
     -->
     <para>
      <!--
-     Doc: mention that VIP will not be brougt up if quorum does not exist. (Tatsuo Ishii)
+     Doc: mention that VIP will not be brought up if quorum does not exist. (Tatsuo Ishii)
      -->
 	 Doc: クォーラムが存在しない場合、VIPは起動されないことをドキュメントに追加しました。(Tatsuo Ishii)
     </para>
@@ -2549,7 +2549,7 @@
     -->
     <para>
      <!--
-     Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
+     Fix segfault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
      -->
      クエリキャッシュが有効な場合に発生するセグメンテーション違反を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
     </para>
@@ -2782,7 +2782,7 @@
     </para>
     <para>
      <!--
-     When all backend nodes are down, <productname>Pgpool-II</> throws an uncorrect
+     When all backend nodes are down, <productname>Pgpool-II</> throws an incorrect
      error message "ERROR: connection cache is full". Change the error
      message to "all backend nodes are down, pgpool requires at least one valid node".
      -->
@@ -3658,7 +3658,7 @@
     <para>
      <!--
      In a explicit transaction, the <literal>SELECT</literal> results are cached in temporary buffer.
-     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffe should be reset.
+     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffer should be reset.
      -->
      明示的なトランザクションでは、<literal>SELECT</literal>の結果は一時バッファにキャッシュされます。
      テーブルを変更する書込み<acronym>SQL</acronym>が送信されると、一時的なバッファをリセットしなければなりません。
@@ -4791,7 +4791,7 @@
     </para>
     <para>
      <!--
-     Removeing "Type=forking" and add OPTS=" -n" to
+     Removing "Type=forking" and add OPTS=" -n" to
      run Pgpool-II with non-daemon mode, because we need to redirect logs.
      Using "journalctl" command to see Pgpool-II systemd log.
      -->
@@ -5264,7 +5264,7 @@
      Supporting per node health check parameters. (Tatsuo Ishii,
      Muhammad Usama)
      -->
-     <productname>PostgreSQL</productname>ノードごとにヘルスチェックパラメータを設定できるようになりました。(Tatsuo Ishi, Muhammad Usama)
+     <productname>PostgreSQL</productname>ノードごとにヘルスチェックパラメータを設定できるようになりました。(Tatsuo Ishii, Muhammad Usama)
     </para>
     <para>
      <!--

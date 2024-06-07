@@ -5397,7 +5397,7 @@ watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
  * This is the intermediate state before going to cluster initialization
  * here we update the information of all connected nodes and move to the
  * initialization state. moving to this state from loading does not make
- * much sence as at loading time we already have updated node informations
+ * much sense as at loading time we already have updated node informations
  */
 static int
 watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode * wdNode, WDPacketData * pkt, WDCommandData * clusterCommand)

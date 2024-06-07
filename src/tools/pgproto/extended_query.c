@@ -219,7 +219,7 @@ process_bind(char *buf, PGconn *conn)
 
 	send_char('B', conn);
 	send_int(len, conn);	/* message length */
-	send_string(portal, conn);	/* protal name */
+	send_string(portal, conn);	/* portal name */
 	free(portal);
 	send_string(stmt, conn);	/* statement name */
 	free(stmt);

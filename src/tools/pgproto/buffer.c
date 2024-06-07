@@ -29,7 +29,7 @@
 #include "pgproto/buffer.h"
 
 /*
- * Read integer field and returns it.  The pointer in the buffer afer reading
+ * Read integer field and returns it.  The pointer in the buffer after reading
  * the data is returned to "bufp".  If the format is not follows above, exit
  * within this function.
  */

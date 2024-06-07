@@ -3994,7 +3994,7 @@ read_status_file(bool discard_status)
 	}
 
 	/*
-	 * Frist try out with old format file.
+	 * First try out with old format file.
 	 */
 	is_old_format = true;
 
