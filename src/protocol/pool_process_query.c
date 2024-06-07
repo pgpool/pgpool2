@@ -1000,7 +1000,7 @@ ParameterStatus(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 	}
 	else
 		ereport(ERROR,
-				(errmsg("ParameterStatus: failed to obatain parameter name, value from the main node.")));
+				(errmsg("ParameterStatus: failed to obtain parameter name, value from the main node.")));
 	return status;
 }
 
@@ -1178,7 +1178,7 @@ is_select_query(Node *node, char *sql)
 		}
 
 		/*
-		 * If SQL comment is not allowed, the query must start with cetain characters.
+		 * If SQL comment is not allowed, the query must start with certain characters.
 		 * However if it's PREPARE, we should skip the check.
 		 */
 		if (!pool_config->allow_sql_comments)
@@ -4154,9 +4154,9 @@ start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * ba
  * query in progress flag is set.  At returning, the ReadyForQuery packet
  * length and the transaction state should be left in the backend buffers
  * EXCEPT for backends that do not satisfy VALID_BACKEND macro. This is
- * required because the caller later on calls pool_message_length() wich
+ * required because the caller later on calls pool_message_length() which
  * retrieves the packet length and the transaction state from the backends
- * that satify VALID_BACKEND macro.
+ * that satisfy VALID_BACKEND macro.
  */
 POOL_STATUS
 end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)

@@ -140,7 +140,7 @@ if_down_cmd = '&lt;path to script&gt; down $_IP_$ &lt;path to awscli&gt;'
    <itemizedlist>
     <listitem>
      <para>
-      &lt;path to script&gt;: Specify the path to the script used to assgin or remove Elastic IP address.
+      &lt;path to script&gt;: Specify the path to the script used to assign or remove Elastic IP address.
      </para>
     </listitem>
 
@@ -250,7 +250,7 @@ arping_cmd = 'true'
     <listitem>
      <para>
       create two route tables associated with the public subnet and the private subnet
-      respectively. Please refer to this <ulink url="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html#VPC_Scenario2_Routing">documetation</ulink>
+      respectively. Please refer to this <ulink url="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html#VPC_Scenario2_Routing">documentation</ulink>
       for detailed information.
      </para>
     </listitem>
@@ -322,7 +322,7 @@ arping_cmd = 'true'
     Mostly the <productname>Pgpool-II</productname> configurations for this
     example will be same as in the <xref linkend="example-cluster">, except
     using <xref linkend="guc-if-up-cmd"> and <xref linkend="guc-if-down-cmd">
-    to assign the virtaul IP and update route tables.
+    to assign the virtual IP and update route tables.
    </para>
    <para>
     Specify the virtual IP to <xref linkend="guc-delegate-ip">.
@@ -447,7 +447,7 @@ $ aws ec2 modify-network-interface-attribute --network-interface-id ${EC2_NETWOR
     from the application instance.
    </para>
    <programlisting>
-[user@appliaction instance]$ psql -h 20.0.0.50 -p 9999 -U postgres -c "show pool_nodes"
+[user@application instance]$ psql -h 20.0.0.50 -p 9999 -U postgres -c "show pool_nodes"
    </programlisting>
    <para>
     Stop the leader <productname>Pgpool-II</productname>.

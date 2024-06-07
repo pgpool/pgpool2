@@ -343,9 +343,9 @@ extern int	my_main_node_id;
 typedef enum
 {
 	POOL_NODE_STATUS_UNUSED,	/* unused */
-	POOL_NODE_STATUS_PRIMARY,	/* primary ndoe */
+	POOL_NODE_STATUS_PRIMARY,	/* primary node */
 	POOL_NODE_STATUS_STANDBY,	/* standby node */
-	POOL_NODE_STATUS_INVALID	/* invalid node (split branin, stand alone) */
+	POOL_NODE_STATUS_INVALID	/* invalid node (split brain, stand alone) */
 }			POOL_NODE_STATUS;
 
 /* Clustering mode macros */
@@ -496,7 +496,7 @@ typedef enum
 }			POOL_RECOVERY_MODE;
 
 /*
- * Process types.  DO NOT change the order of each enum meber!  If you do
+ * Process types.  DO NOT change the order of each enum member!  If you do
  * that, you must change application_name array in src/main/pgpool_main.c
  * accordingly.
  */

@@ -233,7 +233,7 @@ do_worker_child(void)
 			Req_info->switching == false)
 		{
 			/*
-			 * Acquire follow primary lock. If fail to acqure lock, try again.
+			 * Acquire follow primary lock. If fail to acquire lock, try again.
 			 */
 			follow_primary_lock_acquired = false;
 

@@ -256,7 +256,7 @@ relcache_lookup(TSRewriteContext * ctx)
 	return (TSRel *) pool_search_relcache(ts_relcache, ctx->backend, table_name);
 }
 
-/* If timestamp value is required then return ts_const. Otherwize make
+/* If timestamp value is required then return ts_const. Otherwise make
  * a new ParamRef, whose number member is 0 and is overwritten at last,
  * and add it into params list in context.
  */
@@ -782,7 +782,7 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext * ctx)
 /*
  * Rewrite `now()' to timestamp literal.
  * If rewrite_to_params is false then, we rewrite `now()' to timestamp constant.
- * Otherwize, we rewrite `now()' to params and expand that at Bind message.
+ * Otherwise, we rewrite `now()' to params and expand that at Bind message.
  * returns query string as palloced string, or NULL if not to need rewrite.
  */
 char *
@@ -1174,7 +1174,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 				copy_to += sizeof(int16);
 			}
 		}
-		/* otherwize, copy the original format codes as they are*/
+		/* otherwise, copy the original format codes as they are*/
 		else
 		{
 			copy_len = num_formats * sizeof(int16);

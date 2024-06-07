@@ -448,7 +448,7 @@
     -->
     <para>
      <!--
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
      -->
      起動時のbind()エラーを回避するために、ソケットファイルが存在するかどうかを確認し、
      PIDファイルが存在しない場合、それらのソケットファイルを削除するように修正しました。(Bo Peng)
@@ -795,7 +795,7 @@
     -->
     <para>
      <!--
-     Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
+     Fix segfault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
      -->
      クエリキャッシュが有効な場合に発生するセグメンテーション違反を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
     </para>
@@ -962,7 +962,7 @@
     </para>
     <para>
      <!--
-     When all backend nodes are down, <productname>Pgpool-II</> throws an uncorrect
+     When all backend nodes are down, <productname>Pgpool-II</> throws an incorrect
      error message "ERROR: connection cache is full". Change the error
      message to "all backend nodes are down, pgpool requires at least one valid node".
      -->
@@ -1663,7 +1663,7 @@
     <para>
      <!--
      In a explicit transaction, the <literal>SELECT</literal> results are cached in temporary buffer.
-     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffe should be reset.
+     If a write <acronym>SQL</acronym> is sent which modifies the table, the temporary buffer should be reset.
      -->
      明示的なトランザクションでは、<literal>SELECT</literal>の結果は一時バッファにキャッシュされます。
      テーブルを変更する書込み<acronym>SQL</acronym>が送信されると、一時的なバッファをリセットしなければなりません。
@@ -2276,7 +2276,7 @@
     </para>
     <para>
      <!--
-     Removeing "Type=forking" and add OPTS=" -n" to
+     Removing "Type=forking" and add OPTS=" -n" to
      run Pgpool-II with non-daemon mode, because we need to redirect logs.
      Using "journalctl" command to see Pgpool-II systemd log.
      -->
@@ -2473,7 +2473,7 @@
      <!--
      But the problem with this technique is that, for the instance when the node has
      announced itself as a master/coordinator of the cluster and is waiting for
-     the standby nodes to recognise it as a Master node. For that period of time
+     the standby nodes to recognize it as a Master node. For that period of time
      the watchdog state of the node is Master/coordinator, but it is yet not fully
      capable of handling the failover and failover-locking requests.
      -->
@@ -2947,7 +2947,7 @@
      <productname>Pgpool-II</productname>が "Row description" メッセージを受信した際に、クエリ処理中のフラグをリセットするように修正しました。"no data" メッセージと同じ扱いにする必要がありました。
     </para>
     <para>
-     詳細は<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-June/005613.html">[pgpo       ol-general: 5555]</ulink>を参照してください。
+     詳細は<ulink url="http://www.pgpool.net/pipermail/pgpool-general/2017-June/005613.html">[pgpool-general: 5555]</ulink>を参照してください。
     </para>
    </listitem>
 
@@ -3158,7 +3158,7 @@
     2017-04-06 [7859f06]
     -->
     <para>
-     リグレッションの失敗を防ぐために、サポートされていないJavaメソッドを新しいJDBCドライバでコメントアウトしました。(Tatsu Ishii)
+     リグレッションの失敗を防ぐために、サポートされていないJavaメソッドを新しいJDBCドライバでコメントアウトしました。(Tatsuo Ishii)
     </para>
    </listitem>
 

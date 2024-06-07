@@ -464,7 +464,7 @@ pool_reopen_passwd_file(void)
 
 /*
  * function first uses the password in the argument, if the argument is empty
- * string or NULL, it looks for the password for uset in pool_passwd file.
+ * string or NULL, it looks for the password for user in pool_passwd file.
  * The returned password is always in plain text or md5 hashed and palloc'd
  * (if not null)
  */

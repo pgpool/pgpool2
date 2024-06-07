@@ -151,7 +151,7 @@ test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 
     14. pgpool child process id
     15. PostgreSQL backend id
     16. process status
-    17. 1 if backend is load balance node and frontend connected, 0 othewise
+    17. 1 if backend is load balance node and frontend connected, 0 otherwise
     -->
     1. 接続先のデータベース名
     2. 接続先のユーザ名

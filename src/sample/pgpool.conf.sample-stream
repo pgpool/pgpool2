@@ -252,7 +252,7 @@ backend_clustering_mode = 'streaming_replication'
                                    # Log all statements
 #log_per_node_statement = off
                                    # Log all statements
-                                   # with node and backend informations
+                                   # with node and backend information
 #notice_per_node_statement = off
                                    # logs notice message for per node detailed SQL statements
 #log_client_messages = off
@@ -566,7 +566,7 @@ backend_clustering_mode = 'streaming_replication'
                                    # Password in pool_passwd file before using the empty password
 
 #health_check_database = ''
-                                   # Database name for health check. If '', tries 'postgres' frist, 
+                                   # Database name for health check. If '', tries 'postgres' first.
 #health_check_max_retries = 0
                                    # Maximum number of times to retry a failed health check before giving up.
 #health_check_retry_delay = 1
@@ -679,7 +679,7 @@ backend_clustering_mode = 'streaming_replication'
 
 #auto_failback = off
                                    # Detached backend node reattach automatically
-                                   # if replicatiotate is 'streaming'.
+                                   # if replication is 'streaming'.
 #auto_failback_interval = 1min
                                    # Min interval of executing auto_failback in
                                    # seconds.
@@ -771,7 +771,7 @@ backend_clustering_mode = 'streaming_replication'
                                     # ping command path
                                     # (change requires restart)
 
-# - Behaivor on escalation Setting -
+# - Behavior on escalation Setting -
 
 #clear_memqcache_on_escalation = on
                                     # Clear all the query cache on shared memory
@@ -796,7 +796,7 @@ backend_clustering_mode = 'streaming_replication'
 
 #failover_require_consensus = on
                                     # Perform failover when majority of Pgpool-II nodes
-                                    # aggrees on the backend node status change
+                                    # agrees on the backend node status change
                                     # (change requires restart)
 
 #allow_multiple_failover_requests_from_node = off
@@ -931,7 +931,7 @@ backend_clustering_mode = 'streaming_replication'
                                    # Number of relation cache
                                    # entry. If you see frequently:
                                    # "pool_search_relcache: cache replacement happened"
-                                   # in the pgpool log, you might want to increate this number.
+                                   # in the pgpool log, you might want to increase this number.
 
 #check_temp_table = catalog
                                    # Temporary table check method. catalog, trace or none.
@@ -969,7 +969,7 @@ backend_clustering_mode = 'streaming_replication'
                                    # Defaults to localhost.
                                    # (change requires restart)
 #memqcache_memcached_port = 11211
-                                   # Memcached port number. Mondatory if memqcache_method = 'memcached'.
+                                   # Memcached port number. Mandatory if memqcache_method = 'memcached'.
                                    # Defaults to 11211.
                                    # (change requires restart)
 #memqcache_total_size = 64MB
