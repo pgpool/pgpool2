@@ -1357,7 +1357,7 @@
     </para>
     <para>
      サーバサイドのSSLネゴシエーションの実装において、任意のSQLコマンドを実行できる中間者攻撃が可能でした。
-     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hotssl + trust認証の場合に可能でした。
+     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hostssl + trust認証の場合に可能でした。
      PostgreSQLのCVE-2021-23214と似た脆弱性です。
     </para>
     <para>
@@ -2762,7 +2762,7 @@
     -->
     <para>
      <!--
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
      -->
      起動時のbind()エラーを回避するために、ソケットファイルが存在するかどうかを確認し、
      PIDファイルが存在しない場合、それらのソケットファイルを削除するように修正しました。(Bo Peng)
@@ -2838,7 +2838,7 @@
     -->
     <para>
      <!--
-     Doc: Change the sample follow_master_command script %M %H paramater's order. (Bo Peng)
+     Doc: Change the sample follow_master_command script %M %H parameter's order. (Bo Peng)
      -->
      Doc: follow_master_command サンプルスクリプトの %M と %H パラメータの順序を変更しました。(Bo Peng)
     </para>
@@ -3120,7 +3120,7 @@
     -->
     <para>
      <!--
-     Doc: mention that VIP will not be brougt up if quorum does not exist. (Tatsuo Ishii)
+     Doc: mention that VIP will not be brought up if quorum does not exist. (Tatsuo Ishii)
      -->
 	 Doc: クォーラムが存在しない場合、VIPは起動されないことをドキュメントに追加しました。(Tatsuo Ishii)
     </para>
@@ -3471,7 +3471,7 @@
     -->
     <para>
      <!--
-     Fix sefault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
+     Fix segfault when query cache is enabled. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
      -->
      クエリキャッシュが有効な場合に発生するセグメンテーション違反を修正しました。(<ulink url="https://www.pgpool.net/mantisbt/view.php?id=525">bug 525</ulink>) (Tatsuo Ishii)
     </para>
@@ -3704,7 +3704,7 @@
     </para>
     <para>
      <!--
-     When all backend nodes are down, <productname>Pgpool-II</> throws an uncorrect
+     When all backend nodes are down, <productname>Pgpool-II</> throws an incorrect
      error message "ERROR: connection cache is full". Change the error
      message to "all backend nodes are down, pgpool requires at least one valid node".
      -->
@@ -4609,7 +4609,7 @@
   <title>概要</title>
   <para>
    <!--
-   This version addes support for SCRAM and CERT authentication,
+   This version adds support for SCRAM and CERT authentication,
    improves load balancing control and import PostgreSQL 11
    new SQL parser.
    -->
@@ -5090,7 +5090,7 @@
      <!--
      Specify a semicolon separated list of SQL patterns that
      should be sent to primary node only. Regular expression can be
-     used in SQL patterns. Only Maste Slave mode is supported.
+     used in SQL patterns. Only Master Slave mode is supported.
      -->
      プライマリノードだけに送るSQLのパターンをセミコロンで区切られたリストで指定できます。
      SQLのパターンには正規表現を使用することができます。
@@ -5328,7 +5328,7 @@
      <!--
      Downgrade most of DEBUG1 messages to DEBUG5. (Tatsuo Ishii)
      -->
-     大半のDBUG1のメッセージをDEBUG5に変更しました。(Tatsuo Ishii)
+     大半のDEBUG1のメッセージをDEBUG5に変更しました。(Tatsuo Ishii)
     </para>
     <para>
      <!--
@@ -5411,7 +5411,7 @@
      <!--
      pgpool_setup -n 3 (or greater) triggers the bug. While recovering node
      2, pgpool main process tried to retrieve version info from backend #2
-     even if it's not running. This causes the sefault because connection
+     even if it's not running. This causes the segfault because connection
      was not established yet. The reason why <productname>PostgreSQL 9.6</productname>
      or later was not suffered from the bug was, <productname>PostgreSQL</productname>
      exited the loop as soon as the server version is higher than 9.5. To fix this,

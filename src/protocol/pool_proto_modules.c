@@ -1775,7 +1775,7 @@ Describe(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	{
 		/*
 		 * It is possible that client wants to use the portal created by
-		 * DECLARE CUSOR or pl/pgSQL function. If so, the describe message
+		 * DECLARE CURSOR or pl/pgSQL function. If so, the describe message
 		 * should only be sent to primary node.
 		 */
 		query_context = create_dummy_query_context();

@@ -4135,7 +4135,7 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 						pool_release_follow_primary_lock(true);
 					else
 						ereport(LOG,
-								(errmsg("invalid looking operaition[%s] in 'LOCK ON STANDBY' from remote node \"%s\"", operation, wdNode->nodeName),
+								(errmsg("invalid looking operation[%s] in 'LOCK ON STANDBY' from remote node \"%s\"", operation, wdNode->nodeName),
 								 errdetail("command ignored")));
 				}
 				else
@@ -5030,7 +5030,7 @@ issue_watchdog_internal_command(WatchdogNode * wdNode, WDPacketData * pkt, int t
 
 /*
  * Check remote connections except their state are either WD_SHUTDOWN or
- * WD_DEAD. If suncceeded in connecting to any of the remote nodes, returns
+ * WD_DEAD. If succeeded in connecting to any of the remote nodes, returns
  * true, otherwise false.
  */
 static bool
@@ -5677,7 +5677,7 @@ watchdog_state_machine_loading(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
  * This is the intermediate state before going to cluster initialization
  * here we update the information of all connected nodes and move to the
  * initialization state. moving to this state from loading does not make
- * much sence as at loading time we already have updated node informations
+ * much sense as at loading time we already have updated node informations
  */
 static int
 watchdog_state_machine_joining(WD_EVENTS event, WatchdogNode * wdNode, WDPacketData * pkt, WDCommandData * clusterCommand)

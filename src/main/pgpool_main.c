@@ -3708,7 +3708,7 @@ read_status_file(bool discard_status)
 	}
 
 	/*
-	 * Frist try out with old format file.
+	 * First try out with old format file.
 	 */
 	is_old_format = true;
 
@@ -4570,7 +4570,7 @@ pool_release_follow_primary_lock(bool remote_request)
 				/*
 				 * Ideally this should not happen.
 				 * yet if for some reason our local node is trying to release a lock
-				 * that is heald by remote node. Just produce a LOG message and release
+				 * that is held by remote node. Just produce a LOG message and release
 				 * the lock
 				 */
 				ereport(LOG,

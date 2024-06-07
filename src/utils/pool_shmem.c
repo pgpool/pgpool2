@@ -131,7 +131,7 @@ pool_shared_memory_create(size_t size)
 }
 
 /*
- * Removes a shared memory segment from process' address spaceq (called as
+ * Removes a shared memory segment from process' address space (called as
  * an on_shmem_exit callback, hence funny argument list)
  */
 static void

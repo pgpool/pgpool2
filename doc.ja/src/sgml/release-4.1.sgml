@@ -335,7 +335,7 @@
      このポータルは<productname>Pgpool-II</productname>によって管理されないため、<command>Describe foo</command>メッセージは「unable to execute Describe. unable to get the bind message」エラーで失敗していました。
     </para>
     <para>
-     これを修正するため、<function>Describe()</function>でダミーの書き込みクエリコンテキストを作成し、<command>Desribe</command>メッセージをプライマリ（ストリーミングレプリケーションモード）またはすべてのノード（レプリケーション/スナップショットアイソレーションモード）に送信するようにしました。
+     これを修正するため、<function>Describe()</function>でダミーの書き込みクエリコンテキストを作成し、<command>Describe</command>メッセージをプライマリ（ストリーミングレプリケーションモード）またはすべてのノード（レプリケーション/スナップショットアイソレーションモード）に送信するようにしました。
     </para>
     <para>
      新たなテストケース080も追加しました。
@@ -1416,7 +1416,7 @@
         <!--
         Fix process memory requirement. Previously the formula was based on
         RSS. However PSS should be used because RSS includes shared memory
-        such as the memory used for libraries. This resuls in lot smaller
+        such as the memory used for libraries. This results in lot smaller
         memory requirement than before.
         -->
         必要プロセスメモリを修正しました。以前の式はRSSを基にしていましたが、RSSはライブラリに使用されるメモリなどの共有メモリも含むため、PSSを使用するべきです。
@@ -2040,7 +2040,7 @@
     </para>
     <para>
      サーバサイドのSSLネゴシエーションの実装において、任意のSQLコマンドを実行できる中間者攻撃が可能でした。
-     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hotssl + trust認証の場合に可能でした。
+     これはPgpool-IIがクライアント認証で証明書認証を使用しているか、hostssl + trust認証の場合に可能でした。
      PostgreSQLのCVE-2021-23214と似た脆弱性です。
     </para>
     <para>
@@ -3769,7 +3769,7 @@
     -->
     <para>
      <!--
-     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failire. (Bo Peng)
+     Check if socket file exists at startup and remove them if PID file doesn't exist to avoid bind() failure. (Bo Peng)
      -->
      起動時のbind()エラーを回避するために、ソケットファイルが存在するかどうかを確認し、
      PIDファイルが存在しない場合、それらのソケットファイルを削除するように修正しました。(Bo Peng)
@@ -3874,7 +3874,7 @@
     -->
     <para>
      <!--
-     Doc: Change the sample follow_master_command script %M %H paramater's order. (Bo Peng)
+     Doc: Change the sample follow_master_command script %M %H parameter's order. (Bo Peng)
      -->
      Doc: follow_master_command サンプルスクリプトの%Mと%Hパラメータの順序を変更しました。(Bo Peng)
     </para>
@@ -4133,7 +4133,7 @@
     2019-08-29 [69419ac4]
     -->
     <para>
-     多数決ルールを設定する<xref linkend="guc-enable-consensus-with-half-votes">パラメータを追加しました。 (Muhammd Usama, Tatsuo Ishii)
+     多数決ルールを設定する<xref linkend="guc-enable-consensus-with-half-votes">パラメータを追加しました。 (Muhammad Usama, Tatsuo Ishii)
     </para>
     <para>
      これは、偶数（すなわち、2, 4, 6...) watchdogクラスタにおけるクォーラムの存在および多数決の決定における振る舞いを変更します。
@@ -4169,7 +4169,7 @@
     </para>
     <para>
 <!--
-     If installing from RPMs, <literal>postrges</literal> user will be allowed to
+     If installing from RPMs, <literal>postgres</literal> user will be allowed to
      run <varname>if_up/down_cmd</varname> and <varname>arping_cmd</varname>
      with sudo without a password.
      If <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> starts with "/",
@@ -4387,9 +4387,9 @@
     <para>
 <!--
      Performance enhancements for the large INSERT and UPDATE
-     statements. (Muhammd Usama)
+     statements. (Muhammad Usama)
 -->
-     大規模なINSERTとUPDATE文のパフォーマンスの強化。(Muhammd Usama)
+     大規模なINSERTとUPDATE文のパフォーマンスの強化。(Muhammad Usama)
     </para>
     <para>
 <!--
@@ -4449,7 +4449,7 @@
     </para>
     <para>
 <!--
-     Major chanegs of PostgreSQL 12 parser include:
+     Major changes of PostgreSQL 12 parser include:
 -->
      PostgreSQL12のパーサの主な改善点は以下のとおりです。
 
@@ -4565,7 +4565,7 @@
      we set <xref linkend="guc-disable-load-balance-on-write"> =
       <literal>transaction</literal>, when a write query is issued
       inside an explicit truncation, subsequent queries should be
-      sent to primary only until the end of this transactionin in
+      sent to primary only until the end of this transaction in
       order to avoid the replication delay.  However, the SELECTs
       having write functions specified
       in <xref linkend="guc-write-function-list"> or not specified
@@ -4849,9 +4849,9 @@
     <para>
 <!--
      Resign the master watchdog node from master responsibilities if
-     the primary backend node gets into quarantine state on that. (Muhammd Usama)
+     the primary backend node gets into quarantine state on that. (Muhammad Usama)
 -->
-     プライマリバックエンドノードがqurantine状態になるのであれば、マスタwatchdogノードを辞退します。(Muhammd Usama)
+     プライマリバックエンドノードがquarantine状態になるのであれば、マスタwatchdogノードを辞退します。(Muhammad Usama)
     </para>
     <para>
 <!--
@@ -4891,7 +4891,7 @@
     2019-08-29 [69419ac4]
     -->
     <para>
-     多数決ルールの計算方法を設定する<xref linkend="guc-enable-consensus-with-half-votes">パラメータを追加しました。(Muhammd Usama, Tatsuo Ishii)
+     多数決ルールの計算方法を設定する<xref linkend="guc-enable-consensus-with-half-votes">パラメータを追加しました。(Muhammad Usama, Tatsuo Ishii)
     </para>
     <para>
      <productname>Pgpool-II</productname>はwatchdogクラスタが偶数のノードで構成されている場合、ちょうど50%の賛成を得られたときにクォーラムの存在とフェイルオーバの合意を決定します。
@@ -5008,7 +5008,7 @@
        <para>
 <!--
 	Mention that schema qualifications cannot be used in
-	Add performance chapterwhite/black_function_list. (tatsuo
+	Add performance chapter white/black_function_list. (tatsuo
 	Ishii)
 -->
         white/black_function_listでスキーマ修飾が使用出来ないことを記述しました。(tatsuo Ishii)
@@ -5102,7 +5102,7 @@
 	Add description to pg_md5 man page how to show
 	pool_passwd ready string. (tatsuo ishii)
 -->
-        pg_md5のマニュアルページにpool_paswd文字列の表現の仕方の説明を追加しました。(tatsuo ishii)
+        pg_md5のマニュアルページにpool_passwd文字列の表現の仕方の説明を追加しました。(tatsuo ishii)
        </para>
       </listitem>
 
