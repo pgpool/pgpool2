@@ -39,7 +39,7 @@
  * block". Each block is assigned a "cache block id", which is
  * starting with 0.
  */
-typedef char *POOL_CACH_BLOCK;	/* pointer to cache block */
+typedef char *POOL_CACHE_BLOCK;	/* pointer to cache block */
 typedef unsigned int POOL_CACHE_BLOCKID;	/* cache block id */
 typedef unsigned int POOL_CACHE_ITEMID; /* cache item id */
 

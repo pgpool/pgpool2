@@ -315,13 +315,13 @@ establish_persistent_connection(int node)
 	/*
 	 * If the node is already in down status or unused, do nothing.
 	 * except when the node state is down because of quarantine operation
-	 * since we want to detect when the node cames back to life again to
+	 * since we want to detect when the node comes back to life again to
 	 * remove it from the quarantine state
 	 */
 	if (bkinfo->backend_status == CON_UNUSED ||
 		(bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == false))
 	{
-		/* get current time to use auto_faliback_interval */
+		/* get current time to use auto_failback_interval */
 		now = time(NULL);
 
 		if (pool_config->auto_failback && auto_failback_interval < now &&
@@ -440,7 +440,7 @@ establish_persistent_connection(int node)
 		{
 				ereport(LOG,
 					(errmsg("request auto failback, node id:%d", node)));
-				/* get current time to use auto_faliback_interval */
+				/* get current time to use auto_failback_interval */
 				now = time(NULL);
 				auto_failback_interval = now + pool_config->auto_failback_interval;
 

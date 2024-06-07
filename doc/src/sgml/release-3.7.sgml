@@ -752,7 +752,7 @@
      Fix the incorrect display of load balancing node in raw mode. (Bo Peng)
     </para>
     <para>
-     In raw mode, <productname>Pgpool-II</productname> sends all queies to main node.
+     In raw mode, <productname>Pgpool-II</productname> sends all queries to main node.
      This is harmless, but it may confuse users.
     </para>
    </listitem>

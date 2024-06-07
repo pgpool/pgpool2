@@ -502,7 +502,7 @@ backend_cleanup(POOL_CONNECTION * volatile *frontend, POOL_CONNECTION_POOL * vol
 	sp = MAIN_CONNECTION(backend)->sp;
 
 	/*
-	 * cach connection if connection cache configuration parameter is enabled
+	 * cache connection if connection cache configuration parameter is enabled
 	 * and frontend connection is not invalid
 	 */
 	if (sp && pool_config->connection_cache != 0 && frontend_invalid == false)

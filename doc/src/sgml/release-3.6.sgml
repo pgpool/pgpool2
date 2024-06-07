@@ -98,7 +98,7 @@
      Fix the incorrect display of load balancing node in raw mode. (Bo Peng)
     </para>
     <para>
-     In raw mode, <productname>Pgpool-II</productname> sends all queies to main node.
+     In raw mode, <productname>Pgpool-II</productname> sends all queries to main node.
      This is harmless, but it may confuse users.
     </para>
    </listitem>
@@ -3270,7 +3270,7 @@
     <programlisting>
      - pgpool.conf is configured so that all read queries are sent to the standby.
      - First, issue a writing query in a transaction block
-     - After commiting the transaction, issue a select query.
+     - After committing the transaction, issue a select query.
      - When processing the query, send Describe (statement) message just after Parse.
     </programlisting>
 
@@ -5052,7 +5052,7 @@
    </listitem>
    <listitem>
     <!--
-    2016-08-01 [024eaea]  Fix for 215: pgpool doesnt escalate ip in case of another node unavailability
+    2016-08-01 [024eaea]  Fix for 215: pgpool doesn't escalate ip in case of another node unavailability
     -->
     <para>
      Fix <productname>Pgpool-II</productname> doesn't escalate ip in case of another node unavailability. (bug 215) (Muhammad Usama)

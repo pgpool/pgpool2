@@ -134,7 +134,7 @@ pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
 				ereport(FATAL,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("received unencrypted data after SSL request"),
-						 errdetail("This could be an evidence of an attempted man-in-the-middle attacck.")));
+						 errdetail("This could be an evidence of an attempted man-in-the-middle attack.")));
 			}
 
 			SSL_set_fd(cp->ssl, cp->fd);
@@ -189,7 +189,7 @@ pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("received unencrypted data after SSL request"),
-					 errdetail("This could be either a client-software bug or evidence of an attempted man-in-the-middle attacck.")));
+					 errdetail("This could be either a client-software bug or evidence of an attempted man-in-the-middle attack.")));
 		}
 
 		SSL_set_fd(cp->ssl, cp->fd);
@@ -265,7 +265,7 @@ retry:
 			 * indicate that the underlying transport has been closed.
 			 * -------------------------------------------------------------
 			 * We don't want to trigger failover but it is also possible that
-			 * the connectoon has been closed. So returns 0 to ask pool_read()
+			 * the connection has been closed. So returns 0 to ask pool_read()
 			 * to close connection to frontend.
 			 */
 			ereport(WARNING,

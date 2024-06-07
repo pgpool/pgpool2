@@ -460,7 +460,7 @@
     2023-08-09 [30db44e]
     -->
     <para>
-     Fix covery warning. (Tatsuo Ishii)
+     Fix coverity warning. (Tatsuo Ishii)
     </para>
     <para>
      Fix query cache module assigned time_t value to int32 variable. Change
@@ -796,11 +796,11 @@
     2023-01-31 [633bdca]
     -->
     <para>
-     Fix kind mimatch error with <literal>DEALLOCATE</literal>.
+     Fix kind mismatch error with <literal>DEALLOCATE</literal>.
      (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=780">bug 780</ulink>) (Tatsuo Ishii)
     </para>
     <para>
-     Kind mimatch error occurs when conditions below are all met:
+     Kind mismatch error occurs when conditions below are all met:
      <itemizedlist>
       <listitem>
        <para>
@@ -1225,7 +1225,7 @@
     <para>
      To deal with idle_session_timeout detect_idle_session_timeout_error()
      is added to detect the error code for idle_session_timeout. If the
-     error is detected, Pgpool-II returns the error code to frondend as a
+     error is detected, Pgpool-II returns the error code to frontend as a
      fatal error and disconnects the session.  This is a similar fix
      implemented for idle_in_transaction_session_timeout.
      <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=3f5986eee360f12e6a0bb77aa46f95abf5f6bc10">3f5986eee360f12e6a0bb77aa46f95abf5f6bc10</ulink>
@@ -1386,7 +1386,7 @@
     2022-05-31 [5cacb7db]
     -->
     <para>
-     When CloseComplete is received, foward to frontend without buffering. (Tatsuo Ishii)
+     When CloseComplete is received, forward to frontend without buffering. (Tatsuo Ishii)
     </para>
     <para>
      It seems this caused occasional timeout error in 074.bug700_memqcache_segfault.
@@ -1497,7 +1497,7 @@
        <para>
         Fix process memory requirement. Previously the formula was based on
         RSS. However PSS should be used because RSS includes shared memory
-        such as the memory used for libraries. This resuls in lot smaller
+        such as the memory used for libraries. This results in lot smaller
         memory requirement than before.
        </para>
       </listitem>
@@ -1742,7 +1742,7 @@
     2022-04-17 [29734b5]
     -->
     <para>
-     Enhance regression test 018.detach_primary to avoid the timeut error. (Tatsuo Ishii)
+     Enhance regression test 018.detach_primary to avoid the timeout error. (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -1751,7 +1751,7 @@
     2022-04-17 [72d31b0]
     -->
     <para>
-     Enhance regression test 074.bug700_memqcache_segfault to avoid the timeut error. (Tatsuo Ishii)
+     Enhance regression test 074.bug700_memqcache_segfault to avoid the timeout error. (Tatsuo Ishii)
     </para>
    </listitem>
 
@@ -2229,7 +2229,7 @@
      Fix the incorrect display of load balancing node in raw mode. (Bo Peng)
     </para>
     <para>
-     In raw mode, <productname>Pgpool-II</productname> sends all queies to main node.
+     In raw mode, <productname>Pgpool-II</productname> sends all queries to main node.
      This is harmless, but it may confuse users.
     </para>
    </listitem>
@@ -2708,7 +2708,7 @@
      Fix race condition between <xref linkend="guc-detach-false-primary"> and <xref linkend="guc-follow-primary-command">. (Tatsuo Ishii)
     </para>
     <para>
-     If <xref linkend="guc-detach-false-primary"> and <xref linkend="guc-follow-primary-command"> are running concurrently, many problem occured.
+     If <xref linkend="guc-detach-false-primary"> and <xref linkend="guc-follow-primary-command"> are running concurrently, many problem occurred.
      Typical problem is, no primary node is found at the end.
     </para>
    </listitem>
@@ -3948,7 +3948,7 @@
      startup user is changed to <literal>postgres</literal> user.
     </para>
     <para>
-     If installing from RPMs, <literal>postrges</literal> user will be allowed to
+     If installing from RPMs, <literal>postgres</literal> user will be allowed to
      run <varname>if_up/down_cmd</varname> and <varname>arping_cmd</varname>
      with <command>sudo</command> without a password.
      If <varname>if_up/down_cmd</varname> or <varname>arping_cmd</varname> starts with "/",

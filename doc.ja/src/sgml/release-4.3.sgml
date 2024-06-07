@@ -387,7 +387,7 @@
      このポータルは<productname>Pgpool-II</productname>によって管理されないため、<command>Describe foo</command>メッセージは「unable to execute Describe. unable to get the bind message」エラーで失敗していました。
     </para>
     <para>
-     これを修正するため、<function>Describe()</function>でダミーの書き込みクエリコンテキストを作成し、<command>Desribe</command>メッセージをプライマリ（ストリーミングレプリケーションモード）またはすべてのノード（レプリケーション/スナップショットアイソレーションモード）に送信するようにしました。
+     これを修正するため、<function>Describe()</function>でダミーの書き込みクエリコンテキストを作成し、<command>Describe</command>メッセージをプライマリ（ストリーミングレプリケーションモード）またはすべてのノード（レプリケーション/スナップショットアイソレーションモード）に送信するようにしました。
     </para>
     <para>
      新たなテストケース080も追加しました。
@@ -1768,7 +1768,7 @@
         <!--
         Fix process memory requirement. Previously the formula was based on
         RSS. However PSS should be used because RSS includes shared memory
-        such as the memory used for libraries. This resuls in lot smaller
+        such as the memory used for libraries. This results in lot smaller
         memory requirement than before.
         -->
         必要プロセスメモリを修正しました。以前の式はRSSを基にしていましたが、RSSはライブラリに使用されるメモリなどの共有メモリも含むため、PSSを使用するべきです。
