@@ -45,7 +45,7 @@ int yylex(void);
 POOL_CONFIG g_pool_config;	/* configuration values */
 POOL_CONFIG *pool_config = &g_pool_config;	/* for legacy reason pointer to the above struct */
 static unsigned Lineno;
-char   *config_file_dir = NULL; /* directory path of config file pgpool.conf */
+char   config_file_dir[POOLMAXPATHLEN + 1];	/* directory path of config file pgpool.conf */
 
 typedef enum {
   POOL_KEY = 1,
@@ -354,7 +354,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 		/* get directory path of config file pgpool.conf */
 		strlcpy(buf, config_file, sizeof(buf));
 		get_parent_directory(buf);
-		config_file_dir = buf;
+		strlcpy(config_file_dir, buf, sizeof(config_file_dir));
 	}
 
 
