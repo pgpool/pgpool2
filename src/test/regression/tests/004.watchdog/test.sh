@@ -4,6 +4,7 @@
 source $TESTLIBS
 LEADER_DIR=leader
 STANDBY_DIR=standby
+PSQL=$PGBIN/psql
 success_count=0
 
 rm -fr $LEADER_DIR
@@ -76,6 +77,18 @@ do
 	sleep 2
 done
 
+# at this point the watchdog leader and stabdby are working.
+# check to see if "pgpool reset" command works.
+echo "Check pgpool reset command..."
+for i in 11000 11100
+do
+    echo "Check pgpool reset command on port $i..."
+    $PSQL -p $i -c "pgpool reset client_idle_limit" test
+    if [ $? = 0 ];then
+	success_count=$(( success_count + 1 ))
+    fi
+done
+
 # step 2 stop leader pgpool and see if standby take over
 $PGPOOL_INSTALL_DIR/bin/pgpool -f $LEADER_DIR/etc/pgpool.conf -m f stop
 
@@ -112,9 +125,9 @@ $PGPOOL_INSTALL_DIR/bin/pgpool -f $STANDBY_DIR/etc/pgpool.conf -m f stop
 cd leader
 ./shutdownall
 
-echo "$success_count out of 4 successful";
+echo "$success_count out of 6 successful";
 
-if test $success_count -eq 4
+if test $success_count -eq 6
 then
     exit 0
 fi
