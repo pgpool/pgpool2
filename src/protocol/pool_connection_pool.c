@@ -876,6 +876,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 	int			active_backend_count = 0;
 	int			i;
 	bool		status_changed = false;
+	volatile BACKEND_STATUS	status;
 
 	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
@@ -900,8 +901,8 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 		 * that the local status is up, while the global status has been
 		 * changed to down by failover.
 		 */
-		if (BACKEND_INFO(i).backend_status != CON_UP &&
-			BACKEND_INFO(i).backend_status != CON_CONNECT_WAIT)
+		status = BACKEND_INFO(i).backend_status;
+		if (status != CON_UP && status != CON_CONNECT_WAIT)
 		{
 			ereport(DEBUG1,
 					(errmsg("creating new connection to backend"),
@@ -909,7 +910,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 							   i, BACKEND_INFO(i).backend_status)));
 
 			/* sync local status with global status */
-			*(my_backend_status[i]) = BACKEND_INFO(i).backend_status;
+			*(my_backend_status[i]) = status;
 			continue;
 		}
 
