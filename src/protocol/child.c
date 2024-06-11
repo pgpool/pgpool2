@@ -1028,9 +1028,8 @@ static POOL_CONNECTION_POOL * connect_backend(StartupPacket *sp, POOL_CONNECTION
 
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
-			if (VALID_BACKEND(i))
+			if (VALID_BACKEND(i) && CONNECTION_SLOT(backend, i))
 			{
-
 				/* set DB node id */
 				pool_set_db_node_id(CONNECTION(backend, i), i);
 
