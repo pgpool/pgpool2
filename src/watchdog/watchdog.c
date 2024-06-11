@@ -812,6 +812,7 @@ wd_cluster_initialize(void)
 	g_cluster.de_escalation_pid = 0;
 	g_cluster.unidentified_socks = NULL;
 	g_cluster.command_server_sock = 0;
+	g_cluster.network_monitor_sock = 0;
 	g_cluster.notify_clients = NULL;
 	g_cluster.ipc_command_socks = NULL;
 	g_cluster.wd_timer_commands = NULL;
@@ -1195,8 +1196,8 @@ watchdog_main(void)
 	/* open the command server */
 	g_cluster.command_server_sock = wd_create_command_server_socket();
 
-	/* try connecting to all watchdog nodes */
-	g_cluster.network_monitor_sock = create_monitoring_socket();
+	if (g_cluster.wdInterfaceToMonitor)
+		g_cluster.network_monitor_sock = create_monitoring_socket();
 
 	if (any_interface_available() == false)
 	{
@@ -1207,6 +1208,7 @@ watchdog_main(void)
 				 errhint("you can disable interface checking by setting wd_monitoring_interfaces_list = '' in pgpool config")));
 	}
 
+	/* try connecting to all watchdog nodes */
 	connect_with_all_configured_nodes();
 
 	/* set the initial state of local node */
@@ -1414,9 +1416,12 @@ prepare_fds(fd_set *rmask, fd_set *wmask, fd_set *emask)
 	if (fd_max < g_cluster.command_server_sock)
 		fd_max = g_cluster.command_server_sock;
 
-	FD_SET(g_cluster.network_monitor_sock, rmask);
-	if (fd_max < g_cluster.network_monitor_sock)
-		fd_max = g_cluster.network_monitor_sock;
+	if (g_cluster.network_monitor_sock > 0)
+	{
+		FD_SET(g_cluster.network_monitor_sock, rmask);
+		if (fd_max < g_cluster.network_monitor_sock)
+			fd_max = g_cluster.network_monitor_sock;
+	}
 
 	/*
 	 * set write fdset for all waiting for connection sockets, while already
