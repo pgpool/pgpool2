@@ -1255,12 +1255,11 @@ pool_pending_message_query_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEX
 }
 
 /*
- * Add one message to the tail of the list
+ * Add one message to the tail of the list.
  */
 void
 pool_pending_message_add(POOL_PENDING_MESSAGE * message)
 {
-	POOL_PENDING_MESSAGE *msg;
 	MemoryContext old_context;
 
 	if (!session_context)
@@ -1312,8 +1311,7 @@ pool_pending_message_add(POOL_PENDING_MESSAGE * message)
 				(errmsg("pool_pending_message_add: message type: sync")));
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
-	msg = copy_pending_message(message);
-	session_context->pending_messages = lappend(session_context->pending_messages, msg);
+	session_context->pending_messages = lappend(session_context->pending_messages, message);
 	MemoryContextSwitchTo(old_context);
 }
 
