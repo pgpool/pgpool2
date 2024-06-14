@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1840,8 +1840,6 @@ processes_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 
 	num_fields = sizeof(field_names) / sizeof(char *);
 	processes = get_processes(&nrows);
-
-	send_row_description(frontend, backend, num_fields, field_names);
 
 	send_row_description_and_data_rows(frontend, backend, num_fields, field_names, offsettbl,
 									   (char *)processes, sizeof(POOL_REPORT_PROCESSES), nrows);
