@@ -439,11 +439,13 @@
       such as <literal>"/sbin"</literal> or such directory.
       If <xref linkend="guc-if-up-cmd"> or <xref linkend="guc-if-down-cmd"> starts with "/",
       this parameter will be ignored.
+      Default is <literal>/sbin</literal>.
       -->
       <productname>Pgpool-II</productname>が仮想IPを切り替えるために使用するコマンドへのパスを指定します。
       <literal>"/sbin"</literal>のようにパスだけを指定します。
       <varname>if_up_cmd</varname>や<varname>if_down_cmd</varname>に指定したコマンドが"/"で始まる場合、
       フルパスとみなし<varname>if_cmd_path</varname>の設定を無視します。
+      デフォルト値は<literal>/sbin</literal>です。
      </para>
      <para>
       <!--
@@ -486,6 +488,12 @@
       <literal>$_IP_$</literal>は<xref linkend="guc-delegate-ip">で指定されたIPアドレスに置換されます。
      </para>
      <para>
+      <!--
+      Default is <literal>/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev eth0 label eth0:0</literal>.
+      -->
+      デフォルト値は<literal>/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev eth0 label eth0:0</literal>です。
+     </para>
+     <para>
       このパラメータは、サーバ起動時にのみ設定できます。
      </para>
     </listitem>
@@ -524,6 +532,12 @@
      </para>
      <para>
       <!--
+      Default is <literal>/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0</literal>.
+      -->
+      デフォルト値は<literal>/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0</literal>です。
+     </para>
+     <para>
+      <!--
       This parameter can only be set at server start.
       -->
       このパラメータは、サーバ起動時にのみ設定できます。
@@ -549,11 +563,13 @@
       such as <literal>"/usr/sbin"</literal> or such directory.
       If <xref linkend="guc-arping-cmd"> starts with "/",
       this parameter will be ignored.
+      Default is <literal>/usr/sbin</literal>.
       -->
       IPアドレス切り替え後に<productname>Pgpool-II</productname>がARPリクエストを送信するコマンドへのパス指定します。
       <literal>"/usr/sbin"</literal>のようにパスだけを指定します。
       <varname>arping_cmd</varname>に指定したコマンドが"/"で始まる場合、
       フルパスとみなし<varname>arping_path</varname>の設定を無視します。
+      デフォルト値は<literal>/usr/sbin</literal>です。
      </para>
      <para>
       <!--
@@ -598,6 +614,12 @@
      </para>
      <para>
       <!--
+      Default is <literal>/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0</literal>.
+      -->
+      デフォルト値は<literal>/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0</literal>です。
+     </para>
+     <para>
+      <!--
       This parameter can only be set at server start.
       -->
       このパラメータは、サーバ起動時にのみ設定できます。
@@ -620,9 +642,11 @@
       Specifies the path of a ping command to check startup of the virtual IP.
       Set the only path of the directory containing the ping utility,
       such as <literal>"/bin"</literal> or such directory.
+      Default is <literal>/bin</literal>.
       -->
       仮想IPの起動を確認するために利用するpingコマンドのパスを指定します。
       <literal>"/bin"</literal>のようにパスだけを指定します。
+      デフォルト値は<literal>/bin</literal>です。
      </para>
      <para>
       <!--
