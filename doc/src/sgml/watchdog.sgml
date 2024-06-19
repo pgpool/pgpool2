@@ -163,6 +163,7 @@
       Specifies the path of a ping command for monitoring
       connection to the upper servers. Set the only path of the directory containing the
       ping utility, such as <literal>"/bin"</literal> or such directory.
+      Default is <literal>/bin</literal>.
      </para>
      <para>
       This parameter can only be set at server start.
@@ -214,6 +215,7 @@
       such as <literal>"/sbin"</literal> or such directory.
       If <xref linkend="guc-if-up-cmd"> or <xref linkend="guc-if-down-cmd"> starts with "/",
       this parameter will be ignored.
+      Default is <literal>/sbin</literal>.
      </para>
      <para>
       This parameter can only be set at server start.
@@ -241,6 +243,9 @@
       specified in the <xref linkend="guc-delegate-IP">.
      </para>
      <para>
+      Default is <literal>/usr/bin/sudo /sbin/ip addr add $_IP_$/24 dev eth0 label eth0:0</literal>.
+     </para>
+     <para>
       This parameter can only be set at server start.
      </para>
     </listitem>
@@ -266,6 +271,9 @@
       specified in the <xref linkend="guc-delegate-IP">.
      </para>
      <para>
+      Default is <literal>/usr/bin/sudo /sbin/ip addr del $_IP_$/24 dev eth0</literal>.
+     </para>
+     <para>
       This parameter can only be set at server start.
      </para>
     </listitem>
@@ -285,6 +293,7 @@
       such as <literal>"/usr/sbin"</literal> or such directory.
       If <xref linkend="guc-arping-cmd"> starts with "/",
       this parameter will be ignored.
+      Default is <literal>/usr/sbin</literal>.
      </para>
      <para>
       This parameter can only be set at server start.
@@ -311,6 +320,9 @@
       <literal>"/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0"</literal>.
       <literal>$_IP_$</literal> will get replaced by
       the IP address specified in the <varname>delegate_IP</varname>.
+     </para>
+     <para>
+      Default is <literal>/usr/bin/sudo /usr/sbin/arping -U $_IP_$ -w 1 -I eth0</literal>.
      </para>
      <para>
       This parameter can only be set at server start.
