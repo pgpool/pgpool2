@@ -404,7 +404,7 @@ pool_virtual_main_db_node_id(void)
 	}
 
 	/*
-	 * No query context exists.  If in native replication mode, returns primary node
+	 * No query context exists.  If in streaming replication mode, returns primary node
 	 * if exists.  Otherwise returns my_main_node_id, which represents the
 	 * last REAL_MAIN_NODE_ID.
 	 */
