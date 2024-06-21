@@ -361,7 +361,16 @@ pool_virtual_main_db_node_id(void)
 	sc = pool_get_session_context(true);
 	if (!sc)
 	{
-		return REAL_MAIN_NODE_ID;
+		/*
+		 * We used to return REAL_MAIN_NODE_ID here.  Problem with it is, it
+		 * is possible that REAL_MAIN_NODE_ID could be changed
+		 * anytime. Suppose REAL_MAIN_NODE_ID == my_main_node_id == 1. Then
+		 * due to failback, REAL_MAIN_NODE_ID is changed to 0. Then
+		 * MAIN_CONNECTION(cp) will return NULL and any reference to it will
+		 * cause segmentation fault. To prevent the issue we should return
+		 * my_main_node_id instead.
+		 */
+		return my_main_node_id;
 	}
 
 	if (sc->in_progress && sc->query_context)
