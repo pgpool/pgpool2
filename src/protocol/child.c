@@ -1193,6 +1193,7 @@ static RETSIGTYPE close_idle_connection(int sig)
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	ConnectionInfo *info;
 	int			save_errno = errno;
+	int			main_node_id;
 
 	/*
 	 * DROP DATABASE is ongoing.
@@ -1200,44 +1201,35 @@ static RETSIGTYPE close_idle_connection(int sig)
 	if (ignore_sigusr1)
 		return;
 
-#ifdef NOT_USED
-	ereport(DEBUG1,
-			(errmsg("close connection request received")));
-#endif
-
 	for (j = 0; j < pool_config->max_pool; j++, p++)
 	{
-		if (!MAIN_CONNECTION(p))
-			continue;
-		if (!MAIN_CONNECTION(p)->sp)
-			continue;
-		if (MAIN_CONNECTION(p)->sp->user == NULL)
+		main_node_id = in_use_backend_id(p);
+		if (main_node_id < 0)
 			continue;
 
-		if (MAIN_CONNECTION(p)->closetime > 0)	/* idle connection? */
+		if (!CONNECTION_SLOT(p, main_node_id))
+			continue;
+		if (!CONNECTION_SLOT(p, main_node_id)->sp)
+			continue;
+		if (CONNECTION_SLOT(p, main_node_id)->sp->user == NULL)
+			continue;
+
+		if (CONNECTION_SLOT(p, main_node_id)->closetime > 0)	/* idle connection? */
 		{
-#ifdef NOT_USED
-			ereport(DEBUG1,
-					(errmsg("closing idle connection"),
-					 errdetail("user: %s database: %s", MAIN_CONNECTION(p)->sp->user, MAIN_CONNECTION(p)->sp->database)));
-#endif
+			bool	freed = false;
 
 			pool_send_frontend_exits(p);
 
 			for (i = 0; i < NUM_BACKENDS; i++)
 			{
-				if (!VALID_BACKEND(i))
+				if (!CONNECTION_SLOT(p, i))
 					continue;
 
-				if (i == 0)
+				if (!freed)
 				{
-					/*
-					 * only first backend allocated the memory for the start
-					 * up packet
-					 */
 					pool_free_startup_packet(CONNECTION_SLOT(p, i)->sp);
 					CONNECTION_SLOT(p, i)->sp = NULL;
-
+					freed = true;
 				}
 				pool_close(CONNECTION(p, i));
 			}
