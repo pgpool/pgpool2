@@ -61,6 +61,8 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p);
 static int	check_socket_status(int fd);
 static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry);
 
+#define TMINTMAX 0x7fffffff
+
 /*
 * initialize connection pools. this should be called once at the startup.
 */
@@ -241,6 +243,7 @@ pool_create_cp(void)
 	POOL_CONNECTION_POOL *oldestp;
 	POOL_CONNECTION_POOL *ret;
 	ConnectionInfo *info;
+	int		main_node_id;
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 
@@ -253,7 +256,7 @@ pool_create_cp(void)
 
 	for (i = 0; i < pool_config->max_pool; i++)
 	{
-		if (MASTER_CONNECTION(p) == NULL)
+		if (in_use_backend_id(p) < 0)	/* is this connection pool out of use? */
 		{
 			ret = new_connection(p);
 			if (ret)
@@ -271,21 +274,25 @@ pool_create_cp(void)
 	 * discard it.
 	 */
 	oldestp = p = pool_connection_pool;
-	closetime = MASTER_CONNECTION(p)->closetime;
+	closetime = TMINTMAX;
 	pool_index = 0;
 
 	for (i = 0; i < pool_config->max_pool; i++)
 	{
+		main_node_id = in_use_backend_id(p);
+		if (main_node_id < 0)
+			elog(ERROR, "no in use backend found");	/* this should not happen */
+
 		ereport(DEBUG1,
 				(errmsg("creating connection pool"),
 				 errdetail("user: %s database: %s closetime: %ld",
-						   MASTER_CONNECTION(p)->sp->user,
-						   MASTER_CONNECTION(p)->sp->database,
-						   MASTER_CONNECTION(p)->closetime)));
+						   CONNECTION_SLOT(p, main_node_id)->sp->user,
+						   CONNECTION_SLOT(p, main_node_id)->sp->database,
+						   CONNECTION_SLOT(p, main_node_id)->closetime)));
 
-		if (MASTER_CONNECTION(p)->closetime < closetime)
+		if (CONNECTION_SLOT(p, main_node_id)->closetime < closetime)
 		{
-			closetime = MASTER_CONNECTION(p)->closetime;
+			closetime = CONNECTION_SLOT(p, main_node_id)->closetime;
 			oldestp = p;
 			pool_index = i;
 		}
@@ -293,18 +300,21 @@ pool_create_cp(void)
 	}
 
 	p = oldestp;
+	main_node_id = in_use_backend_id(p);
+	if (main_node_id < 0)
+		elog(ERROR, "no in use backend found");	/* this should not happen */
 	pool_send_frontend_exits(p);
 
 	ereport(DEBUG1,
 			(errmsg("creating connection pool"),
 			 errdetail("discarding old %zd th connection. user: %s database: %s",
 					   oldestp - pool_connection_pool,
-					   MASTER_CONNECTION(p)->sp->user,
-					   MASTER_CONNECTION(p)->sp->database)));
+					   CONNECTION_SLOT(p, main_node_id)->sp->user,
+					   CONNECTION_SLOT(p, main_node_id)->sp->database)));
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if (!VALID_BACKEND(i))
+		if (CONNECTION_SLOT(p, i) == NULL)
 			continue;
 
 		if (!freed)
@@ -385,8 +395,6 @@ pool_backend_timer_handler(int sig)
 void
 pool_backend_timer(void)
 {
-#define TMINTMAX 0x7fffffff
-
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	int			i,
 				j;
@@ -1029,4 +1037,22 @@ int
 pool_pool_index(void)
 {
 	return pool_index;
+}
+
+/*
+ * Return the first node id in use.
+ * If no node is in use, return -1.
+ */
+int
+in_use_backend_id(POOL_CONNECTION_POOL *pool)
+{
+	int	i;
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (pool->slots[i])
+			return i;
+	}
+
+	return -1;
 }
