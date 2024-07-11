@@ -153,6 +153,8 @@ do
 
     ./shutdownall
     sleep 10
+    echo "Check if whole pgpool process went down"
+    ps aux|grep pgpool
 done
 
 if [ $failed = "true" ];then
