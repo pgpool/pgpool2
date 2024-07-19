@@ -1084,12 +1084,17 @@ close_all_backend_connections(void)
 	POOL_SETMASK(&oldmask);
 }
 
-void update_pooled_connection_count(void)
+/*
+ * Return number of established connections in the connection pool.
+ * This is called when a client disconnects to pgpool.
+ */
+void
+update_pooled_connection_count(void)
 {
 	int i;
 	int count = 0;
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
-	for (i = 0; i < pool_config->max_pool; i++)
+	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
 		if (MAIN_CONNECTION(p))
 			count++;
