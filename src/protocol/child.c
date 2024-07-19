@@ -477,7 +477,12 @@ do_child(int *fds)
 
 		/* Mark this connection pool is not connected from frontend */
 		pool_coninfo_unset_frontend_connected(pool_get_process_context()->proc_id, pool_pool_index());
+
+		/*
+		 * Update number of established connections in the connection pool.
+		 */
 		update_pooled_connection_count();
+
 		accepted = 0;
 		connection_count_down();
 		if (pool_config->log_disconnections)
