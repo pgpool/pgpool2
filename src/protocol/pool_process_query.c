@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -740,20 +740,8 @@ SimpleForwardToFrontend(char kind, POOL_CONNECTION * frontend,
 	{
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
-#ifdef NOT_USED
-			if (use_sync_map == POOL_SYNC_MAP_EMPTY)
-				continue;
-#endif
-
 			if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
 			{
-#ifdef NOT_USED
-				if (use_sync_map == POOL_SYNC_MAP_IS_VALID && !pool_is_set_sync_map(i))
-				{
-					continue;
-				}
-#endif
-
 				pool_read(CONNECTION(backend, i), &len, sizeof(len));
 
 				len = ntohl(len);
