@@ -2913,6 +2913,13 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 			{
 				if (fkind == 'H')
 				{
+					/*
+					 * If data remains in the frontend write buffer, flush it
+					 * now.
+					 */
+					pool_flush(frontend);
+					elog(DEBUG5,
+						 "pending data flushed to frontend due to a flush message");
 					pool_set_doing_extended_query_message();
 					pool_pending_message_set_flush_request();
 				}
