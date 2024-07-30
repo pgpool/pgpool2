@@ -29,7 +29,10 @@
 
    <listitem>
     <para>
-     クライアントが<productname>Pgpool-II</productname>に接続済みであり、<productname>PostgreSQL</productname>においてシャットダウン処理が実施された場合（クライアントがまったく<productname>Pgpool-II</productname>に接続していない場合は、<productname>PostgreSQL</productname>がシャットダウンされてもフェイルオーバしないことに注意してください）。
+     <xref linkend="guc-failover-on-backend-shutdown">がonかつ、クライアントが<productname>Pgpool-II</productname>に接続済みであり、<productname>PostgreSQL</productname>においてシャットダウン処理が実施された場合（クライアントがまったく<productname>Pgpool-II</productname>に接続していない場合は、<productname>PostgreSQL</productname>がシャットダウンされてもフェイルオーバしないことに注意してください）。
+    </para>
+    <para>
+     なお、ストリーミングレプリケーションモードでは、シャットダウン処理が行われた<productname>PostgreSQL</productname>がスタンバイノードで、かつロードバランスノードでない場合は、<xref linkend="guc-failover-on-backend-shutdown">がonでもフェイルオーバしません。
     </para>
    </listitem>
   </itemizedlist>
@@ -697,6 +700,12 @@ if (we need to executed follow primary command)
       onに設定した場合、<productname>Pgpool-II</productname>は確立したクライアントとバックエンドのセッション上で特定のエラーコード：<literal>57P01</literal>と<literal>57P02</literal>をチェックすることにより、バックエンドのシャットダウンイベントを検出します。
       それらのエラーコードを検出すると、そのノードでフェイルオーバが起動されます。
       offに設定した場合、そのようなエラーの場合でも<productname>Pgpool-II</productname>は単にエラーをレポートしセッションが切断するのみです。
+     </para>
+     <para>
+      なお、ストリーミングレプリケーションモードでは、シャットダウン処理が行われた<productname>PostgreSQL</productname>がスタンバイノードで、かつロードバランスノードでない場合は、このパラメータがonでもフェイルオーバしません。
+      現在のセッションでどのノードがロードバランスなのかは、<xref linkend="SQL-SHOW-POOL-NODES">または<xref linkend="PCP-PROC-INFO">で確認できます。
+     </para>
+     <para>
       デフォルトはoffです。
      </para>
      <para>
