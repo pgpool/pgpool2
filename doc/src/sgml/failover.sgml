@@ -55,6 +55,13 @@
      down of <productname>PostgreSQL</productname> does not
      trigger a failover).
     </para>
+    <para>
+     In addition, in the streaming replication mode, shutting down
+     of <productname>PostgreSQL</productname> does not trigger a
+     failover, if the node is a standby node and is not the load
+     balance node even
+     if <xref linkend="guc-failover-on-backend-shutdown"> is on.
+    </para>
    </listitem>
   </itemizedlist>
 
@@ -540,6 +547,17 @@ if (we need to executed follow primary command)
       <productname>Pgpool-II</productname> will not detect the event
       even if the parameter is on.
      </para>
+     <para>
+      In addition, in the streaming replication mode, shutting down
+      of <productname>PostgreSQL</productname> does not trigger a
+      failover, if the node is a standby node and is not the load
+      balance node even
+      if <xref linkend="guc-failover-on-backend-shutdown"> is on.  In
+      order to find which node is the load balance node, you can
+      use <xref linkend="SQL-SHOW-POOL-NODES">
+      or <xref linkend="PCP-PROC-INFO">.
+     </para>
+
      <para>
       Please note that <literal>57P01</literal> is not only sent at a
       shutdown event, but also sent when the backend currently
