@@ -30,7 +30,7 @@ if [ $? -ne 0 ]; then
 fi
 
 ## Get PostgreSQL major version
-PGVERSION=`${PGHOME}/bin/initdb -V | awk '{print $3}' | sed 's/\..*//' | sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
+PGVERSION=`${PGHOME}/bin/psql -V | awk '{print $3}' | sed 's/\..*//' | sed 's/\([0-9]*\)[a-zA-Z].*/\1/'`
 if [ $PGVERSION -ge 12 ]; then
     RECOVERYCONF=${DEST_NODE_PGDATA}/myrecovery.conf
 else
