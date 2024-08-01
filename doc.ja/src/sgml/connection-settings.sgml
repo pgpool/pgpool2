@@ -919,11 +919,13 @@
      <para>
       <!--
       Specify the maximum number of spare (idle) child processes to keep.
-       If the idle process count increases from max_spare_children, Pgpool-II will kill the excessive child processes.
+      If the idle process count increases from max_spare_children, Pgpool-II will kill the excessive child processes.
+      Selection criteria is to select the processes with minimum number of pooled connections.
       Default value is 10.
       -->
       保持する予備（アイドル状態）の子プロセスの最大個数を指定します。
       予備（アイドル状態）の子プロセス数が<varname>max_spare_children</varname>を超えた場合、<productname>Pgpool-II</productname>は余分な子プロセスを強制終了します。
+      プールされた接続数が少ないものから順に強制終了の対象として選ばれます。
       デフォルト値は10です。
      </para>
      <para>

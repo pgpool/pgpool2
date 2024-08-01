@@ -607,7 +607,8 @@
     <listitem>
      <para>
       Specify the maximum number of spare (idle) child processes to keep.
-       If the idle process count increases from max_spare_children, Pgpool-II will kill the excessive child processes.
+      If the idle process count increases from max_spare_children, Pgpool-II will kill the excessive child processes.
+      Selection criteria is to select the processes with minimum number of pooled connections.
       Default value is 10.
      </para>
      <para>
