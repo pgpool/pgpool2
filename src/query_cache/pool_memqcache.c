@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1408,6 +1408,9 @@ pool_get_dml_table_oid(int **oid)
 	return oidbufp;
 }
 
+/*
+ * Extract table oids contained in memqcache_oiddir by database oid.
+ */
 static int
 pool_get_dropdb_table_oids(int **oids, int dboid)
 {
@@ -1418,14 +1421,15 @@ pool_get_dropdb_table_oids(int **oids, int dboid)
 	int			num_oids = 0;
 	DIR		   *dir;
 	struct dirent *dp;
-	char		path[1024];
+	char		*path;
 
-	snprintf(path, sizeof(path), "%s/%d", pool_config->memqcache_oiddir, dboid);
+	path = psprintf("%s/%d", pool_config->memqcache_oiddir, dboid);
 	if ((dir = opendir(path)) == NULL)
 	{
 		ereport(DEBUG1,
 				(errmsg("memcache: getting drop table oids"),
 				 errdetail("Failed to open dir: %s", path)));
+		pfree(path);
 		return 0;
 	}
 
@@ -1441,6 +1445,7 @@ pool_get_dropdb_table_oids(int **oids, int dboid)
 			if (tmp == NULL)
 			{
 				closedir(dir);
+				pfree(path);
 				return 0;
 			}
 			rtn = tmp;
@@ -1450,6 +1455,7 @@ pool_get_dropdb_table_oids(int **oids, int dboid)
 		num_oids++;
 	}
 
+	pfree(path);
 	closedir(dir);
 	*oids = rtn;
 
@@ -1532,14 +1538,15 @@ pool_get_database_oid_from_dbname(char *dbname)
 {
 	int			dboid = 0;
 	POOL_SELECT_RESULT *res;
-	char		query[1024];
+	char		*query;
 
 	POOL_CONNECTION_POOL *backend;
 
 	backend = pool_get_session_context(false)->backend;
 
-	snprintf(query, sizeof(query), DATABASE_TO_OID_QUERY, dbname);
+	query = psprintf(DATABASE_TO_OID_QUERY, dbname);
 	do_query(MASTER(backend), query, &res, MAJOR(backend));
+	pfree(query);
 
 	if (res->numrows != 1)
 	{
@@ -1569,7 +1576,7 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 {
 	char	   *dir;
 	int			dboid;
-	char		path[1024];
+	char		*path;
 	int			i;
 	int			len;
 
@@ -1604,7 +1611,7 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 		return;
 	}
 
-	snprintf(path, sizeof(path), "%s/%d", dir, dboid);
+	path = psprintf("%s/%d", dir, dboid);
 	if (mkdir(path, S_IREAD | S_IWRITE | S_IEXEC) == -1)
 	{
 		if (errno != EEXIST)
@@ -1612,9 +1619,11 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 			ereport(WARNING,
 					(errmsg("memcache: adding table oid maps, failed to create directory:\"%s\"", path),
 					 errdetail("%m")));
+			pfree(path);
 			return;
 		}
 	}
+	pfree(path);
 
 	if (pool_is_shmem_cache())
 	{
@@ -1635,12 +1644,13 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 		/*
 		 * Create or open each memqcache_oiddir/database_oid/table_oid
 		 */
-		snprintf(path, sizeof(path), "%s/%d/%d", dir, dboid, oid);
+		path = psprintf("%s/%d/%d", dir, dboid, oid);
 		if ((fd = open(path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)) == -1)
 		{
 			ereport(WARNING,
 					(errmsg("memcache: adding table oid maps, failed to open file:\"%s\"", path),
 					 errdetail("%m")));
+			pfree(path);
 			return;
 		}
 
@@ -1657,6 +1667,7 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 					 errdetail("%m")));
 
 			close(fd);
+			pfree(path);
 			return;
 		}
 
@@ -1709,6 +1720,7 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 					(errmsg("memcache: adding table oid maps, failed seek on file:\"%s\"", path),
 					 errdetail("%m")));
 			close(fd);
+			pfree(path);
 			return;
 		}
 
@@ -1725,37 +1737,41 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 			return;
 		}
 		close(fd);
+		pfree(path);
 	}
 }
 
 /*
- * Discard all oid maps at pgpool-II startup.
+ * Discard all oid maps at Pgpool-II startup.
  * This is necessary for shmem case.
  */
 void
 pool_discard_oid_maps(void)
 {
-	char		command[1024];
+	char		*command;
 
-	snprintf(command, sizeof(command), "/bin/rm -fr %s/[0-9]*",
-			 pool_config->memqcache_oiddir);
+	command = psprintf("/bin/rm -fr %s/[0-9]*",
+					   pool_config->memqcache_oiddir);
 	if (system(command) == -1)
 		ereport(WARNING,
 				(errmsg("unable to execute command \"%s\"", command),
 				 errdetail("system() command failed with error \"%m\"")));
 
-
+	pfree(command);
 }
 
+/*
+ *  Discard all oid maps contained in database specified by dboid.
+ */
 void
 pool_discard_oid_maps_by_db(int dboid)
 {
-	char		command[1024];
+	char		*command;
 
 	if (pool_is_shmem_cache())
 	{
-		snprintf(command, sizeof(command), "/bin/rm -fr %s/%d/",
-				 pool_config->memqcache_oiddir, dboid);
+		command = psprintf("/bin/rm -fr %s/%d/",
+						   pool_config->memqcache_oiddir, dboid);
 
 		ereport(DEBUG1,
 				(errmsg("memcache: discarding oid maps by db"),
@@ -1765,6 +1781,8 @@ pool_discard_oid_maps_by_db(int dboid)
 			ereport(WARNING,
 					(errmsg("unable to execute command \"%s\"", command),
 					 errdetail("system() command failed with error \"%m\"")));
+
+		pfree(command);
 	}
 }
 
@@ -1778,7 +1796,7 @@ static void
 pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, int dboid)
 {
 	char	   *dir;
-	char		path[1024];
+	char		*path;
 	int			i;
 	int			len;
 	POOL_CACHEKEY buf;
@@ -1816,7 +1834,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 		}
 	}
 
-	snprintf(path, sizeof(path), "%s/%d", dir, dboid);
+	path = psprintf("%s/%d", dir, dboid);
 	if (mkdir(path, S_IREAD | S_IWRITE | S_IEXEC) == -1)
 	{
 		if (errno != EEXIST)
@@ -1824,6 +1842,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 			ereport(WARNING,
 					(errmsg("memcache: invalidating query cache, failed to create directory:\"%s\"", path),
 					 errdetail("%m")));
+			pfree(path);
 			return;
 		}
 	}
@@ -1847,7 +1866,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 		/*
 		 * Open each memqcache_oiddir/database_oid/table_oid
 		 */
-		snprintf(path, sizeof(path), "%s/%d/%d", dir, dboid, oid);
+		path = psprintf("%s/%d/%d", dir, dboid, oid);
 		if ((fd = open(path, O_RDONLY)) == -1)
 		{
 			/*
@@ -1873,6 +1892,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 					(errmsg("memcache: invalidating query cache, failed to lock file:\"%s\"", path),
 					 errdetail("%m")));
 			close(fd);
+			pfree(path);
 			return;
 		}
 		for (;;)
@@ -1885,6 +1905,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 						 errdetail("%m")));
 
 				close(fd);
+				pfree(path);
 				return;
 			}
 			else if (sts == len)
@@ -1922,6 +1943,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 				ereport(WARNING,
 						(errmsg("memcache: invalidating query cache, invalid data length:%d in file:\"%s\"", sts, path)));
 				close(fd);
+				pfree(path);
 				return;
 			}
 			break;
@@ -1931,6 +1953,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 		{
 			unlink(path);
 		}
+		pfree(path);
 		close(fd);
 	}
 #ifdef SHMEMCACHE_DEBUG
@@ -2955,7 +2978,7 @@ pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
 void
 pool_shmem_lock(void)
 {
-	if (pool_is_shmem_cache() && !is_shmem_locked)
+if (pool_is_shmem_cache() && !is_shmem_locked)
 	{
 		pool_semaphore_lock(SHM_CACHE_SEM);
 		is_shmem_locked = true;
