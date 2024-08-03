@@ -905,7 +905,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 
 			/* sync local status with global status */
 			*(my_backend_status[i]) = status;
-			my_main_node_id = Req_info->main_node_id;
+			my_master_node_id = Req_info->master_node_id;
 			continue;
 		}
 

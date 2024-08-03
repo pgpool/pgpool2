@@ -834,6 +834,7 @@ extern int	connect_unix_domain_socket(int slot, bool retry);
 extern int	connect_inet_domain_socket_by_port(char *host, int port, bool retry);
 extern int	connect_unix_domain_socket_by_port(int port, char *socket_dir, bool retry);
 extern int	pool_pool_index(void);
+extern int	in_use_backend_id(POOL_CONNECTION_POOL *pool);
 
 /* utils/statistics.c */
 size_t		stat_shared_memory_size(void);
