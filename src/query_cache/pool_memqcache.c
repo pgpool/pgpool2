@@ -995,8 +995,8 @@ pool_is_allow_to_cache(Node *node, char *query)
 
 
 	/*
-	 * If the table is in the while list, allow to cache even if it is VIEW or
-	 * unlogged table.
+	 * If the table is in the cache_safe_memqcache_table_list, allow to cache
+	 * even if it is VIEW or unlogged table.
 	 */
 	if (pool_config->num_cache_safe_memqcache_table_list > 0)
 	{
