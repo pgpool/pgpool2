@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -408,15 +408,4 @@ extern bool is_tx_started_by_multi_statement_query(void);
 extern void set_tx_started_by_multi_statement_query(void);
 extern void unset_tx_started_by_multi_statement_query(void);
 
-#ifdef NOT_USED
-extern void pool_set_preferred_main_node_id(int node_id);
-extern int	pool_get_preferred_main_node_id(void);
-extern void pool_reset_preferred_main_node_id(void);
-#endif
-
-#ifdef NOT_USED
-extern void pool_add_prep_where(char *name, bool *map);
-extern bool *pool_get_prep_where(char *name);
-extern void pool_delete_prep_where(char *name);
-#endif							/* NOT_USED */
 #endif							/* POOL_SESSION_CONTEXT_H */
