@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -141,12 +141,6 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	/* Unset suspend reading from frontend flag */
 	pool_unset_suspend_reading_from_frontend();
 
-	/* Initialize where to send map for PREPARE statements */
-#ifdef NOT_USED
-	memset(&session_context->prep_where, 0, sizeof(session_context->prep_where));
-	session_context->prep_where.nelem = POOL_MAX_PREPARED_STATEMENTS;
-#endif							/* NOT_USED */
-
 	/*
 	 * Reset flag to indicate difference in number of affected tuples in
 	 * UPDATE/DELETE.
@@ -168,11 +162,6 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	/* Initialize temp tables */
 	pool_temp_tables_init();
 	
-#ifdef NOT_USED
-	/* Initialize preferred main node id */
-	pool_reset_preferred_main_node_id();
-#endif
-
 	/* Snapshot isolation state */
 	session_context->si_state = SI_NO_SNAPSHOT;
 
@@ -950,81 +939,7 @@ pool_copy_prep_where(bool *src, bool *dest)
 {
 	memcpy(dest, src, sizeof(bool) * MAX_NUM_BACKENDS);
 }
-#ifdef NOT_USED
-/*
- * Add to send map a PREPARED statement
- */
-void
-pool_add_prep_where(char *name, bool *map)
-{
-	int			i;
 
-	if (!session_context)
-	{
-		ereport(ERROR,
-				(errmsg("pool_add_prep_where: session context is not initialized")));
-		return;
-	}
-
-	for (i = 0; i < POOL_MAX_PREPARED_STATEMENTS; i++)
-	{
-		if (*session_context->prep_where.name[i] == '\0')
-		{
-			strncpy(session_context->prep_where.name[i], name, POOL_MAX_PREPARED_NAME);
-			pool_copy_prep_where(map, session_context->prep_where.where_to_send[i]);
-			return;
-		}
-	}
-	ereport(ERROR,
-			(errmsg("pool_add_prep_where: no empty slot found")));
-}
-
-/*
- * Search send map by PREPARED statement name
- */
-bool *
-pool_get_prep_where(char *name)
-{
-	int			i;
-
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_get_prep_where: session context is not initialized")));
-
-
-	for (i = 0; i < POOL_MAX_PREPARED_STATEMENTS; i++)
-	{
-		if (!strcmp(session_context->prep_where.name[i], name))
-		{
-			return session_context->prep_where.where_to_send[i];
-		}
-	}
-	return NULL;
-}
-
-/*
- * Remove PREPARED statement by name
- */
-void
-pool_delete_prep_where(char *name)
-{
-	int			i;
-
-	if (!session_context)
-		ereport(ERROR,
-				(errmsg("pool_delete_prep_where: session context is not initialized")));
-
-	for (i = 0; i < POOL_MAX_PREPARED_STATEMENTS; i++)
-	{
-		if (!strcmp(session_context->prep_where.name[i], name))
-		{
-			memset(&session_context->prep_where.where_to_send[i], 0, sizeof(bool) * MAX_NUM_BACKENDS);
-			*session_context->prep_where.name[i] = '\0';
-			return;
-		}
-	}
-}
-#endif							/* NOT_USED */
 /*
  * Initialize sent message list
  */
@@ -1843,38 +1758,6 @@ pool_unset_suspend_reading_from_frontend(void)
 {
 	session_context->suspend_reading_from_frontend = false;
 }
-
-#ifdef NOT_USED
-/*
- * Set preferred "main" node id.
- * Only used for SimpleForwardToFrontend.
- */
-void
-pool_set_preferred_main_node_id(int node_id)
-{
-	session_context->preferred_main_node_id = node_id;
-}
-
-/*
- * Return preferred "main" node id.
- * Only used for SimpleForwardToFrontend.
- */
-int
-pool_get_preferred_main_node_id(void)
-{
-	return session_context->preferred_main_node_id;
-}
-
-/*
- * Reset preferred "main" node id.
- * Only used for SimpleForwardToFrontend.
- */
-void
-pool_reset_preferred_main_node_id(void)
-{
-	session_context->preferred_main_node_id = -1;
-}
-#endif
 
 /*-----------------------------------------------------------------------
  * Temporary table list management modules.
