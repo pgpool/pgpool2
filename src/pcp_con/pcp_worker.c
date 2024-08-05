@@ -84,6 +84,7 @@ static void inform_watchdog_info(PCP_CONNECTION * frontend, char *buf);
 static void inform_node_info(PCP_CONNECTION * frontend, char *buf);
 static void inform_node_count(PCP_CONNECTION * frontend);
 static void process_reload_config(PCP_CONNECTION * frontend,char scope);
+static void process_log_rotate(PCP_CONNECTION * frontend,char scope);
 static void inform_health_check_stats(PCP_CONNECTION *frontend, char *buf);
 static void process_detach_node(PCP_CONNECTION * frontend, char *buf, char tos);
 static void process_attach_node(PCP_CONNECTION * frontend, char *buf);
@@ -327,6 +328,11 @@ pcp_process_command(char tos, char *buf, int buf_len)
 		case 'Z':				/*reload config file */
 			set_ps_display("PCP: processing reload config request", false);
 			process_reload_config(pcp_frontend, buf[0]);
+			break;
+
+		case 'V':				/* log rotate */
+			set_ps_display("PCP: processing log rotation request", false);
+			process_log_rotate(pcp_frontend, buf[0]);
 			break;
 
 		case 'J':				/* promote node */
@@ -1074,6 +1080,7 @@ inform_node_count(PCP_CONNECTION * frontend)
 			(errmsg("PCP: informing node count"),
 			 errdetail("%d node(s) found", node_count)));
 }
+
 static void
 process_reload_config(PCP_CONNECTION * frontend, char scope)
 {
@@ -1099,6 +1106,32 @@ process_reload_config(PCP_CONNECTION * frontend, char scope)
 	}
 
 	pcp_write(frontend, "z", 1);
+	wsize = htonl(sizeof(code) + sizeof(int));
+	pcp_write(frontend, &wsize, sizeof(int));
+	pcp_write(frontend, code, sizeof(code));
+	do_pcp_flush(frontend);
+}
+
+static void
+process_log_rotate(PCP_CONNECTION * frontend, char scope)
+{
+	char            code[] = "CommandComplete";
+	int wsize;
+
+	if (scope == 'c' && pool_config->use_watchdog)
+	{
+		ereport(LOG,
+				(errmsg("PCP: sending command to watchdog to logrotate cluster")));
+
+		if (wd_execute_cluster_command(WD_COMMAND_LOGROTATE_CLUSTER, NULL) != COMMAND_OK)
+			ereport(ERROR,
+					(errmsg("PCP: error while processing log rotation request for cluster"),
+					 errdetail("failed to propagate log rotation command through watchdog")));
+	}
+
+	pool_signal_logrotate();
+
+	pcp_write(frontend, "v", 1);
 	wsize = htonl(sizeof(code) + sizeof(int));
 	pcp_write(frontend, &wsize, sizeof(int));
 	pcp_write(frontend, code, sizeof(code));

@@ -69,6 +69,7 @@ typedef enum
 	PCP_STOP_PGPOOL,
 	PCP_WATCHDOG_INFO,
 	PCP_RELOAD_CONFIG,
+	PCP_LOG_ROTATE,
 	UNKNOWN,
 }			PCP_UTILITIES;
 
@@ -95,6 +96,7 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_stop_pgpool", PCP_STOP_PGPOOL, "m:h:p:U:s:wWvda", "terminate pgpool-II"},
 	{"pcp_watchdog_info", PCP_WATCHDOG_INFO, "n:h:p:U:wWvd", "display a pgpool-II watchdog's information"},
 	{"pcp_reload_config",PCP_RELOAD_CONFIG,"h:p:U:s:wWvd", "reload a pgpool-II config file"},
+	{"pcp_log_rotate",PCP_LOG_ROTATE,"h:p:U:s:wWvd", "rotate the Pgpool-II's log file"},
 	{NULL, UNKNOWN, NULL, NULL},
 };
 struct AppTypes *current_app_type;
@@ -449,6 +451,11 @@ main(int argc, char **argv)
 	else if (current_app_type->app_type == PCP_RELOAD_CONFIG)
 	{
 		pcpResInfo = pcp_reload_config(pcpConn,command_scope);
+	}
+
+	else if (current_app_type->app_type == PCP_LOG_ROTATE)
+	{
+		pcpResInfo = pcp_log_rotate(pcpConn,command_scope);
 	}
 
 	else
@@ -861,7 +868,8 @@ static inline bool
 app_support_cluster_mode(void)
 {
 	return (current_app_type->app_type == PCP_STOP_PGPOOL ||
-			current_app_type->app_type == PCP_RELOAD_CONFIG);
+			current_app_type->app_type == PCP_RELOAD_CONFIG ||
+			current_app_type->app_type == PCP_LOG_ROTATE);
 }
 
 static void

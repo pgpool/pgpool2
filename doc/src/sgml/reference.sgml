@@ -110,6 +110,7 @@
   &pcpStopPgpool;
   &pcpReloadConfig;
   &pcpRecoveryNode;
+  &pcpLogRotate;
 
  </reference>
 

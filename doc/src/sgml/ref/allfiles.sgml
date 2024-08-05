@@ -17,7 +17,8 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pcpPromoteNode      SYSTEM "pcp_promote_node.sgml">
 <!ENTITY pcpStopPgpool       SYSTEM "pcp_stop_pgpool.sgml">
 <!ENTITY pcpRecoveryNode     SYSTEM "pcp_recovery_node.sgml">
-<!ENTITY pcpReloadConfig      SYSTEM "pcp_reload_config.sgml">
+<!ENTITY pcpReloadConfig     SYSTEM "pcp_reload_config.sgml">
+<!ENTITY pcpLogRotate        SYSTEM "pcp_log_rotate.sgml">
 <!ENTITY pgMd5               SYSTEM "pg_md5.sgml">
 <!ENTITY pgEnc               SYSTEM "pg_enc.sgml">
 <!ENTITY wdCli               SYSTEM "wd_cli.sgml">

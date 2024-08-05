@@ -4098,6 +4098,37 @@ pool_release_follow_primary_lock(bool remote_request)
 }
 
 /*
+ * Sending log rotation signal to logger process.
+ */
+void
+pool_signal_logrotate(void)
+{
+	if (!pool_config->logging_collector)
+	{
+		ereport(ERROR,
+				(errmsg("process log rotation request failed"),
+				 errdetail("logging_collector is disabled")));
+	}
+
+	if (pgpool_logger_pid != 0)
+	{
+		ereport(DEBUG1,
+				(errmsg("sending SIGUSR1 to logger process with PID:%d to rotate log file", pgpool_logger_pid)));
+
+		if (kill(pgpool_logger_pid, SIGUSR1) != 0)
+			ereport(ERROR,
+					(errmsg("process log rotation request failed"),
+					 errdetail("failed to send SIGUSR1 to logger process with PID:%d", pgpool_logger_pid)));
+	}
+	else
+	{
+		ereport(ERROR,
+				(errmsg("process log rotation request failed"),
+				 errdetail("logger process PID:%d is not valid", pgpool_logger_pid)));
+	}
+}
+
+/*
  * -------------------------------------------------------------------------
  * Subroutines for failover() begin
  * -------------------------------------------------------------------------

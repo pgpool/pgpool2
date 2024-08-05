@@ -2111,6 +2111,11 @@ process_IPC_execute_cluster_command(WDCommandData * ipcCommand)
 		ereport(LOG,
 				(errmsg("Watchdog has received reload config cluster command from IPC channel")));
 	}
+	else if (strcasecmp(WD_COMMAND_LOGROTATE_CLUSTER, clusterCommand) == 0)
+	{
+		ereport(LOG,
+				(errmsg("Watchdog has received log rotation cluster command from IPC channel")));
+	}
 	else if (strcasecmp(WD_COMMAND_LOCK_ON_STANDBY, clusterCommand) == 0)
 	{
 		ereport(LOG,
@@ -4114,6 +4119,12 @@ wd_execute_cluster_command_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 		ereport(LOG,
 				(errmsg("processing reload config command from remote node \"%s\"", wdNode->nodeName)));
 		pool_signal_parent(SIGHUP);
+	}
+	else if (strcasecmp(WD_COMMAND_LOGROTATE_CLUSTER, clusterCommand) == 0)
+	{
+		ereport(LOG,
+				(errmsg("processing log rotation command from remote node \"%s\"", wdNode->nodeName)));
+		pool_signal_logrotate();
 	}
 	else if (strcasecmp(WD_COMMAND_LOCK_ON_STANDBY, clusterCommand) == 0)
 	{

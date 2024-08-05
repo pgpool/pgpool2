@@ -619,7 +619,7 @@ extern void initialize_shared_memory_main_segment(size_t size);
 extern void * pool_shared_memory_segment_get_chunk(size_t size);
 
 
-/* pool_main.c*/
+/* pgpool_main.c*/
 extern BackendInfo * pool_get_node_info(int node_number);
 extern int	pool_get_node_count(void);
 extern int *pool_get_process_list(int *array_size);
@@ -636,6 +636,7 @@ extern void pool_set_backend_status_changed_time(int backend_id);
 extern int	get_next_main_node(void);
 extern bool pool_acquire_follow_primary_lock(bool block, bool remote_reques);
 extern void pool_release_follow_primary_lock(bool remote_reques);
+extern void pool_signal_logrotate(void);
 
 /* strlcpy.c */
 #ifndef HAVE_STRLCPY

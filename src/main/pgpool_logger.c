@@ -345,7 +345,7 @@ SysLoggerMain(int argc, char *argv[])
 		{
 			/*
 			 * Force rotation when both values are zero. It means the request
-			 * was sent by pg_rotate_logfile() or "pg_ctl logrotate".
+			 * was sent by pcp_log_rotate.
 			 */
 			if (!time_based_rotation && size_rotation_for == 0)
 				size_rotation_for = LOG_DESTINATION_STDERR | LOG_DESTINATION_CSVLOG;

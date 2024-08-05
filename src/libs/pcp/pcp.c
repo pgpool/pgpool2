@@ -476,6 +476,13 @@ static PCPResultInfo * process_pcp_response(PCPConnInfo * pcpConn, char sentMsg)
 					process_command_complete_response(pcpConn, buf, rsize);
 				break;
 
+			case 'v':			/* pcp_log_rotate */
+				if (sentMsg != 'V')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_command_complete_response(pcpConn, buf, rsize);
+				break;
+
 			case 'w':
 				if (sentMsg != 'W')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
@@ -926,6 +933,31 @@ pcp_reload_config(PCPConnInfo * pcpConn,char command_scope)
 	return process_pcp_response(pcpConn, 'Z');
 }
 
+PCPResultInfo *
+pcp_log_rotate(PCPConnInfo * pcpConn,char command_scope)
+{
+	int                     wsize;
+/*
+ * pcp packet format for pcp_log_rotate
+ * v[size][command_scope]
+ */
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	{
+	   pcp_internal_error(pcpConn, "invalid PCP connection");
+	   return NULL;
+	}
+
+	pcp_write(pcpConn->pcpConn, "V", 1);
+	wsize = htonl(sizeof(int) + sizeof(char));
+	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
+	pcp_write(pcpConn->pcpConn, &command_scope, sizeof(char));
+	if (PCPFlush(pcpConn) < 0)
+	   return NULL;
+	if (pcpConn->Pfdebug)
+	   fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"Z\", len=%d\n", ntohl(wsize));
+
+	return process_pcp_response(pcpConn, 'V');
+}
 
 /*
  * Process health check response from PCP server.
