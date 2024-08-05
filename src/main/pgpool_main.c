@@ -1842,7 +1842,7 @@ reaper(void)
 	int			status;
 	int			i;
 
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("reaper handler")));
 
 	if (exiting)
@@ -2062,7 +2062,7 @@ reaper(void)
 		}
 
 	}
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("reaper handler: exiting normally")));
 }
 
