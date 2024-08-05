@@ -98,6 +98,7 @@
    <listitem>
     <para>
      Specifies the <productname>PostgreSQL</> user name to perform health check.
+     Default is <literal>''</literal>(empty).
      The same user must exist in all the <productname>PostgreSQL</> backends.
      Otherwise, health check causes an error.
     </para>

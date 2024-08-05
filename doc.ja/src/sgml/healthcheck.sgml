@@ -145,10 +145,12 @@
     <para>
      <!--
      Specifies the <productname>PostgreSQL</> user name to perform health check.
+     Default is <literal>''</literal>(empty).
      The same user must exist in all the <productname>PostgreSQL</> backends.
      Otherwise, health check results in an error.
      -->
      ヘルスチェックを行う<productname>PostgreSQL</>ユーザ名を指定します。
+     デフォルトは<literal>''</literal>（空文字）です。
      同じユーザ名が全ての<productname>PostgreSQL</>バックエンドに存在していなければなりません。
      さもないと、ヘルスチェックがエラーとなります。
     </para>

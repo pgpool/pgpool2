@@ -1327,7 +1327,7 @@ pgpool_port2 = 9999
      <para>
       Specifies the user name for the connection used for the life
       check of remote <productname>Pgpool-II</productname>.
-      Default is <literal>"nobody"</literal>.
+      Default is <literal>''</literal>(empty).
      </para>
      <para>
       <varname>wd_lifecheck_user</varname> is only applicable if the

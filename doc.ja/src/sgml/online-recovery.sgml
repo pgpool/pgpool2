@@ -252,11 +252,13 @@
     <para>
      <!--
      Specifies the <productname>PostgreSQL</> user name to perform online recovery.
+     Default is <literal>''</literal>(empty).
      <varname>recovery_user</varname> must specify superuser,
      because <function>pgpool_recovery</function> function is executed
      during online recovery, require superuser privilege.
      -->
      オンラインリカバリを行うための<productname>PostgreSQL</>ユーザ名です。
+     デフォルトは<literal>''</literal>（空文字）です。
      オンラインリカバリで実行される<function>pgpool_recovery</function>関数はPostgreSQLのスーパーユーザ権限が必要なため、<varname>recovery_user</varname>にスーパーユーザを指定しなければなりません。
     </para>
     <para>

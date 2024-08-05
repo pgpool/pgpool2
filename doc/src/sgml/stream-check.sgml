@@ -49,6 +49,7 @@
 
     <para>
      Specifies the <productname>PostgreSQL</> user name to perform streaming replication check.
+     Default is <literal>''</literal>(empty).
      The user must have LOGIN privilege and exist on all the
      <productname>PostgreSQL</> backends.
     </para>

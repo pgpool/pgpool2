@@ -1901,10 +1901,10 @@ heartbeat_device2 = ''
       <!--
       Specifies the user name for the connection used for the life
       check of remote <productname>Pgpool-II</productname>.
-      Default is <literal>"nobody"</literal>.
+      Default is <literal>''</literal>(empty).
       -->
       リモートの<productname>Pgpool-II</productname>の死活監視用の接続先のユーザ名です。
-      デフォルトは<literal>'nobody'</literal>です。
+      デフォルトは<literal>''</literal>（空文字）です。
      </para>
      <para>
       <!--

@@ -503,7 +503,7 @@ backend_clustering_mode = 'streaming_replication'
 #sr_check_period = 10
                                    # Streaming replication check period
                                    # Default is 10s.
-#sr_check_user = 'nobody'
+#sr_check_user = ''
                                    # Streaming replication check user
                                    # This is necessary even if you disable streaming
                                    # replication delay check by sr_check_period = 0
@@ -558,7 +558,7 @@ backend_clustering_mode = 'streaming_replication'
 #health_check_timeout = 20
                                    # Health check timeout
                                    # 0 means no timeout
-#health_check_user = 'nobody'
+#health_check_user = ''
                                    # Health check user
 #health_check_password = ''
                                    # Password for health check user
@@ -583,7 +583,7 @@ backend_clustering_mode = 'streaming_replication'
 #------------------------------------------------------------------------------
 #health_check_period0 = 0
 #health_check_timeout0 = 20
-#health_check_user0 = 'nobody'
+#health_check_user0 = ''
 #health_check_password0 = ''
 #health_check_database0 = ''
 #health_check_max_retries0 = 0
@@ -655,7 +655,7 @@ backend_clustering_mode = 'streaming_replication'
 # ONLINE RECOVERY
 #------------------------------------------------------------------------------
 
-#recovery_user = 'nobody'
+#recovery_user = ''
                                    # Online recovery user
 #recovery_password = ''
                                    # Online recovery password
@@ -900,7 +900,7 @@ backend_clustering_mode = 'streaming_replication'
 #wd_lifecheck_dbname = 'template1'
                                     # Database name connected for lifecheck
                                     # (change requires restart)
-#wd_lifecheck_user = 'nobody'
+#wd_lifecheck_user = ''
                                     # watchdog user monitoring pgpools in lifecheck
                                     # (change requires restart)
 #wd_lifecheck_password = ''

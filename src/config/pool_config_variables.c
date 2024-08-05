@@ -946,7 +946,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.sr_check_user,
-		"nobody",
+		"",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -1006,7 +1006,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.recovery_user,
-		"nobody",
+		"",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -1196,7 +1196,7 @@ static struct config_string ConfigureNamesString[] =
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
 		&g_pool_config.wd_lifecheck_user,
-		"nobody",
+		"",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -1852,14 +1852,14 @@ static struct config_string_array ConfigureNamesStringArray[] =
 			CONFIG_VAR_TYPE_STRING_ARRAY, true, 0, MAX_NUM_BACKENDS
 		},
 		NULL,
-		"nobody",
+		"",
 		{
 			{"health_check_user", CFGCXT_RELOAD, HEALTH_CHECK_CONFIG,
 				"Default PostgreSQL user name to perform health check on node for which health_check_user[node-id] is not specified.",
 				CONFIG_VAR_TYPE_STRING, false, DEFAULT_FOR_NO_VALUE_ARRAY_VAR
 			},
 			&g_pool_config.health_check_user,
-			"nobody",
+			"",
 			NULL, NULL, NULL, NULL
 		},
 		HealthCheckUserAssignFunc, NULL, HealthCheckUserShowFunc, BackendSlotEmptyCheckFunc
