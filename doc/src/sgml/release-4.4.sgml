@@ -1,6 +1,270 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-8">
+ <title>Release 4.4.8</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2024-08-15</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-08-02 [97485f6]
+    -->
+    <para>
+     Use <command>psql -V</command> instead of <command>initdb -V</command>
+     in sample scripts. (Bo Peng)
+    </para>
+    <para>
+     Use <command>psql -V</command> instead of <command>initdb -V</command>
+     in the sample scripts because in some cases postgresqlxx-server may not
+     be installed.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-07-30 [251e422]
+    -->
+    <para>
+     Fix hang after a flush message received. (<ulink url="https://github.com/pgpool/pgpool2/issues/59">#59</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-07-22 [c1dd550]
+    -->
+    <para>
+     Fix segmentation fault. (Tatsuo Ishii)
+    </para>
+    <para>
+     It is reported that pgpool child segfaulted in pool_do_auth. The cause
+     was MAIN_CONNECTION() returns NULL. It seems my_main_node_id was set
+     to incorrect node id 0, which was actually in down status. thus there
+     was no connection in cp->slots[0].
+    </para>
+    <para>
+     Problem is reported by Emond Papegaaij.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-July/001852.html">[pgpool-general: 9175]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-07-19 [49340b9]
+    -->
+    <para>
+     Fix dynamic process management. (Tatsuo Ishii)
+    </para>
+    <para>
+     Calculation of pooled_connection, which is used by the process
+     eviction algorithm, was not correct. The number always resulted in
+     max_pool. Also more comments are added.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-July/004491.html">[pgpool-hackers: 4490]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-28 [8ea6f7a]
+    -->
+    <para>
+     Fixed segmentation fault at parsing config file. (Tatsuo Ishii)
+    </para>
+    <para>
+     This commit fixed a segmentation fault that occurs when parsing pgpool.conf
+     if the setting value was not enclosed in single quotes.
+    </para>
+    <para>
+     The patch is created by Carlos Chapi, reviewed and modified by Tatsuo Ishii.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-21 [7ca9b23]
+    -->
+    <para>
+     Fix segfault to not use MAIN_NODE macro. (Tatsuo Ishii)
+    </para>
+    <para>
+     Some functions (close_idle_connection(), new_connection() and
+     pool_create_cp()) used MAIN* and VALID_BACKEND where they are not
+     appropriate. MAIN* and VALID_BACKEND are only useful against current
+     connections to backend, not for pooled connections since in pooled
+     connections which backend is the main node or up and running is
+     necessarily same as the current connections to backend.
+     The misuses of those macros sometimes leads to segfault.
+    </para>
+    <para>
+     Problem is reported by Emond Papegaaij.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-June/009176.html">[pgpool-general: 9114]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-21 [152c65d]
+    -->
+    <para>
+     Fix MAIN_NODE macro (actually pool_virtual_main_db_node_id()). (Tatsuo Ishii)
+    </para>
+    <para>
+     The macro used to return REAL_MAIN_NODE_ID if there's no session context.
+     This is wrong since REAL_MAIN_NODE_ID can be changed any time when
+     failover/failback happens. 
+    </para>
+    <para>
+     Suppose REAL_MAIN_NODE_ID == my_main_node_id == 1. 
+     Then due to failback, REAL_MAIN_NODE_ID is changed to 0.
+     Then MAIN_CONNECTION(cp) will return NULL and any
+     reference to it will cause segmentation fault. To prevent the issue we
+     should return my_main_node_id instead.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-14 [9488d9f]
+    -->
+    <para>
+     Fix <command>show pool_processes</command> to not show row description twice. (Tatsuo Ishii)
+    </para>
+    <para>
+     processes_reporting() accidentaly called both send_row_description()
+     and send_row_description_and_data_rows().
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-June/004472.html">[pgpool-hackers: 4471]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-11 [8c18899]
+    -->
+    <para>
+     Fix segfault in a child process. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-May/001780.html">[pgpool-general: 9104]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-11 [93ba28b]
+    -->
+    <para>
+     Watchdog dies and kills pgpool2 when network gets shortly interrupted. (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=823">#823</ulink>) (Muhammad Usama)
+    </para>
+    <para>
+     With network monitoring enabled, a <productname>Pgpool-II</productname>
+     node would shut down immediately if it lost all network interfaces or
+     assigned IP addresses, providing extra protection by quickly removing
+     a non-communicative node from the cluster.
+    </para>
+    <para>
+     The issue was that <productname>Pgpool-II</productname> responded to network blackout events even when network
+     monitoring was disabled. This fix ensures that the network monitoring socket is
+     not opened when network monitoring is not enabled, preventing unnecessary shutdowns.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-10 [c90ec3b]
+    -->
+    <para>
+     Fix <command>pgpool reset</command> command not working if watchdog is enabled. (Tatsuo Ishii)
+    </para>
+    <para>
+     Bug reported and problem analysis by keiseo.
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-June/004466.html">[pgpool-hackers: 4465]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-04 [0574a5d]
+    -->
+    <para>
+     Fix <literal>psql_scan</literal> crash. (<ulink url="https://github.com/pgpool/pgpool2/issues/54">#54</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     It was reported that <literal>psql_scan</literal> crashes while determining whether a
+     string in a long query is psql variable (i.e. starting with ":") or not.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-06-07 [cb4ecf0]
+    -->
+    <para>
+     Mega typo fix for docs and program source codes. (Tatsuo Ishii)
+    </para>
+    <para>
+     Patch is created by Umar Hayat.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-08-01 [d9fd431]
+    -->
+    <para>
+     Add the criteria for selecting processes to be killed to <xref linkend="guc-max-spare-children">. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-07-30 [d8f8cca]
+    -->
+    <para>
+     Enhance failover document. (Tatsuo Ishii)
+    </para>
+    <para>
+     Clarify the condition on failover when <xref linkend="guc-failover-on-backend-shutdown"> is enabled.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-19 [36112da]
+    -->
+    <para>
+     Add the missing default values for virtual IP related parameters. (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-7">
  <title>Release 4.4.7</title>
   <note>
