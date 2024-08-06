@@ -1,6 +1,254 @@
 <!-- doc/src/sgml/release-4.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-5-3">
+ <title>リリース 4.5.3</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2024-08-15</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-08-02 [af64bd7]
+    -->
+    <para>
+     サンプルスクリプトで<command>initdb -V</command>の代わりに<command>psql -V</command>を使用するように修正しました。 (Bo Peng)
+    </para>
+    <para>
+     postgresqlxx-serverがインストールされていない可能性があるため、サンプルスクリプトで<command>initdb -V</command>の代わりに<command>psql -V</command>を使用するように修正しました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-07-30 [0f08837]
+    -->
+    <para>
+     フラッシュメッセージを受信した後にハングする問題を修正しました。 (<ulink url="https://github.com/pgpool/pgpool2/issues/59">#59</ulink>) (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-07-22 [7a51b25]
+    -->
+    <para>
+     セグメンテーション違反を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     Pgpool-IIの子プロセスがpool_do_authでセグメント違反になることがありました。
+     原因はMAIN_CONNECTION()がNULLを返すことでした。
+     my_main_node_idが不正なノードID 0に設定されていたようですが、これは実際にはダウン状態でした。
+     そのため、cp->slots[0]には接続がありませんでした。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-July/001852.html">[pgpool-general: 9175]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-07-19 [883be2e]
+    -->
+    <para>
+     動的プロセス管理を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     プロセス排除アルゴリズムで使用されるpooled_connectionの計算が正しくありませんでした。
+     数値は常にmax_poolになっていました。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-July/004491.html">[pgpool-hackers: 4490]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-28 [f4978ac]
+    -->
+    <para>
+     設定ファイルの解析時に発生するセグメンテーション違反を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     設定値が一重引用符で囲まれていない場合に<filename>pgpool.conf</filename>を解析するときにセグメンテーション違反が発生していました。
+    </para>
+    <para>
+     このパッチはCarlos Chapiによって作成され、Tatsuo Ishiiによってレビューおよび修正されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-21 [21e40ca]
+    -->
+    <para>
+     MAIN_NODEマクロを使用しないようにセグメンテーション違反を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     一部の関数 (close_idle_connection()、new_connection()、pool_create_cp())では、MAIN*とVALID_BACKENDが不適切な場所で使用されていました。
+     MAIN*とVALID_BACKENDは、バックエンドへの現在の接続に対してのみ有効であり、プールされた接続には有効ではありません。
+     プールされた接続では、どのバックエンドがメインノードであるか、または稼働中であるかは、バックエンドへの現在の接続と必ず同じであるためです。
+     これらのマクロを誤って使用すると、セグメンテーション違反が発生することがありました。
+    </para>
+    <para>
+     この問題はEmond Papegaaij によって報告されました。
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-June/009176.html">[pgpool-general: 9114]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-21 [85a5ba0]
+    -->
+    <para>
+     MAIN_NODEマクロ（実際は pool_virtual_main_db_node_id()）を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     セッションコンテキストがない場合、マクロは<literal>REAL_MAIN_NODE_ID</literal>に使用されます。
+     フェイルオーバー/フェイルバックが発生すると、いつでも<literal>REAL_MAIN_NODE_ID</literal>が変更される可能性があるため、これは誤りでした。
+    </para>
+    <para>
+     REAL_MAIN_NODE_ID == my_main_node_id == 1と仮定します。
+     その後、フェイルバックにより、<literal>REAL_MAIN_NODE_ID</literal>は0に変更されます。
+     その後、MAIN_CONNECTION(cp)はNULLを返し、これへの参照はセグメンテーションエラーを引き起こします。
+     この問題を回避するには、代わりにmy_main_node_idを返すように修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-14 [a4bab80]
+    -->
+    <para>
+     <command>show pool_processes</command>で行の説明が2回表示されないように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     processes_reporting()が誤ってsend_row_description()とsend_row_description_and_data_rows()の両方を呼び出していました。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-June/004472.html">[pgpool-hackers: 4471]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-11 [134bc75]
+    -->
+    <para>
+     子プロセスでのセグメンテーション違反を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-May/001780.html">[pgpool-general: 9104]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-11 [f92feef]
+    -->
+    <para>
+     ネットワークが短時間中断されると、Watchdogが停止し、<productname>Pgpool-II</productname>が強制終了する問題を修正しました。 (<ulink url="https://www.pgpool.net/mantisbt/view.php?id=823">#823</ulink>) (Muhammad Usama)
+    </para>
+    <para>
+     ネットワーク監視を有効にすると、<productname>Pgpool-II</productname>ノードはすべてのネットワークインターフェイスまたは割り当てられたIPアドレスを失った場合に直ちにシャットダウンし、通信できないノードをクラスタからすばやく削除することで追加の保護を提供します。
+    </para>
+    <para>
+     問題は、ネットワーク監視が無効になっている場合でも、<productname>Pgpool-II</productname>がネットワークブラックアウトイベントに応答していたことです。
+     この修正により、ネットワーク監視が有効になっていない場合にネットワーク監視ソケットがオープンされなくなり、不要なシャットダウンが防止されます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-10 [f46fdae]
+    -->
+    <para>
+     Watchdogが有効な場合に<command>pgpool reset</command>コマンドが動作しない問題を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     バグはkeiseoによって報告・問題分析されました。
+     Disscussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-June/004466.html">[pgpool-hackers: 4465]</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-04 [612e7f4]
+    -->
+    <para>
+     <literal>psql_scan</literal>のクラッシュを修正しました。 (<ulink url="https://github.com/pgpool/pgpool2/issues/54">#54</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     長いクエリ内の文字列が<literal>psql</literal>変数（つまり「:」で始まる）であるかどうかを判別しているときに、<literal>psql_scan</literal>がクラッシュする問題がありました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-06-07 [f8e8436]
+    -->
+    <para>
+     ドキュメントとプログラムソースコードの大量なタイポミスを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     パッチはUmar Hayatによって作成されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-08-01 [ffab3b2]
+    -->
+    <para>
+     強制終了するプロセスを選択するための基準を<xref linkend="guc-max-spare-children">のドキュメントに追加しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-07-30 [7c3e166]
+    -->
+    <para>
+     フェイルオーバーのドキュメントを改良しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-failover-on-backend-shutdown">が有効な場合のフェイルオーバーの条件を明確にしました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-19 [7cd903e]
+    -->
+    <para>
+     仮想IP関連パラメータのデフォルト値をドキュメントに追加しました。(Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-5-2">
  <title>リリース 4.5.2</title>
   <note>
