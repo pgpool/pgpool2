@@ -1327,9 +1327,31 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 			kind = pool_read_kind(backend);
 			if (kind != 'Z')
-				ereport(ERROR,
-						(errmsg("unable to parse the query"),
-						 errdetail("invalid read kind \"%c\" returned from backend %d after Sync message sent", kind, i)));
+			{
+				/*
+				 * It is possible that parameter status message was sent from
+				 * backend.
+				 */
+				if (kind == 'S')
+				{
+					if (ParameterStatus(frontend, backend) != POOL_CONTINUE)
+						ereport(ERROR,
+								(errmsg("unable to process parameter status message")));
+
+					/* expecting ready for query message */
+					kind = pool_read_kind(backend);
+					if (kind != 'Z')
+						ereport(ERROR,
+								(errmsg("unable to parse the query"),
+								 errdetail("invalid read kind \"%c\" returned from backend after Sync message sent",
+										   kind)));
+				}
+				else
+						ereport(ERROR,
+								(errmsg("unable to parse the query"),
+								 errdetail("invalid read kind \"%c\" returned from backend after Sync message sent",
+										   kind)));
+			}
 
 			/*
 			 * SYNC message returns "Ready for Query" message.
