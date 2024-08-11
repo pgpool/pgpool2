@@ -1470,6 +1470,12 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		{
 			int			i;
 
+			/*
+			 * Temporarily unset query in progress so that all live backend
+			 * are processed.
+			 */
+			pool_unset_query_in_progress();
+
 			/* synchronize transaction state */
 			for (i = 0; i < NUM_BACKENDS; i++)
 			{
