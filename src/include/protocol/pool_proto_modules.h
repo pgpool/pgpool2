@@ -115,6 +115,8 @@ extern POOL_STATUS ProcessBackendResponse(POOL_CONNECTION * frontend,
 
 extern void handle_query_context(POOL_CONNECTION_POOL * backend);;
 
+extern void per_node_statement_notice(POOL_CONNECTION_POOL * backend, int node_id, char *query);
+
 /*
  * modules defined in pool_proto2.c
  */
