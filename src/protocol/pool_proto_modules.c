@@ -3650,6 +3650,17 @@ per_node_statement_log(POOL_CONNECTION_POOL * backend, int node_id, char *query)
 }
 
 /*
+ * Make per DB node statement notice message
+ */
+void
+per_node_statement_notice(POOL_CONNECTION_POOL * backend, int node_id, char *query)
+{
+	if (pool_config->notice_per_node_statement)
+		ereport(NOTICE,
+				(errmsg("DB node id: %d statement: %s", node_id, query)));
+}
+
+/*
  * Check kind and produce error message
  * All data read in this function is returned to stream.
  */
