@@ -634,6 +634,16 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
+		{"notice_per_node_statement", CFGCXT_SESSION, LOGGING_CONFIG,
+			"Logs notice message for per node detailed SQL statements.",
+			CONFIG_VAR_TYPE_ENUM, false, 0
+		},
+		&g_pool_config.notice_per_node_statement,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"log_client_messages", CFGCXT_SESSION, LOGGING_CONFIG,
 			"Logs any client messages in the pgpool logs.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
