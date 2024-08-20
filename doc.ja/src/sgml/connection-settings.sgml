@@ -627,6 +627,7 @@
       This parameter can only be set at server start.
       -->
       このパラメータはサーバ起動時にのみ設定可能です。
+      ただし、パスワードファイルの内容変更はサーバの再起動や設定ファイルの再読込なしに直ちに反映されます。
      </para>
     </listitem>
    </varlistentry>

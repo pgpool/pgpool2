@@ -660,9 +660,8 @@
      See <xref linkend="auth-pool-hba-conf"> for more details.
     </para>
     <para>
-     3- After changing md5 password (in both pool_passwd
-     and <productname>PostgreSQL</productname> of course), reload
-     the pgpool configurations.
+     3- Change md5 password in both pool_passwd and <productname>PostgreSQL</productname>.
+     Reloading the pgpool configurations is not necessary.
     </para>
    </sect3>
 
@@ -740,9 +739,8 @@
      See <xref linkend="auth-pool-hba-conf"> for more details.
     </para>
     <para>
-     3- After changing SCRAM password (in both pool_passwd
-     and <productname>PostgreSQL</productname> of course), reload
-     the <productname>Pgpool-II</productname> configuration.
+     3- Change md5 password in both pool_passwd and <productname>PostgreSQL</productname>.
+     Reloading the pgpool configurations is not necessary.
     </para>
    </sect3>
 
