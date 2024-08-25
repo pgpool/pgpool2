@@ -388,7 +388,7 @@
       e.g. <literal>TEXTmypassword</literal>
      </para>
      <para>
-      Similarly md5 hashed passwords must be prefixed with <literal>md5</literal> and
+      similarly md5 hashed passwords must be prefixed with <literal>md5</literal> and
       AES256 encrypted password types can be stored using <literal>AES</literal> prefix.
       see <xref linkend="auth-aes-encrypted-password"> for more details on using
        AES256 encrypted passwords.
@@ -400,9 +400,6 @@
      </para>
      <para>
       This parameter can only be set at server start.
-      However, you don't need to restart the server or reload the
-      configuration file when you update the contents of the password
-      file.
      </para>
     </listitem>
    </varlistentry>
