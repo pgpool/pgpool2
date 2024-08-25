@@ -891,8 +891,7 @@
      3- After changing md5 password(in both pool_passwd and <productname>PostgreSQL</> of course),
      reload the <productname>Pgpool-II</> configurations.
      -->
-     3. pool_passwdと<productname>PostgreSQL</>の両方でmd5パスワードを変更します。
-	<productname>Pgpool-II</>設定の再読み込みは必要ありません。
+     3. （もちろんpool_passwdと<productname>PostgreSQL</>の両方で）md5パスワードを変更したら、<productname>Pgpool-II</>設定の再読み込みを実行してください。
     </para>
    </sect3>
 
@@ -1008,8 +1007,7 @@
      and <productname>PostgreSQL</productname> of course), reload
      the <productname>Pgpool-II</productname> configuration.
      -->
-     3. pool_passwdと<productname>PostgreSQL</>の両方でmd5パスワードを変更します。
-	<productname>Pgpool-II</>設定の再読み込みは必要ありません。
+     3- （もちろんpool_passwdと<productname>PostgreSQL</productname>の両方で）SCRAMパスワードを変更したら、<productname>Pgpool-II</productname>の設定の再読み込みを実行してください。
     </para>
    </sect3>
 
