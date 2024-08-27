@@ -96,7 +96,7 @@
     </term>
     <listitem>
      <para>
-      Specifies the hostname or IP address of
+      Specifies the hostname or IP (IPv4 or IPv6) address of
       <productname>Pgpool-II</productname> server.
       This is used for sending/receiving queries and packets,
       and also as an identifier of the watchdog node.
@@ -1117,7 +1117,7 @@ pgpool_port2 = 9999
     </term>
     <listitem>
      <para>
-      Specifies the <acronym>IP</acronym> address or <acronym>hostname</acronym>
+      Specifies the <acronym>IP (IPv4 or IPv6)</acronym> address or <acronym>hostname</acronym>
 	  for sending and receiving the heartbeat signals.
       The number at the end of the parameter name is referred
       as "pgpool node id", and it starts from 0 (e.g. heartbeat_hostname0).

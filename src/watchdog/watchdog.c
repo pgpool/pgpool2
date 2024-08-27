@@ -585,7 +585,7 @@ static bool get_authhash_for_node(WatchdogNode * wdNode, char *authhash);
 static bool verify_authhash_for_node(WatchdogNode * wdNode, char *authhash);
 
 static void print_watchdog_node_info(WatchdogNode * wdNode);
-static int	wd_create_recv_socket(int port);
+static List *wd_create_recv_socket(int port);
 static void wd_check_config(void);
 static pid_t watchdog_main(void);
 static pid_t fork_watchdog_child(void);
@@ -614,6 +614,7 @@ static void	update_failover_timeout(WatchdogNode * wdNode, POOL_CONFIG *pool_con
 wd_cluster	g_cluster;
 struct timeval g_tm_set_time;
 int			g_timeout_sec = 0;
+List	   *g_wd_recv_socks = NIL;
 
 static unsigned int
 get_next_commandID(void)
@@ -823,7 +824,8 @@ wd_cluster_initialize(void)
 	g_cluster.ipc_auth_needed = strlen(pool_config->wd_authkey) ? true : false;
 
 	g_cluster.localNode->escalated = get_watchdog_node_escalation_state();
-
+	g_cluster.localNode->server_socket.sock = 0;
+	g_cluster.localNode->server_socket.sock_state = WD_SOCK_CLOSED;
 	wd_initialize_monitoring_interfaces();
 	if (g_cluster.ipc_auth_needed)
 	{
@@ -855,82 +857,132 @@ clear_command_node_result(WDCommandNodeResult * nodeResult)
 	nodeResult->cmdState = COMMAND_STATE_INIT;
 }
 
-static int
+static List *
 wd_create_recv_socket(int port)
 {
-	size_t		len = 0;
-	struct sockaddr_in addr;
 	int			one = 1;
 	int			sock = -1;
 	int			saved_errno;
+	int			gai_ret,
+				n = 0,
+				target_n = n;
+	char	   *portstr = NULL;
+	struct addrinfo hints,
+			   *walk,
+			   *res = NULL;
+	List	   *socks = NIL;
 
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	portstr = psprintf("%d", port);
+
+	memset(&hints, 0x00, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_NUMERICSERV | AI_PASSIVE;
+
+	if ((gai_ret = getaddrinfo(NULL, portstr, &hints, &res)) != 0)
 	{
-		/* socket create failed */
 		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("create socket failed with reason: \"%m\"")));
+				(errmsg("getaddrinfo failed with error \"%s\"", gai_strerror(gai_ret))));
+		pfree(portstr);
+		return NIL;
+	}
+	pfree(portstr);
+
+	for (walk = res; walk != NULL; walk = walk->ai_next)
+		n++;
+
+	if (n == 0)
+	{
+		ereport(ERROR, (errmsg("failed to create watchdog receive socket"),
+						errdetail("getaddrinfo() result is empty: no sockets can be created because no available local address with port:%d", port)));
+		return NIL;
+	}
+	else
+	{
+		target_n = n;
+		n = 0;
 	}
 
-	socket_set_nonblock(sock);
-
-	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1)
+	for (walk = res; walk != NULL; walk = walk->ai_next)
 	{
-		/* setsockopt(SO_REUSEADDR) failed */
-		saved_errno = errno;
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%s\"", strerror(saved_errno))));
-	}
-	if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1)
-	{
-		/* setsockopt(TCP_NODELAY) failed */
-		saved_errno = errno;
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%s\"", strerror(saved_errno))));
-	}
-	if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1)
-	{
-		/* setsockopt(SO_KEEPALIVE) failed */
-		saved_errno = errno;
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%s\"", strerror(saved_errno))));
+		if ((sock = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol)) < 0)
+		{
+			/* socket create failed */
+			ereport(ERROR,
+					(errmsg("failed to create watchdog receive socket"),
+					 errdetail("create socket failed with reason: \"%m\"")));
+		}
+
+		socket_set_nonblock(sock);
+
+		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1)
+		{
+			/* setsockopt(SO_REUSEADDR) failed */
+			saved_errno = errno;
+			close(sock);
+			ereport(ERROR,
+					(errmsg("failed to create watchdog receive socket"),
+					 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%s\"", strerror(saved_errno))));
+		}
+		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1)
+		{
+			/* setsockopt(TCP_NODELAY) failed */
+			saved_errno = errno;
+			close(sock);
+			ereport(ERROR,
+					(errmsg("failed to create watchdog receive socket"),
+					 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%s\"", strerror(saved_errno))));
+		}
+		if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1)
+		{
+			/* setsockopt(SO_KEEPALIVE) failed */
+			saved_errno = errno;
+			close(sock);
+			ereport(ERROR,
+					(errmsg("failed to create watchdog receive socket"),
+					 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%s\"", strerror(saved_errno))));
+		}
+		if (walk->ai_family == AF_INET6)
+		{
+			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &one, sizeof(one)) == -1)
+			{
+				ereport(ERROR,
+						(errmsg("failed to set IPPROTO_IPV6 option to watchdog receive socket"),
+						 errdetail("setsockopt(IPV6_V6ONLY) failed with reason: \"%m\"")));
+			}
+		}
+		if (bind(sock, walk->ai_addr, walk->ai_addrlen) < 0)
+		{
+			/* bind failed */
+			saved_errno = errno;
+			close(sock);
+			ereport(ERROR,
+					(errmsg("failed to create watchdog receive socket"),
+					 errdetail("bind on \"TCP:%d\" failed with reason: \"%s\"", port, strerror(saved_errno))));
+		}
+
+		if (listen(sock, MAX_WATCHDOG_NUM * 2) < 0)
+		{
+			/* listen failed */
+			saved_errno = errno;
+			close(sock);
+			ereport(ERROR,
+					(errmsg("failed to create watchdog receive socket"),
+					 errdetail("listen failed with reason: \"%s\"", strerror(saved_errno))));
+		}
+
+		socks = lappend_int(socks, sock);
+		n++;
 	}
 
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	addr.sin_port = htons(port);
-	len = sizeof(struct sockaddr_in);
+	if (target_n != n)
+		ereport(WARNING,
+				(errmsg("failed to create watchdog receive socket as much intended"),
+				 errdetail("only %d out of %d socket(s) had been created", n, target_n)));
 
-	if (bind(sock, (struct sockaddr *) &addr, len) < 0)
-	{
-		/* bind failed */
-		saved_errno = errno;
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("bind on \"TCP:%d\" failed with reason: \"%s\"", port, strerror(saved_errno))));
-	}
-
-	if (listen(sock, MAX_WATCHDOG_NUM * 2) < 0)
-	{
-		/* listen failed */
-		saved_errno = errno;
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog receive socket"),
-				 errdetail("listen failed with reason: \"%s\"", strerror(saved_errno))));
-	}
-
-	return sock;
+	return socks;
 }
-
-
 
 /*
  * creates a socket in non blocking mode and connects it to the hostname and port
@@ -939,15 +991,33 @@ wd_create_recv_socket(int port)
 static int
 wd_create_client_socket(char *hostname, int port, bool *connected)
 {
-	int			sock;
+	int			sock,
+				gai_ret = -1;
 	int			one = 1;
-	size_t		len = 0;
-	struct sockaddr_in addr;
-	struct hostent *hp;
+	char	   *portstr = NULL;
+	struct addrinfo hints,
+			   *res = NULL;
 
+	portstr = psprintf("%d", port);
+
+	memset(&hints, 0x00, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_NUMERICSERV;
+
+	if ((gai_ret = getaddrinfo(hostname, portstr, &hints, &res)) != 0)
+	{
+		ereport(ERROR,
+				(errmsg("getaddrinfo failed with error \"%s\"", gai_strerror(gai_ret))));
+
+		pfree(portstr);
+		return -1;
+	}
+	pfree(portstr);
 	*connected = false;
 	/* create socket */
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	if ((sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
 	{
 		/* socket create failed */
 		ereport(LOG,
@@ -972,31 +1042,13 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 		close(sock);
 		return -1;
 	}
-	/* set sockaddr_in */
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	hp = gethostbyname(hostname);
-	if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-	{
-		hp = gethostbyaddr(hostname, strlen(hostname), AF_INET);
-		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-		{
-			ereport(LOG,
-					(errmsg("failed to get host address for \"%s\"", hostname),
-					 errdetail("gethostbyaddr failed with error: \"%s\"", hstrerror(h_errno))));
-			close(sock);
-			return -1;
-		}
-	}
-	memmove((char *) &(addr.sin_addr), (char *) hp->h_addr, hp->h_length);
-	addr.sin_port = htons(port);
-	len = sizeof(struct sockaddr_in);
 
 	/* set socket to non blocking */
 	socket_set_nonblock(sock);
 
-	if (connect(sock, (struct sockaddr *) &addr, len) < 0)
+	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0)
 	{
+		freeaddrinfo(res);
 		if (errno == EINPROGRESS)
 		{
 			return sock;
@@ -1013,6 +1065,7 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 		close(sock);
 		return -1;
 	}
+	freeaddrinfo(res);
 	/* set socket to blocking again */
 	socket_unset_nonblock(sock);
 	*connected = true;
@@ -1191,8 +1244,8 @@ watchdog_main(void)
 	/* initialize all the local structures for watchdog */
 	wd_cluster_initialize();
 	/* create a server socket for incoming watchdog connections */
-	g_cluster.localNode->server_socket.sock = wd_create_recv_socket(g_cluster.localNode->wd_port);
-	g_cluster.localNode->server_socket.sock_state = WD_SOCK_CONNECTED;
+	g_wd_recv_socks = wd_create_recv_socket(g_cluster.localNode->wd_port);
+
 	/* open the command server */
 	g_cluster.command_server_sock = wd_create_command_server_socket();
 
@@ -1406,9 +1459,16 @@ prepare_fds(fd_set *rmask, fd_set *wmask, fd_set *emask)
 	FD_ZERO(wmask);
 	FD_ZERO(emask);
 
-	/* local node server socket will set the read and exception fds */
-	FD_SET(g_cluster.localNode->server_socket.sock, rmask);
-	FD_SET(g_cluster.localNode->server_socket.sock, emask);
+	foreach(lc, g_wd_recv_socks)
+	{
+		i = lfirst_int(lc);
+		if (fd_max < i)
+			fd_max = i;
+
+		/* local node server socket will set the read and exception fds */
+		FD_SET(i, rmask);
+		FD_SET(i, emask);
+	}
 
 	/* command server socket will set the read and exception fds */
 	FD_SET(g_cluster.command_server_sock, rmask);
@@ -3299,6 +3359,7 @@ static void
 wd_system_will_go_down(int code, Datum arg)
 {
 	int			i;
+	ListCell 	*lc;
 
 	ereport(LOG,
 			(errmsg("Watchdog is shutting down")));
@@ -3307,8 +3368,16 @@ wd_system_will_go_down(int code, Datum arg)
 
 	if (get_local_node_state() == WD_COORDINATOR)
 		resign_from_escalated_node();
-	/* close server socket */
-	close_socket_connection(&g_cluster.localNode->server_socket);
+
+	/* close watchdog receive sockets */
+	foreach(lc, g_wd_recv_socks)
+	{
+		i = lfirst_int(lc);
+		close(i);
+	}
+	list_free(g_wd_recv_socks);
+	g_wd_recv_socks = NIL;
+
 	/* close all node sockets */
 	for (i = 0; i < g_cluster.remoteNodeCount; i++)
 	{
@@ -3382,39 +3451,62 @@ accept_incoming_connections(fd_set *rmask, int pending_fds_count)
 {
 	int			processed_fds = 0;
 	int			fd;
+	ListCell   *lc;
+	int			sock;
 
-	if (FD_ISSET(g_cluster.localNode->server_socket.sock, rmask))
+	foreach(lc, g_wd_recv_socks)
 	{
-		struct sockaddr_in addr;
-		socklen_t	addrlen = sizeof(struct sockaddr_in);
-
-		processed_fds++;
-		fd = accept(g_cluster.localNode->server_socket.sock, (struct sockaddr *) &addr, &addrlen);
-		if (fd < 0)
+		sock = lfirst_int(lc);
+		if (FD_ISSET(sock, rmask))
 		{
-			if (errno == EINTR || errno == 0 || errno == EAGAIN || errno == EWOULDBLOCK)
+			struct sockaddr_storage ss;
+			socklen_t	addrlen = sizeof(ss);
+			int			port;
+
+			processed_fds++;
+			fd = accept(sock, (struct sockaddr *) &ss, &addrlen);
+			if (fd < 0)
 			{
-				/* nothing to accept now */
-				ereport(DEBUG2,
-						(errmsg("Failed to accept incoming watchdog connection, Nothing to accept")));
+				if (errno == EINTR || errno == 0 || errno == EAGAIN || errno == EWOULDBLOCK)
+				{
+					/* nothing to accept now */
+					ereport(DEBUG2,
+							(errmsg("Failed to accept incoming watchdog connection, Nothing to accept")));
+				}
+				/* accept failed */
+				ereport(DEBUG1,
+						(errmsg("Failed to accept incoming watchdog connection")));
 			}
-			/* accept failed */
-			ereport(DEBUG1,
-					(errmsg("Failed to accept incoming watchdog connection")));
-		}
-		else
-		{
-			MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
-			SocketConnection *conn = palloc(sizeof(SocketConnection));
+			else
+			{
+				MemoryContext oldCxt = MemoryContextSwitchTo(TopMemoryContext);
+				SocketConnection *conn = palloc(sizeof(SocketConnection));
 
-			conn->sock = fd;
-			conn->sock_state = WD_SOCK_CONNECTED;
-			gettimeofday(&conn->tv, NULL);
-			strncpy(conn->addr, inet_ntoa(addr.sin_addr), sizeof(conn->addr) - 1);
-			ereport(LOG,
-					(errmsg("new watchdog node connection is received from \"%s:%d\"", inet_ntoa(addr.sin_addr), addr.sin_port)));
-			g_cluster.unidentified_socks = lappend(g_cluster.unidentified_socks, conn);
-			MemoryContextSwitchTo(oldCxt);
+				conn->sock = fd;
+				conn->sock_state = WD_SOCK_CONNECTED;
+				gettimeofday(&conn->tv, NULL);
+
+				switch (ss.ss_family)
+				{
+					case AF_INET:
+						inet_ntop(AF_INET, &((struct sockaddr_in *) &ss)->sin_addr, conn->addr, addrlen);
+						port = ntohs(((struct sockaddr_in *) (&ss))->sin_port);
+						break;
+					case AF_INET6:
+						inet_ntop(AF_INET6, &((struct sockaddr_in6 *) &ss)->sin6_addr, conn->addr, addrlen);
+						port = ntohs(((struct sockaddr_in6 *) (&ss))->sin6_port);
+						break;
+					default:
+						ereport(ERROR, (errmsg("invalid incoming socket family data")));
+						break;
+				}
+
+				ereport(LOG,
+						(errmsg("new watchdog node connection is received from \"%s:%d\"", conn->addr, port)));
+
+				g_cluster.unidentified_socks = lappend(g_cluster.unidentified_socks, conn);
+				MemoryContextSwitchTo(oldCxt);
+			}
 		}
 	}
 

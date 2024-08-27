@@ -75,28 +75,117 @@ static int	hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
 static int	ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
 static int	packet_to_string_hb(WdHbPacket * pkt, char *str, int maxlen);
 static void wd_set_reuseport(int sock);
+static int	select_socket_from_list(List *socks, int timeout_sec);
 
 static int	wd_create_hb_send_socket(WdHbIf * hb_if);
-static int	wd_create_hb_recv_socket(WdHbIf * hb_if);
+static List *wd_create_hb_recv_socket(WdHbIf * hb_if);
 
 static void wd_hb_send(int sock, WdHbPacket * pkt, int len, const char *destination, const int dest_port);
 static void wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr);
+
+ /*
+  * Readable socket will be returned among the listening socket list.
+  */
+static int
+select_socket_from_list(List *socks, int timeout_sec)
+{
+	int			select_ret;
+	int			maxsfd = 0;
+	int			sock;
+	fd_set		rfds;
+	fd_set		efds;
+	ListCell   *lc;
+	struct timeval tv;
+
+	tv.tv_sec = timeout_sec;
+	tv.tv_usec = 0;
+
+	FD_ZERO(&rfds);
+	FD_ZERO(&efds);
+
+	foreach(lc, socks)
+	{
+		sock = lfirst_int(lc);
+		FD_SET(sock, &rfds);
+		FD_SET(sock, &efds);
+		if (maxsfd < sock)
+			maxsfd = sock;
+	}
+
+	select_ret = select(maxsfd + 1, &rfds, NULL, &efds, &tv);
+
+	if (select_ret > 0)
+	{
+		foreach(lc, socks)
+		{
+			sock = lfirst_int(lc);
+			if (FD_ISSET(sock, &rfds))
+			{
+				ereport(DEBUG2,
+						(errmsg("wd_hb_recv_socket fd:%d is readable", sock)));
+				return sock;
+			}
+			if (FD_ISSET(sock, &efds))
+			{
+				ereport(WARNING,
+						(errmsg("exception detected on heartbeat receive socket fd:%d", sock)));
+				break;
+			}
+		}
+	}
+	else if (select_ret == -1)
+	{
+		ereport(ERROR,
+				(errmsg("failed to get socket data from heartbeat receive socket list"),
+				 errdetail("select() failed with reason %m")));
+	}
+	else
+	{
+		ereport(ERROR,
+				(errmsg("failed to get socket data from heartbeat receive socket list"),
+				 errdetail("select() got timeout, exceed %d sec(s)", timeout_sec)));
+	}
+
+	return -1;
+}
 
 /* create socket for sending heartbeat */
 static int
 wd_create_hb_send_socket(WdHbIf * hb_if)
 {
-	int			sock;
+	int			sock = -1;
 	int			tos;
+	int			ret;
+	char	   *portstr = NULL;
+	struct addrinfo hints,
+			   *res = NULL;
+
+	portstr = psprintf("%d", hb_if->dest_port);
+
+	memset(&hints, 0x00, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_NUMERICSERV;
+
+	if ((ret = getaddrinfo(hb_if->addr, portstr, &hints, &res)) != 0)
+	{
+		ereport(ERROR,
+				(errmsg("getaddrinfo() failed with error \"%s\"", gai_strerror(ret))));
+		pfree(portstr);
+		return -1;
+	}
+	pfree(portstr);
 
 	/* create socket */
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	if ((sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
 	{
 		/* socket create failed */
 		ereport(ERROR,
 				(errmsg("failed to create watchdog heartbeat sender socket"),
 				 errdetail("create socket failed with reason: \"%m\"")));
 	}
+	freeaddrinfo(res);
 
 	/* set socket option */
 	tos = IPTOS_LOWDELAY;
@@ -159,112 +248,182 @@ wd_create_hb_send_socket(WdHbIf * hb_if)
 }
 
 /* create socket for receiving heartbeat */
-static int
+static List *
 wd_create_hb_recv_socket(WdHbIf * hb_if)
 {
-	struct sockaddr_in addr;
-	int			sock;
+	int			sock = -1,
+				gai_ret,
+				n = 0,
+				target_n = n;
+	List	   *socks = NIL;
 	const int	one = 1;
 	int			bind_tries;
 	int			bind_is_done;
+	char		buf[INET6_ADDRSTRLEN] = {'\0'};
+	char	   *portstr = NULL;
+	struct addrinfo hints,
+			   *walk,
+			   *res = NULL;
 
-	memset(&(addr), 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(pool_config->wd_heartbeat_port);
-	addr.sin_addr.s_addr = INADDR_ANY;
+	portstr = psprintf("%d", pool_config->wd_heartbeat_port);
 
-	/* create socket */
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	memset(&hints, 0x00, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_NUMERICSERV;
+
+	if ((gai_ret = getaddrinfo(NULL, portstr, &hints, &res)) != 0)
 	{
-		/* socket create failed */
 		ereport(ERROR,
-				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("create socket failed with reason: \"%m\"")));
+				(errmsg("getaddrinfo() failed with error \"%s\"", gai_strerror(gai_ret))));
+		pfree(portstr);
+		return NIL;
+	}
+	pfree(portstr);
+
+	for (walk = res; walk != NULL; walk = walk->ai_next)
+		n++;
+
+	if (n == 0)
+	{
+		ereport(ERROR, (errmsg("failed to create watchdog heartbeat receive socket"),
+						errdetail("getaddrinfo() result is empty: no sockets can be created because no available local address with port:%d", pool_config->wd_heartbeat_port)));
+		return NULL;
+	}
+	else
+	{
+		target_n = n;
+		n = 0;
 	}
 
-	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1)
-	{
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%m\"")));
-	}
 
-	if (hb_if->if_name[0] != '\0')
+	for (walk = res; walk != NULL; walk = walk->ai_next)
 	{
-#if defined(SO_BINDTODEVICE)
+		/* create socket */
+		if ((sock = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol)) < 0)
 		{
-			if (geteuid() == 0) /* check root privileges */
+			/* socket create failed */
+			ereport(ERROR,
+					(errmsg("failed to create watchdog heartbeat receive socket"),
+					 errdetail("create socket failed with reason: \"%m\"")));
+		}
+
+		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1)
+		{
+			close(sock);
+			ereport(ERROR,
+					(errmsg("failed to create watchdog heartbeat receive socket"),
+					 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%m\"")));
+		}
+		if (walk->ai_family == AF_INET6)
+		{
+			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &one, sizeof(one)) == -1)
 			{
-				struct ifreq i;
+				ereport(ERROR,
+						(errmsg("failed to set IPPROTO_IPV6 option to watchdog heartbeat recv socket"),
+						 errdetail("setsockopt(IPV6_V6ONLY) failed with reason: \"%m\"")));
+			}
+		}
 
-				strlcpy(i.ifr_name, hb_if->if_name, sizeof(i.ifr_name));
-
-				if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
+		if (hb_if->if_name[0] != '\0')
+		{
+#if defined(SO_BINDTODEVICE)
+			{
+				if (geteuid() == 0) /* check root privileges */
 				{
-					close(sock);
-					ereport(ERROR,
-							(errmsg("failed to create watchdog heartbeat receive socket"),
-							 errdetail("setsockopt(SO_BINDTODEVICE) failed with reason: \"%m\"")));
-				}
-				ereport(LOG,
-						(errmsg("creating watchdog heartbeat receive socket."),
-						 errdetail("bind receive socket to device: \"%s\"", i.ifr_name)));
+					struct ifreq i;
 
+					strlcpy(i.ifr_name, hb_if->if_name, sizeof(i.ifr_name));
+
+					if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
+					{
+						close(sock);
+						ereport(ERROR,
+								(errmsg("failed to create watchdog heartbeat receive socket"),
+								 errdetail("setsockopt(SO_BINDTODEVICE) failed with reason: \"%m\"")));
+					}
+					ereport(LOG,
+							(errmsg("creating watchdog heartbeat receive socket."),
+							 errdetail("bind receive socket to device: \"%s\"", i.ifr_name)));
+
+				}
+				else
+					ereport(LOG,
+							(errmsg("failed to create watchdog heartbeat receive socket."),
+							 errdetail("setsockopt(SO_BINDTODEVICE) requires root privilege")));
+			}
+#else
+			ereport(LOG,
+					(errmsg("failed to create watchdog heartbeat receive socket"),
+					 errdetail("setsockopt(SO_BINDTODEVICE) is not available on this platform")));
+#endif
+		}
+
+		wd_set_reuseport(sock);
+
+		switch (walk->ai_family)
+		{
+			case AF_INET:
+				inet_ntop(AF_INET, &((struct sockaddr_in *) walk->ai_addr)->sin_addr, buf, walk->ai_addrlen);
+				break;
+			case AF_INET6:
+				inet_ntop(AF_INET6, &((struct sockaddr_in6 *) walk->ai_addr)->sin6_addr, buf, walk->ai_addrlen);
+				break;
+			default:
+				ereport(ERROR, (errmsg("invalid incoming socket family data")));
+				break;
+		}
+		ereport(LOG,
+				(errmsg("creating watchdog heartbeat receive socket."),
+				 errdetail("creating socket on %s:%d", buf, pool_config->wd_heartbeat_port)));
+
+		bind_is_done = 0;
+		for (bind_tries = 0; !bind_is_done && bind_tries < MAX_BIND_TRIES; bind_tries++)
+		{
+			if (bind(sock, walk->ai_addr, walk->ai_addrlen) < 0)
+			{
+				ereport(LOG,
+						(errmsg("failed to create watchdog heartbeat receive socket. retrying..."),
+						 errdetail("bind failed with reason: \"%m\"")));
+
+				sleep(1);
 			}
 			else
-				ereport(LOG,
-						(errmsg("failed to create watchdog heartbeat receive socket."),
-						 errdetail("setsockopt(SO_BINDTODEVICE) requires root privilege")));
+			{
+				bind_is_done = 1;
+			}
 		}
-#else
-		ereport(LOG,
-				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("setsockopt(SO_BINDTODEVICE) is not available on this platform")));
-#endif
-	}
-
-	wd_set_reuseport(sock);
-
-	ereport(LOG,
-			(errmsg("creating watchdog heartbeat receive socket."),
-			 errdetail("set SO_REUSEPORT")));
-
-	bind_is_done = 0;
-	for (bind_tries = 0; !bind_is_done && bind_tries < MAX_BIND_TRIES; bind_tries++)
-	{
-		if (bind(sock, (struct sockaddr *) &addr, sizeof(struct sockaddr)) < 0)
+		/* bind failed finally */
+		if (!bind_is_done)
 		{
-			ereport(LOG,
-					(errmsg("failed to create watchdog heartbeat receive socket. retrying..."),
-					 errdetail("bind failed with reason: \"%m\"")));
-
-			sleep(1);
+			close(sock);
+			ereport(ERROR,
+					(errmsg("failed to create watchdog heartbeat receive socket"),
+					 errdetail("bind socket failed with reason: \"%m\"")));
+			continue;
 		}
-		else
+
+		if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0)
 		{
-			bind_is_done = 1;
+			close(sock);
+			ereport(ERROR,
+					(errmsg("failed to create watchdog heartbeat receive socket"),
+					 errdetail("setting close-on-exec flag failed with reason: \"%m\"")));
+			continue;
 		}
+
+		socks = lappend_int(socks, sock);
+		n++;
 	}
 
-	/* bind failed finally */
-	if (!bind_is_done)
-	{
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("bind socket failed with reason: \"%m\"")));
-	}
+	if (target_n != n)
+		ereport(WARNING,
+				(errmsg("failed to create watchdog heartbeat receive socket as much intended"),
+				 errdetail("only %d out of %d socket(s) had been created", n, target_n)));
 
-	if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0)
-	{
-		close(sock);
-		ereport(ERROR,
-				(errmsg("failed to create watchdog heartbeat receive socket"),
-				 errdetail("setting close-on-exec flag failed with reason: \"%m\"")));
-	}
-
-	return sock;
+	freeaddrinfo(res);
+	return socks;
 }
 
 /* send heartbeat signal */
@@ -272,29 +431,36 @@ static void
 wd_hb_send(int sock, WdHbPacket * pkt, int len, const char *host, const int port)
 {
 	int			rtn;
-	struct sockaddr_in addr;
-	struct hostent *hp;
 	WdHbPacket	buf;
+	char	   *portstr;
+	struct addrinfo hints,
+			   *res = NULL;
+
+	portstr = psprintf("%d", port);
+
+	memset(&hints, 0x00, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags = AI_NUMERICSERV;
 
 	if (!host || !strlen(host))
 		ereport(ERROR,
 				(errmsg("failed to send watchdog heartbeat. host name is empty")));
 
-	hp = gethostbyname(host);
-	if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-		ereport(ERROR,
-				(errmsg("failed to send watchdog heartbeat, gethostbyname() failed"),
-				 errdetail("gethostbyname on \"%s\" failed with reason: \"%s\"", host, hstrerror(h_errno))));
-
-	memmove((char *) &(addr.sin_addr), (char *) hp->h_addr, hp->h_length);
-
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
+	if ((rtn = getaddrinfo(host, portstr, &hints, &res)) != 0)
+	{
+		/* Perhaps wrong hostname or IP */
+		ereport(WARNING,
+				(errmsg("failed to get address from watchdog heartbeat hostname"),
+				 errdetail("getaddrinfo() failed: %s", gai_strerror(rtn))));
+	}
+	pfree(portstr);
 
 	hton_wd_hb_packet(&buf, pkt);
 
 	if ((rtn = sendto(sock, &buf, sizeof(WdHbPacket), 0,
-					  (struct sockaddr *) &addr, sizeof(addr))) != len)
+					  res->ai_addr, res->ai_addrlen)) != len)
 	{
 		ereport(ERROR,
 				(errmsg("failed to send watchdog heartbeat, sendto failed"),
@@ -304,6 +470,7 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char *host, const int port
 	ereport(DEBUG2,
 			(errmsg("watchdog heartbeat: send %d byte packet", rtn)));
 
+	freeaddrinfo(res);
 }
 
 /*
@@ -315,17 +482,14 @@ static
 wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr)
 {
 	int			rtn;
-	struct sockaddr_in senderinfo;
-	socklen_t	addrlen;
 	WdHbPacket	buf;
+	struct sockaddr_storage ss;
+	socklen_t	addrlen = sizeof(ss);
 
-	addrlen = sizeof(senderinfo);
-
-	rtn = recvfrom(sock, &buf, sizeof(WdHbPacket), 0,
-				   (struct sockaddr *) &senderinfo, &addrlen);
+	rtn = recvfrom(sock, &buf, sizeof(WdHbPacket), 0, (struct sockaddr *) &ss, &addrlen);
 	if (rtn < 0)
 		ereport(ERROR,
-				(errmsg("failed to receive heartbeat packet")));
+				(errmsg("failed to receive heartbeat packet with reason %m")));
 	else if (rtn == 0)
 		ereport(ERROR,
 				(errmsg("failed to receive heartbeat received zero length packet")));
@@ -333,7 +497,23 @@ wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr)
 		ereport(DEBUG2,
 				(errmsg("watchdog heartbeat: received %d byte packet", rtn)));
 
-	strncpy(from_addr, inet_ntoa(senderinfo.sin_addr), WD_MAX_HOST_NAMELEN - 1);
+
+	switch (ss.ss_family)
+	{
+		case AF_INET:
+			inet_ntop(AF_INET, &((struct sockaddr_in *) &ss)->sin_addr, from_addr, addrlen);
+			break;
+		case AF_INET6:
+			inet_ntop(AF_INET6, &((struct sockaddr_in6 *) &ss)->sin6_addr, from_addr, addrlen);
+			break;
+		default:
+			ereport(ERROR,
+					(errmsg("invalid socket address family:%d", ss.ss_family)));
+			break;
+	}
+
+	ereport(DEBUG2,
+			(errmsg("watchdog heartbeat: received %d byte packet", rtn)));
 
 	ntoh_wd_hb_packet(pkt, &buf);
 }
@@ -352,6 +532,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 	char		pack_str[WD_MAX_PACKET_STRING];
 	int			pack_str_len;
 	sigjmp_buf	local_sigjmp_buf;
+	List	   *wd_hb_recv_socks = NIL;
 
 	pid = fork();
 	if (pid != 0)
@@ -392,7 +573,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 
 	MemoryContextSwitchTo(TopMemoryContext);
 
-	sock = wd_create_hb_recv_socket(hb_if);
+	wd_hb_recv_socks = wd_create_hb_recv_socket(hb_if);
 
 	set_ps_display("heartbeat receiver", false);
 
@@ -415,6 +596,14 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 
 		MemoryContextSwitchTo(ProcessLoopContext);
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
+
+		/* get readable socket from heartbeat socket list */
+		if ((sock = select_socket_from_list(wd_hb_recv_socks, pool_config->wd_heartbeat_deadtime)) < 0)
+		{
+			ereport(ERROR, (errmsg("failed to get heartbeat from heartbeat receiver"),
+							errdetail("select() failed on heartbeat receiver")));
+			continue;
+		}
 
 		/* receive heartbeat signal */
 		wd_hb_recv(sock, &pkt, from);
@@ -525,7 +714,12 @@ wd_hb_sender(int fork_wait_time, WdHbIf * hb_if)
 
 	MemoryContextSwitchTo(TopMemoryContext);
 
-	sock = wd_create_hb_send_socket(hb_if);
+	if ((sock = wd_create_hb_send_socket(hb_if)) < 0)
+	{
+		ereport(ERROR,
+				(errmsg("error on creating heartbeat send socket")));
+
+	}
 
 	set_ps_display("heartbeat sender", false);
 

@@ -121,14 +121,14 @@
     <listitem>
      <para>
       <!--
-      Specifies the hostname or IP address of
+      Specifies the hostname or IP (IPv4 or IPv6) address of
       <productname>Pgpool-II</productname> server.
       This is used for sending/receiving queries and packets,
       and also as an identifier of the watchdog node.
       The number at the end of the parameter name is referred
       as "pgpool node id", and it starts from 0 (e.g. hostname0).
       -->
-      <productname>Pgpool-II</productname>サーバのホスト名またはIPアドレスを指定します。
+      <productname>Pgpool-II</productname>サーバのホスト名またはIPアドレス（IPv4 あるいは IPv6）を指定します。
       クエリやパケットの送受信の他、watchdogの識別子としても用います。
       パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばhostname0)。
      </para>
@@ -1582,13 +1582,13 @@
     <listitem>
      <para>
       <!--
-      Specifies the <acronym>IP</acronym> address or <acronym>hostname</acronym> of
+      Specifies the <acronym>IP (IPv4 or IPv6)</acronym> address or <acronym>hostname</acronym> of
       for sending and receiving the heartbeat signals.
       Multiple destinations can be configured for the heartbeat signals,
       the number at the end of the parameter name is
       referred as the "pgpool node id", that starts from 0.
       -->
-      ハートビート信号を送受信するための<acronym>IP</acronym>アドレスまたは <acronym>ホスト名</acronym>を指定します。
+      ハートビート信号を送受信するための<acronym>IP</acronym>アドレス（IPv4 あるいは IPv6）、または <acronym>ホスト名</acronym>を指定します。
       パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばheartbeat_hostname0)。
       複数のハートビート信号の送り先をセミコロン(;)で区切って指定することができます。
      </para>
