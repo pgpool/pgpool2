@@ -1,6 +1,115 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-9">
+ <title>リリース 4.4.9</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2024-09-09</simpara>
+  </note>
+
+ <sect2>
+  <title>概要</title>
+  <para>
+   このリリースには、セキュリティ修正が含まれています。
+  </para>
+  <para>
+   クエリキャッシュ機能（<xref linkend="runtime-in-memory-query-cache">）が有効な時に、データベースユーザがクエリキャッシュ経由で本来読み出せない行を読むことが可能でした。(CVE-2024-45624)
+  </para>
+  <para>
+   4.5.4, 4.4.9, 4.3.12, 4.2.19, 4.1.22より古く、クエリキャッシュ機能を持つすべてのバージョン(クエリキャッシュ機能は3.2で実装されました)がこの脆弱性の影響を受けます。
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     あるユーザのクエリキャッシュがテーブルに対して作成されていると、そのテーブルへのアクセス権がREVOKEコマンドで剥奪されても、アクセス権を持たないそのユーザがクエリキャッシュを通じてテーブルにアクセスすることが可能でした。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     ユーザAのクエリキャッシュがテーブルに対して作成されていて、同じセッション内でSET ROLEあるいはSET SESSION_AUTHORIZATIONで他のユーザBに切り替えてそのテーブルにアクセスすると、アクセス権を持たないBがクエリキャッシュを通じてアクセスすることが可能でした。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     ユーザAのクエリキャッシュが行セキュリティが有効なテーブルに対して作成されていて、同じセッション内でSET ROLEあるいはSET SESSION_AUTHORIZATIONで他のユーザBに切り替えてそのテーブルにアクセスすると、本来Bが見えない行をクエリキャッシュを通じて取り出すことが可能でした。
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Pgpool-II 4.5.4, 4.4.9, 4.3.12, 4.2.19, 4.1.22以降へのアップグレードを強くお勧めします。
+   それができない場合は、クエリキャッシュ機能を無効にしてください。
+  </para>
+  <para>
+   なお、この脆弱性を修正するために、いくつかのコマンド(ALTER DATABASE, ALTER ROLE, ALTER TABLE, REVOKE)を実行すると、クエリキャッシュのすべてのデータを削除するようになりました。
+   これにより、クエリキャッシュの性能に影響があるかも知れません。
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-08-15 [730acde]
+    -->
+    <para>
+     <xref linkend="guc-notice-per-node-statement">をバックポートしました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     これは主にテストのためです。v4.1までバックポートしました。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-August/004505.html">[pgpool-hackers: 4504]</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-08-09 [1f200d7]
+    2024-08-11 [ce7ed50]
+      -->
+    <para>
+     レプリケーションモードとスナップショットアイソレーションモードで発生する複数の不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     次の不具合を修正しました。
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       レプリケーションモードおよびスナップショットアイソレーションモードでコマンドを実行すると、<productname>Pgpool-II</productname>はクエリ準備完了メッセージを待ちますが、一部のコマンド（<command>SET ROLE</command>など）がパラメータステータスメッセージを生成することを忘れていました。
+       その結果、<productname>Pgpool-II</productname>はクエリ準備完了メッセージの前に他のメッセージが到着したことをエラーとして出力していました。
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       前のクエリがパラメータステータスメッセージを生成した場合、後続の<function>parse()</function>はそれを読み取って処理する必要があります。
+       これは、パラメータステータスメッセージの後に続くはずのクエリ準備完了メッセージを読み取る必要があるためです。
+      </para>
+      <para>
+       ただし、<function>ParameterStatus()</function>が呼び出されると、クエリ進行中フラグが設定され、この<function>parse()</function>呼び出しで処理されるクエリが負荷分散されている場合、バックエンドからのパラメータステータスメッセージの1つだけが処理される可能性がありました。
+       パラメータステータスメッセージは<command>SET</command>コマンドによって生成され、<command>SET</command>コマンドはレプリケーションモードおよびスナップショットアイソレーションモードのすべての生きているバックエンドに送信されるため、すべての生きているバックエンドから送信される可能性がありました。
+       そのため、ParameterStatus()を呼び出す前に、クエリ進行中フラグを設定解除するように修正しました。
+      </para>
+     </listitem>
+
+    </itemizedlist>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-8">
  <title>リリース 4.4.8</title>
   <note>
