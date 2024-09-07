@@ -34,10 +34,35 @@
     SELECT starting with "/*NO QUERY CACHE*/" comment
     SELECT including system catalogs
     SELECT uses TABLESAMPLE
+    SELECT uses row security enabled tables
    </programlisting>
    However, VIEWs and SELECTs accessing unlogged tables can be
    cached by specifying in
    the <xref linkend="guc-cache-safe-memqcache-table-list">.
+  </para>
+ </note>
+
+ <note>
+  <para>
+   Since consistency between the query cache and database content can
+   be lost by following commands, the query cache is all deleted if
+   they are executed:
+   <programlisting>
+    ALTER DATABASE
+    ALTER ROLE
+    ALTER TABLE
+    REVOKE
+   </programlisting>
+   Moreover, if SET ROLE or SET SESSION AUTHORIZATION are executed,
+   the query cache will not be used and new cache will not be created
+   in the session.
+   <productname>Pgpool-II</productname> assumes that two query cache
+   are different if their session users are different. On the other
+   hand, <productname>PostgreSQL</productname> manages access control
+   depending on current user. Thus these commands may break the
+   consistency between these two access controls.  However, cache
+   invalidation by update commands are performed in the same way in
+   that these commands are not used.
   </para>
  </note>
 

@@ -48,10 +48,27 @@
     /*NO QUERY CACHE*/コメントで始まるSELECT
     システムカタログを使用しているSELECT
     TABLESAMPLEを使っているSELECT
+    行セキュリティが設定されているテーブルを使っているSELECT
    </programlisting>
    ただし、VIEWと unloggedテーブルは、cache_safe_memqcache_table_list に記載することでキャッシュされます。
   </para>
  </note>
+
+ <note>
+  <para>
+   以下のコマンドはクエリキャッシュとデータベース内容の整合性を失わせる可能性があるので、実行されるとクエリキャッシュをすべて削除します。
+   <programlisting>
+    ALTER DATABASE
+    ALTER ROLE
+    ALTER TABLE
+    REVOKE
+   </programlisting>
+   また、SET ROLE、SET SESSION AUTHORIZATIONが実行されると、そのセッション内ではクエリキャッシュは使用されず、また新たにクエリキャッシュが作成されることもありません。
+   <productname>Pgpool-II</productname>はセッションユーザが異なるとクエリキャッシュを違うものと見なしますが、一方で<productname>PostgreSQL</productname>のアクセス権管理はカレントユーザ(current user)を基準に行っており、これらのコマンドはクエリキャッシュとPostgreSQLのアクセス権管理の間の整合性を損なう可能性があるからです。
+   ただし、更新クエリによるクエリキャッシュの削除はこれらのコマンドが使われていない場合と同様に行われます。
+  </para>
+ </note>
+
  <para>
   <!--
   In memory cache saves the pair of SELECT statement

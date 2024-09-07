@@ -1,0 +1,19 @@
+# create query cache
+'P'	""	"SELECT * FROM footable"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# SET SESSION_AUTHORIZATION
+'P'	""	"SET SESSION AUTHORIZATION bar"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# run SELECT as bar. Permission denied is expected.
+'P'	""	"SELECT * FROM footable"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'
