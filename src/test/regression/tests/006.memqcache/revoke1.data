@@ -1,0 +1,73 @@
+# Testing REVOKE
+# create cache
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# revoke
+'P'	""	"REVOKE SELECT ON t1 FROM foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# change role
+'P'	""	"SET ROLE TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure foo cannot SELECT t1
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"RESET ROLE"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# GRANT again
+'P'	""	"GRANT SELECT ON t1 TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# explicit transaction case
+'P'	""	"BEGIN"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# execute REVOKE
+'P'	""	"REVOKE SELECT ON t1 FROM foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# change role
+'P'	""	"SET ROLE TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure foo cannot SELECT t1
+# (thus REVOKE will be rollbacked )
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"END"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# because REVOKE was rolled back, foo should be able to access t1
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'

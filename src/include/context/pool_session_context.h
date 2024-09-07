@@ -171,6 +171,7 @@ typedef enum
 	SI_SNAPSHOT_PREPARED
 } SI_STATE;
 
+
 /*
  * Per session context:
  */
@@ -320,6 +321,17 @@ typedef struct
 													 * transaction has been
 													 * started by a
 													 * multi-statement-query */
+	/*
+	 * True if query cache feature disabled until session ends.
+	 * This is set when SET ROLE/SET SESSION AUTHORIZATION executed.
+	 */
+	bool	query_cache_disabled;
+	/*
+	 * True if query cache feature disabled until current transaction ends.
+	 * This is set when REVOKE executed in a transaction.
+	 */
+	bool	query_cache_disabled_tx;
+
 }			POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
@@ -407,5 +419,12 @@ extern void	pool_temp_tables_dump(void);
 extern bool is_tx_started_by_multi_statement_query(void);
 extern void set_tx_started_by_multi_statement_query(void);
 extern void unset_tx_started_by_multi_statement_query(void);
+
+extern void set_query_cache_disabled(void);
+extern void unset_query_cache_disabled(void);
+extern bool query_cache_disabled(void);
+extern void set_query_cache_disabled_tx(void);
+extern void unset_query_cache_disabled_tx(void);
+extern bool query_cache_disabled_tx(void);
 
 #endif							/* POOL_SESSION_CONTEXT_H */

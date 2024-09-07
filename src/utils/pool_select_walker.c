@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -46,6 +46,8 @@ static bool is_system_catalog(char *table_name);
 static bool temp_table_walker(Node *node, void *context);
 static bool unlogged_table_walker(Node *node, void *context);
 static bool view_walker(Node *node, void *context);
+static bool row_security_enabled(char *table_name);
+static bool row_security_enabled_walker(Node *node, void *context);
 static bool is_temp_table(char *table_name);
 static bool insertinto_or_locking_clause_walker(Node *node, void *context);
 static bool is_immutable_function(char *fname);
@@ -177,6 +179,25 @@ pool_has_view(Node *node)
 	raw_expression_tree_walker(node, view_walker, &ctx);
 
 	return ctx.has_view;
+}
+
+/*
+ * Return true if this SELECT has a row security enabled table.
+ */
+bool
+pool_has_row_security(Node *node)
+{
+
+	SelectContext ctx;
+
+	if (!IsA(node, SelectStmt))
+		return false;
+
+	ctx.row_security = false;
+
+	raw_expression_tree_walker(node, row_security_enabled_walker, &ctx);
+
+	return ctx.row_security;
 }
 
 /*
@@ -553,6 +574,36 @@ view_walker(Node *node, void *context)
 }
 
 /*
+ * Walker function to find a row security enabled table.
+ */
+static bool
+row_security_enabled_walker(Node *node, void *context)
+{
+	SelectContext *ctx = (SelectContext *) context;
+	char	   *relname;
+
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, RangeVar))
+	{
+		RangeVar   *rgv = (RangeVar *) node;
+
+		relname = make_table_name_from_rangevar(rgv);
+
+		ereport(DEBUG1,
+				(errmsg("row secuirty walker. checking relation \"%s\"", relname)));
+
+		if (row_security_enabled(relname))
+		{
+			ctx->row_security = true;
+			return false;
+		}
+	}
+	return raw_expression_tree_walker(node, row_security_enabled_walker, context);
+}
+
+/*
  * Determine whether table_name is a system catalog or not.
  */
 static bool
@@ -908,6 +959,60 @@ is_view(char *table_name)
 	result = pool_search_relcache(relcache, backend, table_name) == 0 ? false : true;
 	return result;
 }
+
+/*
+ * Returns true if table_name enables row security.
+ */
+static bool
+row_security_enabled(char *table_name)
+{
+/*
+ * Query to know if the target table enables row security. This is valid for
+ * PostgreSQL 9.5 or later. Remember that to_regclass() is available in
+ * PostgreSQL 9.4 or later and we can use to_regclass() unconditionally.
+ */
+#define ISROWSECURITYQUERY "SELECT count(*) FROM pg_catalog.pg_class AS c WHERE c.oid = pg_catalog.to_regclass('%s') AND c.relrowsecurity"
+
+	static POOL_RELCACHE * relcache;
+	POOL_CONNECTION_POOL *backend;
+	bool		result;
+	char	   *query;
+
+	if (table_name == NULL)
+		return false;
+
+	backend = pool_get_session_context(false)->backend;
+
+	/*
+	 * Check backend version. PostgreSQL 9.5 or later have relrowsecurity
+	 * column.
+	 */
+	if (Pgversion(backend)->major < 95)
+		return false;
+
+	query = ISROWSECURITYQUERY;
+
+	if (!relcache)
+	{
+		relcache = pool_create_relcache(pool_config->relcache_size, query,
+										int_register_func, int_unregister_func,
+										false);
+		if (relcache == NULL)
+		{
+			ereport(WARNING,
+					(errmsg("unable to create relcache, while checking for row security")));
+			return false;
+		}
+
+	}
+
+	/*
+	 * Search relcache.
+	 */
+	result = pool_search_relcache(relcache, backend, table_name) == 0 ? false : true;
+	return result;
+}
+
 
 /*
  * Judge if we have pgpool_regclass or not.

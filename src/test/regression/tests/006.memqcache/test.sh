@@ -9,6 +9,15 @@ source $TESTLIBS
 TESTDIR=testdir
 
 PSQL=$PGBIN/psql
+PGPROTO=$PGPOOL_INSTALL_DIR/bin/pgproto
+
+# remove error/notice details (message and so on) from
+# ErrorResponse or NoticeResponse messages.
+# used for pgproto.
+function del_details_from_error
+{
+    cat|sed -e '/ErrorResponse/s/ F .*//' -e '/NoticeResponse/s/ F .*$//'
+}
 
 for mode in s r n
 do
@@ -115,8 +124,335 @@ EOF
 	fi
 
 	./shutdownall
+	echo "backend_weight1 = 0" >> etc/pgpool.conf
+	echo "notice_per_node_statement = on" >> etc/pgpool.conf
+	./startall
+	wait_for_pgpool_startup
+
+	createuser foo
+	createuser bar
+
+	$PSQL -a test >> result 2>&1 <<EOF
+--
+-- testing an effect on a row level security enabled table and SET ROLE
+--
+CREATE TABLE users (user_name TEXT, data TEXT);
+INSERT INTO users VALUES('foo', 'foodata');
+INSERT INTO users VALUES('bar', 'bardata');
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_policy ON users USING (user_name = CURRENT_USER);
+GRANT SELECT ON users TO foo;
+GRANT SELECT ON users TO bar;
+SET ROLE TO foo;
+-- run SELECT as foo. Only user_name = 'foo' data expected.
+SELECT * FROM users;
+RESET ROLE;
+SET ROLE TO bar;
+-- run SELECT as bar. Only user_name = 'bar' data expected.
+SELECT * FROM users;
+EOF
+
+#echo '=== extended query test for row security ===' >> result
+#	$PGPROTO -d test -f ../row_security.data |& del_details_from_error >> result
+
+	$PSQL -a -U foo test >> result 2>&1 <<EOF
+--
+-- testing row security with row_security = off
+--
+SET ROW_SECURITY TO off;
+-- Error expected
+SELECT * FROM users;
+EOF
+
+	$PSQL -a test >> result 2>&1 <<EOF
+--
+-- testing SET ROLE
+--
+CREATE TABLE footable(t text);
+INSERT INTO footable VALUES('foo');
+GRANT SELECT ON footable TO foo;
+GRANT INSERT ON footable TO foo;
+GRANT UPDATE ON footable TO foo;
+GRANT DELETE ON footable TO foo;
+SELECT * FROM footable;
+SET ROLE TO bar;
+-- run SELECT as bar. Permission denied is expected.
+SELECT * FROM footable;
+EOF
+
+#echo '==== extended query test for "testing SET ROLE" above ===' >> result
+#	$PGPROTO -d test -f ../set_role1.data |& del_details_from_error >> result
+
+	$PSQL -a test >> result 2>&1 <<EOF
+--
+-- testing SESSION AUTHORIZATION
+--
+SET SESSION AUTHORIZATION bar;
+-- run SELECT as bar. Permission denied is expected.
+SELECT * FROM footable;
+EOF
+
+#echo '=== extended query test for "testing SESSION AUTHORIZATION" above ===' >> result
+#	$PGPROTO -d test -f ../session_authorization.data |& del_details_from_error >> result
+
+	$PSQL -a test >> result 2>&1 <<EOF
+--
+-- testing SET ROLE. Make sure that query cache is not
+-- created.
+--
+-- create cache
+SELECT * FROM footable;
+-- change role
+SET ROLE TO foo;
+-- run SELECT as foo to make sure that cache is not used.
+-- If query cache was created we will NOT see
+-- "NOTICE: DB node id: 1 statement: SELECT ..."
+SELECT * FROM footable;
+-- Modify footable to see cache invalidation works even after SET ROLE.
+INSERT INTO footable VALUES ('foo1');
+-- restore ROLE
+RESET ROLE;
+-- Make sure cache was invalidated.
+SELECT * FROM footable;
+EOF
+
+#echo '=== extended query test for "testing SET ROLE" above ===' >> result
+#	$PGPROTO -d test -f ../set_role2.data |& del_details_from_error >> result
+
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- explicit transaction case
+--
+-- create cache
+SELECT * FROM footable;
+SELECT * FROM footable;
+-- change role
+SET ROLE TO foo;
+BEGIN;
+-- run SELECT as foo to make sure that cache is not used.
+-- If query cache was created we will NOT see
+-- "NOTICE: DB node id: 1 statement: SELECT ..."
+SELECT * FROM footable;
+-- Modify footable to see cache invalidation works even after SET ROLE.
+INSERT INTO footable VALUES ('foo2');
+END;
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+-- Make sure cache was invalidated.
+SELECT * FROM footable;
+EOF
+
+#echo '=== extended query test for "explicit transaction case" above ===' >> result
+#	$PGPROTO -d test -f ../set_role3.data |& del_details_from_error >> result
+
+#		$PSQL -a test >> result 2>&1 <<EOF
+#-- Make sure cache was invalidated.
+#SELECT * FROM footable;
+#EOF
+
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- explicit transaction abort case
+--
+-- create cache
+SELECT * FROM footable;
+SELECT * FROM footable;
+-- change role
+SET ROLE TO foo;
+BEGIN;
+-- run SELECT as foo to make sure that cache is not used.
+-- If query cache was created we will NOT see
+-- "NOTICE: DB node id: 0 statement: SELECT ..."
+SELECT * FROM footable;
+-- Modify footable to see cache invalidation works even after SET ROLE.
+INSERT INTO footable VALUES ('foo3');
+SELECT * FROM footable;
+ABORT;
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+-- Make sure we don't see 'foo3' row.
+SELECT * FROM footable;
+EOF
+
+#echo '=== extended query test for "explicit transaction abort case" above ===' >> result
+#	$PGPROTO -d test -f ../set_role4.data |& del_details_from_error >> result
+
+		$PSQL -a test >> result 2>&1 <<EOF
+-- Make sure we don't see 'foo3' row.
+SELECT * FROM footable;
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- Testing REVOKE
+--
+-- create cache
+SELECT * FROM t1;
+-- REVOKE
+REVOKE SELECT ON t1 FROM foo;
+SET ROLE TO foo;
+-- Make sure foo cannot SELECT t1
+SELECT * FROM t1;
+RESET ROLE;
+-- GRANT again
+GRANT SELECT ON t1 TO foo;
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+-- explicit transaction case
+BEGIN;
+-- REVOKE
+REVOKE SELECT ON t1 FROM foo;
+SET ROLE TO foo;
+-- Make sure foo cannot SELECT t1
+-- (thus REVOKE will be rollbacked )
+SELECT * FROM t1;
+END;
+SET ROLE TO foo;
+-- because REVOKE is rolled back, foo should be able to access t1
+SELECT * FROM t1;
+EOF
+
+#echo '=== extended query test for "Tesing REVOKE" and "explicit transaction case" above ===' >> result
+#	$PGPROTO -d test -f ../revoke1.data |& del_details_from_error >> result
+
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- REVOKE is executed on another session case
+--
+-- Make sure to create cache
+SELECT * FROM t1;
+SELECT * FROM t1;
+-- execute REVOKE
+REVOKE SELECT ON t1 FROM foo
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+-- Make sure this does not access cache
+SELECT * FROM t1;
+EOF
+
+#echo '=== extended query test for "REVOKE is executed on another session case" above ===' >> result
+#	$PGPROTO -d test -f ../revoke2.data |& del_details_from_error >> result
+#	$PGPROTO -d test -f ../revoke3.data |& del_details_from_error >> result
+
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- ALTER ROLE BYPASSRLS case
+--
+ALTER ROLE foo BYPASSRLS;
+SET ROLE TO foo;
+-- expect to ignore cache and result is all rows
+SELECT * FROM users;
+RESET ROLE;
+ALTER ROLE foo NOBYPASSRLS;
+SET ROLE TO foo;
+-- expect to ignore cache and result is one row
+SELECT * FROM users;
+EOF
+
+#echo '=== extended query test for "ALTER ROLE BYPASSRLS case" case ===' >> result
+#	$PGPROTO -d test -f ../alter_role.data |& del_details_from_error >> result
+
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- Testing ALTER TABLE
+--
+-- create cache
+SELECT * FROM t1;
+ALTER TABLE t1 ADD COLUMN j INT;
+-- Make sure cache is not used
+SELECT * FROM t1;
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+-- explicit transaction case
+BEGIN;
+ALTER TABLE t1 DROP COLUMN j;
+-- Make sure cache is not used
+SELECT * FROM t1;
+END;
+SELECT * FROM t1;
+-- Make sure cache is used
+SELECT * FROM t1;
+EOF
+
+#echo '=== extended query test for "Testing ALTER TABLE and explicit transaction" case ===' >> result
+#	$PGPROTO -d test -f ../alter_table1.data |& del_details_from_error >> result
+
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- ALTER TABLE is executed on another session case
+--
+-- Make sure to create cache
+SELECT * FROM t1;
+SELECT * FROM t1;
+ALTER TABLE t1 ADD COLUMN j INT;
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+-- Make sure this does not access cache
+SELECT * FROM t1;
+ALTER TABLE t1 DROP COLUMN j;
+EOF
+
+#echo '=== extended query test for "ALTER TABLE is executed on another session" case ===' >> result
+#	$PGPROTO -d test -f ../alter_table2.data |& del_details_from_error >> result
+#	$PGPROTO -d test -f ../alter_table3.data |& del_details_from_error >> result
+
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- Testing ALTER DATABASE
+--
+ALTER TABLE t1 ADD COLUMN j INT;
+-- create taget database
+create database test2;
+-- create cache
+SELECT * FROM t1;
+ALTER DATABASE test2 RESET ALL;
+-- Make sure cache is not used
+SELECT * FROM t1;
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+-- explicit transaction case
+BEGIN;
+ALTER DATABASE test2 RESET ALL;
+-- Make sure cache is not used
+SELECT * FROM t1;
+END;
+SELECT * FROM t1;
+-- Make sure cache is used
+SELECT * FROM t1;
+EOF
+#echo '=== extended query test for "ALTER DATABSE and explicit transaction" case ===' >> result
+#	$PGPROTO -d test -f ../alter_database1.data |& del_details_from_error >> result
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- ALTER DATABASE is executed on another session case
+--
+-- Make sure to create cache
+SELECT * FROM t1;
+SELECT * FROM t1;
+ALTER DATABASE test2 RESET ALL;
+EOF
+		$PSQL -a test >> result 2>&1 <<EOF
+-- Make sure this does not access cache
+SELECT * FROM t1;
+EOF
+
+#echo '=== extended query test for "ALTER DATABASE is executed on another session" case ===' >> result
+#	$PGPROTO -d test -f ../alter_database2.data |& del_details_from_error >> result
+#	$PGPROTO -d test -f ../alter_database3.data |& del_details_from_error >> result
+
+	./shutdownall
 
 	cd ..
+
+	log=/tmp/diff
+	EXPECTED=expected.$mode
+	diff -c $EXPECTED testdir/result > $log
+	if [ $? != 0 ];then
+	    echo "test failed in mode: $mode"
+	    cat $log
+	    rm $log
+	    exit 1
+	fi
+	rm $log
 done
 
 exit 0

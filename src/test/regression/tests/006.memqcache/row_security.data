@@ -1,0 +1,42 @@
+# run SELECT as foo. It is expected 0 row returned.
+'P'	""	"SET ROLE TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SELECT * FROM users WHERE user_name = 'bar'"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"RESET ROLE"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# run SELECT as bar. It is expected 0 row returned.
+'P'	""	"SET ROLE TO bar"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SELECT * FROM users WHERE user_name = 'foo'"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+#
+# testing row security with row_security = off
+# Error expected
+#
+'P'	""	"SET row_security TO off"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SELECT * FROM users"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'
