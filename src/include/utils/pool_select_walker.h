@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -48,6 +48,7 @@ typedef struct
 	bool		has_insertinto_or_locking_clause;	/* True if it has SELECT
 													 * INTO or FOR
 													 * SHARE/UPDATE */
+	bool		row_security;	/* true if row security enabled */
 	int			num_oids;		/* number of oids */
 	int			table_oids[POOL_MAX_SELECT_OIDS];	/* table oids */
 	char		table_names[POOL_MAX_SELECT_OIDS][NAMEDATALEN];	/* table names */
@@ -61,6 +62,7 @@ extern bool pool_has_temp_table(Node *node);
 extern void discard_temp_table_relcache(void);
 extern bool pool_has_unlogged_table(Node *node);
 extern bool pool_has_view(Node *node);
+extern bool pool_has_row_security(Node *node);
 extern bool pool_has_insertinto_or_locking_clause(Node *node);
 extern bool pool_has_pgpool_regclass(void);
 extern bool pool_has_to_regclass(void);

@@ -1,0 +1,39 @@
+# create query cache
+'P'	""	"SELECT * FROM footable"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# SET ROLE
+'P'	""	"SET ROLE TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# run SELECT as foo to make sure that cache is not used.
+# If query cache was created we will NOT see
+# "NOTICE: DB node id: 1 statement: SELECT ..."
+'P'	""	"SELECT * FROM footable"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Modify footable to see cache invalidation works even after SET ROLE.
+'P'	""	"UPDATE footable SET t = 'foo1' WHERE t = 'foo1'"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# restore ROLE
+'P'	""	"RESET ROLE"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure cache was invalidated.
+'P'	""	"SELECT * FROM footable"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'

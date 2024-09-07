@@ -1,0 +1,90 @@
+# explicit transaction case
+# create cache
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# change role
+'P'	""	"SET ROLE TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+'P'	""	"BEGIN"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+# run SELECT as foo to make sure that cache is not used.
+# If query cache was created we will NOT see
+# "NOTICE: DB node id: 0 statement: SELECT ..."
+'P'	""	"SELECT * FROM footable"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+# Modify footable to see cache invalidation works even after SET ROLE.
+'P'	""	"INSERT INTO footable VALUES ('foo3')"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+'P'	""	"SELECT * FROM footable"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+'P'	""	"ABORT"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+# Make sure we don't see 'foo3' row.
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+# change role
+'P'	""	"SET ROLE TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+'P'	""	"BEGIN"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+# run SELECT as foo to make sure that cache is not used.
+# If query cache was created we will NOT see
+# "NOTICE: DB node id: 0 statement: SELECT ..."
+'P'	""	"SELECT * FROM footable"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+# Modify footable to see cache invalidation works even after SET ROLE.
+'P'	""	"INSERT INTO footable VALUES ('foo3')"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+'P'	""	"ABORT"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'
