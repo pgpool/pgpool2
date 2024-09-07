@@ -253,7 +253,8 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	 */
 	if (pool_config->memory_cache_enabled && is_likely_select &&
 		!pool_is_writing_transaction() &&
-		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E')
+		TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E' &&
+		!query_cache_disabled())
 	{
 		bool		foundp;
 
@@ -861,7 +862,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 */
 	if (pool_config->memory_cache_enabled && !pool_is_writing_transaction() &&
 		(TSTATE(backend, MASTER_SLAVE ? PRIMARY_NODE_ID : REAL_MASTER_NODE_ID) != 'E')
-		&& pool_is_likely_select(query))
+		&& pool_is_likely_select(query) && !query_cache_disabled())
 	{
 		POOL_STATUS status;
 		char	   *search_query = NULL;

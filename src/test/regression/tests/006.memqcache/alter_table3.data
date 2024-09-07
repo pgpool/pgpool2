@@ -1,0 +1,8 @@
+# ALTER TABLE is executed on another session case
+# Make sure this does not access cache
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'
