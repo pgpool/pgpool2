@@ -1,0 +1,53 @@
+# Testing ALTER DATABASE
+# create cache
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# execute ALTER DATABASE
+'P'	""	"ALTER DATABASE test2 RESET ALL"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure cache is not used
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# explicit transaction case
+'P'	""	"BEGIN"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"ALTER DATABASE test2 RESET ALL"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure cache is not used
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"END"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure cache is used
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'

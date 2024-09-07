@@ -1,0 +1,60 @@
+# ALTER ROLE BYPASSRLS case
+# Make sure to create cache (sync needed)
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'P'	""	"ALTER TABLE t1 ADD COLUMN j INT"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure cache is not used
+'P'	""	"SELECT j FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# explicit transaction case
+'P'	""	"BEGIN"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"ALTER TABLE t1 DROP COLUMN j"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure cache is not used (an error expected)
+'P'	""	"SELECT i,j FROM t1"
+#'B'	""	""	0	0	0
+#'E'	""	0
+'S'
+'Y'
+'P'	""	"END"
+'B'	""	""	0	0	0
+'E'	""	0
+# Sync is needed to reset query_cache_disabled_tx flag
+'S'
+'Y'
+# create cache
+'P'	""	"SELECT j FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# Make sure cache is used
+'P'	""	"SELECT j FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# drop column j for subsequent test
+'Q'	"ALTER TABLE t1 DROP COLUMN j"
+'S'
+'X'

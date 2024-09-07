@@ -1,0 +1,18 @@
+# ALTER TABLE is executed on another session case
+# Make sure to create cache (sync needed)
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SELECT * FROM t1"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"ALTER TABLE t1 ADD COLUMN j INT"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'

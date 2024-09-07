@@ -171,6 +171,10 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	dml_adaptive_init();
 
 	unset_tx_started_by_multi_statement_query();
+
+	unset_query_cache_disabled();
+
+	unset_query_cache_disabled_tx();
 }
 
 /*
@@ -2030,4 +2034,83 @@ unset_tx_started_by_multi_statement_query(void)
 				(errmsg("unset_tx_started_by_multi_statement_query: session context is not initialized")));
 
 	session_context->is_tx_started_by_multi_statement = false;
+}
+
+/*
+ * Set query_cache_disabled
+ */
+void
+set_query_cache_disabled(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("set_query_cache_disabled: session context is not initialized")));
+
+	session_context->query_cache_disabled = true;
+}
+
+/*
+ * Unset query_cache_disabled
+ */
+void
+unset_query_cache_disabled(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("unset_query_cache_disabled: session context is not initialized")));
+
+	session_context->query_cache_disabled = false;
+}
+
+/*
+ * Get query_cache_disabled
+ */
+bool
+query_cache_disabled(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("query_cache_disabled: session context is not initialized")));
+
+	return session_context->query_cache_disabled ||
+		session_context->query_cache_disabled_tx;
+}
+
+/*
+ * Set query_cache_disabled in transaction
+ */
+void
+set_query_cache_disabled_tx(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("set_query_cache_disabled_tx: session context is not initialized")));
+
+	session_context->query_cache_disabled_tx = true;
+}
+
+/*
+ * Unset query_cache_disabled in transaction
+ */
+void
+unset_query_cache_disabled_tx(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("unset_query_cache_disabled_tx: session context is not initialized")));
+
+	session_context->query_cache_disabled_tx = false;
+}
+
+/*
+ * Get query_cache_disabled in transaction
+ */
+bool
+query_cache_disabled_tx(void)
+{
+	if (!session_context)
+		ereport(ERROR,
+				(errmsg("query_cache_disabled_tx: session context is not initialized")));
+
+	return session_context->query_cache_disabled_tx;
 }

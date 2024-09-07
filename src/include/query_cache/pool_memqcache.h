@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -301,5 +301,7 @@ extern bool pool_is_shmem_lock(void);
 extern void InvalidateQueryCache(int tableoid, int dboid);
 
 extern void pool_init_whole_cache_blocks(void);
+
+extern int delete_all_cache_on_memcached(void);
 
 #endif							/* POOL_MEMQCACHE_H */
