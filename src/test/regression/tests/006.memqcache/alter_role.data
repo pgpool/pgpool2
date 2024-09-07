@@ -1,0 +1,50 @@
+# ALTER ROLE BYPASSRLS case
+# Make sure to create cache (sync needed)
+'P'	""	"SELECT * FROM users"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SELECT * FROM users"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"ALTER ROLE foo BYPASSRLS"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SET ROLE TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# expect to ignore cache and result is all rows
+'P'	""	"SELECT * FROM users"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"RESET ROLE"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"ALTER ROLE foo NOBYPASSRLS"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'P'	""	"SET ROLE TO foo"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+# expect to ignore cache and result is one row
+'P'	""	"SELECT * FROM users"
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
+'X'

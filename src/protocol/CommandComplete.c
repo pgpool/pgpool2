@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -44,6 +44,8 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNE
 static int	forward_command_complete(POOL_CONNECTION * frontend, char *packet, int packetlen);
 static int	forward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen);
 static int	forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen);
+static void process_clear_cache(POOL_CONNECTION_POOL * backend);
+static void clear_query_cache(void);
 
 POOL_STATUS
 CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool command_complete)
@@ -367,6 +369,21 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 
 			/* Forget a transaction was started by multi statement query */
 			unset_tx_started_by_multi_statement_query();
+
+			/*
+			 * Query cache enabled and REVOKE was issued in this transaction?
+			 */
+			if (pool_config->memory_cache_enabled &&
+				query_cache_disabled_tx())
+			{
+				/*
+				 * Clear all the query cache.
+				 */
+				clear_query_cache();
+
+				/* Unset query cache disabled in this transaction */
+				unset_query_cache_disabled_tx();
+			}
 		}
 		else if (stmt->kind == TRANS_STMT_ROLLBACK)
 		{
@@ -375,6 +392,9 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 
 			/* Forget a transaction was started by multi statement query */
 			unset_tx_started_by_multi_statement_query();
+
+			/* Unset query cache disabled in this transaction */
+			unset_query_cache_disabled_tx();
 		}
 	}
 	else if (IsA(node, CreateStmt))
@@ -432,6 +452,34 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 				next = lnext(session_context->temp_tables, cell);
 			}
 		}
+	}
+	else if (IsA(node, VariableSetStmt))
+	{
+		VariableSetStmt *stmt = (VariableSetStmt *) node;
+
+		/* SET ROLE or SESSION AUTHORIZATION command? */
+		if (stmt->kind == VAR_SET_VALUE &&
+			(!strcmp(stmt->name, "role") ||
+			 !strcmp(stmt->name, "session_authorization")))
+			/* disable query cache in this session */
+			set_query_cache_disabled();
+	}
+	else if (IsA(node, GrantStmt))
+	{
+		GrantStmt *stmt = (GrantStmt *) node;
+
+		/* REVOKE? */
+		if (stmt->is_grant)
+			return;
+
+		/* Clear query cache */
+		process_clear_cache(backend);
+	}
+	else if (IsA(node, AlterTableStmt) || IsA(node, AlterDatabaseStmt) ||
+			 IsA(node, AlterDatabaseSetStmt) || IsA(node, AlterRoleStmt))
+	{
+		/* Clear query cache */
+		process_clear_cache(backend);
 	}
 }
 
@@ -606,4 +654,104 @@ forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, 
 	pool_write_and_flush(frontend, packet, packetlen);
 
 	return 0;
+}
+
+/*
+ * Process statements that need clearing query cache
+ */
+static void
+process_clear_cache(POOL_CONNECTION_POOL * backend)
+{
+	/* Query cache enabled? */
+	if (!pool_config->memory_cache_enabled)
+		return;
+
+	/* Streaming replication mode? */
+	if (SL_MODE)
+	{
+		/*
+		 * Are we inside a transaction?
+		 */
+		if (TSTATE(backend, MAIN_NODE_ID ) == 'T')
+		{
+			/*
+			 * Disable query cache in this transaction.
+			 * All query cache will be cleared at commit.
+			 */
+			set_query_cache_disabled_tx();
+		}
+		else if (TSTATE(backend, MAIN_NODE_ID ) == 'I')	/* outside transaction */
+		{
+			/*
+			 * Clear all the query cache.
+			 */
+			clear_query_cache();
+		}
+	}
+	else
+	{
+		/*
+		 * Are we inside a transaction?
+		 */
+		if (TSTATE(backend, MAIN_NODE_ID ) == 'T')
+		{
+			/* Inside user started transaction? */
+			if (!INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID))
+			{
+				/*
+				 * Disable query cache in this transaction.
+				 * All query cache will be cleared at commit.
+				 */
+				set_query_cache_disabled_tx();
+			}
+			else
+			{
+				/*
+				 * Clear all the query cache.
+				 */
+				clear_query_cache();
+			}
+		}
+		else if (TSTATE(backend, MAIN_NODE_ID ) == 'I')	/* outside transaction */
+		{
+			/*
+			 * Clear all the query cache.
+			 */
+			clear_query_cache();
+		}
+	}
+}
+
+/*
+ * Clear query cache on shmem or memcached
+ */
+static
+void clear_query_cache(void)
+{
+	/*
+	 * Clear all the shared memory cache and oid maps.
+	 */
+	if (pool_is_shmem_cache())
+	{
+		pool_clear_memory_cache();
+		ereport(LOG,
+				(errmsg("all query cache in shared memory deleted")));
+	}
+	else
+#ifdef USE_MEMCACHED
+	{
+		/*
+		 * Clear all the memcached cache and oid maps.
+		 */
+		delete_all_cache_on_memcached();
+		pool_discard_oid_maps();
+		ereport(LOG,
+				(errmsg("all query cache in memcached deleted")));
+	}
+#else
+	{
+		ereport(WARNING,
+				(errmsg("failed to clear cache on memcached, memcached support is not enabled")));
+	}
+#endif
 }
