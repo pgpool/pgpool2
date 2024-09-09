@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -894,9 +894,9 @@ wd_create_recv_socket(int port)
 
 	if (n == 0)
 	{
+		freeaddrinfo(res);
 		ereport(ERROR, (errmsg("failed to create watchdog receive socket"),
 						errdetail("getaddrinfo() result is empty: no sockets can be created because no available local address with port:%d", port)));
-		return NIL;
 	}
 	else
 	{
@@ -909,6 +909,9 @@ wd_create_recv_socket(int port)
 		if ((sock = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol)) < 0)
 		{
 			/* socket create failed */
+			saved_errno = errno;
+			freeaddrinfo(res);
+			errno = saved_errno;
 			ereport(ERROR,
 					(errmsg("failed to create watchdog receive socket"),
 					 errdetail("create socket failed with reason: \"%m\"")));
@@ -920,33 +923,43 @@ wd_create_recv_socket(int port)
 		{
 			/* setsockopt(SO_REUSEADDR) failed */
 			saved_errno = errno;
+			freeaddrinfo(res);
 			close(sock);
+			errno = saved_errno;
 			ereport(ERROR,
 					(errmsg("failed to create watchdog receive socket"),
-					 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%s\"", strerror(saved_errno))));
+					 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%m\"")));
 		}
 		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1)
 		{
 			/* setsockopt(TCP_NODELAY) failed */
 			saved_errno = errno;
+			freeaddrinfo(res);
 			close(sock);
+			errno = saved_errno;
 			ereport(ERROR,
 					(errmsg("failed to create watchdog receive socket"),
-					 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%s\"", strerror(saved_errno))));
+					 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%m\"")));
 		}
 		if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1)
 		{
 			/* setsockopt(SO_KEEPALIVE) failed */
 			saved_errno = errno;
+			freeaddrinfo(res);
 			close(sock);
+			errno = saved_errno;
 			ereport(ERROR,
 					(errmsg("failed to create watchdog receive socket"),
-					 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%s\"", strerror(saved_errno))));
+					 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%m\"")));
 		}
 		if (walk->ai_family == AF_INET6)
 		{
 			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &one, sizeof(one)) == -1)
 			{
+				saved_errno = errno;
+				freeaddrinfo(res);
+				close(sock);
+				errno = saved_errno;
 				ereport(ERROR,
 						(errmsg("failed to set IPPROTO_IPV6 option to watchdog receive socket"),
 						 errdetail("setsockopt(IPV6_V6ONLY) failed with reason: \"%m\"")));
@@ -956,20 +969,24 @@ wd_create_recv_socket(int port)
 		{
 			/* bind failed */
 			saved_errno = errno;
+			freeaddrinfo(res);
 			close(sock);
+			errno = saved_errno;
 			ereport(ERROR,
 					(errmsg("failed to create watchdog receive socket"),
-					 errdetail("bind on \"TCP:%d\" failed with reason: \"%s\"", port, strerror(saved_errno))));
+					 errdetail("bind on \"TCP:%d\" failed with reason: \"%m\"", port)));
 		}
 
 		if (listen(sock, MAX_WATCHDOG_NUM * 2) < 0)
 		{
 			/* listen failed */
 			saved_errno = errno;
+			freeaddrinfo(res);
 			close(sock);
+			errno = saved_errno;
 			ereport(ERROR,
 					(errmsg("failed to create watchdog receive socket"),
-					 errdetail("listen failed with reason: \"%s\"", strerror(saved_errno))));
+					 errdetail("listen failed with reason: \"%m\"")));
 		}
 
 		socks = lappend_int(socks, sock);
@@ -980,6 +997,8 @@ wd_create_recv_socket(int port)
 		ereport(WARNING,
 				(errmsg("failed to create watchdog receive socket as much intended"),
 				 errdetail("only %d out of %d socket(s) had been created", n, target_n)));
+
+	freeaddrinfo(res);
 
 	return socks;
 }
@@ -1021,17 +1040,19 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 	{
 		/* socket create failed */
 		ereport(LOG,
-				(errmsg("create socket failed with reason: \"%m\"")));
+				(errmsg("create socket failed with error: \"%m\"")));
+		freeaddrinfo(res);
 		return -1;
 	}
 
 	/* set socket option */
 	if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1)
 	{
-		close(sock);
 		ereport(LOG,
 				(errmsg("failed to set socket options"),
 				 errdetail("setsockopt(TCP_NODELAY) failed with error: \"%m\"")));
+		freeaddrinfo(res);
+		close(sock);
 		return -1;
 	}
 	if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1)
@@ -1039,6 +1060,7 @@ wd_create_client_socket(char *hostname, int port, bool *connected)
 		ereport(LOG,
 				(errmsg("failed to set socket options"),
 				 errdetail("setsockopt(SO_KEEPALIVE) failed with error: \"%m\"")));
+		freeaddrinfo(res);
 		close(sock);
 		return -1;
 	}
