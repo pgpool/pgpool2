@@ -1855,6 +1855,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 			return;
 		}
 	}
+	pfree(path);
 
 	if (pool_is_shmem_cache())
 	{
@@ -1886,6 +1887,7 @@ pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, in
 			ereport(DEBUG1,
 					(errmsg("memcache invalidating query cache"),
 					 errdetail("failed to open \"%s\". reason:\"%m\"", path)));
+			pfree(path);
 			continue;
 		}
 
