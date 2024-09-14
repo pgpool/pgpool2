@@ -2845,7 +2845,7 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 											MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0);
 					}
 				}
-				else if (lock_kind == 2)
+				else if (lock_kind == 2 || lock_kind == 3)
 				{
 					per_node_statement_log(backend, i, qbuf);
 					do_query(CONNECTION(backend, i), qbuf, &result, MAJOR(backend));
