@@ -5183,10 +5183,10 @@ pool_push_pending_data(POOL_CONNECTION * backend)
 
 		len_save = len;
 		len = ntohl(len);
+		len -= sizeof(len);
 		buf = NULL;
-		if ((len - sizeof(len)) > 0)
+		if (len  > 0)
 		{
-			len -= sizeof(len);
 			buf = palloc(len);
 			pool_read(backend, buf, len);
 		}
