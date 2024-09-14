@@ -1743,6 +1743,7 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 					(errmsg("memcache: adding table oid maps, failed to write file:\"%s\"", path),
 					 errdetail("%m")));
 			close(fd);
+			pfree(path);
 			return;
 		}
 		close(fd);
