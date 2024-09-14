@@ -2811,7 +2811,7 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 					per_node_statement_log(backend, i, qbuf);
 					if (pool_get_session_context(true) && pool_is_doing_extended_query_message())
 					{
-						do_query(MAIN(backend), qbuf, &result, MAJOR(backend));
+						do_query(CONNECTION(backend, i), qbuf, &result, MAJOR(backend));
 						if (result)
 							free_select_result(result);
 					}
