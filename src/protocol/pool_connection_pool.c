@@ -1073,11 +1073,15 @@ close_all_backend_connections(void)
 
 	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
-		if (!MAIN_CONNECTION(p))
+		int	backend_id = in_use_backend_id(p);
+
+		if (backend_id < 0)
 			continue;
-		if (!MAIN_CONNECTION(p)->sp)
+		if (CONNECTION_SLOT(p, backend_id) == NULL)
 			continue;
-		if (MAIN_CONNECTION(p)->sp->user == NULL)
+		if (CONNECTION_SLOT(p, backend_id)->sp == NULL)
+			continue;
+		if (CONNECTION_SLOT(p, backend_id)->sp->user == NULL)
 			continue;
 		pool_send_frontend_exits(p);
 	}
