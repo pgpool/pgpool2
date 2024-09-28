@@ -22,30 +22,93 @@
  <note>
   <para>
    <!--
-   Basically following SELECTs will not be cached:
+   First of all if the query starts with SQL comment:
    <programlisting>
-   SELECTs including non immutable functions
-   SELECTs including temp tables, unlogged tables
-   SELECT result is too large (memqcache_maxcache)
-   SELECT FOR SHARE/UPDATE
-   SELECT starting with "/*NO QUERY CACHE*/" comment
-   SELECT including system catalogs
-   SELECT uses TABLESAMPLE
-  </programlisting>
+    /*FORCE QUERY CACHE*/
+   </programlisting>
+   is checked (case insensitive).  If so, the result of the query is
+   cached unconditionally as long as it is not SELECT or WITH + SELECT.
+   However you must be very careful to use this feature. For example,
+   <programlisting>
+    /*FORCE QUERY CACHE*/SELECT now();
+   </programlisting>
+   will return the same timestamp until pgpool restarts, once the
+   query is cached. The query cache will not be discarded even with a
+   query:
+   <programlisting>
+    /*NO QUERY CACHE*/SELECT now();
+   </programlisting>
+   Because it just prevents to create a cache entry for the query, and
+   does not affect the query using the FORCE QUERY CACHE comment.
+   </programlisting>
+   Because it just prevents to create a cache entry for the query, and
+   does not affect the query using the FORCE QUERY CACHE comment.
+   -->
+   まず、クエリが以下のSQLコメントで始まるかどうかがチェックされます（大文字小文字は区別されません）。
+   <programlisting>
+    /*FORCE QUERY CACHE*/
+   </programlisting>
+   もしこのコメントで始まっているなら、そのクエリがSELECTあるいはWITH + SELECTである限り無条件にキャッシュされます。
+   しかし、この機能は注意深く使う必要があります。
+   たとえば、
+   <programlisting>
+    /*FORCE QUERY CACHE*/SELECT now();
+   </programlisting>
+   このクエリがキャッシュされると、pgpoolが再起動するまで同じタイムスタンプを返し続けます。
+   このクエリキャッシュは、以下のクエリによってさえも削除されません。
+   <programlisting>
+    /*NO QUERY CACHE*/SELECT now();
+   </programlisting>
+   なぜなら、これはこのクエリのキャッシュエントリが作成されないようにするだけで、FORCE QUERY CACHEコメントを使ったクエリには影響を与えないからです。
+   </para>
+  <para>
+  <!--
+   Note that for following query:
+   <programlisting>
+    /*FORCE QUERY CACHE*/SELECT * FROM t1;
+   </programlisting>
+   usual cache validation due to an update to the table (in this case
+   t1) works.
+   -->
+   次のクエリ
+   <programlisting>
+    /*FORCE QUERY CACHE*/SELECT * FROM t1;
+   </programlisting>
+   に対しては、テーブル（この場合はt1）の更新によるキャッシュの削除は機能することに注意してください。
+  </para>
+  <para>
+   <!--
+   If the query does not start with FORCE QUERY CACHE comment,
+   following checks are performed.  If one of followings is satisfied,
+   SELECT will not be cached.
+   <programlisting>
+    SELECT including non immutable functions
+    SELECT including temp tables, unlogged tables
+    SELECT including TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+    SELECT including CAST to TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+    SELECT including SQLValueFunction (CURRENT_TIME, CURRENT_USER etc.)
+    SELECT result is too large (memqcache_maxcache)
+    SELECT FOR SHARE/UPDATE
+    SELECT starting with "/*NO QUERY CACHE*/" comment (case insensitive)
+    SELECT including system catalogs
+    SELECT using TABLESAMPLE
+    SELECT uses row security enabled tables
+   </programlisting>
    However, VIEWs and SELECTs accessing unlogged tables can be
    cached by specifying in
    the <xref linkend="guc-cache-safe-memqcache-table-list">.
    -->
-   基本的に以下のSELECTはキャッシュされません。
+   クエリがFORCE QUERY CACHEコメントで始まっていなければ、以下のチェックが行われます。
+   以下の一つでも該当すれば、SELECTはキャッシュされません。
    <programlisting>
     immutableでない関数を含むSELECT
+    一時テーブル、unloggedテーブルを使ったSELECT
     TIMESTAMP WITH TIMEZONE、TIME WITH TIMEZONEを返す関数を使っているSELECT
     TIMESTAMP WITH TIMEZONE、TIME WITH TIMEZONEへのキャストを含むSELECT
     SQLValueFunction (CURRENT_TIME, CURRENT_USERなど)を含むSELECT
-    一時テーブル、unloggedテーブルを使ったSELECT
     検索結果が memqcache_maxcache を越えるようなSELECT
     SELECT FOR SHARE/UPDATE
-    /*NO QUERY CACHE*/コメントで始まるSELECT
+    /*NO QUERY CACHE*/コメント（大文字小文字は区別されません）で始まるSELECT
     システムカタログを使用しているSELECT
     TABLESAMPLEを使っているSELECT
     行セキュリティが設定されているテーブルを使っているSELECT

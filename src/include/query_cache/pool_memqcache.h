@@ -29,6 +29,9 @@
 #include "pool.h"
 #include <sys/time.h>
 
+#define FORCE_QUERY_CACHE "/*FORCE QUERY CACHE*/"
+#define FORCE_QUERY_CACHE_COMMENT_SZ (sizeof(FORCE_QUERY_CACHE)-1)
+
 #define NO_QUERY_CACHE "/*NO QUERY CACHE*/"
 #define NO_QUERY_CACHE_COMMENT_SZ (sizeof(NO_QUERY_CACHE)-1)
 

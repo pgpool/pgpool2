@@ -22,18 +22,48 @@
 
  <note>
   <para>
-   Basically following SELECTs will not be cached:
+   First of all if the query starts with SQL comment:
    <programlisting>
-    SELECTs including non immutable functions
-    SELECTs including temp tables, unlogged tables
-    SELECTs including TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
-    SELECTs including CAST to TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
-    SELECTs including SQLValueFunction (CURRENT_TIME, CURRENT_USER etc.)
+    /*FORCE QUERY CACHE*/
+   </programlisting>
+   is checked (case insensitive).  If so, the result of the query is
+   cached unconditionally as long as it is not SELECT or WITH + SELECT.
+   However you must be very careful to use this feature. For example,
+   <programlisting>
+    /*FORCE QUERY CACHE*/SELECT now();
+   </programlisting>
+   will return the same timestamp until pgpool restarts, once the
+   query is cached. The query cache will not be discarded even with a
+   query:
+   <programlisting>
+    /*NO QUERY CACHE*/SELECT now();
+   </programlisting>
+   Because it just prevents to create a cache entry for the query, and
+   does not affect the query using the FORCE QUERY CACHE comment.
+  </para>
+  <para>
+   Note that for following query:
+   <programlisting>
+    /*FORCE QUERY CACHE*/SELECT * FROM t1;
+   </programlisting>
+   usual cache validation due to an update to the table (in this case
+   t1) works.
+  </para>
+  <para>
+   If the query does not start with FORCE QUERY CACHE comment,
+   following checks are performed.  If one of followings is satisfied,
+   SELECT will not be cached.
+   <programlisting>
+    SELECT including non immutable functions
+    SELECT including temp tables, unlogged tables
+    SELECT including TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+    SELECT including CAST to TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE
+    SELECT including SQLValueFunction (CURRENT_TIME, CURRENT_USER etc.)
     SELECT result is too large (memqcache_maxcache)
     SELECT FOR SHARE/UPDATE
-    SELECT starting with "/*NO QUERY CACHE*/" comment
+    SELECT starting with "/*NO QUERY CACHE*/" comment (case insensitive)
     SELECT including system catalogs
-    SELECT uses TABLESAMPLE
+    SELECT using TABLESAMPLE
     SELECT uses row security enabled tables
    </programlisting>
    However, VIEWs and SELECTs accessing unlogged tables can be

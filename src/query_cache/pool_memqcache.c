@@ -925,7 +925,13 @@ pool_is_allow_to_cache(Node *node, char *query)
 	SelectContext ctx;
 
 	/*
-	 * If NO QUERY CACHE comment exists, do not cache.
+	 * If FORCE QUERY CACHE comment exists, cache it unconditionally.
+	 */
+	if (!strncasecmp(query, FORCE_QUERY_CACHE, FORCE_QUERY_CACHE_COMMENT_SZ))
+		return true;
+
+	/*
+	 * If NO QUERY CACHE comment exists, do not cache unconditionally.
 	 */
 	if (!strncasecmp(query, NO_QUERY_CACHE, NO_QUERY_CACHE_COMMENT_SZ))
 		return false;
