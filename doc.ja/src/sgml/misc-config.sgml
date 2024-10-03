@@ -87,7 +87,7 @@
       -->
       もし以下のようなメッセージが<productname>Pgpool-II</productname>ログに頻繁に出る場合は、パフォーマンス向上のため<varname>relcache_size</varname>を大きくしてください。
       <programlisting>
-       "pool_search_relcache: cache replacement happened"
+       "pool_search_relcache: cache replacement occurred"
       </programlisting>
      </para>
     </note>
