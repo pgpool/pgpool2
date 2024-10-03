@@ -57,7 +57,7 @@
       <productname>Pgpool-II</productname> log, you may need to
       increase the <varname>relcache_size</varname> for better performance.
       <programlisting>
-       "pool_search_relcache: cache replacement happened"
+       "pool_search_relcache: cache replacement occurred"
       </programlisting>
      </para>
     </note>
