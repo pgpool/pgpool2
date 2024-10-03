@@ -744,7 +744,7 @@ relcache_expire = 0
 relcache_size = 256
                                    # Number of relation cache
                                    # entry. If you see frequently:
-                                   # "pool_search_relcache: cache replacement happened"
+                                   # "pool_search_relcache: cache replacement occurred"
                                    # in the pgpool log, you might want to increate this number.
 
 check_temp_table = catalog
