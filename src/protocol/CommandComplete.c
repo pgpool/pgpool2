@@ -45,7 +45,6 @@ static int	forward_command_complete(POOL_CONNECTION * frontend, char *packet, in
 static int	forward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen);
 static int	forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen);
 static void process_clear_cache(POOL_CONNECTION_POOL * backend);
-static void clear_query_cache(void);
 
 POOL_STATUS
 CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool command_complete)
@@ -720,38 +719,4 @@ process_clear_cache(POOL_CONNECTION_POOL * backend)
 			clear_query_cache();
 		}
 	}
-}
-
-/*
- * Clear query cache on shmem or memcached
- */
-static
-void clear_query_cache(void)
-{
-	/*
-	 * Clear all the shared memory cache and oid maps.
-	 */
-	if (pool_is_shmem_cache())
-	{
-		pool_clear_memory_cache();
-		ereport(LOG,
-				(errmsg("all query cache in shared memory deleted")));
-	}
-	else
-#ifdef USE_MEMCACHED
-	{
-		/*
-		 * Clear all the memcached cache and oid maps.
-		 */
-		delete_all_cache_on_memcached();
-		pool_discard_oid_maps();
-		ereport(LOG,
-				(errmsg("all query cache in memcached deleted")));
-	}
-#else
-	{
-		ereport(WARNING,
-				(errmsg("failed to clear cache on memcached, memcached support is not enabled")));
-	}
-#endif
 }

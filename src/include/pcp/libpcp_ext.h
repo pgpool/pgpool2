@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -382,6 +382,7 @@ extern PCPResultInfo * pcp_process_count(PCPConnInfo * pcpConn);
 extern PCPResultInfo * pcp_process_info(PCPConnInfo * pcpConn, int pid);
 extern PCPResultInfo * pcp_reload_config(PCPConnInfo * pcpConn,char command_scope);
 extern PCPResultInfo * pcp_log_rotate(PCPConnInfo * pcpConn,char command_scope);
+extern PCPResultInfo * pcp_invalidate_query_cache(PCPConnInfo * pcpConn);
 
 extern PCPResultInfo * pcp_detach_node(PCPConnInfo * pcpConn, int nid);
 extern PCPResultInfo * pcp_detach_node_gracefully(PCPConnInfo * pcpConn, int nid);

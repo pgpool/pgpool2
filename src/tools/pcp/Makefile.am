@@ -14,7 +14,8 @@ bin_PROGRAMS =  pcp_stop_pgpool \
 				pcp_pool_status \
 				pcp_watchdog_info \
 				pcp_reload_config \
-				pcp_log_rotate
+				pcp_log_rotate \
+				pcp_invalidate_query_cache
 
 client_sources = pcp_frontend_client.c ../fe_memutils.c ../../utils/sprompt.c ../../utils/pool_path.c
 
@@ -46,3 +47,5 @@ pcp_reload_config_SOURCES = $(client_sources)
 pcp_reload_config_LDADD = $(libs_dir)/pcp/libpcp.la
 pcp_log_rotate_SOURCES = $(client_sources)
 pcp_log_rotate_LDADD = $(libs_dir)/pcp/libpcp.la
+pcp_invalidate_query_cache_SOURCES = $(client_sources)
+pcp_invalidate_query_cache_LDADD = $(libs_dir)/pcp/libpcp.la

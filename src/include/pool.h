@@ -454,6 +454,7 @@ typedef struct
 	bool		follow_primary_lock_held_remotely; /* true when lock is held by
 													watchdog coordinator*/
 	bool		follow_primary_ongoing;	/* true if follow primary command is ongoing */
+	bool		query_cache_invalidate_request;	/* true if pcp_invalidate_query_cache requested */
 }			POOL_REQUEST_INFO;
 
 /* description of row. corresponding to RowDescription message */

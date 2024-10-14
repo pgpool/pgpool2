@@ -305,6 +305,6 @@ extern void InvalidateQueryCache(int tableoid, int dboid);
 
 extern void pool_init_whole_cache_blocks(void);
 
-extern int delete_all_cache_on_memcached(void);
+extern void clear_query_cache(void);
 
 #endif							/* POOL_MEMQCACHE_H */

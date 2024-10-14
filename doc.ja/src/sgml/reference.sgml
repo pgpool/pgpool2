@@ -162,6 +162,7 @@
   &pcpReloadConfig;
   &pcpRecoveryNode;
   &pcpLogRotate;
+  &pcpInvalidateCache;
 
  </reference>
 

@@ -125,6 +125,7 @@ static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT * element);
 static bool is_free_hash_element(void);
 static void inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen);
+static int delete_all_cache_on_memcached(void);
 
 /*
  * if true, shared memory is locked in this process now.
@@ -2160,7 +2161,7 @@ pool_clear_memory_cache(void)
 /*
  * delete all query cache on memcached
  */
-int
+static int
 delete_all_cache_on_memcached(void)
 {
 	memcached_return rc;
@@ -2177,6 +2178,39 @@ delete_all_cache_on_memcached(void)
 	return 1;
 }
 #endif
+
+/*
+ * Clear query cache on shmem or memcached
+ */
+void clear_query_cache(void)
+{
+	/*
+	 * Clear all the shared memory cache and oid maps.
+	 */
+	if (pool_is_shmem_cache())
+	{
+		pool_clear_memory_cache();
+		ereport(LOG,
+				(errmsg("all query cache in shared memory deleted")));
+	}
+	else
+#ifdef USE_MEMCACHED
+	{
+		/*
+		 * Clear all the memcached cache and oid maps.
+		 */
+		delete_all_cache_on_memcached();
+		pool_discard_oid_maps();
+		ereport(LOG,
+				(errmsg("all query cache in memcached deleted")));
+	}
+#else
+	{
+		ereport(WARNING,
+				(errmsg("failed to clear cache on memcached, memcached support is not enabled")));
+	}
+#endif
+}
 
 /*
  * Return shared memory cache address

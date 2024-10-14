@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -58,18 +58,19 @@ typedef enum
 {
 	PCP_ATTACH_NODE,
 	PCP_DETACH_NODE,
+	PCP_HEALTH_CHECK_STATS,
+	PCP_INVALIDATE_QUERY_CACHE,
+	PCP_LOG_ROTATE,
 	PCP_NODE_COUNT,
 	PCP_NODE_INFO,
-	PCP_HEALTH_CHECK_STATS,
 	PCP_POOL_STATUS,
 	PCP_PROC_COUNT,
 	PCP_PROC_INFO,
 	PCP_PROMOTE_NODE,
 	PCP_RECOVERY_NODE,
-	PCP_STOP_PGPOOL,
-	PCP_WATCHDOG_INFO,
 	PCP_RELOAD_CONFIG,
-	PCP_LOG_ROTATE,
+	PCP_WATCHDOG_INFO,
+	PCP_STOP_PGPOOL,
 	UNKNOWN,
 }			PCP_UTILITIES;
 
@@ -97,6 +98,7 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_watchdog_info", PCP_WATCHDOG_INFO, "n:h:p:U:wWvd", "display a pgpool-II watchdog's information"},
 	{"pcp_reload_config",PCP_RELOAD_CONFIG,"h:p:U:s:wWvd", "reload a pgpool-II config file"},
 	{"pcp_log_rotate",PCP_LOG_ROTATE,"h:p:U:s:wWvd", "rotate the Pgpool-II's log file"},
+	{"pcp_invalidate_query_cache",PCP_INVALIDATE_QUERY_CACHE,"h:p:U:s:wWvd", "invalidate query cache"},
 	{NULL, UNKNOWN, NULL, NULL},
 };
 struct AppTypes *current_app_type;
@@ -395,6 +397,11 @@ main(int argc, char **argv)
 			pcpResInfo = pcp_detach_node(pcpConn, nodeID);
 	}
 
+	else if (current_app_type->app_type == PCP_LOG_ROTATE)
+	{
+		pcpResInfo = pcp_log_rotate(pcpConn,command_scope);
+	}
+
 	else if (current_app_type->app_type == PCP_NODE_COUNT)
 	{
 		pcpResInfo = pcp_node_count(pcpConn);
@@ -408,6 +415,11 @@ main(int argc, char **argv)
 	else if (current_app_type->app_type == PCP_HEALTH_CHECK_STATS)
 	{
 		pcpResInfo = pcp_health_check_stats(pcpConn, nodeID);
+	}
+
+	else if (current_app_type->app_type == PCP_INVALIDATE_QUERY_CACHE)
+	{
+		pcpResInfo = pcp_invalidate_query_cache(pcpConn);
 	}
 
 	else if (current_app_type->app_type == PCP_POOL_STATUS)
@@ -438,6 +450,11 @@ main(int argc, char **argv)
 		pcpResInfo = pcp_recovery_node(pcpConn, nodeID);
 	}
 
+	else if (current_app_type->app_type == PCP_RELOAD_CONFIG)
+	{
+		pcpResInfo = pcp_reload_config(pcpConn,command_scope);
+	}
+
 	else if (current_app_type->app_type == PCP_STOP_PGPOOL)
 	{
 		pcpResInfo = pcp_terminate_pgpool(pcpConn, shutdown_mode, command_scope);
@@ -446,16 +463,6 @@ main(int argc, char **argv)
 	else if (current_app_type->app_type == PCP_WATCHDOG_INFO)
 	{
 		pcpResInfo = pcp_watchdog_info(pcpConn, nodeID);
-	}
-
-	else if (current_app_type->app_type == PCP_RELOAD_CONFIG)
-	{
-		pcpResInfo = pcp_reload_config(pcpConn,command_scope);
-	}
-
-	else if (current_app_type->app_type == PCP_LOG_ROTATE)
-	{
-		pcpResInfo = pcp_log_rotate(pcpConn,command_scope);
 	}
 
 	else

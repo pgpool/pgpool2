@@ -8,7 +8,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -390,6 +390,94 @@ static PCPResultInfo * process_pcp_response(PCPConnInfo * pcpConn, char sentMsg)
 
 		switch (toc)
 		{
+			case 'a':			/* set configuration parameter */
+				if (sentMsg != 'A')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_command_complete_response(pcpConn, buf, rsize);
+				break;
+
+			case 'b':			/* status request */
+				if (sentMsg != 'B')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_pool_status_response(pcpConn, buf, rsize);
+				break;
+
+			case 'c':			/* attach node */
+				if (sentMsg != 'C' && sentMsg != 'O')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_command_complete_response(pcpConn, buf, rsize);
+				break;
+
+			case 'd':			/* detach node */
+				if (sentMsg != 'D' && sentMsg != 'J')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_command_complete_response(pcpConn, buf, rsize);
+				break;
+
+			case 'E':			/* error */
+				setResultStatus(pcpConn, PCP_RES_BACKEND_ERROR);
+				process_error_response(pcpConn, toc, buf);
+				break;
+
+			case 'g':			/* invalidate query cache */
+				if (sentMsg != 'G')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_command_complete_response(pcpConn, buf, rsize);
+				break;
+
+			case 'h':			/* health check stats */
+				if (sentMsg != 'H')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_health_check_stats_response(pcpConn, buf, rsize);
+				break;
+
+			case 'i':			/* node info */
+				if (sentMsg != 'I')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_node_info_response(pcpConn, buf, rsize);
+				break;
+
+			case 'l':			/* node count */
+				if (sentMsg != 'L')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_pcp_node_count_response(pcpConn, buf, rsize);
+				break;
+
+			case 'm':			/* salt info response */
+				if (sentMsg != 'M')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_salt_info_response(pcpConn, buf, rsize);
+				break;
+
+			case 'N':			/* error response */
+				process_error_response(pcpConn, toc, buf);
+				pfree(buf);
+				continue;
+				break;
+
+			case 'n':			/* process count */
+				if (sentMsg != 'N')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_process_count_response(pcpConn, buf, rsize);
+				break;
+
+			case 'p':			/* process info */
+				if (sentMsg != 'P')
+					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
+				else
+					process_process_info_response(pcpConn, buf, rsize);
+				break;
+
 			case 'r':			/* Authentication Response */
 				{
 					if (sentMsg != 'R')
@@ -409,71 +497,12 @@ static PCPResultInfo * process_pcp_response(PCPConnInfo * pcpConn, char sentMsg)
 					}
 				}
 				break;
-			case 'm':
-				if (sentMsg != 'M')
+
+			case 't':			/* shutdown request */
+				if (sentMsg != 'T')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_salt_info_response(pcpConn, buf, rsize);
-				break;
-
-			case 'E':
-				setResultStatus(pcpConn, PCP_RES_BACKEND_ERROR);
-				process_error_response(pcpConn, toc, buf);
-				break;
-
-			case 'N':
-				process_error_response(pcpConn, toc, buf);
-				pfree(buf);
-				continue;
-				break;
-
-			case 'i':
-				if (sentMsg != 'I')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_node_info_response(pcpConn, buf, rsize);
-				break;
-
-			case 'h':
-				if (sentMsg != 'H')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_health_check_stats_response(pcpConn, buf, rsize);
-				break;
-
-			case 'l':
-				if (sentMsg != 'L')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_pcp_node_count_response(pcpConn, buf, rsize);
-				break;
-
-			case 'c':
-				if (sentMsg != 'C' && sentMsg != 'O')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_command_complete_response(pcpConn, buf, rsize);
-				break;
-
-			case 'd':
-				if (sentMsg != 'D' && sentMsg != 'J')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_command_complete_response(pcpConn, buf, rsize);
-				break;
-
-			case 'a':
-				if (sentMsg != 'A')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_command_complete_response(pcpConn, buf, rsize);
-				break;
-
-			case 'z':
-				if (sentMsg != 'Z')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_command_complete_response(pcpConn, buf, rsize);
+					setResultStatus(pcpConn, PCP_RES_COMMAND_OK);
 				break;
 
 			case 'v':			/* pcp_log_rotate */
@@ -483,39 +512,18 @@ static PCPResultInfo * process_pcp_response(PCPConnInfo * pcpConn, char sentMsg)
 					process_command_complete_response(pcpConn, buf, rsize);
 				break;
 
-			case 'w':
+			case 'w':			/* watchdog info */
 				if (sentMsg != 'W')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
 					process_watchdog_info_response(pcpConn, buf, rsize);
 				break;
 
-			case 'p':
-				if (sentMsg != 'P')
+			case 'z':			/* command complete */
+				if (sentMsg != 'Z')
 					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
 				else
-					process_process_info_response(pcpConn, buf, rsize);
-				break;
-
-			case 'n':
-				if (sentMsg != 'N')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_process_count_response(pcpConn, buf, rsize);
-				break;
-
-			case 'b':
-				if (sentMsg != 'B')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					process_pool_status_response(pcpConn, buf, rsize);
-				break;
-
-			case 't':
-				if (sentMsg != 'T')
-					setResultStatus(pcpConn, PCP_RES_BAD_RESPONSE);
-				else
-					setResultStatus(pcpConn, PCP_RES_COMMAND_OK);
+					process_command_complete_response(pcpConn, buf, rsize);
 				break;
 
 			default:
@@ -957,6 +965,28 @@ pcp_log_rotate(PCPConnInfo * pcpConn,char command_scope)
 	   fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"Z\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'V');
+}
+
+PCPResultInfo *
+pcp_invalidate_query_cache(PCPConnInfo * pcpConn)
+{
+	int                     wsize;
+
+	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
+	{
+	   pcp_internal_error(pcpConn, "invalid PCP connection");
+	   return NULL;
+	}
+
+	pcp_write(pcpConn->pcpConn, "G", 1);
+	wsize = htonl(sizeof(int));
+	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
+	if (PCPFlush(pcpConn) < 0)
+	   return NULL;
+	if (pcpConn->Pfdebug)
+	   fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"G\", len=%d\n", ntohl(wsize));
+
+	return process_pcp_response(pcpConn, 'G');
 }
 
 /*

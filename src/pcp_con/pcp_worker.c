@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -93,6 +93,7 @@ static void process_status_request(PCP_CONNECTION * frontend);
 static void process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos);
 static void process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos);
 static void process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int len);
+static void process_invalidate_query_cache(PCP_CONNECTION * frontend);
 
 static void pcp_worker_will_go_down(int code, Datum arg);
 
@@ -268,9 +269,30 @@ pcp_process_command(char tos, char *buf, int buf_len)
 			process_set_configuration_parameter(pcp_frontend, buf, buf_len);
 			break;
 
-		case 'L':				/* node count */
-			set_ps_display("PCP: processing node count request", false);
-			inform_node_count(pcp_frontend);
+		case 'B':				/* status request */
+			set_ps_display("PCP: processing status request request", false);
+			process_status_request(pcp_frontend);
+			break;
+
+		case 'C':				/* attach node */
+			set_ps_display("PCP: processing attach node request", false);
+			process_attach_node(pcp_frontend, buf);
+			break;
+
+		case 'D':				/* detach node */
+		case 'd':				/* detach node gracefully */
+			set_ps_display("PCP: processing detach node request", false);
+			process_detach_node(pcp_frontend, buf, tos);
+			break;
+
+		case 'F':
+			ereport(DEBUG1,
+					(errmsg("PCP processing request, stop online recovery")));
+			break;
+
+		case 'G':				/* invalidate query cache */
+			set_ps_display("PCP: processing invalidate query cache request", false);
+			process_invalidate_query_cache(pcp_frontend);
 			break;
 
 		case 'H':				/* health check stats */
@@ -283,30 +305,30 @@ pcp_process_command(char tos, char *buf, int buf_len)
 			inform_node_info(pcp_frontend, buf);
 			break;
 
+		case 'J':				/* promote node */
+		case 'j':				/* promote node gracefully */
+			set_ps_display("PCP: processing promote node request", false);
+			process_promote_node(pcp_frontend, buf, tos);
+			break;
+
+		case 'L':				/* node count */
+			set_ps_display("PCP: processing node count request", false);
+			inform_node_count(pcp_frontend);
+			break;
+
 		case 'N':				/* process count */
 			set_ps_display("PCP: processing process count request", false);
 			inform_process_count(pcp_frontend);
 			break;
 
+		case 'O':				/* recovery request */
+			set_ps_display("PCP: processing recovery request", false);
+			process_recovery_request(pcp_frontend, buf);
+			break;
+
 		case 'P':				/* process info */
 			set_ps_display("PCP: processing process info request", false);
 			inform_process_info(pcp_frontend, buf);
-			break;
-
-		case 'W':				/* watchdog info */
-			set_ps_display("PCP: processing watchdog info request", false);
-			inform_watchdog_info(pcp_frontend, buf);
-			break;
-
-		case 'D':				/* detach node */
-		case 'd':				/* detach node gracefully */
-			set_ps_display("PCP: processing detach node request", false);
-			process_detach_node(pcp_frontend, buf, tos);
-			break;
-
-		case 'C':				/* attach node */
-			set_ps_display("PCP: processing attach node request", false);
-			process_attach_node(pcp_frontend, buf);
 			break;
 
 		case 'T':
@@ -315,35 +337,19 @@ pcp_process_command(char tos, char *buf, int buf_len)
 			process_shutdown_request(pcp_frontend, buf[0], tos);
 			break;
 
-		case 'O':				/* recovery request */
-			set_ps_display("PCP: processing recovery request", false);
-			process_recovery_request(pcp_frontend, buf);
-			break;
-
-		case 'B':				/* status request */
-			set_ps_display("PCP: processing status request request", false);
-			process_status_request(pcp_frontend);
-			break;
-
-		case 'Z':				/*reload config file */
-			set_ps_display("PCP: processing reload config request", false);
-			process_reload_config(pcp_frontend, buf[0]);
-			break;
-
 		case 'V':				/* log rotate */
 			set_ps_display("PCP: processing log rotation request", false);
 			process_log_rotate(pcp_frontend, buf[0]);
 			break;
 
-		case 'J':				/* promote node */
-		case 'j':				/* promote node gracefully */
-			set_ps_display("PCP: processing promote node request", false);
-			process_promote_node(pcp_frontend, buf, tos);
+		case 'W':				/* watchdog info */
+			set_ps_display("PCP: processing watchdog info request", false);
+			inform_watchdog_info(pcp_frontend, buf);
 			break;
 
-		case 'F':
-			ereport(DEBUG1,
-					(errmsg("PCP processing request, stop online recovery")));
+		case 'Z':				/*reload config file */
+			set_ps_display("PCP: processing reload config request", false);
+			process_reload_config(pcp_frontend, buf[0]);
 			break;
 
 		case 'X':				/* disconnect */
@@ -1369,6 +1375,32 @@ process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos)
 	}
 
 	pcp_write(frontend, "d", 1);
+	wsize = htonl(sizeof(code) + sizeof(int));
+	pcp_write(frontend, &wsize, sizeof(int));
+	pcp_write(frontend, code, sizeof(code));
+	do_pcp_flush(frontend);
+}
+
+/*
+ * Process pcp_invalidate_query_cache
+ */
+static void
+process_invalidate_query_cache(PCP_CONNECTION * frontend)
+{
+	int			wsize;
+	char		code[] = "CommandComplete";
+
+	if (!pool_config->memory_cache_enabled)
+		ereport(ERROR,
+				(errmsg("query cache is not enabled")));
+
+	ereport(DEBUG1,
+			(errmsg("PCP: processing invalidate query cache")));
+
+	/* Set query cache invalidation request flag */
+	Req_info->query_cache_invalidate_request = true;
+
+	pcp_write(frontend, "g", 1);
 	wsize = htonl(sizeof(code) + sizeof(int));
 	pcp_write(frontend, &wsize, sizeof(int));
 	pcp_write(frontend, code, sizeof(code));

@@ -10,6 +10,7 @@ TESTDIR=testdir
 
 PSQL=$PGBIN/psql
 PGPROTO=$PGPOOL_INSTALL_DIR/bin/pgproto
+PCP_INVALIDATE_QUERY_CACHE=$PGPOOL_INSTALL_DIR/bin/pcp_invalidate_query_cache
 
 # remove error/notice details (message and so on) from
 # ErrorResponse or NoticeResponse messages.
@@ -459,6 +460,37 @@ EOF
 	    exit 1
 	fi
 	rm $log
+
+	cd $TESTDIR
+	./startall
+	wait_for_pgpool_startup
+
+	# test for pcp_invalidate_query_cache
+	res1=`$PSQL -t -c "/*FORCE QUERY CACHE*/SELECT current_timestamp" test`
+	res2=`$PSQL -t -c "/*FORCE QUERY CACHE*/SELECT current_timestamp" test`
+	# make sure query cache created
+	if [ "$res1" != "$res2" ];then
+	    echo "query cache was not created in pcp_invalidate_query_cache test"
+	    ./shutdownall
+	    exit 1
+	fi
+	# remove query cache
+	$PCP_INVALIDATE_QUERY_CACHE -p $PCP_PORT
+	if [ $? != 0 ];then
+	    echo "pcp_invalidate_query_cache failed"
+	    ./shutdownall
+	    exit 1
+	fi
+	# make sure query cache has gone
+	res1=`$PSQL -t -c "/*FORCE QUERY CACHE*/SELECT current_timestamp" test`
+	if [ "$res1" = "$res2" ];then
+	    echo "query cache was not invalidated"
+	    ./shutdownall
+	    exit 1
+	fi
+	./shutdownall
+
+	cd ..
 done
 
 exit 0

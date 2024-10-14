@@ -466,6 +466,22 @@ pool_process_query(POOL_CONNECTION * frontend,
 				load_hba(get_hba_file_name());
 			got_sighup = 0;
 		}
+
+		/*
+		 * Process query cache invalidation request if any.
+		 */
+		if (pool_config->memory_cache_enabled)
+		{
+			volatile bool invalidate_request = Req_info->query_cache_invalidate_request;
+			if (invalidate_request)
+			{
+				/*
+				 * Delete all query cache in shared memory or memcached.
+				 */
+				clear_query_cache();
+				Req_info->query_cache_invalidate_request = false;
+			}
+		}
 	}
 }
 
