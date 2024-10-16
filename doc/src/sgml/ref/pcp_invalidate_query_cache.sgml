@@ -1,0 +1,66 @@
+<!--
+doc/src/sgml/ref/pcp_logrotate_pgpool.sgml
+Pgpool-II documentation
+-->
+
+<refentry id="PCP-INVALIDATE-QUERY-CACHE">
+ <indexterm zone="pcp-invalidate-query-cache">
+  <primary>pcp_invalidate_query_cache</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>pcp_invalidate_query_cache</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>PCP Command</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pcp_invalidate_query_cache</refname>
+  <refpurpose>
+   invalidate query cache contents</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pcp_invalidate_query_cache</command>
+   <arg rep="repeat"><replaceable>options</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-PCP-INVALIDATE-QUERY-CACHE-1">
+  <title>Description</title>
+  <para>
+   <command>pcp_invalidate_query_cache</command> places a query cache
+   invalidation request on the shared memory area. The request is
+   processed by one of <productname>Pgpool-II</productname> child
+   process, which corresponds to each pgpool client session, when a
+   message from the client is processed. This means that if there's no
+   client connecting to <productname>Pgpool-II</productname>, or
+   all clients are sitting idle, the request will not be
+   processed until next message arrives.
+  </para>
+  <para>
+   Although this command does not modifies the statistics data shown by
+   <xref linkend="SQL-SHOW-POOL-CACHE">, part of the statistics data
+   is affected since this command invalidate the contents of query
+   cache. <varname>num_cache_hits</varname>
+   and <varname>num_selects</varname> continue to increase after the
+   query cache
+   invalidated. <varname>used_hash_entries</varname>, <varname>num_cache_entries</varname>
+   and <varname>used_cache_entries_size</varname> starts off with
+   0. <varname>free_cache_entries_size</varname> will increase.
+  </para>
+  <para>
+   If <xref linkend="guc-memory-cache-enabled">
+   is <literal>false</literal>, this command emits an error and exits.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+  <para>
+   See <xref linkend="pcp-common-options">.
+  </para>
+ </refsect1>
+
+</refentry>

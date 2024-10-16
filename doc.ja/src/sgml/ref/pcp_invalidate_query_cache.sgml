@@ -1,0 +1,93 @@
+<!--
+doc/src/sgml/ref/pcp_logrotate_pgpool.sgml
+Pgpool-II documentation
+-->
+
+<refentry id="PCP-INVALIDATE-QUERY-CACHE">
+ <indexterm zone="pcp-invalidate-query-cache">
+  <primary>pcp_invalidate_query_cache</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>pcp_invalidate_query_cache</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>PCP Command</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pcp_invalidate_query_cache</refname>
+  <refpurpose>
+<!--
+   invalidate query cache contents
+-->
+   クエリキャッシュの内容を破棄する
+  </refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pcp_invalidate_query_cache</command>
+   <arg rep="repeat"><replaceable>options</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-PCP-INVALIDATE-QUERY-CACHE-1">
+<!--
+  <title>Description</title>
+-->
+  <title>説明</title>
+  <para>
+<!--
+   <command>pcp_invalidate_query_cache</command> places a query cache
+   invalidation request on the shared memory area. The request is
+   processed by one of <productname>Pgpool-II</productname> child
+   process, which corresponds to each pgpool client session, when a
+   message from the client is processed. This means that if there's no
+   client connecting to <productname>Pgpool-II</productname>, or
+   all clients are sitting idle, the request will not be
+   processed until next message arrives.
+-->
+   <command>pcp_invalidate_query_cache</command>は、共有メモリ上にクエリキャッシュの破棄リクエストをセットします。
+   このリクエストは、クライアントから送られてきたメッセージが処理された時に、pgpoolとの個々のセッションに関連する<productname>Pgpool-II</productname>の子プロセスによって処理されます。
+   このことは、<productname>Pgpool-II</productname>に接続するクライアントがないか、あるいはあったしてもすべてのクライアントがアイドルのままなら、次にメッセージが到着するまでリクエストは処理されないことを意味します。
+  </para>
+  <para>
+<!--
+   Although this command does not modifies the statistics data shown by
+   <xref linkend="SQL-SHOW-POOL-CACHE">, part of the statistics data
+   is affected since this command invalidate the contents of query
+   cache. <varname>num_cache_hits</varname>
+   and <varname>num_selects</varname> continue to increase after the
+   query cache
+   invalidated. <varname>used_hash_entries</varname>, <varname>num_cache_entries</varname>
+   and <varname>used_cache_entries_size</varname> starts off with
+   0. <varname>free_cache_entries_size</varname> will increase.
+-->
+   このコマンドは<xref linkend="SQL-SHOW-POOL-CACHE">で表示される統計情報を変更しませんが、その元になるクエリキャッシュの内容を破棄するため、一部の表示データは影響を受けます。
+   <varname>num_cache_hits</varname>と<varname>num_selects</varname>は、キャッシュの破棄後も増加し続けます。
+   <xref linkend="guc-memqcache-method">が<literal>shmem</literal>の場合、<varname>used_hash_entries</varname>、<varname>num_cache_entries</varname>、<varname>used_cache_entries_size</varname>は一旦0となります。
+   <varname>free_cache_entries_size</varname>は増加するでしょう。
+  </para>
+   <para>
+<!--
+   If <xref linkend="guc-memory-cache-enabled">
+   is <literal>false</literal>, this command emits an error and exits.
+-->
+    <xref linkend="guc-memory-cache-enabled">が<literal>false</literal>なら、このコマンドはエラーを出力して終了します。
+  </para>
+ </refsect1>
+
+ <refsect1>
+<!--
+  <title>Options</title>
+-->
+  <title>オプション</title>
+  <para>
+<!--
+   See <xref linkend="pcp-common-options">.
+-->
+   <xref linkend="pcp-common-options">をご覧ください。
+  </para>
+ </refsect1>
+
+</refentry>
