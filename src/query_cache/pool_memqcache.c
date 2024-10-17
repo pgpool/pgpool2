@@ -2126,9 +2126,7 @@ void
 pool_clear_memory_cache(void)
 {
 	size_t		size;
-	pool_sigset_t oldmask;
 
-	POOL_SETMASK2(&BlockSig, &oldmask);
 	pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
 
 	PG_TRY();
@@ -2148,13 +2146,11 @@ pool_clear_memory_cache(void)
 	PG_CATCH();
 	{
 		pool_shmem_unlock();
-		POOL_SETMASK(&oldmask);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	pool_shmem_unlock();
-	POOL_SETMASK(&oldmask);
 }
 
 #ifdef USE_MEMCACHED

@@ -482,6 +482,7 @@ EOF
 	    exit 1
 	fi
 	# make sure query cache has gone
+	$PSQL -t -c "SELECT 1" test	# this query processes query cache invalidation request
 	res1=`$PSQL -t -c "/*FORCE QUERY CACHE*/SELECT current_timestamp" test`
 	if [ "$res1" = "$res2" ];then
 	    echo "query cache was not invalidated"
