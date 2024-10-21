@@ -6,8 +6,8 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
- * Portions Copyright (c) 2003-2023, PgPool Global Development Group
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2024, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  src/backend/lib/stringinfo.c
@@ -59,10 +59,16 @@ initStringInfo(StringInfo str)
  *
  * Reset the StringInfo: the data buffer remains valid, but its
  * previous content, if any, is cleared.
+ *
+ * Read-only StringInfos as initialized by initReadOnlyStringInfo cannot be
+ * reset.
  */
 void
 resetStringInfo(StringInfo str)
 {
+	/* don't allow resets of read-only StringInfos */
+	Assert(str->maxlen != 0);
+
 	str->data[0] = '\0';
 	str->len = 0;
 	str->cursor = 0;
@@ -273,6 +279,9 @@ enlargeStringInfo(StringInfo str, int needed)
 {
 	int			newlen;
 
+	/* validate this is not a read-only StringInfo */
+	Assert(str->maxlen != 0);
+
 	/*
 	 * Guard against out-of-range "needed" values.  Without this, we can get
 	 * an overflow or infinite loop in the following.
@@ -315,4 +324,20 @@ enlargeStringInfo(StringInfo str, int needed)
 	str->data = (char *) repalloc(str->data, newlen);
 
 	str->maxlen = newlen;
+}
+
+/*
+ * destroyStringInfo
+ *
+ * Frees a StringInfo and its buffer (opposite of makeStringInfo()).
+ * This must only be called on palloc'd StringInfos.
+ */
+void
+destroyStringInfo(StringInfo str)
+{
+	/* don't allow destroys of read-only StringInfos */
+	Assert(str->maxlen != 0);
+
+	pfree(str->data);
+	pfree(str);
 }

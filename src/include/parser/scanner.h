@@ -8,8 +8,8 @@
  * higher-level API provided by parser.h.
  *
  *
- * Portions Copyright (c) 2003-2023, PgPool Global Development Group
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2024, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/scanner.h

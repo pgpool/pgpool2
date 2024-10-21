@@ -771,43 +771,6 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 }
 
 /*
- * MemoryContextAllocZeroAligned
- *		MemoryContextAllocZero where length is suitable for MemSetLoop
- *
- *	This might seem overly specialized, but it's not because newNode()
- *	is so often called with compile-time-constant sizes.
- */
-void *
-MemoryContextAllocZeroAligned(MemoryContext context, Size size)
-{
-	void	   *ret;
-
-	AssertArg(MemoryContextIsValid(context));
-	AssertNotInCriticalSection(context);
-
-	if (!AllocSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
-	context->isReset = false;
-
-	ret = (*context->methods->alloc) (context, size);
-	if (ret == NULL)
-	{
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu.", size)));
-	}
-
-	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
-
-	MemSetLoop(ret, 0, size);
-
-	return ret;
-}
-
-/*
  * MemoryContextAllocExtended
  *		Allocate space within the specified context using the given flags.
  */

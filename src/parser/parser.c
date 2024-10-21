@@ -10,8 +10,8 @@
  * analyze.c and related files.
  *
  *
- * Portions Copyright (c) 2003-2023, PgPool Global Development Group
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2024, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -75,12 +75,12 @@ raw_parser(const char *str, RawParseMode mode, int len, bool *error, bool use_mi
 	{
 		/* this array is indexed by RawParseMode enum */
 		static const int mode_token[] = {
-			0,					/* RAW_PARSE_DEFAULT */
-			MODE_TYPE_NAME,		/* RAW_PARSE_TYPE_NAME */
-			MODE_PLPGSQL_EXPR,	/* RAW_PARSE_PLPGSQL_EXPR */
-			MODE_PLPGSQL_ASSIGN1,	/* RAW_PARSE_PLPGSQL_ASSIGN1 */
-			MODE_PLPGSQL_ASSIGN2,	/* RAW_PARSE_PLPGSQL_ASSIGN2 */
-			MODE_PLPGSQL_ASSIGN3	/* RAW_PARSE_PLPGSQL_ASSIGN3 */
+			[RAW_PARSE_DEFAULT] = 0,
+			[RAW_PARSE_TYPE_NAME] = MODE_TYPE_NAME,
+			[RAW_PARSE_PLPGSQL_EXPR] = MODE_PLPGSQL_EXPR,
+			[RAW_PARSE_PLPGSQL_ASSIGN1] = MODE_PLPGSQL_ASSIGN1,
+			[RAW_PARSE_PLPGSQL_ASSIGN2] = MODE_PLPGSQL_ASSIGN2,
+			[RAW_PARSE_PLPGSQL_ASSIGN3] = MODE_PLPGSQL_ASSIGN3,
 		};
 
 		yyextra.have_lookahead = true;
@@ -676,11 +676,15 @@ parse_version(const char *versionString)
 
 	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
 
-	if (cnt < 2)
-		return -1;
-
 	if (cnt == 2)
+	{
 		vrev = 0;
+	}
+	else if (cnt == 1)
+	{
+		vmin = 0;
+		vrev = 0;
+	}
 
 	return (100 * vmaj + vmin) * 100 + vrev;
 }

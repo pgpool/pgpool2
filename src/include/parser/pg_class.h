@@ -4,8 +4,8 @@
  *	  definition of the "relation" system catalog (pg_class)
  *
  *
- * Portions Copyright (c) 2003-2023, PgPool Global Development Group
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2024, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_class.h
@@ -147,9 +147,12 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
  */
 typedef FormData_pg_class *Form_pg_class;
 
-DECLARE_UNIQUE_INDEX_PKEY(pg_class_oid_index, 2662, ClassOidIndexId, on pg_class using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_class_relname_nsp_index, 2663, ClassNameNspIndexId, on pg_class using btree(relname name_ops, relnamespace oid_ops));
-DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeIndexId, on pg_class using btree(reltablespace oid_ops, relfilenode oid_ops));
+DECLARE_UNIQUE_INDEX_PKEY(pg_class_oid_index, 2662, ClassOidIndexId, pg_class, btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_class_relname_nsp_index, 2663, ClassNameNspIndexId, pg_class, btree(relname name_ops, relnamespace oid_ops));
+DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeIndexId, pg_class, btree(reltablespace oid_ops, relfilenode oid_ops));
+
+MAKE_SYSCACHE(RELOID, pg_class_oid_index, 128);
+MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
 
 #define                  RELKIND_RELATION                'r'	/* ordinary table */
 #define                  RELKIND_INDEX                   'i'	/* secondary index */
@@ -215,7 +218,9 @@ DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeInd
 /*
  * Relation kinds with a table access method (rd_tableam).  Although sequences
  * use the heap table AM, they are enough of a special case in most uses that
- * they are not included here.
+ * they are not included here.  Likewise, partitioned tables can have an access
+ * method defined so that their partitions can inherit it, but they do not set
+ * rd_tableam; hence, this is handled specially outside of this macro.
  */
 #define RELKIND_HAS_TABLE_AM(relkind) \
 	((relkind) == RELKIND_RELATION || \
@@ -232,6 +237,9 @@ extern int	errdetail_relkind_not_supported(char relkind);
 
 #define DATEOID			1082
 #define TIMEOID			1083
+
+/* OIDS 0 - 99 */
+#define TEXTOID 25
 
 /* OIDS 1100 - 1199 */
 #define TIMESTAMPOID	1114

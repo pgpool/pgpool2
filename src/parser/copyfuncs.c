@@ -11,8 +11,8 @@
  * be handled easily in a simple depth-first traversal.
  *
  *
- * Portions Copyright (c) 2003-2023, PgPool Global Development Group
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2024, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -109,7 +109,7 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_NODE_FIELD(paramExecTypes);
 	COPY_NODE_FIELD(utilityStmt);
 	COPY_LOCATION_FIELD(stmt_location);
-	COPY_SCALAR_FIELD(stmt_len);
+	COPY_LOCATION_FIELD(stmt_len);
 
 	return newnode;
 }
@@ -231,6 +231,7 @@ _copyModifyTable(const ModifyTable *from)
 	COPY_SCALAR_FIELD(exclRelRTI);
 	COPY_NODE_FIELD(exclRelTlist);
 	COPY_NODE_FIELD(mergeActionLists);
+	COPY_NODE_FIELD(mergeJoinConditions);
 
 	return newnode;
 }
@@ -1399,6 +1400,7 @@ _copyTableFunc(const TableFunc *from)
 {
 	TableFunc  *newnode = makeNode(TableFunc);
 
+	COPY_SCALAR_FIELD(functype);
 	COPY_NODE_FIELD(ns_uris);
 	COPY_NODE_FIELD(ns_names);
 	COPY_NODE_FIELD(docexpr);
@@ -1409,7 +1411,10 @@ _copyTableFunc(const TableFunc *from)
 	COPY_NODE_FIELD(colcollations);
 	COPY_NODE_FIELD(colexprs);
 	COPY_NODE_FIELD(coldefexprs);
+	COPY_NODE_FIELD(colvalexprs);
+	COPY_NODE_FIELD(passingvalexprs);
 	COPY_BITMAPSET_FIELD(notnulls);
+	COPY_NODE_FIELD(plan);
 	COPY_SCALAR_FIELD(ordinalitycol);
 	COPY_LOCATION_FIELD(location);
 
@@ -1584,9 +1589,35 @@ _copyWindowFunc(const WindowFunc *from)
 	COPY_SCALAR_FIELD(inputcollid);
 	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(aggfilter);
+	COPY_NODE_FIELD(runCondition);
 	COPY_SCALAR_FIELD(winref);
 	COPY_SCALAR_FIELD(winstar);
 	COPY_SCALAR_FIELD(winagg);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static WindowFuncRunCondition *
+_copyWindowFuncRunCondition(const WindowFuncRunCondition *from)
+{
+	WindowFuncRunCondition *newnode = makeNode(WindowFuncRunCondition);
+
+	COPY_SCALAR_FIELD(opno);
+	COPY_SCALAR_FIELD(inputcollid);
+	COPY_SCALAR_FIELD(wfunc_left);
+	COPY_NODE_FIELD(arg);
+
+	return newnode;
+}
+
+static MergeSupportFunc *
+_copyMergeSupportFunc(const MergeSupportFunc *from)
+{
+	MergeSupportFunc *newnode = makeNode(MergeSupportFunc);
+
+	COPY_SCALAR_FIELD(msftype);
+	COPY_SCALAR_FIELD(msfcollid);
 	COPY_LOCATION_FIELD(location);
 
 	return newnode;
@@ -2094,6 +2125,147 @@ _copyXmlExpr(const XmlExpr *from)
 	return newnode;
 }
 
+static JsonFormat *
+_copyJsonFormat(const JsonFormat *from)
+{
+	JsonFormat *newnode = makeNode(JsonFormat);
+
+	COPY_SCALAR_FIELD(format_type);
+	COPY_SCALAR_FIELD(encoding);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonReturning *
+_copyJsonReturning(const JsonReturning *from)
+{
+	JsonReturning *newnode = makeNode(JsonReturning);
+
+	COPY_NODE_FIELD(format);
+	COPY_SCALAR_FIELD(typid);
+	COPY_SCALAR_FIELD(typmod);
+
+	return newnode;
+}
+
+static JsonValueExpr *
+_copyJsonValueExpr(const JsonValueExpr *from)
+{
+	JsonValueExpr *newnode = makeNode(JsonValueExpr);
+
+	COPY_NODE_FIELD(raw_expr);
+	COPY_NODE_FIELD(formatted_expr);
+	COPY_NODE_FIELD(format);
+
+	return newnode;
+}
+
+static JsonConstructorExpr *
+_copyJsonConstructorExpr(const JsonConstructorExpr *from)
+{
+	JsonConstructorExpr *newnode = makeNode(JsonConstructorExpr);
+
+	COPY_SCALAR_FIELD(type);
+	COPY_NODE_FIELD(args);
+	COPY_NODE_FIELD(func);
+	COPY_NODE_FIELD(coercion);
+	COPY_NODE_FIELD(returning);
+	COPY_SCALAR_FIELD(absent_on_null);
+	COPY_SCALAR_FIELD(unique);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonIsPredicate *
+_copyJsonIsPredicate(const JsonIsPredicate *from)
+{
+	JsonIsPredicate *newnode = makeNode(JsonIsPredicate);
+
+	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(format);
+	COPY_SCALAR_FIELD(item_type);
+	COPY_SCALAR_FIELD(unique_keys);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonBehavior *
+_copyJsonBehavior(const JsonBehavior *from)
+{
+	JsonBehavior *newnode = makeNode(JsonBehavior);
+
+	COPY_SCALAR_FIELD(btype);
+	COPY_NODE_FIELD(expr);
+	COPY_SCALAR_FIELD(coerce);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonExpr *
+_copyJsonExpr(const JsonExpr *from)
+{
+	JsonExpr *newnode = makeNode(JsonExpr);
+
+	COPY_SCALAR_FIELD(op);
+	COPY_STRING_FIELD(column_name);
+	COPY_NODE_FIELD(formatted_expr);
+	COPY_NODE_FIELD(format);
+	COPY_NODE_FIELD(path_spec);
+	COPY_NODE_FIELD(returning);
+	COPY_NODE_FIELD(passing_names);
+	COPY_NODE_FIELD(passing_values);
+	COPY_NODE_FIELD(on_empty);
+	COPY_NODE_FIELD(on_error);
+	COPY_SCALAR_FIELD(use_io_coercion);
+	COPY_SCALAR_FIELD(use_json_coercion);
+	COPY_SCALAR_FIELD(wrapper);
+	COPY_SCALAR_FIELD(omit_quotes);
+	COPY_SCALAR_FIELD(collation);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonTablePath *
+_copyJsonTablePath(const JsonTablePath *from)
+{
+	JsonTablePath *newnode = makeNode(JsonTablePath);
+
+	COPY_NODE_FIELD(value);
+	COPY_STRING_FIELD(name);
+
+	return newnode;
+}
+
+static JsonTablePathScan *
+_copyJsonTablePathScan(const JsonTablePathScan *from)
+{
+	JsonTablePathScan *newnode = makeNode(JsonTablePathScan);
+
+	COPY_NODE_FIELD(path);
+	COPY_SCALAR_FIELD(errorOnError);
+	COPY_NODE_FIELD(child);
+	COPY_SCALAR_FIELD(colMin);
+	COPY_SCALAR_FIELD(colMax);
+
+	return newnode;
+}
+
+static JsonTableSiblingJoin *
+_copyJsonTableSiblingJoin(const JsonTableSiblingJoin *from)
+{
+	JsonTableSiblingJoin *newnode = makeNode(JsonTableSiblingJoin);
+
+	COPY_NODE_FIELD(lplan);
+	COPY_NODE_FIELD(rplan);
+
+	return newnode;
+}
+
 /*
  * _copyNullTest
  */
@@ -2121,6 +2293,21 @@ _copyBooleanTest(const BooleanTest *from)
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(booltesttype);
 	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static MergeAction *
+_copyMergeAction(const MergeAction *from)
+{
+	MergeAction *newnode = makeNode(MergeAction);
+
+	COPY_SCALAR_FIELD(matchKind);
+	COPY_SCALAR_FIELD(commandType);
+	COPY_SCALAR_FIELD(override);
+	COPY_NODE_FIELD(qual);
+	COPY_NODE_FIELD(targetList);
+	COPY_NODE_FIELD(updateColnos);
 
 	return newnode;
 }
@@ -2332,6 +2519,17 @@ _copyPathKey(const PathKey *from)
 	return newnode;
 }
 
+static GroupByOrdering *
+_copyGroupByOrdering(const GroupByOrdering *from)
+{
+	GroupByOrdering *newnode = makeNode(GroupByOrdering);
+
+	COPY_NODE_FIELD(pathkeys);
+	COPY_NODE_FIELD(clauses);
+
+	return newnode;
+}
+
 /*
  * _copyRestrictInfo
  */
@@ -2468,10 +2666,14 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 {
 	RangeTblEntry *newnode = makeNode(RangeTblEntry);
 
+	COPY_NODE_FIELD(alias);
+	COPY_NODE_FIELD(eref);
 	COPY_SCALAR_FIELD(rtekind);
 	COPY_SCALAR_FIELD(relid);
+	COPY_SCALAR_FIELD(inh);
 	COPY_SCALAR_FIELD(relkind);
 	COPY_SCALAR_FIELD(rellockmode);
+	COPY_SCALAR_FIELD(perminfoindex);
 	COPY_NODE_FIELD(tablesample);
 	COPY_NODE_FIELD(subquery);
 	COPY_SCALAR_FIELD(security_barrier);
@@ -2493,10 +2695,7 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_NODE_FIELD(colcollations);
 	COPY_STRING_FIELD(enrname);
 	COPY_SCALAR_FIELD(enrtuples);
-	COPY_NODE_FIELD(alias);
-	COPY_NODE_FIELD(eref);
 	COPY_SCALAR_FIELD(lateral);
-	COPY_SCALAR_FIELD(inh);
 	COPY_SCALAR_FIELD(inFromCl);
 	COPY_NODE_FIELD(securityQuals);
 
@@ -2583,7 +2782,6 @@ _copyWindowClause(const WindowClause *from)
 	COPY_SCALAR_FIELD(frameOptions);
 	COPY_NODE_FIELD(startOffset);
 	COPY_NODE_FIELD(endOffset);
-	COPY_NODE_FIELD(runCondition);
 	COPY_SCALAR_FIELD(startInRangeFunc);
 	COPY_SCALAR_FIELD(endInRangeFunc);
 	COPY_SCALAR_FIELD(inRangeColl);
@@ -2706,27 +2904,12 @@ _copyMergeWhenClause(const MergeWhenClause *from)
 {
 	MergeWhenClause *newnode = makeNode(MergeWhenClause);
 
-	COPY_SCALAR_FIELD(matched);
+	COPY_SCALAR_FIELD(matchKind);
 	COPY_SCALAR_FIELD(commandType);
 	COPY_SCALAR_FIELD(override);
 	COPY_NODE_FIELD(condition);
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(values);
-	return newnode;
-}
-
-static MergeAction *
-_copyMergeAction(const MergeAction *from)
-{
-	MergeAction *newnode = makeNode(MergeAction);
-
-	COPY_SCALAR_FIELD(matched);
-	COPY_SCALAR_FIELD(commandType);
-	COPY_SCALAR_FIELD(override);
-	COPY_NODE_FIELD(qual);
-	COPY_NODE_FIELD(targetList);
-	COPY_NODE_FIELD(updateColnos);
-
 	return newnode;
 }
 
@@ -3101,11 +3284,13 @@ _copyConstraint(const Constraint *from)
 	COPY_STRING_FIELD(conname);
 	COPY_SCALAR_FIELD(deferrable);
 	COPY_SCALAR_FIELD(initdeferred);
-	COPY_LOCATION_FIELD(location);
+	COPY_SCALAR_FIELD(skip_validation);
+	COPY_SCALAR_FIELD(initially_valid);
 	COPY_SCALAR_FIELD(is_no_inherit);
 	COPY_NODE_FIELD(raw_expr);
 	COPY_STRING_FIELD(cooked_expr);
 	COPY_SCALAR_FIELD(generated_when);
+	COPY_SCALAR_FIELD(inhcount);
 	COPY_SCALAR_FIELD(nulls_not_distinct);
 	COPY_NODE_FIELD(keys);
 	COPY_NODE_FIELD(including);
@@ -3125,8 +3310,7 @@ _copyConstraint(const Constraint *from)
 	COPY_NODE_FIELD(fk_del_set_cols);
 	COPY_NODE_FIELD(old_conpfeqop);
 	COPY_SCALAR_FIELD(old_pktable_oid);
-	COPY_SCALAR_FIELD(skip_validation);
-	COPY_SCALAR_FIELD(initially_valid);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -3194,6 +3378,226 @@ _copyTriggerTransition(const TriggerTransition *from)
 	return newnode;
 }
 
+static JsonOutput *
+_copyJsonOutput(const JsonOutput *from)
+{
+	JsonOutput *newnode = makeNode(JsonOutput);
+
+	COPY_NODE_FIELD(typeName);
+	COPY_NODE_FIELD(returning);
+
+	return newnode;
+}
+
+static JsonArgument *
+_copyJsonArgument(const JsonArgument *from)
+{
+	JsonArgument *newnode = makeNode(JsonArgument);
+
+	COPY_NODE_FIELD(val);
+	COPY_STRING_FIELD(name);
+
+	return newnode;
+}
+
+static JsonFuncExpr *
+_copyJsonFuncExpr(const JsonFuncExpr *from)
+{
+	JsonFuncExpr *newnode = makeNode(JsonFuncExpr);
+
+	COPY_SCALAR_FIELD(op);
+	COPY_STRING_FIELD(column_name);
+	COPY_NODE_FIELD(context_item);
+	COPY_NODE_FIELD(pathspec);
+	COPY_NODE_FIELD(passing);
+	COPY_NODE_FIELD(output);
+	COPY_NODE_FIELD(on_empty);
+	COPY_NODE_FIELD(on_error);
+	COPY_SCALAR_FIELD(wrapper);
+	COPY_SCALAR_FIELD(quotes);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonTablePathSpec *
+_copyJsonTablePathSpec(const JsonTablePathSpec *from)
+{
+	JsonTablePathSpec *newnode = makeNode(JsonTablePathSpec);
+
+	COPY_NODE_FIELD(string);
+	COPY_STRING_FIELD(name);
+	COPY_LOCATION_FIELD(name_location);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonTable *
+_copyJsonTable(const JsonTable *from)
+{
+	JsonTable *newnode = makeNode(JsonTable);
+
+	COPY_NODE_FIELD(context_item);
+	COPY_NODE_FIELD(pathspec);
+	COPY_NODE_FIELD(passing);
+	COPY_NODE_FIELD(columns);
+	COPY_NODE_FIELD(on_error);
+	COPY_NODE_FIELD(alias);
+	COPY_SCALAR_FIELD(lateral);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonTableColumn *
+_copyJsonTableColumn(const JsonTableColumn *from)
+{
+	JsonTableColumn *newnode = makeNode(JsonTableColumn);
+
+	COPY_SCALAR_FIELD(coltype);
+	COPY_STRING_FIELD(name);
+	COPY_NODE_FIELD(typeName);
+	COPY_NODE_FIELD(pathspec);
+	COPY_NODE_FIELD(format);
+	COPY_SCALAR_FIELD(wrapper);
+	COPY_SCALAR_FIELD(quotes);
+	COPY_NODE_FIELD(columns);
+	COPY_NODE_FIELD(on_empty);
+	COPY_NODE_FIELD(on_error);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonKeyValue *
+_copyJsonKeyValue(const JsonKeyValue *from)
+{
+	JsonKeyValue *newnode = makeNode(JsonKeyValue);
+
+	COPY_NODE_FIELD(key);
+	COPY_NODE_FIELD(value);
+
+	return newnode;
+}
+
+static JsonParseExpr *
+_copyJsonParseExpr(const JsonParseExpr *from)
+{
+	JsonParseExpr *newnode = makeNode(JsonParseExpr);
+
+	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(output);
+	COPY_SCALAR_FIELD(unique_keys);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonScalarExpr *
+_copyJsonScalarExpr(const JsonScalarExpr *from)
+{
+	JsonScalarExpr *newnode = makeNode(JsonScalarExpr);
+
+	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(output);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonSerializeExpr *
+_copyJsonSerializeExpr(const JsonSerializeExpr *from)
+{
+	JsonSerializeExpr *newnode = makeNode(JsonSerializeExpr);
+
+	COPY_NODE_FIELD(expr);
+	COPY_NODE_FIELD(output);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonObjectConstructor *
+_copyJsonObjectConstructor(const JsonObjectConstructor *from)
+{
+	JsonObjectConstructor *newnode = makeNode(JsonObjectConstructor);
+
+	COPY_NODE_FIELD(exprs);
+	COPY_NODE_FIELD(output);
+	COPY_SCALAR_FIELD(absent_on_null);
+	COPY_SCALAR_FIELD(unique);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonArrayConstructor *
+_copyJsonArrayConstructor(const JsonArrayConstructor *from)
+{
+	JsonArrayConstructor *newnode = makeNode(JsonArrayConstructor);
+
+	COPY_NODE_FIELD(exprs);
+	COPY_NODE_FIELD(output);
+	COPY_SCALAR_FIELD(absent_on_null);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonArrayQueryConstructor *
+_copyJsonArrayQueryConstructor(const JsonArrayQueryConstructor *from)
+{
+	JsonArrayQueryConstructor *newnode = makeNode(JsonArrayQueryConstructor);
+
+	COPY_NODE_FIELD(query);
+	COPY_NODE_FIELD(output);
+	COPY_NODE_FIELD(format);
+	COPY_SCALAR_FIELD(absent_on_null);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonAggConstructor *
+_copyJsonAggConstructor(const JsonAggConstructor *from)
+{
+	JsonAggConstructor *newnode = makeNode(JsonAggConstructor);
+
+	COPY_NODE_FIELD(output);
+	COPY_NODE_FIELD(agg_filter);
+	COPY_NODE_FIELD(agg_order);
+	COPY_NODE_FIELD(over);
+	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static JsonObjectAgg *
+_copyJsonObjectAgg(const JsonObjectAgg *from)
+{
+	JsonObjectAgg *newnode = makeNode(JsonObjectAgg);
+
+	COPY_NODE_FIELD(constructor);
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(absent_on_null);
+	COPY_SCALAR_FIELD(unique);
+
+	return newnode;
+}
+
+static JsonArrayAgg *
+_copyJsonArrayAgg(const JsonArrayAgg *from)
+{
+	JsonArrayAgg *newnode = makeNode(JsonArrayAgg);
+
+	COPY_NODE_FIELD(constructor);
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(absent_on_null);
+
+	return newnode;
+}
+
 static Query *
 _copyQuery(const Query *from)
 {
@@ -3217,7 +3621,11 @@ _copyQuery(const Query *from)
 	COPY_SCALAR_FIELD(isReturn);
 	COPY_NODE_FIELD(cteList);
 	COPY_NODE_FIELD(rtable);
+	COPY_NODE_FIELD(rteperminfos);
 	COPY_NODE_FIELD(jointree);
+	COPY_NODE_FIELD(mergeActionList);
+	COPY_SCALAR_FIELD(mergeTargetRelation);
+	COPY_NODE_FIELD(mergeJoinCondition);
 	COPY_NODE_FIELD(targetList);
 	COPY_SCALAR_FIELD(override);
 	COPY_NODE_FIELD(onConflict);
@@ -3236,10 +3644,8 @@ _copyQuery(const Query *from)
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(constraintDeps);
 	COPY_NODE_FIELD(withCheckOptions);
-	COPY_NODE_FIELD(mergeActionList);
-	COPY_SCALAR_FIELD(mergeUseOuterJoin);
 	COPY_LOCATION_FIELD(stmt_location);
-	COPY_SCALAR_FIELD(stmt_len);
+	COPY_LOCATION_FIELD(stmt_len);
 
 	return newnode;
 }
@@ -3251,7 +3657,7 @@ _copyRawStmt(const RawStmt *from)
 
 	COPY_NODE_FIELD(stmt);
 	COPY_LOCATION_FIELD(stmt_location);
-	COPY_SCALAR_FIELD(stmt_len);
+	COPY_LOCATION_FIELD(stmt_len);
 
 	return newnode;
 }
@@ -3310,6 +3716,7 @@ _copyMergeStmt(const MergeStmt *from)
 	COPY_NODE_FIELD(sourceRelation);
 	COPY_NODE_FIELD(joinCondition);
 	COPY_NODE_FIELD(mergeWhenClauses);
+	COPY_NODE_FIELD(returningList);
 	COPY_NODE_FIELD(withClause);
 
 	return newnode;
@@ -3751,7 +4158,7 @@ _copyAlterStatsStmt(const AlterStatsStmt *from)
 	AlterStatsStmt *newnode = makeNode(AlterStatsStmt);
 
 	COPY_NODE_FIELD(defnames);
-	COPY_SCALAR_FIELD(stxstattarget);
+	COPY_NODE_FIELD(stxstattarget);
 	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
@@ -3945,6 +4352,7 @@ _copyTransactionStmt(const TransactionStmt *from)
 	COPY_STRING_FIELD(savepoint_name);
 	COPY_STRING_FIELD(gid);
 	COPY_SCALAR_FIELD(chain);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -4731,6 +5139,8 @@ _copyDeallocateStmt(const DeallocateStmt *from)
 	DeallocateStmt *newnode = makeNode(DeallocateStmt);
 
 	COPY_STRING_FIELD(name);
+	COPY_SCALAR_FIELD(isall);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -4865,6 +5275,15 @@ _copyPartitionRangeDatum(const PartitionRangeDatum *from)
 	COPY_SCALAR_FIELD(kind);
 	COPY_NODE_FIELD(value);
 	COPY_LOCATION_FIELD(location);
+
+	return newnode;
+}
+
+static SinglePartitionSpec *
+_copySinglePartitionSpec(const SinglePartitionSpec *from)
+{
+	SinglePartitionSpec *newnode = makeNode(SinglePartitionSpec);
+
 
 	return newnode;
 }
@@ -5289,6 +5708,12 @@ copyObjectImpl(const void *from)
 		case T_WindowFunc:
 			retval = _copyWindowFunc(from);
 			break;
+		case T_WindowFuncRunCondition:
+			retval = _copyWindowFuncRunCondition(from);
+			break;
+		case T_MergeSupportFunc:
+			retval = _copyMergeSupportFunc(from);
+			break;
 		case T_SubscriptingRef:
 			retval = _copySubscriptingRef(from);
 			break;
@@ -5373,11 +5798,44 @@ copyObjectImpl(const void *from)
 		case T_XmlExpr:
 			retval = _copyXmlExpr(from);
 			break;
+		case T_JsonFormat:
+			retval = _copyJsonFormat(from);
+			break;
+		case T_JsonReturning:
+			retval = _copyJsonReturning(from);
+			break;
+		case T_JsonValueExpr:
+			retval = _copyJsonValueExpr(from);
+			break;
+		case T_JsonConstructorExpr:
+			retval = _copyJsonConstructorExpr(from);
+			break;
+		case T_JsonIsPredicate:
+			retval = _copyJsonIsPredicate(from);
+			break;
+		case T_JsonBehavior:
+			retval = _copyJsonBehavior(from);
+			break;
+		case T_JsonExpr:
+			retval = _copyJsonExpr(from);
+			break;
+		case T_JsonTablePath:
+			retval = _copyJsonTablePath(from);
+			break;
+		case T_JsonTablePathScan:
+			retval = _copyJsonTablePathScan(from);
+			break;
+		case T_JsonTableSiblingJoin:
+			retval = _copyJsonTableSiblingJoin(from);
+			break;
 		case T_NullTest:
 			retval = _copyNullTest(from);
 			break;
 		case T_BooleanTest:
 			retval = _copyBooleanTest(from);
+			break;
+		case T_MergeAction:
+			retval = _copyMergeAction(from);
 			break;
 		case T_CoerceToDomain:
 			retval = _copyCoerceToDomain(from);
@@ -5420,6 +5878,9 @@ copyObjectImpl(const void *from)
 			 */
 		case T_PathKey:
 			retval = _copyPathKey(from);
+			break;
+		case T_GroupByOrdering:
+			retval = _copyGroupByOrdering(from);
 			break;
 		case T_RestrictInfo:
 			retval = _copyRestrictInfo(from);
@@ -5471,6 +5932,7 @@ copyObjectImpl(const void *from)
 			 */
 		case T_IntList:
 		case T_OidList:
+		case T_XidList:
 			retval = list_copy(from);
 			break;
 
@@ -5982,9 +6444,6 @@ copyObjectImpl(const void *from)
 		case T_MergeWhenClause:
 			retval = _copyMergeWhenClause(from);
 			break;
-		case T_MergeAction:
-			retval = _copyMergeAction(from);
-			break;
 		case T_ObjectWithArgs:
 			retval = _copyObjectWithArgs(from);
 			break;
@@ -6000,6 +6459,54 @@ copyObjectImpl(const void *from)
 		case T_TriggerTransition:
 			retval = _copyTriggerTransition(from);
 			break;
+        case T_JsonOutput:
+            retval = _copyJsonOutput(from);
+            break;
+        case T_JsonArgument:
+            retval = _copyJsonArgument(from);
+            break;
+        case T_JsonFuncExpr:
+            retval = _copyJsonFuncExpr(from);
+            break;
+        case T_JsonTablePathSpec:
+            retval = _copyJsonTablePathSpec(from);
+            break;
+        case T_JsonTable:
+            retval = _copyJsonTable(from);
+            break;
+        case T_JsonTableColumn:
+            retval = _copyJsonTableColumn(from);
+            break;
+        case T_JsonKeyValue:
+            retval = _copyJsonKeyValue(from);
+            break;
+        case T_JsonParseExpr:
+            retval = _copyJsonParseExpr(from);
+            break;
+        case T_JsonScalarExpr:
+            retval = _copyJsonScalarExpr(from);
+            break;
+        case T_JsonSerializeExpr:
+            retval = _copyJsonSerializeExpr(from);
+            break;
+        case T_JsonObjectConstructor:
+            retval = _copyJsonObjectConstructor(from);
+            break;
+        case T_JsonArrayConstructor:
+            retval = _copyJsonArrayConstructor(from);
+            break;
+        case T_JsonArrayQueryConstructor:
+            retval = _copyJsonArrayQueryConstructor(from);
+            break;
+        case T_JsonAggConstructor:
+            retval = _copyJsonAggConstructor(from);
+            break;
+        case T_JsonObjectAgg:
+            retval = _copyJsonObjectAgg(from);
+            break;
+        case T_JsonArrayAgg:
+            retval = _copyJsonArrayAgg(from);
+            break;
 		case T_PartitionElem:
 			retval = _copyPartitionElem(from);
 			break;
@@ -6011,6 +6518,9 @@ copyObjectImpl(const void *from)
 			break;
 		case T_PartitionRangeDatum:
 			retval = _copyPartitionRangeDatum(from);
+			break;
+		case T_SinglePartitionSpec:
+			retval = _copySinglePartitionSpec(from);
 			break;
 		case T_PartitionCmd:
 			retval = _copyPartitionCmd(from);

@@ -3,8 +3,8 @@
  * scansup.c
  *	  scanner support routines used by the core lexer
  *
- * Portions Copyright (c) 1996-2023, PgPool Global Development Group
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2024, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -127,6 +127,7 @@ scanner_isspace(char ch)
 		ch == '\t' ||
 		ch == '\n' ||
 		ch == '\r' ||
+		ch == '\v' ||
 		ch == '\f')
 		return true;
 	return false;

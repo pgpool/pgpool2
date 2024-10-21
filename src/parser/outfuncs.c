@@ -3,8 +3,8 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2023, PgPool Global Development Group
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2024, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,7 +26,11 @@
 #include "pg_trigger.h"
 #include "value.h"
 
+/* State flag that determines how nodeToStringInternal() should treat location fields */
+static bool write_location_fields = false;
+
 #define booltostr(x)  ((x) ? "true" : "false")
+#define SINGLE_QUOTE '\''
 
 void		_outNode(StringInfo str, void *obj);
 
@@ -36,6 +40,7 @@ static void _outAlias(StringInfo str, Alias *node);
 static void _outRangeVar(StringInfo str, RangeVar *node);
 static void _outVar(StringInfo str, Var *node);
 static void _outConst(StringInfo str, Const *node);
+static void _outSingleQuote(StringInfo str, const char *s);
 static void _outParam(StringInfo str, Param *node);
 static void _outAggref(StringInfo str, Aggref *node);
 static void _outGroupingFunc(StringInfo str, GroupingFunc *node);
@@ -349,6 +354,22 @@ outToken(StringInfo str, const char *s)
 }
 
 static void
+_outSingleQuote(StringInfo str, const char *s)
+{
+	if (s == NULL || *s == '\0')
+	{
+		return;
+	}
+
+	while (*s)
+	{
+		if (*s == SINGLE_QUOTE)
+			appendStringInfoChar(str, SINGLE_QUOTE);
+		appendStringInfoChar(str, *s++);
+	}
+}
+
+static void
 _outAlias(StringInfo str, Alias *node)
 {
 	appendStringInfoString(str, " AS \"");
@@ -422,15 +443,54 @@ _outGroupingFunc(StringInfo str, GroupingFunc *node)
 }
 
 static void
+_outWindowFuncRunCondition(StringInfo str, const WindowFuncRunCondition *node)
+{
+}
+
+static void
+_outMergeSupportFunc(StringInfo str, const MergeSupportFunc *node)
+{
+
+	if (IsA(node, MergeSupportFunc))
+	{
+		appendStringInfoString(str, "MERGE_ACTION()");
+	}
+}
+
+static void
 _outSubscriptingRef(StringInfo str, SubscriptingRef *node)
+{
+}
+
+static void
+_outJsonBehavior(StringInfo str, const JsonBehavior *node)
+{
+}
+
+static void
+_outJsonExpr(StringInfo str, const JsonExpr *node)
 {
 
 }
 
 static void
+_outJsonTablePath(StringInfo str, const JsonTablePath *node)
+{
+}
+
+static void
+_outJsonTablePathScan(StringInfo str, const JsonTablePathScan *node)
+{
+}
+
+static void
+_outJsonTableSiblingJoin(StringInfo str, const JsonTableSiblingJoin *node)
+{
+}
+
+static void
 _outFuncExpr(StringInfo str, FuncExpr *node)
 {
-
 }
 
 static void
@@ -1341,6 +1401,31 @@ _outTriggerTransition(StringInfo str, TriggerTransition *node)
 }
 
 static void
+_outJsonArgument(StringInfo str, const JsonArgument *node)
+{
+}
+
+static void
+_outJsonFuncExpr(StringInfo str, const JsonFuncExpr *node)
+{
+}
+
+static void
+_outJsonTablePathSpec(StringInfo str, const JsonTablePathSpec *node)
+{
+}
+
+static void
+_outJsonTable(StringInfo str, const JsonTable *node)
+{
+}
+
+static void
+_outJsonTableColumn(StringInfo str, const JsonTableColumn *node)
+{
+}
+
+static void
 _outReturnStmt(StringInfo str, ReturnStmt *node)
 {
 }
@@ -1647,15 +1732,18 @@ static void
 _outMergeWhenClauses(StringInfo str, List *node)
 {
 	ListCell   *temp;
+	char comma;
 
 	foreach(temp, node)
 	{
 		MergeWhenClause *m = (MergeWhenClause *) lfirst(temp);
 
-		if (m->matched)
+		if (m->matchKind == MERGE_WHEN_MATCHED)
 			appendStringInfoString(str, " WHEN MATCHED ");
+		else if (m->matchKind == MERGE_WHEN_NOT_MATCHED_BY_SOURCE)
+			appendStringInfoString(str, " WHEN NOT MATCHED BY SOURCE ");
 		else
-			appendStringInfoString(str, " WHEN NOT MATCHED ");
+			appendStringInfoString(str, " WHEN NOT MATCHED BY TARGET ");
 
 		if (m->condition)
 		{
@@ -1670,12 +1758,70 @@ _outMergeWhenClauses(StringInfo str, List *node)
 			ListCell *s;
 
 			case CMD_UPDATE:
+				comma = 0;
+				appendStringInfo(str, "UPDATE SET ");
 				foreach(s, m->targetList)
 				{
 					ResTarget *r = (ResTarget *) lfirst(s);
-					appendStringInfo(str, "UPDATE SET %s = ", r->name);
+
+					if (comma == 0)
+						comma = 1;
+					else
+						appendStringInfoString(str, ", ");
+
+					appendStringInfo(str, "\"%s\" = ", r->name);
 					_outNode(str, r->val);
 				}
+				break;
+			case CMD_INSERT:
+				appendStringInfo(str, "INSERT ");
+				if (m->targetList)
+				{
+					comma = 0;
+					appendStringInfoString(str, "(");
+					foreach(s, m->targetList)
+					{
+						ResTarget *r = (ResTarget *) lfirst(s);
+
+						if (comma == 0)
+							comma = 1;
+						else
+							appendStringInfoString(str, ", ");
+
+						appendStringInfo(str, "\"%s\"", r->name);
+
+					}
+					appendStringInfoString(str, ") ");
+				}
+
+				if (m->override == OVERRIDING_SYSTEM_VALUE)
+					appendStringInfoString(str, "OVERRIDING SYSTEM VALUE ");
+				else if (m->override == OVERRIDING_USER_VALUE)
+					appendStringInfoString(str, "OVERRIDING USER VALUE ");
+
+				if (m->values)
+				{
+					comma = 0;
+					appendStringInfo(str, "VALUES ");
+					appendStringInfoString(str, "(");
+
+					foreach(s, m->values)
+					{
+						if (comma == 0)
+							comma = 1;
+						else
+							appendStringInfoString(str, ", ");
+
+						_outNode(str, lfirst(s));
+					}
+					appendStringInfoString(str, ")");
+				}
+				break;
+			case CMD_DELETE:
+				appendStringInfo(str, "DELETE ");
+				break;
+			case CMD_NOTHING:
+				appendStringInfo(str, "DO NOTHING ");
 				break;
 			default:
 				break;
@@ -1914,8 +2060,13 @@ _outString(StringInfo str, const String *node)
 static void
 _outBitString(StringInfo str, const BitString *node)
 {
-    /* internal representation already has leading 'b' */
-    appendStringInfoString(str, node->bsval);
+	/*
+	 * The lexer will always produce a string starting with 'b' or 'x'.  There
+	 * might be characters following that that need escaping, but outToken
+	 * won't escape the 'b' or 'x'.  This is relied on by nodeTokenType.
+	 */
+	Assert(node->bsval[0] == 'b' || node->bsval[0] == 'x');
+	outToken(str, node->bsval);
 }
 
 static void
@@ -2626,6 +2777,12 @@ _outMergeStmt(StringInfo str, MergeStmt *node)
 	{
 		_outMergeWhenClauses(str, node->mergeWhenClauses);
 	}
+
+	if (node->returningList)
+	{
+		appendStringInfoString(str, " RETURNING ");
+		_outNode(str, node->returningList);
+	}
 }
 
 static void
@@ -2878,6 +3035,7 @@ _outCopyStmt(StringInfo str, CopyStmt *node)
 	else
 		appendStringInfoString(str, node->is_from == TRUE ? "STDIN " : "STDOUT ");
 
+
 	if (server_version_num < 90000)
 	{
 		foreach(lc, node->options)
@@ -2940,7 +3098,7 @@ _outCopyStmt(StringInfo str, CopyStmt *node)
 		/* version_num >= 90000 */
 		if (node->options)
 		{
-			appendStringInfoString(str, "(");
+			appendStringInfoString(str, "WITH (");
 
 			foreach(lc, node->options)
 			{
@@ -2953,18 +3111,35 @@ _outCopyStmt(StringInfo str, CopyStmt *node)
 				appendStringInfoString(str, " ");
 
 				if (strcmp(e->defname, "format") == 0
+					|| strcmp(e->defname, "freeze") == 0
 					|| strcmp(e->defname, "oids") == 0
-					|| strcmp(e->defname, "delimiter") == 0
-					|| strcmp(e->defname, "null") == 0
 					|| strcmp(e->defname, "header") == 0
-					|| strcmp(e->defname, "quote") == 0
-					|| strcmp(e->defname, "escape") == 0)
+					|| strcmp(e->defname, "on_error") == 0
+					|| strcmp(e->defname, "log_verbosity") == 0)
 					_outNode(str, e->arg);
-				else if (strcmp(e->defname, "force_not_null") == 0)
+				else if (strcmp(e->defname, "delimiter") == 0
+					|| strcmp(e->defname, "null") == 0
+					|| strcmp(e->defname, "default") == 0
+					|| strcmp(e->defname, "quote") == 0
+					|| strcmp(e->defname, "escape") == 0
+					|| strcmp(e->defname, "encoding") == 0)
 				{
-					appendStringInfoString(str, "(");
-					_outIdList(str, (List *) e->arg);
-					appendStringInfoString(str, ")");
+					String     *value = (String *) e->arg;
+					appendStringInfoString(str, "'");
+					_outSingleQuote(str, value->sval);
+					appendStringInfoString(str, "'");
+				}
+				else if (strcmp(e->defname, "force_not_null") == 0
+					|| strcmp(e->defname, "force_null") == 0)
+				{
+					if (IsA(e->arg, A_Star))
+						appendStringInfoString(str, "*");
+					else if (IsA(e->arg, List))
+					{
+						appendStringInfoString(str, "(");
+						_outIdList(str, (List *) e->arg);
+						appendStringInfoString(str, ")");
+					}
 				}
 				else if (strcmp(e->defname, "force_quote") == 0)
 				{
@@ -5708,6 +5883,88 @@ _outXmlExpr(StringInfo str, XmlExpr *node)
 	}
 }
 
+
+static void
+_outJsonFormat(StringInfo str, const JsonFormat *node)
+{
+}
+
+static void
+_outJsonReturning(StringInfo str, const JsonReturning *node)
+{
+}
+
+static void
+_outJsonValueExpr(StringInfo str, const JsonValueExpr *node)
+{
+}
+
+static void
+_outJsonConstructorExpr(StringInfo str, const JsonConstructorExpr *node)
+{
+}
+
+static void
+_outJsonIsPredicate(StringInfo str, const JsonIsPredicate *node)
+{
+}
+
+static void
+_outJsonOutput(StringInfo str, const JsonOutput *node)
+{
+}
+
+static void
+_outJsonKeyValue(StringInfo str, const JsonKeyValue *node)
+{
+}
+
+static void
+_outJsonParseExpr(StringInfo str, const JsonParseExpr *node)
+{
+}
+
+static void
+_outJsonScalarExpr(StringInfo str, const JsonScalarExpr *node)
+{
+}
+
+static void
+_outJsonSerializeExpr(StringInfo str, const JsonSerializeExpr *node)
+{
+}
+
+static void
+_outJsonObjectConstructor(StringInfo str, const JsonObjectConstructor *node)
+{
+}
+
+static void
+_outJsonArrayConstructor(StringInfo str, const JsonArrayConstructor *node)
+{
+}
+
+
+static void
+_outJsonArrayQueryConstructor(StringInfo str, const JsonArrayQueryConstructor *node)
+{
+}
+
+static void
+_outJsonAggConstructor(StringInfo str, const JsonAggConstructor *node)
+{
+}
+
+static void
+_outJsonObjectAgg(StringInfo str, const JsonObjectAgg *node)
+{
+}
+
+static void
+_outJsonArrayAgg(StringInfo str, const JsonArrayAgg *node)
+{
+}
+
 static void
 _outXmlSerialize(StringInfo str, XmlSerialize *node)
 {
@@ -5815,6 +6072,11 @@ _outPartitionRangeDatum(StringInfo str, PartitionRangeDatum *node)
 {
 }
 
+static void
+_outSinglePartitionSpec(StringInfo str, const SinglePartitionSpec *node)
+{
+}
+
 /*
  * _outNode -
  *	  converts a Node into ascii string and append it to 'str'
@@ -5878,6 +6140,12 @@ _outNode(StringInfo str, void *obj)
 				/*
 				 * case T_WindowFunc: _outWindowFunc(str, obj); break;
 				 */
+			case T_WindowFuncRunCondition:
+				_outWindowFuncRunCondition(str, obj);
+				break;
+			case T_MergeSupportFunc:
+				_outMergeSupportFunc(str, obj);
+				break;
 			case T_SubscriptingRef:
 				_outSubscriptingRef(str, obj);
 				break;
@@ -5967,11 +6235,44 @@ _outNode(StringInfo str, void *obj)
 			case T_XmlExpr:
 				_outXmlExpr(str, obj);
 				break;
+			case T_JsonFormat:
+				_outJsonFormat(str, obj);
+				break;
+			case T_JsonReturning:
+				_outJsonReturning(str, obj);
+				break;
+			case T_JsonValueExpr:
+				_outJsonValueExpr(str, obj);
+				break;
+			case T_JsonConstructorExpr:
+				_outJsonConstructorExpr(str, obj);
+				break;
+			case T_JsonIsPredicate:
+				_outJsonIsPredicate(str, obj);
+				break;
+			case T_JsonBehavior:
+				_outJsonBehavior(str, obj);
+				break;
+			case T_JsonExpr:
+				_outJsonExpr(str, obj);
+				break;
+			case T_JsonTablePath:
+				_outJsonTablePath(str, obj);
+				break;
+			case T_JsonTablePathScan:
+				_outJsonTablePathScan(str, obj);
+				break;
+			case T_JsonTableSiblingJoin:
+				_outJsonTableSiblingJoin(str, obj);
+				break;
 			case T_NullTest:
 				_outNullTest(str, obj);
 				break;
 			case T_BooleanTest:
 				_outBooleanTest(str, obj);
+				break;
+			case T_MergeAction:
+				_outMergeAction(str, obj);
 				break;
 			case T_CoerceToDomain:
 				_outCoerceToDomain(str, obj);
@@ -6093,9 +6394,6 @@ _outNode(StringInfo str, void *obj)
 			case T_MergeWhenClause:
 				_outMergeWhenClauses(str, obj);
 				break;
-			case T_MergeAction:
-				_outMergeAction(str, obj);
-				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
 				break;
@@ -6184,6 +6482,54 @@ _outNode(StringInfo str, void *obj)
 			case T_TriggerTransition:
 				_outTriggerTransition(str, obj);
 				break;
+			case T_JsonOutput:
+				_outJsonOutput(str, obj);
+				break;
+			case T_JsonArgument:
+				_outJsonArgument(str, obj);
+				break;
+			case T_JsonFuncExpr:
+				_outJsonFuncExpr(str, obj);
+				break;
+			case T_JsonTablePathSpec:
+				_outJsonTablePathSpec(str, obj);
+				break;
+			case T_JsonTable:
+				_outJsonTable(str, obj);
+				break;
+			case T_JsonTableColumn:
+				_outJsonTableColumn(str, obj);
+				break;
+			case T_JsonKeyValue:
+				_outJsonKeyValue(str, obj);
+				break;
+			case T_JsonParseExpr:
+				_outJsonParseExpr(str, obj);
+				break;
+			case T_JsonScalarExpr:
+				_outJsonScalarExpr(str, obj);
+				break;
+			case T_JsonSerializeExpr:
+				_outJsonSerializeExpr(str, obj);
+				break;
+			case T_JsonObjectConstructor:
+				_outJsonObjectConstructor(str, obj);
+				break;
+			case T_JsonArrayConstructor:
+				_outJsonArrayConstructor(str, obj);
+				break;
+			case T_JsonArrayQueryConstructor:
+				_outJsonArrayQueryConstructor(str, obj);
+				break;
+			case T_JsonAggConstructor:
+				_outJsonAggConstructor(str, obj);
+				break;
+			case T_JsonObjectAgg:
+				_outJsonObjectAgg(str, obj);
+				break;
+			case T_JsonArrayAgg:
+				_outJsonArrayAgg(str, obj);
+				break;
 			case T_PartitionElem:
 				_outPartitionElem(str, obj);
 				break;
@@ -6195,6 +6541,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_PartitionRangeDatum:
 				_outPartitionRangeDatum(str, obj);
+				break;
+			case T_SinglePartitionSpec:
+				_outSinglePartitionSpec(str, obj);
 				break;
 
 			case T_InsertStmt:
@@ -6490,13 +6839,35 @@ _outNode(StringInfo str, void *obj)
 /*
  * nodeToString -
  *	   returns the ascii representation of the Node as a palloc'd string
+ *
+ * write_loc_fields determines whether location fields are output with their
+ * actual value rather than -1.  The actual value can be useful for debugging,
+ * but for most uses, the actual value is not useful, since the original query
+ * string is no longer available.
+ */
+static char *
+nodeToStringInternal(const void *obj, bool write_loc_fields)
+{
+	StringInfoData str;
+	bool		save_write_location_fields;
+
+	save_write_location_fields = write_location_fields;
+	write_location_fields = write_loc_fields;
+
+	/* see stringinfo.h for an explanation of this maneuver */
+	initStringInfo(&str);
+	_outNode(&str, (void *) obj);
+
+	write_location_fields = save_write_location_fields;
+
+	return str.data;
+}
+
+/*
+ * Externally visible entry points
  */
 char *
 nodeToString(const void *obj)
 {
-	StringInfoData	   str;
-
-	initStringInfo(&str);
-	_outNode(&str, (void *) obj);
-	return str.data;
+	return nodeToStringInternal(obj, false);
 }

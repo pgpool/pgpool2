@@ -4,8 +4,8 @@
  *	  prototypes for the creator functions of various nodes
  *
  *
- * Portions Copyright (c) 2003-2023, PgPool Global Development Group
- * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2024, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/makefuncs.h
@@ -82,6 +82,7 @@ extern FuncExpr *makeFuncExpr(Oid funcid, Oid rettype, List *args,
 extern FuncCall *makeFuncCall(List *name, List *args,
 							  CoercionForm funcformat, int location);
 
+extern Node *makeStringConst(char *str, int location);
 extern DefElem *makeDefElem(char *name, Node *arg, int location);
 extern DefElem *makeDefElemExtended(char *nameSpace, char *name, Node *arg,
 									DefElemAction defaction, int location);
@@ -98,6 +99,11 @@ extern Node *makeJsonKeyValue(Node *key, Node *value);
 extern Node *makeJsonIsPredicate(Node *expr, JsonFormat *format,
 								 JsonValueType item_type, bool unique_keys,
 								 int location);
-extern JsonEncoding makeJsonEncoding(char *name);
+extern JsonBehavior *makeJsonBehavior(JsonBehaviorType btype, Node *expr,
+									  int location);
+extern JsonTablePath *makeJsonTablePath(Const *pathvalue, char *pathname);
+extern JsonTablePathSpec *makeJsonTablePathSpec(char *string, char *name,
+												int string_location,
+												int name_location);
 
 #endif							/* MAKEFUNC_H */

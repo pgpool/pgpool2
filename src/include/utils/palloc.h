@@ -75,7 +75,6 @@ extern MemoryContext CurrentMemoryContext;
  */
 extern void *MemoryContextAlloc(MemoryContext context, Size size);
 extern void *MemoryContextAllocZero(MemoryContext context, Size size);
-extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
 extern void *MemoryContextAllocExtended(MemoryContext context,
 						   Size size, int flags);
 
@@ -84,19 +83,6 @@ extern void *palloc0(Size size);
 extern void *palloc_extended(Size size, int flags);
 extern void *repalloc(void *pointer, Size size);
 extern void pfree(void *pointer);
-
-/*
- * The result of palloc() is always word-aligned, so we can skip testing
- * alignment of the pointer when deciding which MemSet variant to use.
- * Note that this variant does not offer any advantage, and should not be
- * used, unless its "sz" argument is a compile-time constant; therefore, the
- * issue that it evaluates the argument multiple times isn't a problem in
- * practice.
- */
-#define palloc0fast(sz) \
-	( MemSetTest(0, sz) ? \
-		MemoryContextAllocZeroAligned(CurrentMemoryContext, sz) : \
-		MemoryContextAllocZero(CurrentMemoryContext, sz) )
 
 /* Higher-limit allocators. */
 extern void *MemoryContextAllocHuge(MemoryContext context, Size size);

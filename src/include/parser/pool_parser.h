@@ -2,7 +2,7 @@
 /*
  * $Header$
  *
- * Copyright (c) 2006-2023, pgpool Global Development Group
+ * Copyright (c) 2006-2024, pgpool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
