@@ -4731,3 +4731,56 @@ InvalidateQueryCache(int tableoid, int dboid)
 	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
 	POOL_SETMASK(&oldmask);
 }
+
+/*
+ * Public API to invalidate query cache specified by query string.  Returns
+ * true for successfully query cache invalidation.  If the query cache was not
+ * found, returns false.  Note that this function does not remove any entry in
+ * a table oid file.  That may leave a garbage in the file (which is ignored
+ * by the auto cache invalidation) but it's not worth the trouble to remove
+ * the entry since it's relatively expensive. It needs to rewrite the whole
+ * file in the worst case.
+ */
+bool query_cache_delete_by_stmt(char *query, POOL_CONNECTION_POOL * backend)
+{
+	bool		rtn = true;
+	pool_sigset_t oldmask;
+
+	char		key[MAX_KEY];
+	POOL_CACHEID *cacheid;
+
+	POOL_SETMASK2(&BlockSig, &oldmask);
+	pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
+
+	/* encode md5key */
+	encode_key(query, key, backend);
+
+	if (pool_is_shmem_cache())
+
+	{
+		POOL_QUERY_HASH		hashkey;
+
+		memcpy(hashkey.query_hash, key, POOL_MD5_HASHKEYLEN);
+		cacheid = pool_hash_search(&hashkey);
+		if (cacheid == NULL)
+			rtn = false;
+		else
+			pool_delete_item_shmem_cache(cacheid);
+	}
+#ifdef USE_MEMCACHED
+	else
+	{
+		if (delete_cache_on_memcached(key) == 0)
+			rtn = false;
+	}
+#else
+	{
+		ereport(WARNING,
+				(errmsg("failed to delete query cache on memcached, memcached support is not enabled")));
+	}
+#endif
+	pool_semaphore_unlock(QUERY_CACHE_STATS_SEM);
+	POOL_SETMASK(&oldmask);
+
+	return rtn;
+}

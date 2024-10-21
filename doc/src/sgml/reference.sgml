@@ -155,6 +155,7 @@
 
   &pgpoolShow
   &pgpoolSet
+  &pgpoolSetCache
   &pgpoolReset
   &showPoolStatus
   &showPoolNodes

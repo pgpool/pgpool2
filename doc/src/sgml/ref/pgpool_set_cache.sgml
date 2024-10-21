@@ -1,0 +1,97 @@
+<!--
+doc/src/sgml/ref/set.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-PGPOOL-SET-CACHE">
+ <indexterm zone="sql-pgpool-set-cache">
+  <primary>PGPOOL SET</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>PGPOOL SET CACHE</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>PGPOOL SET CACHE</refname>
+  <refpurpose>delete query cache</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <synopsis>
+   PGPOOL SET CACHE DELETE <replaceable class="PARAMETER">'query'</replaceable>
+  </synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   The <command>PGPOOL SET CACHE DELETE</command> command deletes the
+   <link linkend="runtime-in-memory-query-cache">query cache</link>
+   previously created by the query. The query string must be exactly
+   identical to the previous query, including
+   trailing <literal>';'</literal>. Nevertheless if the query
+   includes <literal>'</literal> (single quore), it needs to be
+   prefixed by <literal>'</literal> like:
+   <programlisting>
+PGPOOL SET CACHE DELETE 'SELECT ''FOO'';';
+   </programlisting>
+   This command is particularly useful for queries that are not
+   invalidated by
+   the <link linkend="guc-memqcache-auto-cache-invalidation">auto
+   cache invalidation feature</link> because the query does not have
+   any reference to tables.
+  </para>
+  <para>
+   If you do not remember the previous query, you can
+   use <xref linkend="PCP-INVALIDATE-QUERY-CACHE"> to delete all the
+   query cache including the cache you want to delete. However it
+   requires the <productname>Pgpool-II</productname> admin privilege.
+  </para>
+  <para>
+   Upon successful deletion of the query cache, this command emits a
+   notice message:
+   <programlisting>
+NOTICE:  query cache deleted. query: "<literal>query string</literal>"
+   </programlisting>
+   If the cache does not exist or query cache is not enabled, it emits
+   a notice message:
+   <programlisting>
+NOTICE:  query cache does not exist for query: "<literal>query string</literal>"
+   </programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Accidentally created an unwanted query cache. Delete it by using
+   the command.
+    <programlisting>
+test=# /*FORCE QUERY CACHE*/SELECT current_timestamp;
+       current_timestamp       
+-------------------------------
+ 2024-10-18 18:25:07.826423+09
+(1 row)
+
+test=# PGPOOL SET CACHE DELETE '/*FORCE QUERY CACHE*/SELECT current_timestamp;';
+NOTICE:  query cache deleted. query: "/*FORCE QUERY CACHE*/SELECT current_timestamp;"
+SET
+    </programlisting>
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="PCP-INVALIDATE-QUERY-CACHE"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

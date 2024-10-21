@@ -307,4 +307,6 @@ extern void pool_init_whole_cache_blocks(void);
 
 extern void clear_query_cache(void);
 
+extern bool query_cache_delete_by_stmt(char *query, POOL_CONNECTION_POOL * backend);
+
 #endif							/* POOL_MEMQCACHE_H */

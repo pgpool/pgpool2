@@ -450,7 +450,20 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			pool_set_skip_reading_from_backends();
 			return POOL_CONTINUE;
 		}
+		if (IsA(node, PgpoolQueryCacheStmt))
+		{
+			VariableSetStmt *vnode = (VariableSetStmt *) node;
 
+			if (query_cache_delete_by_stmt(vnode->name, backend))
+				elog(NOTICE, "query cache deleted. query: \"%s\"", vnode->name);
+			else
+				elog(NOTICE, "query cache does not exist for query: \"%s\"", vnode->name);
+			pool_ps_idle_display(backend);
+			send_complete_and_ready(frontend, backend, "SET", -1);
+			pool_query_context_destroy(query_context);
+			pool_set_skip_reading_from_backends();
+			return POOL_CONTINUE;
+		}
 		if (IsA(node, PgpoolVariableSetStmt))
 		{
 			VariableSetStmt *vnode = (VariableSetStmt *) node;

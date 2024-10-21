@@ -30,6 +30,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pgpoolShow          SYSTEM "pgpool_show.sgml">
 <!ENTITY pgpoolReset         SYSTEM "pgpool_reset.sgml">
 <!ENTITY pgpoolSet           SYSTEM "pgpool_set.sgml">
+<!ENTITY pgpoolSetCache      SYSTEM "pgpool_set_cache.sgml">
 <!ENTITY showPoolStatus      SYSTEM "show_pool_status.sgml">
 <!ENTITY showPoolNodes       SYSTEM "show_pool_nodes.sgml">
 <!ENTITY showPoolProcesses   SYSTEM "show_pool_processes.sgml">
