@@ -439,6 +439,18 @@ EOF
 #	$PGPROTO -d test -f ../alter_database2.data |& del_details_from_error >> result
 #	$PGPROTO -d test -f ../alter_database3.data |& del_details_from_error >> result
 
+		$PSQL -a test >> result 2>&1 <<EOF
+--
+-- ALTER ROLE WITH ENCRYPTED PASSWORD and
+-- ALTER ROLE WITH CONNECTION LIMIT 10
+-- do not invalidate query cache
+SELECT 10;
+SELECT 10;
+ALTER ROLE foo WITH ENCRYPTED PASSWORD 'foo';
+ALTER ROLE foo WITH CONNECTION LIMIT 10;
+SELECT 10;
+EOF
+
 	./shutdownall
 
 	cd ..
