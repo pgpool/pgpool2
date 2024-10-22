@@ -45,6 +45,7 @@ static int	forward_command_complete(POOL_CONNECTION * frontend, char *packet, in
 static int	forward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen);
 static int	forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen);
 static void process_clear_cache(POOL_CONNECTION_POOL * backend);
+static bool check_alter_role_statement(AlterRoleStmt *stmt);
 
 POOL_STATUS
 CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool command_complete)
@@ -475,11 +476,44 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 		process_clear_cache(backend);
 	}
 	else if (IsA(node, AlterTableStmt) || IsA(node, AlterDatabaseStmt) ||
-			 IsA(node, AlterDatabaseSetStmt) || IsA(node, AlterRoleStmt))
+			 IsA(node, AlterDatabaseSetStmt))
 	{
 		/* Clear query cache */
 		process_clear_cache(backend);
 	}
+	else if (IsA(node, AlterRoleStmt))
+	{
+		if (check_alter_role_statement(castNode(AlterRoleStmt, node)))
+		{
+			/* Clear query cache */
+			process_clear_cache(backend);
+		}
+	}
+}
+
+/*
+ * Check whether the ALTER ROLE statement needs query cache invalidation.
+ * stmt must be AlterRoleStmt.
+ */
+static bool
+check_alter_role_statement(AlterRoleStmt *stmt)
+{
+	ListCell	*l;
+
+	foreach(l, stmt->options)
+	{
+		DefElem	*elm = (DefElem *) lfirst(l);
+
+		/*
+		 * We want to detect other than ALTER ROLE foo WITH PASSWORD or
+		 * WITH CONNECTION LIMIT case.  It does not change any privilege of the
+		 * role.
+		 */
+		if (strcmp(elm->defname, "password") &&
+			strcmp(elm->defname, "connectionlimit"))
+			return true;
+	}
+	return false;
 }
 
 /*

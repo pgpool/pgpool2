@@ -122,7 +122,7 @@
    以下のコマンドはクエリキャッシュとデータベース内容の整合性を失わせる可能性があるので、実行されるとクエリキャッシュをすべて削除します。
    <programlisting>
     ALTER DATABASE
-    ALTER ROLE
+    ALTER ROLE or USER (WITH CONNECTION LIMITとWITH [ENCRYPTED] PASSWORDを除く)
     ALTER TABLE
     REVOKE
    </programlisting>

@@ -79,7 +79,7 @@
    they are executed:
    <programlisting>
     ALTER DATABASE
-    ALTER ROLE
+    ALTER ROLE or USER (except WITH CONNECTION LIMIT and WITH [ENCRYPTED] PASSWORD)
     ALTER TABLE
     REVOKE
    </programlisting>
