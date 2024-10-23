@@ -596,3 +596,33 @@ SELECT 10;
        10
 (1 row)
 
+--
+-- PGPOOL SET CACHE DELETE test cases.
+--
+-- force to create cache
+/*FORCE QUERY CACHE*/SELECT 1;
+NOTICE:  DB node id: 0 statement: /*FORCE QUERY CACHE*/SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- make sure the cache was created
+/*FORCE QUERY CACHE*/SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- delete the cache
+PGPOOL SET CACHE DELETE '/*FORCE QUERY CACHE*/SELECT 1;';
+NOTICE:  query cache deleted. query: "/*FORCE QUERY CACHE*/SELECT 1;"
+SET
+-- make sure the cache was deleted
+/*FORCE QUERY CACHE*/SELECT 1;
+NOTICE:  DB node id: 0 statement: /*FORCE QUERY CACHE*/SELECT 1;
+ ?column? 
+----------
+        1
+(1 row)
+
