@@ -154,6 +154,14 @@ do_health_check_child(int *node_id)
 	/* Initialize per process context */
 	pool_init_process_context();
 
+	/*
+	 * Open pool_passwd.
+	 */
+	if (strcmp("", pool_config->pool_passwd))
+	{
+		pool_reopen_passwd_file();
+	}
+
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
 		pool_signal(SIGALRM, SIG_IGN);
