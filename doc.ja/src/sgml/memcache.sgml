@@ -39,7 +39,10 @@
     /*NO QUERY CACHE*/SELECT now();
    </programlisting>
    Because it just prevents to create a cache entry for the query, and
-   does not affect the query using the FORCE QUERY CACHE comment.
+   does not affect the query using the FORCE QUERY CACHE comment.  You
+   can delete such a query cache by
+   using <xref linkend="SQL-PGPOOL-SET-CACHE"> command,
+   or <xref linkend="PCP-INVALIDATE-QUERY-CACHE"> command.
    </programlisting>
    Because it just prevents to create a cache entry for the query, and
    does not affect the query using the FORCE QUERY CACHE comment.
@@ -60,6 +63,7 @@
     /*NO QUERY CACHE*/SELECT now();
    </programlisting>
    なぜなら、これはこのクエリのキャッシュエントリが作成されないようにするだけで、FORCE QUERY CACHEコメントを使ったクエリには影響を与えないからです。
+   このようなクエリキャッシュは、<xref linkend="SQL-PGPOOL-SET-CACHE">コマンドか、<xref linkend="PCP-INVALIDATE-QUERY-CACHE">コマンドで削除できます。
    </para>
   <para>
   <!--
