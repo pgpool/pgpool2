@@ -43,9 +43,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <math.h>
 #include "pool_parser.h"
 #include "stringinfo.h"
 #include "utils/palloc.h"
+#include "postgresql/16/server/postgres_fe.h"
 
 /*
  * We used to use the platform's NL_ARGMAX here, but that's a bad idea,
