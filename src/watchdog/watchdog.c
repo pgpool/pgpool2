@@ -6654,8 +6654,8 @@ watchdog_state_machine_nw_isolation(WD_EVENTS event, WatchdogNode * wdNode, WDPa
 static bool
 beacon_message_received_from_node(WatchdogNode * wdNode, WDPacketData * pkt)
 {
-	long		seconds_since_node_startup;
-	long		seconds_since_current_state;
+	time_t		seconds_since_node_startup;
+	time_t		seconds_since_current_state;
 	int			quorum_status;
 	int			standby_nodes_count;
 	bool		escalated;
