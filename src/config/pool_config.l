@@ -63,6 +63,10 @@ static void FreeConfigVariable(ConfigVariable *item);
 static bool ParseConfigFile(const char *config_file, const char *calling_file,
 				int depth, int elevel, ConfigVariable **head_p, ConfigVariable **tail_p);
 
+static int growFunctionPatternArray(RegPattern item);
+static int growMemqcacheTablePatternArray(RegPattern item);
+static int growQueryPatternArray(RegPattern item);
+
 %}
 
 %option 8bit
@@ -162,13 +166,17 @@ int add_regex_pattern(const char *type, char *s)
 	   if required to prevent partial matching. It also allow backward
 	   compatibility.
 	 */
-	if (strncmp(s, "^", 1) != 0) {
+	if (strncmp(s, "^", 1) != 0)
+	{
 		strncpy(currItem.pattern, "^", 2);
 		strncat(currItem.pattern, s, pattern_len - 2);
-	} else {
+	}
+	else
+	{
 		strncpy(currItem.pattern, s, pattern_len);
 	}
-	if (s[strlen(s)-1] != '$') {
+	if (s[strlen(s)-1] != '$')
+	{
 		strncat(currItem.pattern, "$", 2);
 	}
 	ereport(DEBUG1,
@@ -213,7 +221,8 @@ int add_regex_pattern(const char *type, char *s)
  * The array start with PATTERN_ARR_SIZE storage place, if required
  * it will grow of PATTERN_ARR_SIZE more each time.
  */
-int growFunctionPatternArray(RegPattern item)
+static int
+growFunctionPatternArray(RegPattern item)
 {
 	void *_tmp = NULL;
 	if (pool_config->pattc == pool_config->current_pattern_size)
@@ -234,7 +243,8 @@ int growFunctionPatternArray(RegPattern item)
 	return(pool_config->pattc);
 }
 
-int growMemqcacheTablePatternArray(RegPattern item)
+static int
+growMemqcacheTablePatternArray(RegPattern item)
 {
 	void *_tmp = NULL;
 	if (pool_config->memqcache_table_pattc == pool_config->current_memqcache_table_pattern_size)
@@ -255,7 +265,8 @@ int growMemqcacheTablePatternArray(RegPattern item)
 	return(pool_config->memqcache_table_pattc);
 }
 
-int growQueryPatternArray(RegPattern item)
+static int
+growQueryPatternArray(RegPattern item)
 {
 	void *_tmp = NULL;
 	if (pool_config->query_pattc == pool_config->current_query_pattern_size)

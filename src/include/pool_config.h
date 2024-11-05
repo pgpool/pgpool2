@@ -663,7 +663,6 @@ typedef struct ConfigVariable
 	struct ConfigVariable *next;
 } ConfigVariable;
 
-
 extern int	pool_init_config(void);
 extern bool pool_get_config(const char *config_file, ConfigContext context);
 extern int	eval_logical(const char *str);
@@ -672,8 +671,5 @@ extern char *backend_status_to_str(BackendInfo * bi);
 
 /* methods used for regexp support */
 extern int	add_regex_pattern(const char *type, char *s);
-extern int	growFunctionPatternArray(RegPattern item);
-extern int	growMemqcacheTablePatternArray(RegPattern item);
-extern int	growQueryPatternArray(RegPattern item);
 
 #endif							/* POOL_CONFIG_H */
