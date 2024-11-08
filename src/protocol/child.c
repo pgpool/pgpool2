@@ -1295,9 +1295,12 @@ child_will_go_down(int code, Datum arg)
 		memcached_disconnect();
 	}
 
-	/* let backend know now we are exiting */
-	if (pool_connection_pool)
-		close_all_backend_connections();
+	/*
+	 * We used to call close_all_backend_connections() here so that we send
+	 * 'X' (terminate) message to backend. However it was possible that the
+	 * function is called while initializing the connection pool object, which
+	 * leads to crash. So we stopped to call close_all_backend_connections().
+	 */
 }
 void
 child_exit(int code)
