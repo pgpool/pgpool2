@@ -138,6 +138,11 @@ bool		stop_now = false;
 #endif
 
 /*
+ * If true, connection pool has been initialized.
+ */
+static bool connection_pool_initialized = false;
+
+/*
 * child main loop
 */
 void
@@ -220,6 +225,7 @@ do_child(int *fds)
 	{
 		child_exit(POOL_EXIT_AND_RESTART);
 	}
+	connection_pool_initialized = true;
 
 	/*
 	 * Open pool_passwd in child process.  This is necessary to avoid the file
@@ -1293,7 +1299,7 @@ child_will_go_down(int code, Datum arg)
 	}
 
 	/* let backend know now we are exiting */
-	if (pool_connection_pool)
+	if (connection_pool_initialized)
 		close_all_backend_connections();
 }
 void
