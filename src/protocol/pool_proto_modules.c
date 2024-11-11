@@ -3398,6 +3398,12 @@ CopyDataRows(POOL_CONNECTION * frontend,
 					copy_count++;
 					continue;
 				}
+				/*
+				 * Flush (H) or Sync (S) messages should be ignored while in
+				 * the COPY IN mode.
+				 */
+				else if (kind == 'H' || kind == 'S')
+					continue;
 				else
 				{
 					if (pool_config->log_client_messages && copy_count != 0)
