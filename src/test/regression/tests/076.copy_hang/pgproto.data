@@ -1,0 +1,9 @@
+'Q'	"CREATE TEMP TABLE t1(i INT)"
+'Y'
+'Q'	"COPY t1 FROM STDIN"	0
+'d'	"1"
+'H'
+'c'
+'S'
+'Y'
+'X'
