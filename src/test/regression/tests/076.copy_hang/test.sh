@@ -17,6 +17,7 @@
 source $TESTLIBS
 TESTDIR=testdir
 PSQL=$PGBIN/psql
+PGPROTO=$PGPOOL_INSTALL_DIR/bin/pgproto
 
 rm -fr $TESTDIR
 mkdir $TESTDIR
@@ -46,9 +47,21 @@ g
 EOF
 
 if [ ! $? -eq 0 ];then
-    echo ...timed out.
     ./shutdownall
     exit 1
 fi
-echo ...ok.
+
+#
+# Another COPY FROM STDIN hang case.
+# commit ab091663b09ef8c2d0a1841921597948c597444e
+# If Flush or Sync message is sent from frontend during COPY IN mode,
+# pgpool hangs.
+# In order to reproduce the problem, we use pgproto because psql
+# cannot send Flush or Sync during COPY FROM STDIN
+
+timeout 10 $PGPROTO -d test -f ../pgproto.data
+if [ ! $? -eq 0 ];then
+    ./shutdownall
+    exit 1
+fi
 ./shutdownall
