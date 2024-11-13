@@ -2141,9 +2141,10 @@ check_config_reload(void)
 		if (pool_config->enable_pool_hba)
 		{
 			load_hba(get_hba_file_name());
-			if (strcmp("", pool_config->pool_passwd))
-				pool_reopen_passwd_file();
 		}
+		if (strcmp("", pool_config->pool_passwd))
+			pool_reopen_passwd_file();
+
 		got_sighup = 0;
 	}
 }
