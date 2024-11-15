@@ -2306,7 +2306,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 					if (p)
 					{
 						memcpy(&shortval, p, sizeof(short));
-						num_fields = htons(shortval);
+						num_fields = ntohs(shortval);
 						p += sizeof(short);
 					}
 					else
@@ -2338,7 +2338,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 						if (major == PROTO_MAJOR_V3)
 						{
 							memcpy(&intval, p, sizeof(int));
-							len = htonl(intval);
+							len = ntohl(intval);
 							p += sizeof(int);
 
 							res->nullflags[num_data] = len;
