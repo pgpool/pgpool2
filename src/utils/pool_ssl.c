@@ -152,6 +152,16 @@ pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
 					(errmsg("attempting to negotiate a secure connection"),
 					 errdetail("server doesn't want to talk SSL")));
 			break;
+		case 'E':
+			/*
+			 * Server failure of some sort, such as failure to fork a backend
+			 * process.  Don't bother retrieving the error message; we should
+			 * not trust it as the server has not been authenticated yet.
+			 */
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("server sent an error response during SSL exchange")));
+			break;
 		default:
 			ereport(WARNING,
 					(errmsg("error while attempting to negotiate a secure connection, unhandled response: %c", server_response)));
