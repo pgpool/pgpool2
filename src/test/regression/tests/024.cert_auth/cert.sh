@@ -71,6 +71,6 @@ openssl ca -batch -in frontend.req -config crl_openssl.conf -days 375 -notext -m
 # Generate clean CRL (No revocation so far)
 openssl ca -gencrl -config crl_openssl.conf -out server.crl -cert root.crt -keyfile root.key
 # Revoke Frontend Cert
-openssl ca -revoke frontend.crt -config crl_openssl.conf -keyfile root.key -cert root.crt -out root.crl
+#openssl ca -revoke frontend.crt -config crl_openssl.conf -keyfile root.key -cert root.crt -out root.crl
 # Generate CRL after revocation
-openssl ca -gencrl -config crl_openssl.conf -out server_revoked.crl -cert root.crt -keyfile root.key
+#openssl ca -gencrl -config crl_openssl.conf -out server_revoked.crl -cert root.crt -keyfile root.key

@@ -35,7 +35,7 @@ cp -p ../$SSL_KEY etc/
 chmod og-rwx etc/$SSL_KEY
 cp -p ../$SSL_CRT etc/
 cp -p ../$SSL_CRL etc/
-cp -p ../$SSL_CRL2 etc/
+#cp -p ../$SSL_CRL2 etc/
 cp -p ../$ROOT_CRT etc/
 
 echo "ssl = on" >> etc/pgpool.conf
@@ -77,6 +77,7 @@ echo "Checking cert auth between Pgpool-II and frontend was ok."
 
 
 # Starting CRL verification
+
 # Adding valid CRL file in pgpool.conf file.
 echo "ssl_crl_file = '$SSL_CRL'" >> etc/pgpool.conf
 
@@ -115,6 +116,12 @@ echo "Checking cert auth between Pgpool-II and frontend with clean CRL was ok."
 
 # Adding CRL file with revoked certification entry in pgpool.conf file.
 echo "Updating pgpool.conf with revoked CRL file"
+
+# Revoke Frontend Cert
+(cd ..;openssl ca -revoke frontend.crt -config crl_openssl.conf -keyfile root.key -cert root.crt -out root.crl)
+# Generate CRL after revocation
+(cd ..; openssl ca -gencrl -config crl_openssl.conf -out server_revoked.crl -cert root.crt -keyfile root.key)
+cp -p ../$SSL_CRL2 etc/
 
 sed -i 's/server.crl/server_revoked.crl/' etc/pgpool.conf
 
