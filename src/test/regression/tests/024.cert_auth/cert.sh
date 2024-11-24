@@ -58,19 +58,29 @@ EOF
 # Print OpenSSL version
 openssl version
 
+# OpenSSL config file dir
+dir=`openssl version -d|awk '{print $2}'|sed 's/"//g'`
+
 # Create root cert
-openssl req -new -x509 -nodes -out root.crt -keyout root.key -config crl_openssl.conf -days 365 -subj /CN=MyRootCA
+openssl req -new -nodes -text -out root.csr -keyout root.key -subj "/CN=MyrootCA"
+chmod og-rwx root.key
+openssl x509 -req -in root.csr -text -days 3650 -extfile $dir/openssl.cnf -extensions v3_ca -signkey root.key -out root.crt
+
 # PostgreSQL/Pgpool cert
-openssl req -new -out server.req -keyout server.key -config crl_openssl.conf -nodes -subj "/CN=postgresql"
-openssl ca -batch -in server.req -config crl_openssl.conf -days 375 -notext -md sha256 -out server.crt
+openssl req -new -nodes -text -out server.csr -keyout server.key -subj "/CN=postgresql"
+chmod og-rwx server.key
+openssl x509 -req -in server.csr -text -days 365 -CA root.crt -CAkey root.key -CAcreateserial -out server.crt
 
 # Frontend Cert
-openssl req -new -out frontend.req -keyout frontend.key -config crl_openssl.conf -nodes -subj "/CN=$USER"
-openssl ca -batch -in frontend.req -config crl_openssl.conf -days 375 -notext -md sha256 -out frontend.crt
+openssl req -new -nodes -text -out frontend.csr -keyout frontend.key -subj "/CN=$USER"
+chmod og-rwx frontend.key
+openssl x509 -req -in frontend.csr -text -days 365 -CA root.crt -CAkey root.key -CAcreateserial -out frontend.crt
 
 # Generate clean CRL (No revocation so far)
-openssl ca -gencrl -config crl_openssl.conf -out server.crl -cert root.crt -keyfile root.key
+openssl ca -config crl_openssl.conf -gencrl -out server.crl -cert root.crt -keyfile root.key
+
 # Revoke Frontend Cert
-openssl ca -revoke frontend.crt -config crl_openssl.conf -keyfile root.key -cert root.crt -out root.crl
+openssl ca -config crl_openssl.conf -revoke frontend.crt -keyfile root.key -cert root.crt -out root.crl
+
 # Generate CRL after revocation
-openssl ca -gencrl -config crl_openssl.conf -out server_revoked.crl -cert root.crt -keyfile root.key
+openssl ca -config crl_openssl.conf -gencrl -out server_revoked.crl -cert root.crt -keyfile root.key
