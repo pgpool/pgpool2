@@ -2204,18 +2204,27 @@ kill_all_children(int sig)
 			}
 		}
 	}
-	/* make PCP process reload as well */
-	if (sig == SIGHUP && pcp_pid > 0)
-		kill(pcp_pid, sig);
 
-	/* make health check process reload as well */
 	if (sig == SIGHUP)
 	{
+		/* make PCP process reload as well */
+		if (pcp_pid > 0)
+			kill(pcp_pid, sig);
+
+		/* make health check process reload as well */
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			if (health_check_pids[i] > 0)
 				kill(health_check_pids[i], sig);
 		}
+
+		/* make worker process reload as well */
+		if (worker_pid > 0)
+			kill(worker_pid, sig);
+
+		/* make watchdog process reload as well */
+		if (watchdog_pid > 0)
+			kill(watchdog_pid, sig);
 	}
 }
 
@@ -3445,10 +3454,8 @@ reload_config(void)
 	MemoryContextSwitchTo(oldContext);
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
-	kill_all_children(SIGHUP);
 
-	if (worker_pid)
-		kill(worker_pid, SIGHUP);
+	kill_all_children(SIGHUP);
 }
 
 /* Call back function to unlink the file */

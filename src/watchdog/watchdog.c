@@ -1182,6 +1182,8 @@ check_signals(void)
 	/* reload config file signal? */
 	if (reload_config_signal)
 	{
+		ereport(LOG,
+				(errmsg("reloading config file")));
 		MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
 		pool_get_config(get_config_file_name(), CFGCXT_RELOAD);
