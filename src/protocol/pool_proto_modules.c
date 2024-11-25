@@ -3731,6 +3731,138 @@ per_node_statement_notice(POOL_CONNECTION_POOL * backend, int node_id, char *que
 }
 
 /*
+ * Make backend message log when log_backend_messages is on.
+ */
+void log_backend_messages(unsigned char kind, int backend_id)
+{
+	/*
+	 * Map table for message kind and message label
+	 */
+	typedef struct
+	{
+		unsigned char	kind;	/* message kind */
+		char	*label;			/* message label */
+	}		BackendMessage;
+		
+	static BackendMessage message_label[] =
+		{
+			{'1', "ParseComplete"},
+			{'2', "BindComplete"},
+			{'3', "CloseComplete"},
+			{'A', "NotificationResponse"},
+			{'C', "CommandComplete"},
+			{'D', "DataRow"},
+			{'E', "ErrorResponse"},
+			{'G', "CopyInResponse"},
+			{'H', "CopyOutResponse"},
+			{'I', "EmptyQueryResponse"},
+			{'K', "BackendKeyData"},
+			{'N', "NoticeResponse"},
+			{'R', "AuthenticationRequest"},
+			{'S', "ParameterStatus"},
+			{'T', "RowDescription"},
+			{'V', "FunctionCallResponse"},
+			{'W', "CopyBothResponse"},
+			{'Z', "ReadyForQuery"},
+			{'n', "NoData"},
+			{'s', "PortalSuspended"},
+			{'t', "ParameterDescription"},
+			{'v', "NegotiateProtocolVersion"},
+			{'c', "CopyDone"},
+			{'d', "CopyData"},
+		};
+		
+
+	/* store last kind for each backend */
+	static unsigned char kind_cache[MAX_NUM_BACKENDS];
+
+	/* number of repetitions of each kind */
+	static int kind_count[MAX_NUM_BACKENDS];
+
+	int		kind_num = sizeof(message_label)/sizeof(BackendMessage);
+	char	*label;
+	static	char	*last_label;
+	int		i;
+
+	/* do nothing if log_backend_messages is disabled */
+	if (pool_config->log_backend_messages == BGMSG_NONE)
+		return;
+
+	/* check backend_id */
+	if (backend_id < 0)
+	{
+		elog(WARNING, "log_backend_messages: invalid backend_id: %d", backend_id);
+		return;
+	}
+
+	label = NULL;
+
+	/* search matched message label */
+	for (i = 0; i < kind_num; i++)
+	{
+		if (kind == message_label[i].kind)
+		{
+			label = message_label[i].label;
+			break;
+		}
+	}
+	if (label == NULL)
+	{
+		elog(WARNING, "log_backend_messages: no label found for kind \"%c\" from backend_id: %d",
+			 kind, backend_id);
+		return;
+	}
+
+	/* is the setting verbose? */
+	if (pool_config->log_backend_messages == BGMSG_VERBOSE)
+	{
+		/* log everything unconditionally */
+		ereport(LOG,
+				(errmsg("%s message from backend %d", label, backend_id)));
+		return;
+	}
+		
+	/* just to make sure the setting is terse */
+	if (pool_config->log_backend_messages != BGMSG_TERSE)
+	{
+		elog(ERROR, "unexpected log_backend_messages option: %d",
+			 pool_config->log_backend_messages);
+		return;
+	}
+
+	/*
+	 * From now on We can assume that log_backend_messages is set to terse
+	 */
+
+	/* same kind as before? */
+	if (kind != kind_cache[backend_id])
+	{
+		/* is the kind new? */
+		if (kind_count[backend_id] == 0)
+		{
+			/* this is new kind. save the label */
+			last_label = label;
+		}
+		else
+		{
+			/* same kind was repeated */
+			ereport(LOG,
+					(errmsg("last %s message from backend %d repeated %d times",
+							last_label, backend_id, kind_count[backend_id])));
+			kind_count[backend_id] = 0;
+		}
+		ereport(LOG,
+				(errmsg("%s message from backend %d", label, backend_id)));
+
+		/* save kind for this backend */
+		kind_cache[backend_id] = kind;
+	}
+	else
+		/* same kind is repeated */
+		kind_count[backend_id]++;
+}
+
+/*
  * Check kind and produce error message.
  * Return message kind.
  * All data read in this function is returned to stream.
@@ -4649,6 +4781,9 @@ pool_emit_log_for_message_length_diff(int *length_array, char *name)
 	}
 }
 
+/*
+ * Read kind from all valid backend
+ */
 signed char
 pool_read_kind(POOL_CONNECTION_POOL * cp)
 {
@@ -4667,6 +4802,7 @@ pool_read_kind(POOL_CONNECTION_POOL * cp)
 		}
 
 		pool_read(CONNECTION(cp, i), &kind, sizeof(kind));
+		log_backend_messages(kind, i);
 
 		if (IS_MAIN_NODE_ID(i))
 		{

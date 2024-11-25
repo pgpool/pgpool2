@@ -1207,6 +1207,57 @@ local0.*    /var/log/pgpool.log
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry id="guc-log-backend-messages" xreflabel="log_backend_messages">
+    <term><varname>log_backend_messages</varname> (<type>boolean</type>)
+     <indexterm>
+      <!--
+      <primary><varname>log_backend_messages</varname> configuration parameter</primary>
+      -->
+      <primary><varname>log_backend_messages</varname> 設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Setting to <literal>terse</literal>
+      or <literal>verbose</literal>, prints backend messages to the
+      log.  With <literal>terse</literal> the number of same kind of
+      messages are recorded and is printed when different kind of
+      messages is sent. Below is an example.
+      <programlisting>
+       LOG:  last DataRow message from backend 0 repeated 10 times
+      </programlisting>
+      Thus the log will not be printed if the process corresponding to
+      the session is killed. If you want to print the log even in this
+      case, use <literal>verbose</literal> option. Note that with the
+      option each repeated message is printed and lots of log lines
+      are printed. The default is <literal>none</literal>, which
+      disables printing log messages from backend.
+      -->
+      <literal>terse</literal>または<literal>verbose</literal>に設定されている場合、バックエンドからのメッセージをログ出力します
+      <literal>terse</literal>では、同じ種類のメッセージが同じバックエンドから送られてくると、その回数を記録し、次に異なる種類のメセージが送られてきた時に繰り返し回数を報告します。
+      出力例を示します。
+      <programlisting>
+       LOG:  last DataRow message from backend 0 repeated 10 times
+      </programlisting>
+      したがって、繰り返している最中にセッションに対応するプロセスが強制終了すると、その分のログが出力されません。
+      この場合でもすべてのログを出力するには、<literal>verbose</literal>オプションを使用します。
+      ただし、このオプションでは繰り返し回数分だけの行のログが出力されるので、大量のメッセージがバックエンドから送られてくる場合は注意が必要です。
+      デフォルトは<literal>none</literal>で、バックエンドからのメッセージをログ出力しません。
+     </para>
+     <para>
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
+      this parameter for a current session.
+      -->
+      このパラメータは、<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-log-hostname" xreflabel="log_hostname">
     <term><varname>log_hostname</varname> (<type>boolean</type>)
      <indexterm>

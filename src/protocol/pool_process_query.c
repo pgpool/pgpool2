@@ -3431,6 +3431,8 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 						(errmsg("reading backend data packet kind"),
 						 errdetail("backend:%d kind:'%c'", i, kind)));
 
+				log_backend_messages(kind, i);
+
 				/*
 				 * Read and forward notice messages to frontend
 				 */

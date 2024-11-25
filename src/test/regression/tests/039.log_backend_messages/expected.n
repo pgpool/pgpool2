@@ -1,0 +1,91 @@
+
+==== mode: n option: none ===
+ i 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+FE=> Parse(stmt="", query="SELECT * FROM t1")
+FE=> Bind(stmt="", portal="")
+FE=> Execute(portal="")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE CommandComplete(SELECT 3)
+<= BE ReadyForQuery(I)
+FE=> Terminate
+==== mode: n option: terse ===
+LOG:  ReadyForQuery message from backend 0
+LOG:  RowDescription message from backend 0
+LOG:  DataRow message from backend 0
+LOG:  last DataRow message from backend 0 repeated 2 times
+LOG:  CommandComplete message from backend 0
+LOG:  ReadyForQuery message from backend 0
+ i 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+LOG:  ReadyForQuery message from backend 0
+FE=> Parse(stmt="", query="SELECT * FROM t1")
+FE=> Bind(stmt="", portal="")
+FE=> Execute(portal="")
+FE=> Sync
+<= BE NoticeResponse(S LOG C XX000 M last ReadyForQuery message from backend 0 repeated 1 times 
+<= BE NoticeResponse(S LOG C XX000 M ParseComplete message from backend 0 
+<= BE ParseComplete
+<= BE NoticeResponse(S LOG C XX000 M BindComplete message from backend 0 
+<= BE BindComplete
+<= BE NoticeResponse(S LOG C XX000 M DataRow message from backend 0 
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE NoticeResponse(S LOG C XX000 M last DataRow message from backend 0 repeated 2 times 
+<= BE NoticeResponse(S LOG C XX000 M CommandComplete message from backend 0 
+<= BE CommandComplete(SELECT 3)
+<= BE NoticeResponse(S LOG C XX000 M ReadyForQuery message from backend 0 
+<= BE ReadyForQuery(I)
+FE=> Terminate
+==== mode: n option: verbose ===
+LOG:  ReadyForQuery message from backend 0
+LOG:  RowDescription message from backend 0
+LOG:  DataRow message from backend 0
+LOG:  DataRow message from backend 0
+LOG:  DataRow message from backend 0
+LOG:  CommandComplete message from backend 0
+LOG:  ReadyForQuery message from backend 0
+ i 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+LOG:  ReadyForQuery message from backend 0
+FE=> Parse(stmt="", query="SELECT * FROM t1")
+FE=> Bind(stmt="", portal="")
+FE=> Execute(portal="")
+FE=> Sync
+<= BE NoticeResponse(S LOG C XX000 M ReadyForQuery message from backend 0 
+<= BE NoticeResponse(S LOG C XX000 M ParseComplete message from backend 0 
+<= BE ParseComplete
+<= BE NoticeResponse(S LOG C XX000 M BindComplete message from backend 0 
+<= BE BindComplete
+<= BE NoticeResponse(S LOG C XX000 M DataRow message from backend 0 
+<= BE DataRow
+<= BE NoticeResponse(S LOG C XX000 M DataRow message from backend 0 
+<= BE DataRow
+<= BE NoticeResponse(S LOG C XX000 M DataRow message from backend 0 
+<= BE DataRow
+<= BE NoticeResponse(S LOG C XX000 M CommandComplete message from backend 0 
+<= BE CommandComplete(SELECT 3)
+<= BE NoticeResponse(S LOG C XX000 M ReadyForQuery message from backend 0 
+<= BE ReadyForQuery(I)
+FE=> Terminate

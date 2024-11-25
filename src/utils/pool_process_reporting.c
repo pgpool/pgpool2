@@ -479,6 +479,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "if non 0, logs any client messages", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "log_backend_messages", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_backend_messages);
+	StrNCpy(status[i].desc, "if non 0, logs any backend messages", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "log_standby_delay", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%d", pool_config->log_standby_delay);
 	StrNCpy(status[i].desc, "how to log standby delay", POOLCONFIG_MAXDESCLEN);

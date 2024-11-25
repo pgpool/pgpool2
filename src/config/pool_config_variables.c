@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -305,6 +305,13 @@ static const struct config_enum_entry check_temp_table_options[] = {
 	{"none", CHECK_TEMP_NONE, false},		/* do not check temp tables */
 	{"on", CHECK_TEMP_ON, false},			/* same as CHECK_TEMP_CATALOG. Just for backward compatibility. */
 	{"off", CHECK_TEMP_OFF, false},			/* same as CHECK_TEMP_NONE. Just for backward compatibility. */
+	{NULL, 0, false}
+};
+
+static const struct config_enum_entry log_backend_messages_options[] = {
+	{"none", BGMSG_NONE, false},		/* turn off logging */
+	{"terse", BGMSG_TERSE, false},		/* terse logging (repeated messages are collapsed into count */
+	{"verbose", BGMSG_VERBOSE, false},	/* always log each message */
 	{NULL, 0, false}
 };
 
@@ -2396,6 +2403,17 @@ static struct config_enum ConfigureNamesEnum[] =
 		(int *) &g_pool_config.log_standby_delay,
 		LSD_OVER_THRESHOLD,
 		log_standby_delay_options,
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"log_backend_messages", CFGCXT_SESSION, LOGGING_CONFIG,
+			"Logs any backend messages in the pgpool logs.",
+			CONFIG_VAR_TYPE_ENUM, false, 0
+		},
+		&g_pool_config.log_backend_messages,
+		BGMSG_NONE,
+		log_backend_messages_options,
 		NULL, NULL, NULL, NULL
 	},
 

@@ -257,6 +257,10 @@ backend_clustering_mode = 'streaming_replication'
                                    # logs notice message for per node detailed SQL statements
 #log_client_messages = off
                                    # Log any client messages
+#log_backend_messages = none
+                                   # Log any backend messages
+                                   # Valid values are none, terse and verbose
+
 #log_standby_delay = 'if_over_threshold'
                                    # Log standby delay
                                    # Valid values are combinations of always,
