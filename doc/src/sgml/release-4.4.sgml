@@ -1,6 +1,279 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-10">
+ <title>Release 4.4.10</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2024-11-28</simpara>
+  </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-11-26 [48502ce]
+    -->
+    <para>
+     Abort SSL negotiation if backend sends an error message. (Tatsuo Ishii)
+    </para>
+    <para>
+     In the client side implementation of SSL negotiation
+     (pool_ssl_negotiate_clientserver()), it was possible for a
+     man-in-the-middle attacker to send a long error message to confuse
+     Pgpool-II or client while in the SSL negotiation phase. This commit
+     rejects the negotiation immediately (issue a FATAL error) and exits
+     the session to prevent such an attack.
+    </para>
+    <para>
+     This resembles PostgreSQL's CVE-2024-10977.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-25 [81ff539]
+    -->
+    <para>
+     Fix the watchdog process not reloading configurations. (Bo Peng)
+    </para>
+    <para>
+     The <function>reload_config()</function> function
+     in <productname>Pgpool-II</productname> should send
+     a SIGHUP signal to the watchdog process.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-15 [ffabbed]
+    -->
+    <para>
+     Fix bug in <function>do_query</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix <function>do_query</function> to use ntohs/ntohl instead of htons/htonl.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-13 [c81e354]
+    -->
+    <para>
+     Fix authentication failure after updating <filename>pool_passwd</filename> and reload. (Tatsuo Ishii)
+    </para>
+    <para>
+     If <filename>pool_hba.conf</filename> is disabled,
+     updating pool_passwd was not recognized
+     by <productname>Pgpool-II</productname> child process even
+     if <productname>Pgpool-II</productname> reload was performed.
+     The reload processing function check_config_reload() mistakenly assumed
+     that reopening pool_passwd was only necessary when
+     <xref linkend="guc-enable-pool-hba"> is on.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-November/001944.html">https://www.pgpool.net/pipermail/pgpool-general/2024-November/001944.html"</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-11 [f3a98a4]
+    2024-11-12 [897147b]
+    -->
+    <para>
+     Fix <command>COPY</command> hangs. (<ulink url="https://github.com/pgpool/pgpool2/issues/79">#79</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     During COPY IN state (i.e. COPY FROM STDIN), frontend can send Flush
+     or Sync messages.  According to the F/B protocol specification, they
+     should be ignored but Pgpool-II treated as an invalid message and this
+     causes COPY hung.
+    </para>
+    <para>
+     Also a regression test is added for this issue.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-09 [a690ce0]
+    -->
+    <para>
+     Fix <productname>Pgpool-II</productname> child process crash during shutdown. (Tatsuo Ishii)
+    </para>
+    <para>
+     The actual crash was in <function>close_all_backend_connections()</function>.
+     <function>close_all_backend_connections()</function> was
+     called because on_system_exit registers
+     <function>child_will_go_down()</function>.
+     At the moment it seems pgpool child had just started up and doing
+     <function>pool_init_cp()</function>. The connection pool
+     object had not been completely initialized, that's cause of the crash.
+    </para>
+    <para>
+     Problem reported and analyzed by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-November/001938.html">https://www.pgpool.net/pipermail/pgpool-general/2024-November/001938.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-26 [33a2f2c]
+    -->
+    <para>
+     Fix sporadic health check failures due to authentication failure. (Tatsuo Ishii)
+    </para>
+    <para>
+     When <xref linkend="guc-health-check-password"> is empty string,
+     health check process looks for the password from pool_passwd file.
+     Problem is, the file descriptor for the file is inherited from
+     parent pgpool process.
+     This means that pgpool main and health check process (possibly multiple
+     process) share the same descriptor, which causes various problem
+     including the issue reported here. To fix the problem, re-open the
+     file when health check process starts so that each health check
+     process owns its own file descriptor.
+    </para>
+    <para>
+     Note that pgpool child process (responsible for frontend sessions)
+     already re-opens the file descriptor and they are not related to the
+     issue.
+    </para>
+    <para>
+     Problem reported and analyzed by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-October/001913.html">https://www.pgpool.net/pipermail/pgpool-general/2024-October/001913.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-23 [1a66900]
+    -->
+    <para>
+     Optimize query cache invalidation for <literal>ALTER ROLE</literal>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Commit <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=6b7d585eb1c693e4ffb5b8e6ed9aa0f067fa1b89">6b7d585eb1c693e4ffb5b8e6ed9aa0f067fa1b89</ulink> invalidates query
+     cache if any <literal>ALTER ROLE/USER</literal> statement is used.
+     Actually this is an overkill.
+     Because following queries do not affect the privilege of the role.
+    </para>
+    <programlisting>
+ALTER ROLE user WITH [ENCRYPTED] PASSWORD
+ALTER ROLE user WITH CONNECTION LIMIT
+    </programlisting>
+    <para>
+     So do not invalidate query cache if those commands are used.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-October/004532.html">https://www.pgpool.net/pipermail/pgpool-hackers/2024-October/004532.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-09-18 [04142b4]
+    -->
+    <para>
+     Fix <productname>Pgpool-II</productname> crash when pgpool child process exits. (Tatsuo Ishii)
+    </para>
+    <para>
+     When a pgpool child process exits,
+     <function>close_all_backend_connections()</function> is
+     called, which is responsible for closing all connections to backend in
+     the connection pool. It used mistakenly MAIN_CONNECTION macro, which
+     is fine for current active connections but is not good for pooled
+     connections because a main node could be different at the time when
+     the connection pool was created.
+     Fix is using <function>in_use_backend()</function> instead.
+    </para>
+    <para>
+     Reported-by: Emond Papegaaij
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-09-14 [794adad]
+    -->
+    <para>
+     Fix bug in replication/snapshot isolation mode. (<ulink url="https://github.com/pgpool/pgpool2/issues/69">#69</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     When <command>INSERT</command> command is received,
+     pgpool automatically issues table LOCK command to the
+     target table but it forgot to send the command to
+     other than main nodes. This only happened in extended query mode.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-09-14 [10333d5]
+    -->
+    <para>
+     Fix another bug in native replication/snapshot isolation mode. (Tatsuo Ishii)
+    </para>
+    <para>
+     insert_lock() forgot to send row lock command (lock_kind == 3 case) to
+     other than main node.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-09-14 [12e1b78]
+    2024-09-10 [f60aaf4]
+    -->
+    <para>
+     Fix resource leaks in <filename>pool_memqcache.c</filename>. (Tatsuo Ishii)
+    </para>
+    <para>
+     These leaks were brought in by commit <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=6fdba5c33">6fdba5c33</ulink>.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-10-03 [bf46b3d]
+    -->
+    <para>
+     Fix typos in the documentation and sample configuration files. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-11-25 [8b7af6a]
+    2024-11-25 [36100bd]
+    -->
+    <para>
+     Adapt 024.cert_auth test to OpenSSL 3.2. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-9">
  <title>Release 4.4.9</title>
   <note>
