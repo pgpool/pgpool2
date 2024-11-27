@@ -1,6 +1,254 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-10">
+ <title>リリース 4.4.10</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2024-11-28</simpara>
+  </note>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-11-26 [48502ce]
+    -->
+    <para>
+     バックエンドがエラーメッセージを送信した場合に、SSLネゴシエーションを中止するよう修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     SSLネゴシエーションのクライアント側実装（pool_ssl_negotiate_clientserver()）では、
+     中間者攻撃者がSSLネゴシエーションフェーズ中に長いエラーメッセージを送信することで、
+     <productname>Pgpool-II</productname>やクライアントを混乱させる可能性がありました。
+     このコミットでは、ネゴシエーションを直ちに拒否（FATALエラーを発行）し、
+     そのような攻撃を防ぐためにセッションを終了するよう修正しました。
+    </para>
+    <para>
+     これは、PostgreSQLのCVE-2024-10977に似ています。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-25 [81ff539]
+    -->
+    <para>
+     リロード処理がWatchdogプロセスに反映されない問題を修正しました。(Bo Peng)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の
+     <function>reload_config()</function>関数は、
+     WatchdogププロセスにSIGHUPシグナルを送信する必要がありました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-15 [ffabbed]
+    -->
+    <para>
+     <function>do_query</function>関数の不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     htons/htonlの代わりにntohs/ntohlを使用するように<function>do_query</function>を修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-13 [c81e354]
+    -->
+    <para>
+     <filename>pool_passwd</filename>を更新してリロードした後の認証失敗問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <filename>pool_hba.conf</filename>が無効になっている場合、<productname>Pgpool-II</productname>のリロードが実行されても、<productname>Pgpool-II</productname>の子プロセスは<filename>pool_passwd</filename>の更新を認識しませんでした。
+     リロード処理関数<function>check_config_reload()</function>は、<xref linkend="guc-enable-pool-hba">が有効な場合にのみ<filename>pool_passwd</filename>を再オープンする必要があると誤って判断していたことが原因でした。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-November/001944.html">https://www.pgpool.net/pipermail/pgpool-general/2024-November/001944.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-11 [f3a98a4]
+    2024-11-12 [897147b]
+    -->
+    <para>
+     <command>COPY</command>がハングする問題を修正しました。(<ulink url="https://github.com/pgpool/pgpool2/issues/79">#79</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     COPY IN状態(つまり、COPY FROM STDIN)中、フロントエンドはFlushまたはSyncメッセージを送信できます。
+     F/Bプロトコル仕様によると、これらは無視されるはずですが、<productname>Pgpool-II</productname>は無効なメッセージとして処理し、これが<command>COPY</command>のハングの原因でした。
+    </para>
+    <para>
+     リグレッションテストも追加しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-09 [a690ce0]
+    -->
+    <para>
+     シャットダウン中に<productname>Pgpool-II</productname>の子プロセスがクラッシュする問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     実際のクラッシュは<function>close_all_backend_connections()</function>内で発生していました。
+     この関数は、<function>on_system_exit</function>が<function>child_will_go_down()</function>を登録するために呼び出されます。
+     この時点では、<productname>Pgpool-II</productname>子プロセスが起動し、<function>pool_init_cp()</function>を実行した直後であるようです。
+     接続プールオブジェクトが完全に初期化されていなかったため、クラッシュが発生していました。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告され、分析されました。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-November/001938.html">https://www.pgpool.net/pipermail/pgpool-general/2024-November/001938.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-26 [33a2f2c]
+    -->
+    <para>
+     認証失敗による散発的なヘルスチェックの失敗を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-health-check-password">が空文字列の場合、ヘルスチェックプロセスは<filename>pool_passwd</filename>ファイルからパスワードを検索します。
+     問題は、このファイルのファイルディスクリプタが親pgpoolプロセスから継承されている点です。
+     pgpoolメインプロセスとヘルスチェックプロセス（複数存在する可能性あり）が同じディスクリプタを共有するため、さまざまな問題が発生していました。
+     この問題を解決するために、ヘルスチェックプロセスが開始される際にファイルを再度開き、
+     それぞれのヘルスチェックプロセスが独自のファイルディスクリプタを持つようにしました。
+    </para>
+    <para>
+     なお、pgpoolの子プロセス（フロントエンドセッションを担当）はすでにファイルディスクリプタを再度開く処理を行っており、これが今回の問題には関連していません。
+    </para>
+    <para>
+     この問題は、Emond Papegaaijによって報告され、分析されました。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2024-October/001913.html">https://www.pgpool.net/pipermail/pgpool-general/2024-October/001913.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-23 [1a66900]
+    -->
+    <para>
+     <literal>ALTER ROLE</literal>のクエリキャッシュ無効化を最適化しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     コミット<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=6b7d585eb1c693e4ffb5b8e6ed9aa0f067fa1b89">6b7d585eb1c693e4ffb5b8e6ed9aa0f067fa1b89</ulink>は、<literal>ALTER ROLE/USER</literal>ステートメントが使用される際にクエリキャッシュを無効にしています。
+     しかし、実際にはこれが過剰です。
+     次のクエリはロールの権限に影響を与えないため、クエリキャッシュを無効にする必要はありません。
+    </para>
+    <programlisting>
+ALTER ROLE user WITH [ENCRYPTED] PASSWORD
+ALTER ROLE user WITH CONNECTION LIMIT
+    </programlisting>
+    <para>
+     したがって、これらのコマンドが使用される場合には、クエリキャッシュを無効にしないようにしました。
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-October/004532.html">https://www.pgpool.net/pipermail/pgpool-hackers/2024-October/004532.html</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-09-18 [04142b4]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>の子プロセスが終了したときに<productname>Pgpool-II</productname>がクラッシュする問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の子プロセスが終了すると、<function>close_all_backend_connections()</function>が呼び出され、接続プール内のすべてのバックエンド接続が閉じられます。
+     しかし、誤ってMAIN_CONNECTIONマクロが使用されていました。
+     このマクロは現在アクティブな接続には適していますが、接続プールが作成された時点でのメインノードが異なる可能性があるため、プールされた接続には適していませでした。
+     この問題を修正するために、代わりに<function>in_use_backend()</function>を使用するよう変更しました。
+    </para>
+    <para>
+     Emond Papegaaijによって報告されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-09-14 [794adad]
+    -->
+    <para>
+     ネイティブレプリケーション/スナップショットアイソレーションモードモードのバグを修正しました。(<ulink url="https://github.com/pgpool/pgpool2/issues/69">#69</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     <command>INSERT</command>コマンドを受信すると、<productname>Pgpool-II</productname>はターゲットテーブルに対して自動的にテーブルLOCKコマンドを発行しますが、メインノード以外のノードにコマンドを送信し忘れていました。
+     この問題は拡張クエリモードの場合にのみ発生していました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-09-14 [10333d5]
+    -->
+    <para>
+     ネイティブレプリケーション/スナップショットアイソレーションモードモードの別のバグを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     insert_lock()は、メインノード以外のノードに行ロックコマンド(lock_kind == 3 の場合)を送信するのを忘れていました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-09-14 [12e1b78]
+    2024-09-10 [f60aaf4]
+    -->
+    <para>
+     <filename>pool_memqcache.c</filename>のメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     この問題はコミット<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=commit;h=6fdba5c33">6fdba5c33</ulink>によって導入されました。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-10-03 [bf46b3d]
+    -->
+    <para>
+     ドキュメントとサンプル設定ファイルのタイポを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2024-11-25 [8b7af6a]
+    2024-11-25 [36100bd]
+    -->
+    <para>
+     テスト024.cert_authをOpenSSL 3.2に対応するよう修正しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-9">
  <title>リリース 4.4.9</title>
   <note>
