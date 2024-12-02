@@ -43,6 +43,7 @@ function clean_all {
 	pgrep pgpool | xargs kill -9 > /dev/null 2>&1
 	pgrep postgres | xargs kill -9 > /dev/null 2>&1
 	rm -f $PGSOCKET_DIR/.s.PGSQL.*
+	netstat -t -p 2>/dev/null|grep pgpool
 }
 
 #-------------------------------------------
