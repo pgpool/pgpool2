@@ -4600,21 +4600,24 @@ inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen)
 	int			i = 0;
 	bool		is_prepared_stmt = false;
 	POOL_SESSION_CONTEXT *session_context;
-	POOL_QUERY_CONTEXT *query_context;
 	POOL_PENDING_MESSAGE *msg;
+	int			num_msgs;
+	int			msg_cnt = 0;
 
 	session_context = pool_get_session_context(false);
-	query_context = session_context->query_context;
-	msg = pool_pending_message_find_lastest_by_query_context(query_context);
+	msg = pool_pending_message_head_message();
+	num_msgs = list_length(session_context->pending_messages);
 
 	if (msg)
 	{
 		/*
-		 * If pending message found, we should extract target backend from it
+		 * If pending message found, we should extract data from the target
+		 * backend.
 		 */
 		int			backend_id;
 
 		backend_id = pool_pending_message_get_target_backend_id(msg);
+		pool_pending_message_free_pending_message(msg);
 		backend = CONNECTION(session_context->backend, backend_id);
 		timeout = -1;
 	}
@@ -4645,15 +4648,50 @@ inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen)
 			pool_set_timeout(-1);
 		}
 
+		/* read one message from backend */
 		pool_read(backend, &kind, 1);
-		ereport(DEBUG1,
-				(errmsg("inject_cached_message: push message kind: '%c'", kind)));
-		if (msg &&
-			((kind == 'T' && msg->type == POOL_DESCRIBE) ||
-			 (kind == '2' && msg->type == POOL_BIND)))
+
+		/*
+		 * Count up number of received messages to compare with the number of
+		 * pending messages
+		 */
+		switch(kind)
 		{
-			/* Pending message seen. Now it is likely to end of pending data */
+			case '1':	/* parse complete */
+			case '2':	/* bind complete */
+			case '3':	/* close complete */
+			case 'C':	/* command complete */
+			case 's':	/* portal suspended */
+			case 'T':	/* row description */
+				msg_cnt++;	/* count up number of messages */
+				elog(DEBUG1, "count up message %c msg_cnt: %d", kind, msg_cnt);
+				break;
+			case 'E':	/* ErrorResponse */
+				/*
+				 * If we receive ErrorResponse, it is likely that the last
+				 * Execute caused an error and we can stop reading messsages
+				 * from backend.
+				 */
+				timeout = 0;
+				break;
+			default:
+				/* we do not count other messages */
+				break;
+		}
+
+		/*
+		 * If msg count is greater than or equal to the number of pending
+		 * messages, it is likely all necessary backend messages have been
+		 * already seen.
+		 */
+		if (msg_cnt >= num_msgs)
+		{
+			/*
+			 * Set timeout to 0 so that we do not need to wait for responses
+			 * from backend in vain.
+			 */
 			timeout = 0;
+			elog(DEBUG1, "num_msgs: %d msg_cnt: %d", num_msgs, msg_cnt);
 		}
 		pool_push(backend, &kind, sizeof(kind));
 		pool_read(backend, &len, sizeof(len));

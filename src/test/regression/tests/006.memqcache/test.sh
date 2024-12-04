@@ -519,4 +519,56 @@ EOF
 	cd ..
 done
 
+#
+# Test for extended query protocol coner cases in streaming replication mode.
+# These tests are basically for a sequence of extended queries:
+# 1. execute a SELECT and create query cache entry.
+# 2. sync.
+# 3. execute another a SELECT.
+# 4. execute bind and execute to use the query cache created at #1.
+# 5. sync.
+
+rm -fr $TESTDIR
+mkdir $TESTDIR
+cd $TESTDIR
+
+# create test environment
+echo -n "creating test environment..."
+$PGPOOL_SETUP -m s -n 2 || exit 1
+echo "done."
+
+echo "memory_cache_enabled = on" >> etc/pgpool.conf
+cd ..
+
+for i in 1 2 3
+do
+    #
+    # case 1: failed with kind mismatch error at #5.
+    # "packet kind of backend 0 ['T'] does not match with main/majority nodes packet kind ['Z']"
+    #
+    # case 2: step #4 includes error (hung).
+    #
+    # case 3: step #4 includes PortalSuspended (hung).
+    cd $TESTDIR
+    ./startall
+    wait_for_pgpool_startup
+    timeout 1 $PGPROTO -d test -f ../query_cache_bug$i.data |& del_details_from_error > result
+    if [ $? != 0 ];then
+	# timeout happened or pgproto returned non 0 status
+	echo "test failed in test case #2 (timeout)"
+	err=true
+	./shutdownall
+	exit 1
+    fi
+    ./shutdownall
+    cd ..
+    diff -c expected.$i $TESTDIR/result > $log
+    if [ $? != 0 ];then
+	echo "test failed in test case $i"
+	cat $log
+	rm $log
+	exit 1
+    fi
+done
+
 exit 0
