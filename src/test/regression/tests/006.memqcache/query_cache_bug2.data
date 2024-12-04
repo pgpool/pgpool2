@@ -1,0 +1,23 @@
+# test case including error response
+
+'P'	"S0"	"SELECT 1"	0
+'B'	"P0"	"S0"	0	0	0   
+'D'	'P'	"P0"
+'E'	"P0"	0   
+'S'
+'Y'
+
+# setseed parameter out of range error
+'P'	"S1"	"SELECT setseed(10)"	0
+'B'	"P1"	"S1"	0	0	0   
+'D'	'P'	"P1"
+'E'	"P1"	0   
+
+'B'	"P2"	"S0"	0	0	0   
+'D'	'P'	"P2"
+'E'	"P2"	0   
+
+'S'
+'Y'
+
+'X'
