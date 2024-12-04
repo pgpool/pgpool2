@@ -1,0 +1,25 @@
+FE=> Parse(stmt="S0", query="SELECT 1")
+FE=> Bind(stmt="S0", portal="P0")
+FE=> Describe(portal="P0")
+FE=> Execute(portal="P0")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE RowDescription
+<= BE DataRow
+<= BE CommandComplete(SELECT 1)
+<= BE ReadyForQuery(I)
+FE=> Parse(stmt="S1", query="SELECT setseed(10)")
+FE=> Bind(stmt="S1", portal="P1")
+FE=> Describe(portal="P1")
+FE=> Execute(portal="P1")
+FE=> Bind(stmt="S0", portal="P2")
+FE=> Describe(portal="P2")
+FE=> Execute(portal="P2")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE RowDescription
+<= BE ErrorResponse(S ERROR V ERROR C 22023 M setseed parameter 10 is out of allowed range [-1,1]
+<= BE ReadyForQuery(I)
+FE=> Terminate
