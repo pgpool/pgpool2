@@ -412,16 +412,23 @@ update_pool_passwd(char *conf_file, char *username, char *password, char *key)
 		fprintf(stderr, "pool_init_config() failed\n\n");
 		exit(EXIT_FAILURE);
 	}
-	if (pool_get_config(conf_file, CFGCXT_RELOAD) == false)
+	if (pool_get_config(conf_file, CFGCXT_INIT) == false)
 	{
 		fprintf(stderr, "Unable to get configuration. Exiting...\n\n");
 		exit(EXIT_FAILURE);
 	}
 
-	strlcpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
-	dirp = dirname(dirnamebuf);
-	snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
-			 dirp, pool_config->pool_passwd);
+	if (pool_config->pool_passwd[0] != '/')
+	{
+		strlcpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
+		dirp = dirname(dirnamebuf);
+		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
+				 dirp, pool_config->pool_passwd);
+	}
+	else
+		strlcpy(pool_passwd, pool_config->pool_passwd,
+				sizeof(pool_passwd));
+
 	pool_init_pool_passwd(pool_passwd, POOL_PASSWD_RW);
 
 	if (username == NULL || strlen(username) == 0)
