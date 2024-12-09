@@ -183,7 +183,7 @@ ALTER ROLE user WITH CONNECTION LIMIT
     2024-09-14 [db75470]
     -->
     <para>
-     ネイティブレプリケーション/スナップショットアイソレーションモードモードのバグを修正しました。(<ulink url="https://github.com/pgpool/pgpool2/issues/69">#69</ulink>) (Tatsuo Ishii)
+     ネイティブレプリケーションモードとスナップショットアイソレーションモードのバグを修正しました。(<ulink url="https://github.com/pgpool/pgpool2/issues/69">#69</ulink>) (Tatsuo Ishii)
     </para>
     <para>
      <command>INSERT</command>コマンドを受信すると、<productname>Pgpool-II</productname>はターゲットテーブルに対して自動的にテーブルLOCKコマンドを発行しますが、メインノード以外のノードにコマンドを送信し忘れていました。
@@ -196,7 +196,7 @@ ALTER ROLE user WITH CONNECTION LIMIT
     2024-09-14 [7429499]
     -->
     <para>
-     ネイティブレプリケーション/スナップショットアイソレーションモードモードの別のバグを修正しました。(Tatsuo Ishii)
+     ネイティブレプリケーションモードとスナップショットアイソレーションモードの別のバグを修正しました。(Tatsuo Ishii)
     </para>
     <para>
      insert_lock()は、メインノード以外のノードに行ロックコマンド(lock_kind == 3 の場合)を送信するのを忘れていました。
