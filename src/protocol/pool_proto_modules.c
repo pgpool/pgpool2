@@ -2960,6 +2960,14 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 					 * If data remains in the frontend write buffer, flush it
 					 * now.
 					 */
+					if (!pool_read_buffer_is_empty(frontend))
++					{
++						/* If data remains in the frontend buffer, flush it now. */
++						pool_flush(frontend);
++						elog(DEBUG5,
++							 "pending data flushed to frontend due to a flush message");
++					}
+
 					pool_flush(frontend);
 					elog(DEBUG5,
 						 "pending data flushed to frontend due to a flush message");
