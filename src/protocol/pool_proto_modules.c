@@ -271,7 +271,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		 * If the query is SELECT from table to cache, try to fetch cached
 		 * result.
 		 */
-		status = pool_fetch_from_memory_cache(frontend, backend, contents, &foundp);
+		status = pool_fetch_from_memory_cache(frontend, backend, contents, false, &foundp);
 
 		if (status != POOL_CONTINUE)
 			return status;
@@ -881,6 +881,8 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	POOL_QUERY_CONTEXT *query_context;
 	POOL_SENT_MESSAGE *bind_msg;
 	bool		foundp = false;
+	int			num_rows;
+	char		*p;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
@@ -891,6 +893,10 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 				 errdetail("portal: \"%s\"", contents)));
 	ereport(DEBUG2,
 			(errmsg("Execute: portal name <%s>", contents)));
+
+	/* obtain number of returning rows */
+	p = contents + strlen(contents) + 1;
+	memcpy(&num_rows, p, sizeof(num_rows));
 
 	bind_msg = pool_get_sent_message('B', contents, POOL_SENT_MESSAGE_CREATED);
 	if (!bind_msg)
@@ -921,6 +927,18 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	node = bind_msg->query_context->parse_tree;
 	query = bind_msg->query_context->original_query;
 
+	/*
+	 * If execute message's parameter is not 0, set partial_fetch flag to true
+	 * so that subsequent execute message knows that the portal started with
+	 * partial fetching.
+	 */
+	if (num_rows != 0)
+	{
+		query_context->partial_fetch = true;
+		elog(DEBUG1, "set partial_fetch in execute");
+	}
+	elog(DEBUG1, "execute: partial_fetch: %d", query_context->partial_fetch);
+	
 	strlcpy(query_string_buffer, query, sizeof(query_string_buffer));
 
 	ereport(DEBUG2, (errmsg("Execute: query string = <%s>", query)));
@@ -934,11 +952,15 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		ereport(LOG, (errmsg("statement: %s", query)));
 
 	/*
-	 * Fetch memory cache if possible
+	 * Fetch memory cache if possible.  Also if atEnd is false or the execute
+	 * message has 0 row argument, we maybe able to use cache.
+	 * If partial_fetch is true, cannot use cache.
 	 */
 	if (pool_config->memory_cache_enabled && !pool_is_writing_transaction() &&
 		(TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E')
-		&& pool_is_likely_select(query) && !query_cache_disabled())
+		&& pool_is_likely_select(query) && !query_cache_disabled() &&
+		(query_context->atEnd || num_rows == 0) &&
+		!query_context->partial_fetch)
 	{
 		POOL_STATUS status;
 		char	   *search_query = NULL;
@@ -1020,7 +1042,15 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		 * If the query is SELECT from table to cache, try to fetch cached
 		 * result.
 		 */
-		status = pool_fetch_from_memory_cache(frontend, backend, search_query, &foundp);
+
+		/*
+		 * If we are in streaming replication mode and use extended query
+		 * protocol, pass the information atEnd which represents whether all
+		 * rows in the portal has been already retrieved. If so,
+		 * pool_fetch_from_memory_cache will return "CommandComplete 0" cache.
+		 */
+		status = pool_fetch_from_memory_cache(frontend, backend, search_query,
+											  query_context->atEnd, &foundp);
 
 		if (status != POOL_CONTINUE)
 			return status;
@@ -1642,6 +1672,13 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 				(errmsg("unable to bind"),
 				 errdetail("cannot get the query context")));
 	}
+
+	/*
+	 * Since now that fresh portal is created, we reset atEnd and
+	 * partial_fetch flag.
+	 */
+	query_context->atEnd = false;
+	query_context->partial_fetch = false;
 
 	/*
 	 * If the query can be cached, save its offset of query text in bind
@@ -2297,7 +2334,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 					if (session_context->query_context &&
 						session_context->query_context->query_state[MAIN_NODE_ID] == POOL_EXECUTE_COMPLETE)
 					{
-						pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state);
+						pool_handle_query_cache(backend, session_context->query_context->query_w_hex, node, state, false);
 						if (session_context->query_context->query_w_hex)
 							pfree(session_context->query_context->query_w_hex);
 						session_context->query_context->query_w_hex = NULL;
@@ -2310,7 +2347,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 						state = 'I';	/* XXX I don't think query cache works
 										 * with PROTO2 protocol */
 					}
-					pool_handle_query_cache(backend, query, node, state);
+					pool_handle_query_cache(backend, query, node, state, false);
 				}
 			}
 		}
