@@ -1,0 +1,51 @@
+FE=> Parse(stmt="", query="SELECT * FROM (VALUES(1),(2)) v")
+FE=> Bind(stmt="", portal="")
+FE=> Describe(portal="")
+FE=> Execute(portal="")
+FE=> Execute(portal="")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE RowDescription
+<= BE DataRow
+<= BE PortalSuspended
+<= BE DataRow
+<= BE CommandComplete(SELECT 1)
+<= BE ReadyForQuery(I)
+FE=> Parse(stmt="", query="SELECT * FROM (VALUES(1),(2)) v")
+FE=> Bind(stmt="", portal="")
+FE=> Describe(portal="")
+FE=> Execute(portal="")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE RowDescription
+<= BE DataRow
+<= BE DataRow
+<= BE CommandComplete(SELECT 2)
+<= BE ReadyForQuery(I)
+FE=> Parse(stmt="S1", query="SELECT * FROM (VALUES(1),(2)) v")
+FE=> Bind(stmt="S1", portal="P1")
+FE=> Describe(portal="P1")
+FE=> Execute(portal="P1")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE RowDescription
+<= BE DataRow
+<= BE DataRow
+<= BE CommandComplete(SELECT 2)
+<= BE ReadyForQuery(I)
+FE=> Bind(stmt="S1", portal="P1")
+FE=> Describe(portal="P1")
+FE=> Execute(portal="P1")
+FE=> Execute(portal="P1")
+FE=> Sync
+<= BE BindComplete
+<= BE RowDescription
+<= BE DataRow
+<= BE DataRow
+<= BE CommandComplete(SELECT 2)
+<= BE CommandComplete(SELECT 0)
+<= BE ReadyForQuery(I)
+FE=> Terminate

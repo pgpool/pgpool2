@@ -90,6 +90,12 @@ typedef struct
 									 * extended query, do not commit cache if
 									 * this flag is true. */
 
+	bool		atEnd;				/* if true all rows have been already
+									 * fetched from the portal */
+
+	bool		partial_fetch;		/* if true some rows have been fetched by
+									 * an execute with non 0 row option */
+
 	MemoryContext memory_context;	/* memory context for query context */
 }			POOL_QUERY_CONTEXT;
 

@@ -1,0 +1,37 @@
+# Since the first Eexecute returns portal suspended, the second
+# E does not create cache.
+'P'	""	"SELECT * FROM (VALUES(1),(2)) v"	0
+'B'	""	""	0	0	0   
+'D'	'P'	""
+'E'	""	1
+'E'	""	0
+'S'
+'Y'
+
+# Since no cache was created, two rows are returned,
+# and cache created.
+'P'	""	"SELECT * FROM (VALUES(1),(2)) v"	0
+'B'	""	""	0	0	0   
+'D'	'P'	""
+'E'	""	0
+'S'
+'Y'
+
+# This time cache is used. 2 rows are returned.
+'P'	"S1"	"SELECT * FROM (VALUES(1),(2)) v"	0
+'B'	"P1"	"S1"	0	0	0   
+'D'	'P'	"P1"
+'E'	"P1"	0
+'S'
+'Y'
+
+# cache is used, 2 rows are returned.
+# but the second E returns 0 rows.
+'B'	"P1"	"S1"	0	0	0   
+'D'	'P'	"P1"
+'E'	"P1"	0
+'E'	"P1"	0
+'S'
+'Y'
+
+'X'

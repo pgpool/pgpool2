@@ -125,6 +125,7 @@ static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT * element);
 static bool is_free_hash_element(void);
 static void inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen);
+static char *create_fake_cache(size_t *len);
 
 /*
  * if true, shared memory is locked in this process now.
@@ -726,11 +727,13 @@ delete_cache_on_memcached(const char *key)
 
 /*
  * Fetch SELECT data from cache if possible.
+ *
+ * If use_fake_cache is true, make up "CommandComplete 0" result and use it.
  */
 POOL_STATUS
 pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
 							 POOL_CONNECTION_POOL * backend,
-							 char *contents, bool *foundp)
+							 char *contents, bool use_fake_cache, bool *foundp)
 {
 	char	   *qcache;
 	size_t		qcachelen;
@@ -779,6 +782,16 @@ pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
 
 		session_context = pool_get_session_context(true);
 		target_backend = CONNECTION(backend, session_context->load_balance_node_id);
+
+		/*
+		 * If use_fake_cache is true, make up "CommandComplete (0)" response.
+		 */
+		if (use_fake_cache)
+		{
+			pfree(qcache);
+			qcache = create_fake_cache(&qcachelen);
+			elog(DEBUG2, "fake_cach: len: %ld", qcachelen);
+		}
 		inject_cached_message(target_backend, qcache, qcachelen);
 	}
 	else
@@ -825,6 +838,29 @@ pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
 			 errdetail("query result found in the query cache, %s", contents)));
 
 	return POOL_CONTINUE;
+}
+
+/*
+ * Make up response packet for "CommandComplete (SELECT 0)" message.
+ */
+static char *
+create_fake_cache(size_t *len)
+{
+	char		*qcache, *p;
+	int32		mlen;	/* message length including self */
+	static		char*	msg = "SELECT 0";
+
+	*len = sizeof(char)	+	/* message kind */
+		sizeof(int32) +		/* packet length including self */
+		sizeof(msg);	/* Command Complete message with 0 row returned */
+	mlen = *len - 1;	/* message length does not include message kind */
+	mlen = htonl(mlen);
+	p = qcache = palloc(*len);
+	*p++ = 'C';
+	memcpy(p, &mlen, sizeof(mlen));
+	p += sizeof(mlen);
+	strncpy(p, msg, strlen(msg) + 1);
+	return qcache;
 }
 
 /*
@@ -3616,7 +3652,8 @@ pool_check_and_discard_cache_buffer(int num_oids, int *oids)
  * For other case At Ready for Query handle query cache.
  */
 void
-pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node, char state)
+pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node, char state,
+						bool partial_fetch)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	pool_sigset_t oldmask;
@@ -3629,7 +3666,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 	session_context = pool_get_session_context(true);
 
 	/* Ok to cache SELECT result? */
-	if (pool_is_cache_safe() && !query_cache_disabled())
+	if (!partial_fetch && pool_is_cache_safe() && !query_cache_disabled())
 	{
 		SelectContext ctx;
 		MemoryContext old_context;
@@ -3746,6 +3783,12 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 		/* Discard buffered data */
 		pool_reset_memqcache_buffer(true);
 	}
+	else if (partial_fetch)		/* cannot create cache because of partial fetch */
+	{
+		/* Discard buffered data */
+		pool_reset_memqcache_buffer(true);
+	}
+
 	else if (is_commit_query(node)) /* Commit? */
 	{
 		int			num_caches;
