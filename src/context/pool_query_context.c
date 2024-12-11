@@ -169,6 +169,8 @@ pool_start_query(POOL_QUERY_CONTEXT * query_context, char *query, int len, Node 
 			query_context->temp_cache = pool_create_temp_query_cache(query);
 		pool_set_query_in_progress();
 		query_context->skip_cache_commit = false;
+		query_context->atEnd = false;
+		query_context->partial_fetch = false;
 		session_context->query_context = query_context;
 		MemoryContextSwitchTo(old_context);
 	}

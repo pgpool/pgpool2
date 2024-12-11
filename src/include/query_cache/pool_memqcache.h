@@ -253,7 +253,7 @@ extern uint32 hash_any(unsigned char *k, int keylen);
 
 extern POOL_STATUS pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
 												POOL_CONNECTION_POOL * backend,
-												char *contents, bool *foundp);
+												char *contents, bool use_fake_cache, bool *foundp);
 
 extern int pool_fetch_cache(POOL_CONNECTION_POOL * backend, const char *query, char **buf, size_t *len);
 extern int pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_t datalen);
@@ -280,7 +280,8 @@ extern POOL_QUERY_CACHE_ARRAY * pool_create_query_cache_array(void);
 extern void pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY * cache_array);
 
 extern POOL_TEMP_QUERY_CACHE * pool_create_temp_query_cache(char *query);
-extern void pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node, char state);
+extern void pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node, char state,
+	bool partial_fetch);
 
 extern int	pool_init_memqcache_stats(void);
 extern POOL_QUERY_CACHE_STATS * pool_get_memqcache_stats(void);

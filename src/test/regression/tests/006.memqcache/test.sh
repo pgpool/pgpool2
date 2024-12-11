@@ -540,7 +540,7 @@ echo "done."
 echo "memory_cache_enabled = on" >> etc/pgpool.conf
 cd ..
 
-for i in 1 2 3
+for i in 1 2 3 4 4
 do
     #
     # case 1: failed with kind mismatch error at #5.
@@ -549,6 +549,10 @@ do
     # case 2: step #4 includes error (hung).
     #
     # case 3: step #4 includes PortalSuspended (hung).
+    #
+    # case 4: various cases including portal suspended
+    # Note that case4 is executed twice to make sure that
+    # the test works for either query cache exists or does not exist
     cd $TESTDIR
     ./startall
     wait_for_pgpool_startup

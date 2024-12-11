@@ -228,7 +228,19 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 			query = session_context->query_context->query_w_hex;
 			node = pool_get_parse_tree();
 			state = TSTATE(backend, MAIN_NODE_ID);
-			pool_handle_query_cache(backend, query, node, state);
+
+			/*
+			 * If some rows have been fetched by an execute with non 0 row option,
+			 * we do not create cache.
+			 */ 
+			pool_handle_query_cache(backend, query, node, state,
+									session_context->query_context->partial_fetch);
+
+			/*
+			 * CommandComplete guarantees that all rows have been fetched.  We
+			 * can unconditionally set atEnd flag.
+			 */
+			session_context->query_context->atEnd = true;
 		}
 	}
 
