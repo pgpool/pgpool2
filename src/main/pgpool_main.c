@@ -2225,6 +2225,10 @@ kill_all_children(int sig)
 		/* make watchdog process reload as well */
 		if (watchdog_pid > 0)
 			kill(watchdog_pid, sig);
+
+		/* make logger process reload as well */
+		if (pgpool_logger_pid > 0)
+			kill(pgpool_logger_pid, sig);
 	}
 }
 

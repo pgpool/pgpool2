@@ -453,9 +453,9 @@
 	 the directory in which log files will be created.
      </para>
 	 <para>The default is <literal>/tmp/pgpool_logs</literal>.</para>
-	 <para>
-	 This parameter can only be set at the Pgpool-II start.
-	 </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
 
     </listitem>
    </varlistentry>
@@ -482,9 +482,9 @@
 	 <para>
 	 The default is <literal>pgpool-%Y-%m-%d_%H%M%S.log</literal>.
 	 </para>
-	 <para>
-	 This parameter can only be set at the Pgpool-II start.
-	 </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -507,9 +507,9 @@
 	 </para>
 	 </note>
 
-	<para>
-	 This parameter can only be set at the Pgpool-II start.
-	 </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -529,9 +529,9 @@
 	 <para>
 	 Set to zero to disable time-based creation of new log files.
      </para>
-	 <para>
-	 This parameter can only be set at the Pgpool-II start.
-	 </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -550,9 +550,9 @@
 	 <para>
 	 Set to zero to disable size-based creation of new log files.
      </para>
-	 <para>
-	 This parameter can only be set at the Pgpool-II start.
-	 </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -574,9 +574,9 @@
 	 like pgpool-%H.log would result in generating twenty-four hourly log
 	 files and then cyclically overwriting them.
      </para>
-	 <para>
-	 This parameter can only be set at the Pgpool-II start.
-	 </para>
+     <para>
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     </para>
     </listitem>
    </varlistentry>
 

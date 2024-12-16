@@ -799,7 +799,7 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_truncate_on_rotation", CFGCXT_INIT, LOGGING_CONFIG,
+		{"log_truncate_on_rotation", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"If on, an existing log file gets truncated on time based log rotation.",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -1348,7 +1348,7 @@ static struct config_string ConfigureNamesString[] =
 		NULL, NULL, NULL, NULL
 	},
 	{
-		{"log_directory", CFGCXT_INIT, LOGGING_CONFIG,
+		{"log_directory", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"directory where log files are written.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1358,7 +1358,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_filename", CFGCXT_INIT, LOGGING_CONFIG,
+		{"log_filename", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"log file name pattern.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -2270,7 +2270,7 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_rotation_age", CFGCXT_INIT, LOGGING_CONFIG,
+		{"log_rotation_age", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"Automatic rotation of logfiles will happen after that (minutes) time.",
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_MIN
 		},
@@ -2280,7 +2280,7 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_rotation_size", CFGCXT_INIT, LOGGING_CONFIG,
+		{"log_rotation_size", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"Automatic rotation of logfiles will happen after that much (kilobytes) log output.",
 			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_KB
 		},
@@ -2290,7 +2290,7 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_file_mode", CFGCXT_INIT, LOGGING_CONFIG,
+		{"log_file_mode", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"creation mode for log files.",
 			CONFIG_VAR_TYPE_INT, false, 0
 		},

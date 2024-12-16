@@ -714,10 +714,10 @@ local0.*    /var/log/pgpool.log
       デフォルトは<literal>/tmp/pgpool_logs</literal>です。
       </para>
      <para>
-<!--
-	 This parameter can only be set at the Pgpool-II start.
--->
-      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
      </para>
 
     </listitem>
@@ -760,10 +760,10 @@ local0.*    /var/log/pgpool.log
       デフォルトは<literal>pgpool-%Y-%m-%d_%H%M%S.log</literal>です。
      </para>
      <para>
-<!--
-	 This parameter can only be set at the Pgpool-II start.
--->
-      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
      </para>
 
     </listitem>
@@ -799,10 +799,10 @@ local0.*    /var/log/pgpool.log
      </note>
 
      <para>
-<!--
-	 This parameter can only be set at the Pgpool-II start.
--->
-      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
      </para>
     </listitem>
    </varlistentry>
@@ -834,10 +834,10 @@ local0.*    /var/log/pgpool.log
       ゼロに設定することで、寿命に基づいた新しいログファイルの生成は無効になります。
      </para>
      <para>
-<!--
-      This parameter can only be set at the Pgpool-II start.
--->
-      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
      </para>
     </listitem>
    </varlistentry>
@@ -868,10 +868,10 @@ local0.*    /var/log/pgpool.log
       ゼロに設定することで、サイズに基づいた新しいログファイルの生成は無効になります。
      </para>
      <para>
-<!--
-      This parameter can only be set at the Pgpool-II start.
--->
-      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
      </para>
     </listitem>
    </varlistentry>
@@ -904,10 +904,10 @@ local0.*    /var/log/pgpool.log
        例えば、この設定を<literal>pgpool-%H.log</literal>のような<xref linkend="guc-log-filename">と組み合わせて使用すると、24個の時別のログファイルが生成され、それらは周期的に上書きされることになります。
      </para>
      <para>
-<!--
-      This parameter can only be set at the Pgpool-II start.
--->
-      このパラメータは<productname>Pgpool-II</productname>起動時のみ設定可能です。
+      <!--
+      This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+      -->
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
      </para>
     </listitem>
    </varlistentry>
