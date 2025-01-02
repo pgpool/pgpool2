@@ -1,6 +1,7 @@
 pcp_attach_node
 pcp_detach_node
 pcp_health_check_stats
+pcp_invalidate_query_cache
 pcp_log_rotate
 pcp_node_count
 pcp_node_info
