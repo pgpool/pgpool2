@@ -125,7 +125,9 @@ static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
 static void put_back_hash_element(volatile POOL_HASH_ELEMENT * element);
 static bool is_free_hash_element(void);
 static void inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen);
+#ifdef USE_MEMCACHED
 static int delete_all_cache_on_memcached(void);
+#endif
 static char *create_fake_cache(size_t *len);
 
 /*
