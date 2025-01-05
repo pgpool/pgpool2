@@ -268,6 +268,8 @@ fi
 %{_bindir}/pcp_watchdog_info
 %{_bindir}/pcp_reload_config
 %{_bindir}/pcp_health_check_stats
+%{_bindir}/pcp_log_rotate
+%{_bindir}/pcp_invalidate_query_cache
 %{_bindir}/pg_md5
 %{_bindir}/pg_enc
 %{_bindir}/pgpool_setup
