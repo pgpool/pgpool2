@@ -39,7 +39,8 @@ CREATE TABLE t3(i INTEGER);
 CREATE TABLE tF(i INTEGER);
 CREATE FUNCTION f1(INTEGER) returns INTEGER AS 'SELECT \$1' LANGUAGE SQL;
 EOF
-
+# wait for the newly created tables replicated
+sleep 1;
 $PSQL test <<EOF
 
 BEGIN;
