@@ -36,6 +36,10 @@
   このため、クライアントホストに基づく認証のため、<productname>Pgpool-II</productname>は<literal>pg_hba</literal>と同様にクライアント接続の認証処理を行う<literal>pool_hba</literal>のメカニズムを持っています。
  </para>
 
+ <para>
+  クライアントが<productname>Pgpool-II</productname>に接続する際の認証用のパスワードを管理するのが<filename>pool_passwd</filename>ファイルです（詳細は<xref linkend="guc-pool-passwd">をご覧ください。)<filename>pool_passwd</filename>に登録されるパスワードは、<productname>PostgreSQL</productname>に登録されるパスワードと一致している必要があります。<productname>PostgreSQL</productname>に登録されたパスワードを変更しても、<filename>pool_passwd</filename>のパスワードは自動変更されないことに注意してください。<link linkend="auth-scram">scram-shar-256認証</link>と<link linkend="auth-md5">MD5認証</link>では、<filename>pool_passwd</filename>にユーザ名とパスワードを登録するのが必須ですが、<link linkend="auth-password">clear text password認証</link>では必須ではありません。このため、<filename>pool_passwd</filename>のパスワードの保守を避けたい場合には、<link linkend="auth-password">clear text password認証</link>の検討をお勧めします。
+ </para>
+
  <sect1 id="auth-pool-hba-conf">
   <!--
   <title>The <filename>pool_hba.conf</filename> File</title>

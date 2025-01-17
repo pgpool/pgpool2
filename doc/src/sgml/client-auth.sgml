@@ -30,6 +30,26 @@
   <literal>pool_hba</literal> mechanism similar to the <literal>pg_hba</literal> mechanism for
   authenticating the incoming client connections.
  </para>
+ <para>
+  The <filename>pool_passwd</filename> file manages passwords for
+  authentication used when clients connect
+  to <productname>Pgpool-II</productname>
+  (see <xref linkend="guc-pool-passwd"> for more details). The
+  passwords registered on <filename>pool_passwd</filename> must match
+  with the passwords registered
+  on <productname>PostgreSQL</productname>. Note that passwords
+  changed on <productname>PostgreSQL</productname> are not
+  automatically sync to the passwords
+  on <filename>pool_passwd</filename>. <link linkend="auth-scram">scram-shar-256
+  authentication</link> and <link linkend="auth-md5">MD5
+  authentication</link> require that the user name and the password
+  have been already registered on <filename>pool_passwd</filename>,
+  while <link linkend="auth-password">clear text password
+  authentication</link> does not require that. Therefore, if you want
+  to avoid maintaining the <filename>pool_passwd</filename>, it would
+  be worth to check <link linkend="auth-password">clear text password
+  authentication</link>.
+ </para>
 
  <sect1 id="auth-pool-hba-conf">
   <title>The <filename>pool_hba.conf</filename> File</title>
