@@ -970,7 +970,7 @@ pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 		 * that any session object (i.e. named statement) does not remain in
 		 * the last session.
 		 */
-		if (per_node_error_log(backend, i, string, "pool_send_and_wait: Error or notice message from backend: ", true) == 'E')
+		if (per_node_error_log(backend, i, string, "pool_send_and_wait: Error or notice message from backend", true) == 'E')
 			reset_query_error = true;
 	}
 
@@ -1182,7 +1182,7 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 			 * does not report what statement caused that error and make users
 			 * confused.
 			 */
-			per_node_error_log(backend, i, str, "pool_send_and_wait: Error or notice message from backend: ", true);
+			per_node_error_log(backend, i, str, "pool_send_and_wait: Error or notice message from backend", true);
 		}
 	}
 
