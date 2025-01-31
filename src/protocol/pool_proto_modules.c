@@ -1603,7 +1603,7 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		 * PostgreSQL does not report what statement caused that error and
 		 * make users confused.
 		 */
-		per_node_error_log(backend, MAIN_NODE_ID, stmt, "Parse: Error or notice message from backend: ", true);
+		per_node_error_log(backend, MAIN_NODE_ID, stmt, "Parse: Error or notice message from backend", true);
 
 		if (deadlock_detected)
 		{
@@ -2326,7 +2326,7 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 			if (!pool_read_buffer_is_empty(CONNECTION(backend, i)))
 				per_node_error_log(backend, i,
 								   "(out of band message)",
-								   "ReadyForQuery: Error or notice message from backend: ", false);
+								   "ReadyForQuery: Error or notice message from backend", false);
 		}
 	}
 
