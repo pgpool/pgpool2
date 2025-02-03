@@ -1,0 +1,307 @@
+<sect1 id="release-4-6-0">
+ <title>リリース 4.6.0</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2025-02-xx</simpara>
+ </note>
+
+ <sect2>
+  <title>概要</title>
+  <para>
+   このリリースでは、ログ取得や<productname>Pgpool-II</productname>の管理のための便利な機能を追加しました。
+   新しいPCPコマンドを使って、<productname>Pgpool-II</productname>を再起動したり、シグナルを送ることなくログをローテートできます。
+   <xref linkend="guc-logging-collector">関連のパラメータが設定ファイルの再読込で変更できるようになりました。
+   また、<productname>Pgpool-II</productname>を再起動せずにクエリキャッシュを削除するための新しいPCPコマンドが追加されました。
+   他の新しいクエリキャッシュの機能としては、クエリキャッシュのエントリを強制的に作成すること、指定したクエリキャッシュのエントリを削除できるようになりました。
+   新しい設定パラメータの<xref linkend="guc-log-backend-messages">により、<productname>Pgpool-II</productname>と<productname>PostgreSQL</productname>の間の通信を容易に分析することができるようになりました。
+   SQLパーサは、<productname>PostgreSQL 17</productname>バージョンと同期していつものように更新されました。
+   最後に、watchdogのhostnameとheartbeat_hostname設定パラメータでIPv6が使えるようになりました。
+  </para>
+
+  <para>
+   主な機能の改良は以下の通りです。
+  </para>
+
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     ログのローテーションを指示する<link linkend="pcp-log-rotate">新しいPCPコマンド</link>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     リロードによる<xref linkend="guc-logging-collector">関連のパラメータの変更
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     クエリキャッシュを削除する<link linkend="pcp-invalidate-query-cache">新しいPCPコマンド</link>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <link linkend="runtime-in-memory-query-cache">クエリキャッシュ</link>の強制的な作成
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     新しい<link linkend="sql-pgpool-set-cache">PGPOOL SET CACHE DELETE</link>コマンド
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     新しい設定パラメータ<xref linkend="guc-log-backend-messages">
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     PostgreSQL 17のSQLパーサの導入
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     watchdogの<xref linkend="guc-hostname">と<xref linkend="guc-heartbeat-hostname">パラメータのIPv6対応
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2 id="migration-4-6-0">
+  <title>バージョン4.6への移行</title>
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-health-check-user">、<xref linkend="guc-recovery-user">、<xref linkend="guc-sr-check-user">、<xref linkend="guc-wd-lifecheck-user">のデフォルト値が'nobody'から''(空文字)に変更されました。
+     4.6ではそれらに適切な値をセットする必要があります。さもなければエラーが生じます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     文字列型の設定パラメータ、たとえば<xref linkend="guc-unix-socket-directories">や<xref linkend="guc-pcp-socket-dir">で、先頭/末尾の空白を無視するようにしました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="guc-child-life-time">や<xref linkend="guc-child-max-connections">を設定していると以下のログメッセージが記録されました。これらは正常時のメッセージであるため、DEBUG1にダウングレードされました。
+     <programlisting>
+  reaper handler
+  reaper handler: exiting normally
+     </programlisting>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-08-05 [55036fd6c]
+    -->
+    <para>
+     ログをローテートする<xref linkend="pcp-log-rotate">を追加しました。(Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-12-16 [5752de991]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>の設定を再ロードすることにより、<xref linkend="guc-logging-collector">関連のパラメータを変更できるようにしました。 (Bo Peng)
+    </para>
+    <para>
+     以下の<xref linkend="guc-logging-collector">関連のパラメータは再ロードで変更できます。
+     <itemizedlist>
+      <listitem>
+       <para>
+	log_truncate_on_rotation
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_directory
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_filename
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_rotation_age
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_rotation_size
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_file_mode
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-14 [09d4e59c5]
+    -->
+    <para>
+     クエリキャッシュを削除する<xref linkend="pcp-invalidate-query-cache">を追加しました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-21 [c5c1ca6b3]
+    -->
+    <para>
+     指定のクエリキャッシュを削除する<link linkend="sql-pgpool-set-cache">PGPOOL SET CACHE DELETE</link>コマンドを追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-25 [6d4106f9c]
+    -->
+    <para>
+     バックエンドからのプロトコルメッセージをログする新しい設定パラメータの<xref linkend="guc-log-backend-messages">を追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-21 [b58a3c630]
+    -->
+    <para>
+     <productname>PostgreSQL</productname> 17の新しいパーサを取り込みました。(Bo Peng)
+    </para>
+    <para>
+     <productname>PostgreSQL</productname> 17パーサの変更点には以下のものがあります。
+
+     <programlisting>
+- MERGEでNOT MATCHED BY SOURCEとRETURNING句が使えるようになりました。
+
+    MERGE INTO ... WHEN NOT MATCHED BY SOURCE ...
+    MERGE INTO ... RETURNING ...
+
+- 新しいCOPYオプションのON_ERROR ignoreとLOG_VERBOSITYが追加されました。
+
+  COPY ... WITH (ON_ERROR ignore);
+  COPY ... WITH (LOG_VERBOSITY verbose);
+
+- すべての列に対して'*'を使ってCOPY FROMオプションのFORCE_NOT_NULLとFORCE_NULLが指定できるようになりました。
+
+  COPY ... WITH (FORCE_NOT_NULL *);
+  COPY ... WITH (FORCE_NULL *);
+
+- EXPLAINにオプションのSERIALIZEとMEMORYが追加されました。
+
+  EXPLAIN (MEMORY) ...
+  EXPLAIN (ANALYZE, SERIALIZE ...) ...
+
+- ALTER TABLEでSET STATISTICS DEFAULTを使って指定の列をデフォルトの統計上情報ターゲットにできるようになりました。
+
+  ALTER TABLE ... ALTER COLUMN ... SET STATISTICS DEFAULT;
+
+- ALTER TABLEで列の生成式を変更できるようになりました。
+
+  ALTER TABLE ... ALTER COLUMN ... SET EXPRESSION;
+
+- ALTER TABLEで .. SET ACCESS METHODのデフォルトを指定できるようになりました。
+
+  ALTER TABLE ... SET ACCESS METHOD new_access_method DEFAULT;
+
+- イベントトリガでログインイベントを扱えるようになりました。
+
+  CREATE EVENT TRIGGER ... ON login ...
+
+- イベントトリガでREINDEXを扱えるようになりました。
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-08-27 [65dbbe7a0]
+    -->
+    <para>
+     パラメータの<xref linkend="guc-hostname">と<xref linkend="guc-heartbeat-hostname">でIPv6をサポートしました。(Kwangwon Seo)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-05-09 [7c5ef8d09]
+    -->
+    <para>
+     文字列型の設定パラメータで、先頭/末尾の空白を無視するようにしました。(Bo Peng)
+    </para>
+    <para>
+     文字列型のパラメータ（たとえば<xref linkend="guc-unix-socket-directories">や<xref linkend="guc-pcp-socket-dir">）に空白が含まれると、起動に失敗することがありました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-08-05 [2cde5031a]
+    -->
+    <para>
+     reaper handlerのログをダウングレードしました。(Bo Peng)
+    </para>
+    <para>
+     以下のメッセージは、たとえばchild_life_timeやchild_max_connectionsの設定で子プロセスが終了する時に現れます。
+     これらは正常なメッセージなので、DEBUG1にダウングレードしました。
+     <programlisting>
+  reaper handler
+  reaper handler: exiting normally
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-12 [a9d1df446]
+    -->
+    <para>
+     拡張問い合わせプロトコルを処理する時の不必要なメモリ獲得を防ぐようにしました。(Tatsuo Ishii)
+     これは、ストリーミングレプリケーションモードに対してのみ関係します。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>バグ修正</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+     このリリースでは、他のマイナーリリースと同じバグ修正がすでに適用されています。
+     これらの修正の詳細については、<xref linkend="release">を参照してください。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+</sect1>

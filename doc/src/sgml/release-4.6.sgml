@@ -1,0 +1,340 @@
+<sect1 id="release-4-6-0">
+ <title>Release 4.6.0</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2025-02-xx</simpara>
+ </note>
+
+ <sect2>
+  <title>Overview</title>
+  <para>
+   This release adds convenient features for logging and
+   administration of <productname>Pgpool-II</productname>. Now you can
+   rotate log without restarting or sending a signal
+   to <productname>Pgpool-II</productname> by using new PCP
+   command. <xref linkend="guc-logging-collector"> related parameters
+   can be changed by reloading of the configuration file. Also new PC
+   commands are added to invalidate query cache without
+   restarting <productname>Pgpool-II</productname>. Another features
+   for query cache are forcing to create a query cache entry and
+   removing particular query cache entry.  New configuration parameter
+   <xref linkend="guc-log-backend-messages"> allows to log messages
+   from backend for easier analysis of communication
+   between <productname>Pgpool-II</productname>
+   and <productname>PostgreSQL</productname>.  The SQL parser is
+   updated to sync with the latest <productname>PostgreSQL
+   17</productname> version as usual. Finally now you can use IPv6 for
+   watchdog's hostname and heartbeat_hostname parameter.
+  </para>
+
+  <para>
+   Major enhancements are as follows:
+  </para>
+
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     <link linkend="pcp-log-rotate">New PCP command</link> to trigger log rotation.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Allow <xref linkend="guc-logging-collector"> related parameters to be changed by reloading.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <link linkend="pcp-invalidate-query-cache">New PCP command</link> to invalidate query cache.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Allow to force to
+     create <link linkend="runtime-in-memory-query-cache">query
+     cache</link>
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     New <link linkend="sql-pgpool-set-cache">PGPOOL SET CACHE DELETE</link> command.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     New configuration parameter <xref linkend="guc-log-backend-messages">.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Import PostgreSQL 17's SQL parser.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Add IPv6 support for watchdog <xref linkend="guc-hostname">
+     and <xref linkend="guc-heartbeat-hostname"> parameter.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2 id="migration-4-6-0">
+  <title>Migration to Version 4.6</title>
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     The default values of <xref linkend="guc-health-check-user">, <xref linkend="guc-recovery-user">,
+     <xref linkend="guc-sr-check-user">
+     and <xref linkend="guc-wd-lifecheck-user"> are changed from
+     'noboy' to '' (empty string). You need to set them in
+     4.6. Otherwise you will get an error.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Ignore leading/trailing spaces in string list type configuration
+     parameters, for
+     example, <xref linkend="guc-unix-socket-directories">
+     and <xref linkend="guc-pcp-socket-dir">.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     The following log messages appear when a child process exits due
+     to <xref linkend="guc-child-life-time">
+     or <xref linkend="guc-child-max-connections">.  Downgrade them to
+     DEBUG1 because they are normal messages.
+     <programlisting>
+  reaper handler
+  reaper handler: exiting normally
+     </programlisting>
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2024-08-05 [55036fd6c]
+    -->
+    <para>
+     Add <xref linkend="pcp-log-rotate"> to trigger log rotation. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-12-16 [5752de991]
+    -->
+    <para>
+     Allow <xref linkend="guc-logging-collector"> related parameters
+     to be changed by reloading
+     the <productname>Pgpool-II</productname> configurations. (Bo
+     Peng)
+    </para>
+    <para>
+     The following <xref linkend="guc-logging-collector"> related
+     parameters can now be changed by reloading:
+     <itemizedlist>
+      <listitem>
+       <para>
+	log_truncate_on_rotation
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_directory
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_filename
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_rotation_age
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_rotation_size
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	log_file_mode
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-14 [09d4e59c5]
+    -->
+    <para>
+     Add <xref linkend="pcp-invalidate-query-cache"> to invalidate
+     query cache. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-21 [c5c1ca6b3]
+    -->
+    <para>
+     Add <link linkend="sql-pgpool-set-cache">PGPOOL SET CACHE
+     DELETE</link> command to invalidate specified query cache entry.
+     (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-11-25 [6d4106f9c]
+    -->
+    <para>
+     Add new configuration
+     parameter <xref linkend="guc-log-backend-messages"> to log
+     protocol messages from each backend. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-10-21 [b58a3c630]
+    -->
+    <para>
+     Import <productname>PostgreSQL</productname> 17 RC1 new parser. (Bo Peng)
+    </para>
+    <para>
+     Major changes of <productname>PostgreSQL</productname> 17 parser include:
+
+     <programlisting>
+- Allow MERGE to use NOT MATCHED BY SOURCE and RETURNING clause:
+
+    MERGE INTO ... WHEN NOT MATCHED BY SOURCE ...
+    MERGE INTO ... RETURNING ...
+
+- Add new COPY option ON_ERROR ignore and LOG_VERBOSITY:
+
+  COPY ... WITH (ON_ERROR ignore);
+  COPY ... WITH (LOG_VERBOSITY verbose);
+
+- Allow to use '*' to specify the COPY FROM options FORCE_NOT_NULL and FORCE_NULL for all columns.
+
+  COPY ... WITH (FORCE_NOT_NULL *);
+  COPY ... WITH (FORCE_NULL *);
+
+- Add EXPLAIN option SERIALIZE and MEMORY
+
+  EXPLAIN (MEMORY) ...
+  EXPLAIN (ANALYZE, SERIALIZE ...) ...
+
+- Allow ALTER TABLE to use SET STATISTICS DEFAULT to set a column to the default statistics target
+
+  ALTER TABLE ... ALTER COLUMN ... SET STATISTICS DEFAULT;
+
+- Allow ALTER TABLE to change a column's generation expression
+
+  ALTER TABLE ... ALTER COLUMN ... SET EXPRESSION;
+
+- Add DEFAULT setting for ALTER TABLE .. SET ACCESS METHOD
+
+  ALTER TABLE ... SET ACCESS METHOD new_access_method DEFAULT;
+
+- Allow event triggers to use login event:
+
+  CREATE EVENT TRIGGER ... ON login ...
+
+- Add event trigger support for REINDEX.
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-08-27 [65dbbe7a0]
+    -->
+    <para>
+     Add IPv6 support for <xref linkend="guc-hostname"> and <xref linkend="guc-heartbeat-hostname"> parameter. (Kwangwon Seo)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-05-09 [7c5ef8d09]
+    -->
+    <para>
+     Ignore leading/trailing spaces in string list type configuration parameters. (Bo Peng)
+    </para>
+    <para>
+     If the string list type configuration parameters
+     (e.g. <xref linkend="guc-unix-socket-directories">, <xref linkend="guc-pcp-socket-dir">,
+     etc.) contain white spaces, it may cause startup failure.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-08-05 [2cde5031a]
+    -->
+    <para>
+     Downgrade reaper handler logs. (Bo Peng)
+    </para>
+    <para>
+     The following log messages appear when a child process exits due
+     to settings (e.g., child_life_time or child_max_connections) .
+     Downgrade them to DEBUG1 because they are normal messages.
+     <programlisting>
+  reaper handler
+  reaper handler: exiting normally
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-06-12 [a9d1df446]
+    -->
+    <para>
+     Eliminate unnecessary memory allocation in extended query protocol. (Tatsuo Ishii)
+     Note this is only releated to streaming replication mode.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <para>
+     This release fixes the same bugs as other minor releases.
+     See <xref linkend="release"> for more details of those fixes.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+</sect1>
