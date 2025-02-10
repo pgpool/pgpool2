@@ -7,7 +7,7 @@
   この設定例では、3台の<productname>Pgpool-II</productname>を使って<productname>PostgreSQL</productname>（プライマリ1台、スタンバイ2台）を管理し、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
  </para>
  <para>
-  この設定例では<productname>PostgreSQL</productname> 16を使っていますが、
+  この設定例では<emphasis><productname>PostgreSQL</productname> 17</emphasis>を使っていますが、
   各種スクリプトは<productname>PostgreSQL</productname> 10以降での動作確認を行っています。
  </para>
  <sect2 id="example-cluster-requirement">
@@ -22,7 +22,7 @@
   <title>全体構成</title>
   <para>
    今回は、Linuxサーバを3台用意し、それぞれのホスト名は<literal>server1</literal>、<literal>server2</literal>、<literal>server3</literal>とします。
-   使用するOSはすべてRocky Linux 8とします。
+   使用するOSはすべて<emphasis>Rocky Linux 9</emphasis>とします。
    それぞれのサーバに<productname>PostgreSQL</productname>と<productname>Pgpool-II</productname>をインストールします。
    3台の<productname>PostgreSQL</productname>がストリーミングレプリケーション構成になります。全体構成図は以下の通りです。
   </para>
@@ -83,7 +83,7 @@
     <tbody>
      <row>
       <entry>PostgreSQLバージョン</entry>
-      <entry>16.0</entry>
+      <entry>17.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -93,13 +93,13 @@
      </row>
      <row>
       <entry>$PGDATA</entry>
-      <entry>/var/lib/pgsql/16/data</entry>
+      <entry>/var/lib/pgsql/17/data</entry>
       <entry>-</entry>
      </row>
      <row>
       <entry>アーカイブモード</entry>
-      <entry>有効</entry>
-      <entry>/var/lib/pgsql/archivedir</entry>
+      <entry>無効</entry>
+      <entry>-</entry>
      </row>
      <row>
       <entry>レプリケーションスロット</entry>
@@ -131,7 +131,7 @@
     <tbody>
      <row>
       <entry>Pgpool-IIバージョン</entry>
-      <entry>4.5.0</entry>
+      <entry>4.6.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -188,25 +188,25 @@
     <tbody>
      <row>
       <entry morerows='1'>自動フェイルオーバ</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/failover.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/failover.sh.sample</ulink></entry>
       <entry>フェイルオーバを実行するスクリプト。<xref linkend="GUC-FAILOVER-COMMAND">で使用します。</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/follow_primary.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/follow_primary.sh.sample</ulink></entry>
       <entry>上記フェイルオーバスクリプトが実行された後に、新しいプライマリサーバとスタンバイサーバを同期させるスクリプト。<xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">で使用します。 PostgreSQLサーバが2台の場合はこのスクリプトの設定は不要です。</entry>
      </row>
      <row>
       <entry morerows='1'>オンラインリカバリ</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/recovery_1st_stage.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/recovery_1st_stage.sample</ulink></entry>
       <entry>スタンバイサーバをリカバリするスクリプト。<xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND">で使用します。</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/pgpool_remote_start.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/pgpool_remote_start.sample</ulink></entry>
       <entry>上記<xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND">が実行された後に、スタンバイノードを起動させるスクリプト。</entry>
      </row>
      <row>
       <entry morerows='1'>Watchdog</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_5_STABLE">/etc/pgpool-II/sample_scripts/escalation.sh.sample</ulink></entry>
+      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/escalation.sh.sample</ulink></entry>
       <entry>
        任意の設定。Pgpool-IIのリーダー/スタンバイ切り替え時に、旧Watchdogリーダープロセスの異常終了によって旧Watchdogリーダーで仮想IPが起動したまま、新しいリーダーノードで仮想IPが起動されることを防ぐために、新しいリーダー以外で起動している仮想IPを停止するスクリプト。<xref linkend="guc-wd-escalation-command">で使用します。
       </entry>
@@ -228,9 +228,9 @@
    <productname>PostgreSQL</productname>のインストールは<productname>PostgreSQL</productname>コミュニティのリポジトリを使います。
   </para>
   <programlisting>
-[全サーバ]# dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+[全サーバ]# dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 [全サーバ]# dnf -qy module disable postgresql
-[全サーバ]# dnf install -y postgresql16-server
+[全サーバ]# dnf install -y postgresql17-server
   </programlisting>
 
   <para>
@@ -252,6 +252,10 @@
 exclude=pgpool*
 
 
+[pgdg17]
+...
+exclude=pgpool*
+
 [pgdg16]
 ...
 exclude=pgpool*
@@ -271,18 +275,17 @@ exclude=pgpool*
 [pgdg12]
 ...
 exclude=pgpool*
-
-[pgdg11]
-...
-exclude=pgpool*
   </programlisting>
 
   <para>
    <productname>Pgpool-II</productname>をインストールします。
+   <productname>Pgpool-II</productname>のインストールに必要なlibmemcachedライブラリをインストールするために、<literal>crb</literal>リポジトリを有効にする必要があります。
+   <literal>Rocky Linux 8</literal>を使用する場合、<literal>crb</literal>リポジトリではなく、<literal>powertools</literal>リポジトリを使用してください。
+   
   </para>
   <programlisting>
-[全サーバ]# dnf install -y https://www.pgpool.net/yum/rpms/4.5/redhat/rhel-8-x86_64/pgpool-II-release-4.5-1.noarch.rpm
-[全サーバ]# dnf install -y pgpool-II-pg16-*
+[全サーバ]# dnf install -y https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-9-x86_64/pgpool-II-release-4.6-1.noarch.rpm
+[全サーバ]# dnf install -y --enablerepo=crb pgpool-II-pg17-*
   </programlisting>
  </sect2>
 
@@ -292,49 +295,103 @@ exclude=pgpool*
   Pgpool-IIの設定の前に、以下の設定を行ってください。
   </para>
 
-  <sect3 id="example-cluster-before-starting-primary">
-   <title>プライマリのセットアップ</title>
+  <sect3 id="example-cluster-before-starting-ssh">
+   <title>SSH公開鍵認証の設定</title>
     <para>
-     <productname>PostgreSQL</productname>プライマリサーバでストリーミングレプリケーションの設定を行います。
-     この設定の例ではアーカイブリカバリを行うように設定します。
+     自動フェイルオーバ、オンラインリカバリ機能を利用するには、すべての<productname>Pgpool-II</productname>ノード間で<literal>postgres</literal>ユーザ（Pgpool-IIのデフォルトの起動ユーザ。Pgpool-II 4.0以前、デフォルトの起動ユーザは<literal>root</literal>）として双方向にSSH公開鍵認証（パスワードなし）で接続できるように設定する必要があります。 
     </para>
     <para>
-     まず、すべてのサーバにて<acronym>WAL</acronym>を格納するディレクトリ<filename>/var/lib/pgsql/archivedir</filename>を事前に作成します。この設定例では、プライマリサーバのみで<acronym>WAL</acronym>アーカイブをローカルで実施します。
+    </para>
+    <para>
+     まず、全サーバで以下のコマンドを実行し、SSH鍵ファイルを作成します。
+     この設定例では生成される鍵ファイル名は<literal>id_rsa_pgpool</literal>とします。
     </para>
     <programlisting>
 [全サーバ]# su - postgres
-[全サーバ]$ mkdir /var/lib/pgsql/archivedir
+[全サーバ]$ mkdir ~/.ssh && chmod 700 ~/.ssh
+[全サーバ]$ ssh-keygen -t rsa -f ~/.ssh/id_rsa_pgpool
     </programlisting>
-
     <para>
-     <literal>server1</literal>で<productname>PostgreSQL</productname>プライマリサーバの初期化を行います。
+     次に、公開鍵<literal>id_rsa_pgpool.pub</literal>を各サーバの<filename>/var/lib/pgsql/.ssh/authorized_keys</filename>ファイルに追加します。
+    </para>
+    <para>
+     設定後、<literal>postgres</literal>ユーザで<command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command>コマンドを実行し、パスワードなしでログインできることを確認してください。
+    </para>
+
+    <note>
+     <para>
+      公開鍵認証によるログインに失敗した場合には、以下を確認してください。
+      <itemizedlist>
+       <listitem>
+        <para>
+         <filename>/etc/ssh/sshd_config</filename>で公開鍵認証が許可されていることを確認します。
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+PubkeyAuthentication yes
+      </programlisting>
+      <itemizedlist>
+       <listitem>
+        <para>
+         SELinuxを有効化している場合は、SSH公開鍵認証(パスワードなし)が失敗する可能性があるので、すべてのサーバで以下のコマンドを実行する必要があります。
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+[全サーバ]# su - postgres
+[全サーバ]$ restorecon -Rv ~/.ssh
+      </programlisting>
+     </para>
+    </note>
+  </sect3>
+
+  <sect3 id="example-cluster-before-starting-firewall">
+   <title>firewallの設定</title>
+   <para>
+    <productname>Pgpool-II</productname>や<productname>PostgreSQL</productname>に接続する際には、ファイアーウォールによって目的のポートが開けられていなければなりません。
+    <systemitem>Rocky Linux 9/RHEL 9</systemitem>の場合、以下のように設定します。
+   </para>
+   <programlisting>
+[全サーバ]# firewall-cmd --permanent --zone=public --add-service=postgresql
+[全サーバ]# firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp --add-port=9694/udp
+[全サーバ]# firewall-cmd --reload
+   </programlisting>
+  </sect3>
+
+  <sect3 id="example-cluster-before-starting-primary">
+   <title>プライマリのセットアップ</title>
+    <para>
+     <literal>server1</literal>で<productname>PostgreSQL</productname>プライマリサーバのセットアップを行います。
+    </para>
+    <para>
+     まず、データベースクラスタの初期化を行います。
+     <productname>PostgreSQL</productname> 17ではデータベースクラスタのデフォルトの作成先は<filename>/var/lib/pgsql/17/data</filename>で、<literal>postgres</literal>ユーザの設定ファイル<filename>~/.bash_profile</filename>で環境変数<varname>PGDATA</varname>に指定されています。
+     必要に応じて変更してください。
+    </para>
+    <para>
+     <command>initdb</command>コマンドを実行して、データベースクラスタの初期化を行います。
+     必要に応じて、<literal>--encoding</literal>や<literal>--locale</literal><ulink url="https://www.postgresql.org/docs/17/app-initdb.html">オプション</ulink>を指定して、データベースのエンコーディングやロケールを設定してください。
     </para>
     <programlisting>
-[server1]# su - postgres
-[server1]$ /usr/pgsql-16/bin/initdb -D $PGDATA
+[root@server1 ~]# su - postgres
+[postgres@server1 ~]$ /usr/pgsql-17/bin/initdb
     </programlisting>
 
     <para>
      次に<literal>server1</literal>で設定ファイル<filename>$PGDATA/postgresql.conf</filename>を以下のように編集します。
-     <application>pg_rewind</application>を使うために<varname>wal_log_hints</varname>を有効にしておきます。
-     プライマリが後でスタンバイになる可能性があるので、<literal>hot_standby = on</literal>にしておきます。
+     <application>pg_rewind</application>を使うために<varname>wal_log_hints</varname>を有効にします。
     </para>
     <programlisting>
+[postgres@server1 ~]$ vi $PGDATA/postgresql.conf
 listen_addresses = '*'
-archive_mode = on
-archive_command = 'cp "%p" "/var/lib/pgsql/archivedir/%f"'
-max_wal_senders = 10
-max_replication_slots = 10
-wal_level = replica
-hot_standby = on
 wal_log_hints = on
     </programlisting>
     <para>
-     <literal>server1</literal>でPostgreSQLプライマリを起動します。
+     最後に、<literal>server1</literal>で<productname>PostgreSQL</productname>を起動します。
     </para>
    <programlisting>
-[server1]# su - postgres
-[server1]$ /usr/pgsql-16/bin/pg_ctl start -D $PGDATA
+[postgres@server1 ~]$ /usr/pgsql-17/bin/pg_ctl start
     </programlisting>
   </sect3>
 
@@ -375,7 +432,7 @@ wal_log_hints = on
     </para>
 
     <table id="example-cluster-user">
-     <title>ユーザ</title>
+     <title>PostgreSQLユーザ</title>
      <tgroup cols="3">
       <thead>
        <row>
@@ -408,7 +465,7 @@ wal_log_hints = on
     </table>
 
     <programlisting>
-[server1]# psql -U postgres -p 5432
+[postgres@server1 ~]$ psql
 postgres=# SET password_encryption = 'scram-sha-256';
 postgres=# CREATE ROLE pgpool WITH LOGIN;
 postgres=# CREATE ROLE repl WITH REPLICATION LOGIN;
@@ -422,7 +479,8 @@ postgres=# \password postgres
      以下のコマンドで<literal>pgpool</literal>ユーザをそのグループに所属させます。
     </para>
     <programlisting>
-GRANT pg_monitor TO pgpool;
+postgres=# GRANT pg_monitor TO pgpool;
+postgres=# \q
     </programlisting>
 
     <note>
@@ -432,66 +490,15 @@ GRANT pg_monitor TO pgpool;
     </note>
 
     <para>
-     <productname>Pgpool-II</productname>サーバと<productname>PostgreSQL</productname>バックエンドサーバが同じサブネットワークにあることを想定し、各ユーザが<acronym>scram-sha-256</acronym>認証方式で接続するように、<filename>pg_hba.conf</filename>を編集しておきます。
+     この設定例では、<productname>Pgpool-II</productname>サーバと<productname>PostgreSQL</productname>バックエンドサーバが同じサブネットワークにあることを想定し、各ユーザが<acronym>scram-sha-256</acronym>認証方式で接続するように、<filename>$PGDATA/pg_hba.conf</filename>を編集しておきます。
     </para>
     <programlisting>
+[postgres@server1 ~]$ vi $PGDATA/pg_hba.conf
+(以下を追加)
 host    all             pgpool          samenet                 scram-sha-256
 host    all             postgres        samenet                 scram-sha-256
-host    replication     all             samenet                 scram-sha-256
+host    replication     repl            samenet                 scram-sha-256
     </programlisting>
-  </sect3>
-
-  <sect3 id="example-cluster-before-starting-ssh">
-   <title>SSH公開鍵認証の設定</title>
-    <para>
-     自動フェイルオーバ、オンラインリカバリ機能を利用するには、すべての<productname>Pgpool-II</productname>ノード間で<literal>postgres</literal>ユーザ（Pgpool-IIのデフォルトの起動ユーザ。Pgpool-II 4.0以前、デフォルトの起動ユーザは<literal>root</literal>）として双方向にSSH公開鍵認証（パスワードなし）で接続できるように設定する必要があります。 
-    </para>
-    <para>
-    </para>
-    <para>
-     まず、全サーバで以下のコマンドを実行し、SSH鍵ファイルを作成します。
-     この設定例では生成される鍵ファイル名は<literal>id_rsa_pgpool</literal>とします。
-    </para>
-    <programlisting>
-[全サーバ]# su - postgres
-[全サーバ]$ mkdir ~/.ssh
-[全サーバ]$ chmod 700 ~/.ssh
-[全サーバ]$ cd ~/.ssh
-[全サーバ]$ ssh-keygen -t rsa -f id_rsa_pgpool
-    </programlisting>
-    <para>
-     次に、公開鍵<literal>id_rsa_pgpool.pub</literal>を各サーバの<filename>/var/lib/pgsql/.ssh/authorized_keys</filename>ファイルに追加します。
-    </para>
-    <para>
-     設定後、<literal>postgres</literal>ユーザで<command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command>コマンドを実行し、パスワードなしでログインできることを確認してください。
-    </para>
-
-    <note>
-     <para>
-      公開鍵認証によるログインに失敗した場合には、以下を確認してください。
-      <itemizedlist>
-       <listitem>
-        <para>
-         <filename>/etc/ssh/sshd_config</filename>で公開鍵認証が許可されていることを確認します。
-        </para>
-       </listitem>
-      </itemizedlist>
-      <programlisting>
-PubkeyAuthentication yes
-      </programlisting>
-      <itemizedlist>
-       <listitem>
-        <para>
-         SELinuxを有効化している場合は、SSH公開鍵認証(パスワードなし)が失敗する可能性があるので、すべてのサーバで以下のコマンドを実行する必要があります。
-        </para>
-       </listitem>
-      </itemizedlist>
-      <programlisting>
-[全サーバ]# su - postgres
-[全サーバ]$ restorecon -Rv ~/.ssh
-      </programlisting>
-     </para>
-    </note>
   </sect3>
 
   <sect3 id="example-cluster-before-starting-pgpass">
@@ -500,31 +507,60 @@ PubkeyAuthentication yes
      パスワード入力なしで、ストリーミングレプリケーションや<application>pg_rewind</application>を実行するために、すべてのサーバで<literal>postgres</literal>ユーザのホームディレクトリ<filename>/var/lib/pgsql</filename>に<filename>.pgpass</filename>を作成し、パーミッションを600に設定しておきます。
     </para>
     <programlisting>
-[全サーバ]# su - postgres
-[全サーバ]$ vi /var/lib/pgsql/.pgpass
-(以下を追加)
+[postgres@server1 ~]$ vi ~/.pgpass
 server1:5432:replication:repl:&lt;replユーザのパスワード&gt;
 server2:5432:replication:repl:&lt;replユーザのパスワード&gt;
 server3:5432:replication:repl:&lt;replユーザのパスワード&gt;
 server1:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
 server2:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
 server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
-[全サーバ]$ chmod 600  /var/lib/pgsql/.pgpass
+
+[postgres@server1 ~]$ chmod 600 ~/.pgpass
+    </programlisting>
+    <para>
+     server2およびserver3のpostgresユーザのホームディレクトリにコピーします。
+    </para>
+    <programlisting>
+[postgres@server1 ~]$ scp -i ~/.ssh/id_rsa_pgpool -p ~/.pgpass postgres@server2:
+[postgres@server1 ~]$ scp -i ~/.ssh/id_rsa_pgpool -p ~/.pgpass postgres@server3:
     </programlisting>
   </sect3>
+ </sect2>
 
-  <sect3 id="example-cluster-before-starting-firewall">
-   <title>firewallの設定</title>
+ <sect2 id="pcp-authentication">
+  <title>PCP接続認証の設定</title>
+  <para>
+   PCPコマンドを使用するには、<literal>username:encryptedpassword</literal>形式のPCPユーザ名とmd5暗号化パスワードを<filename>pcp.conf</filename>に登録する必要があります。
+  </para>
+  <para>
+   この設定例では、PCPユーザ名を<literal>pgpool</literal>、パスワードを<literal>pgpool_password</literal>に設定します。
+   必要に応じて、ユーザ名とパスワードを変更してください。
+  </para>
+  <para>
+   以下のように、pg_md5を使用して、pcpユーザpgpoolの暗号化されたパスワードエントリを作成します。
+  </para>
+  <programlisting>
+[postgres@server1 ~]$ echo 'pgpool:'`pg_md5 pgpool_password` &gt;&gt; /etc/pgpool-II/pcp.conf
+
+[postgres@server1 ~]$ cat /etc/pgpool-II/pcp.conf
+# USERID:MD5PASSWD
+pgpool:4aa0cb9673e84b06d4c8a848c80eb5d0
+  </programlisting>
+  <para>
+   後述の<filename>follow_primary.sh</filename>のスクリプトでパスワード入力なしで<literal>PCP</literal>コマンドを実行する必要があるので、<productname>Pgpool-II</productname>の起動ユーザ（postgresユーザ）のホームディレクトリに<filename>.pcppass</filename>を作成します。
+  </para>
+  <programlisting>
+[postgres@server1 ~]$ echo 'localhost:9898:pgpool:pgpool_password' &gt; ~/.pcppass
+[postgres@server1 ~]$ chmod 600 ~/.pcppass
+  </programlisting>
    <para>
-    <productname>Pgpool-II</productname>や<productname>PostgreSQL</productname>に接続する際には、ファイアーウォールによって目的のポートが開けられていなければなりません。
-    <systemitem>Rocky Linux 8/RHEL 8</systemitem>の場合、以下のように設定します。
+    server2およびserver3のpostgresユーザのホームディレクトリにコピーします。
    </para>
    <programlisting>
-[全サーバ]# firewall-cmd --permanent --zone=public --add-service=postgresql
-[全サーバ]# firewall-cmd --permanent --zone=public --add-port=9999/tcp --add-port=9898/tcp --add-port=9000/tcp  --add-port=9694/udp
-[全サーバ]# firewall-cmd --reload
-   </programlisting>
-  </sect3>
+[postgres@server1 ~]$ scp -i ~/.ssh/id_rsa_pgpool -p ~/.pcppass postgres@server2:
+[postgres@server1 ~]$ scp -i ~/.ssh/id_rsa_pgpool -p ~/.pcppass postgres@server3:
+[postgres@server1 ~]$ exit
+  </programlisting>
  </sect2>
 
  <sect2 id="example-cluster-pgpool-node-id">
@@ -542,7 +578,8 @@ server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
      <literal>server1</literal>
     </para>
     <programlisting>
-[server1]# cat /etc/pgpool-II/pgpool_node_id
+[root@server1 ~]# echo 0 &gt; /etc/pgpool-II/pgpool_node_id
+[root@server1 ~]# cat /etc/pgpool-II/pgpool_node_id
 0
     </programlisting>
    </listitem>
@@ -551,7 +588,8 @@ server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
      <literal>server2</literal>
     </para>
     <programlisting>
-[server2]# cat /etc/pgpool-II/pgpool_node_id
+[root@server2 ~]# echo 1 &gt; /etc/pgpool-II/pgpool_node_id
+[root@server2 ~]# cat /etc/pgpool-II/pgpool_node_id
 1
     </programlisting>
    </listitem>
@@ -560,29 +598,12 @@ server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
      <literal>server3</literal>
     </para>
     <programlisting>
-[server3]# cat /etc/pgpool-II/pgpool_node_id
+[root@server3 ~]# echo 2 &gt; /etc/pgpool-II/pgpool_node_id
+[root@server3 ~]# cat /etc/pgpool-II/pgpool_node_id
 2
     </programlisting>
    </listitem>
   </itemizedlist>
- </sect2>
-
- <sect2 id="pcp-authentication">
-  <title>PCP接続認証の設定</title>
-  <para>
-   PCPコマンドを使用するには、<literal>username:encryptedpassword</literal>形式のPCPユーザ名とmd5暗号化パスワードを<filename>pcp.conf</filename>に登録する必要があります。
-  </para>
-  <para>
-   この例では、PCPユーザ名を<literal>pgpool</literal>、パスワードを<literal>pgpool_password</literal>に設定します。
-   以下のように、pg_md5を使用して、pgpoolユーザの暗号化されたパスワードエントリを作成します。
-  </para>
-  <programlisting>
-[全サーバ]# echo 'pgpool:'`pg_md5 pgpool_password` &gt;&gt; /etc/pgpool-II/pcp.conf
-
-[全サーバ]# cat /etc/pgpool-II/pcp.conf
-# USERID:MD5PASSWD
-pgpool:4aa0cb9673e84b06d4c8a848c80eb5d0
-  </programlisting>
  </sect2>
 
  <sect2 id="example-cluster-pgpool-config">
@@ -600,11 +621,12 @@ pgpool:4aa0cb9673e84b06d4c8a848c80eb5d0
   <sect3 id="example-cluster-pgpool-config-config-file">
    <title>クラスタリングモード</title>
    <para>
-    <productname>Pgpool-II</productname>にはいくつかのクラスタリングモードがあります。
-    クラスタリングモードの設定には<xref linkend="GUC-BACKEND-CLUSTERING-MODE">を使用します。
-    今回の設定例では、ストリーミングレプリケーションモードを設定します。
+    <productname>Pgpool-II</productname>にはいくつかのクラスタリングモードがあり、
+    クラスタリングモードを設定するには<xref linkend="GUC-BACKEND-CLUSTERING-MODE">というパラメータを使用します。
+    この設定例では、ストリーミングレプリケーションモードを使用します。
    </para>
    <programlisting>
+[root@server1 ~]# vi /etc/pgpool-II/pgpool.conf 
 backend_clustering_mode = 'streaming_replication'
    </programlisting>
   </sect3>
@@ -678,24 +700,22 @@ health_check_max_retries = 3
     末尾にノードIDを表す数字を付加することで複数のバックエンドを指定することができます。
    </para>
    <programlisting>
-# - Backend Connection Settings -
-
 backend_hostname0 = 'server1'
 backend_port0 = 5432
 backend_weight0 = 1
-backend_data_directory0 = '/var/lib/pgsql/16/data'
+backend_data_directory0 = '/var/lib/pgsql/17/data'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname1 = 'server2'
 backend_port1 = 5432
 backend_weight1 = 1
-backend_data_directory1 = '/var/lib/pgsql/16/data'
+backend_data_directory1 = '/var/lib/pgsql/17/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname2 = 'server3'
 backend_port2 = 5432
 backend_weight2 = 1
-backend_data_directory2 = '/var/lib/pgsql/16/data'
+backend_data_directory2 = '/var/lib/pgsql/17/data'
 backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
 
@@ -706,11 +726,8 @@ backend_flag2 = 'ALLOW_TO_FAILOVER'
     ここではそれぞれのホスト名を設定します。
     <varname>backend_application_nameX</varname>に設定された値が、<varname>primary_conninfo</varname>の<varname>application_name</varname>に設定された値と一致していることを確認してください。
       <programlisting>
-...
 backend_application_name0 = 'server1'
-...
 backend_application_name1 = 'server2'
-...
 backend_application_name2 = 'server3'
       </programlisting>
    </para>
@@ -752,27 +769,27 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
     </para>
    </note>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_5_STABLE">failover.sh</ulink>及び
-    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_5_STABLE">follow_primary.sh</ulink>は
+    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_6_STABLE">failover.sh</ulink>及び
+    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_6_STABLE">follow_primary.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをコピーして作成します。
    </para>
    <programlisting>
-[全サーバ]# cp -p /etc/pgpool-II/sample_scripts/failover.sh.sample /etc/pgpool-II/failover.sh
-[全サーバ]# cp -p /etc/pgpool-II/sample_scripts/follow_primary.sh.sample /etc/pgpool-II/follow_primary.sh
-[全サーバ]# chown postgres:postgres /etc/pgpool-II/{failover.sh,follow_primary.sh}
+[root@server1 ~]# cp -p /etc/pgpool-II/sample_scripts/failover.sh.sample /etc/pgpool-II/failover.sh
+[root@server1 ~]# cp -p /etc/pgpool-II/sample_scripts/follow_primary.sh.sample /etc/pgpool-II/follow_primary.sh
+[root@server1 ~]# chown postgres:postgres /etc/pgpool-II/{failover.sh,follow_primary.sh}
    </programlisting>
    <para>
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
    </para>
    <programlisting>
-[全サーバ]# vi /etc/pgpool-II/failover.sh
+[root@server1 ~]# vi /etc/pgpool-II/failover.sh
 ...
-PGHOME=/usr/pgsql-16
+PGHOME=/usr/pgsql-17
 ...
 
-[全サーバ]# vi /etc/pgpool-II/follow_primary.sh
+[root@server1 ~]# vi /etc/pgpool-II/follow_primary.sh
 ...
-PGHOME=/usr/pgsql-16
+PGHOME=/usr/pgsql-17
 ...
    </programlisting>
    <para>
@@ -780,21 +797,10 @@ PGHOME=/usr/pgsql-16
     この設定例では、前述の<xref linkend="PCP-AUTHENTICATION">セクションですでに登録済みです。
    </para>
    <programlisting>
-# cat /etc/pgpool-II/follow_primary.sh
+[root@server1 ~]# vi /etc/pgpool-II/follow_primary.sh
 ...
 PCP_USER=pgpool
 ...
-   </programlisting>
-   <para>
-    前述の<filename>follow_primary.sh</filename>のスクリプトでパスワード入力なしで<literal>PCP</literal>コマンドを実行できるように、すべてのサーバで<productname>Pgpool-II</productname>の起動ユーザのホームディレクトリに<filename>.pcppass</filename>を作成します。
-   </para>
-   <para>
-    この例では、PCPユーザが<literal>pgpool</literal>で、パスワードが<literal>pgpool_password</literal>とします。
-   </para>
-   <programlisting>
-[全サーバ]# su - postgres
-[全サーバ]$ echo 'localhost:9898:pgpool:pgpool_password' &gt; ~/.pcppass
-[全サーバ]$ chmod 600 ~/.pcppass
    </programlisting>
    <note>
     <para>
@@ -821,28 +827,27 @@ recovery_password = ''
 recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
-    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_5_STABLE">recovery_1st_stage</ulink>
-    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_5_STABLE">pgpool_remote_start</ulink>は
+    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_6_STABLE">recovery_1st_stage</ulink>
+    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_6_STABLE">pgpool_remote_start</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、
     これらのファイルをプライマリサーバ(<literal>server1</literal>)のデータベースクラスタ配下に配置します。
    </para>
    <programlisting>
-[server1]# cp -p /etc/pgpool-II/sample_scripts/recovery_1st_stage.sample /var/lib/pgsql/16/data/recovery_1st_stage
-[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/16/data/pgpool_remote_start
-[server1]# chown postgres:postgres /var/lib/pgsql/16/data/{recovery_1st_stage,pgpool_remote_start}
+[root@server1 ~]# su - postgres -c "cp -p /etc/pgpool-II/sample_scripts/recovery_1st_stage.sample $PGDATA/recovery_1st_stage"
+[root@server1 ~]# su - postgres -c "cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample $PGDATA/pgpool_remote_start"
    </programlisting>
    <para>
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
    </para>
    <programlisting>
-[server1]# vi /var/lib/pgsql/16/data/recovery_1st_stage
+[root@server1 ~]# vi /var/lib/pgsql/17/data/recovery_1st_stage
 ...
-PGHOME=/usr/pgsql-16
+PGHOME=/usr/pgsql-17
 ...
 
-[server1]# vi /var/lib/pgsql/16/data/pgpool_remote_start
+[root@server1 ~]# vi /var/lib/pgsql/17/data/pgpool_remote_start
 ...
-PGHOME=/usr/pgsql-16
+PGHOME=/usr/pgsql-17
 ...
    </programlisting>
 
@@ -852,8 +857,7 @@ PGHOME=/usr/pgsql-16
     <literal>server1</literal>のtemplate1に<function>pgpool_recovery</function>をインストールしておきます。
    </para>
    <programlisting>
-[server1]# su - postgres
-[server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
+[root@server1 ~]# psql -U postgres template1 -c "CREATE EXTENSION pgpool_recovery"
    </programlisting>
    <note>
     <para>
@@ -887,6 +891,8 @@ enable_pool_hba = on
     この設定例では、<productname>Pgpool-II</productname>に接続しているアプリケーションが同じサブネット内にあると想定しています。
    </para>
    <programlisting>
+[root@server1 ~]# vi /etc/pgpool-II/pool_hba.conf 
+(以下を追加)
 host    all         pgpool           samenet          scram-sha-256
 host    all         postgres         samenet          scram-sha-256
    </programlisting>
@@ -898,26 +904,28 @@ host    all         postgres         samenet          scram-sha-256
    <para>
     <productname>Pgpool-II</productname>のクライアント認証で用いるデフォルトのパスワードファイル名は<filename>pool_passwd</filename>です。
     <acronym>scram-sha-256</acronym>認証を利用する場合、<productname>Pgpool-II</productname>はそれらのパスワードを復号化するために復号鍵が必要となります。
-    全サーバで復号鍵ファイルを<productname>Pgpool-II</productname>の起動ユーザ<literal>postgres</literal> (<productname>Pgpool-II</productname> 4.0以前のバージョンでは
-    <literal>root</literal>) のホームディレクトリ配下に作成します。
+    復号鍵ファイルを<productname>Pgpool-II</productname>の起動ユーザ<literal>postgres</literal>（<productname>Pgpool-II</productname> 4.0以前のバージョンでは<literal>root</literal>）のホームディレクトリ配下に作成し、<literal>server2</literal>および<literal>server3</literal>にコピーします。
    </para>
    <programlisting>
-[全サーバ]# su - postgres
-[全サーバ]$ echo '任意の文字列' > ~/.pgpoolkey 
-[全サーバ]$ chmod 600 ~/.pgpoolkey
+[root@server1 ~]# su - postgres -c "echo '任意の文字列' > ~/.pgpoolkey"
+[root@server1 ~]# su - postgres -c "chmod 600 ~/.pgpoolkey"
+[root@server1 ~]# su - postgres -c "scp -i ~/.ssh/id_rsa_pgpool -p ~/.pgpoolkey postgres@server2:"
+[root@server1 ~]# su - postgres -c "scp -i ~/.ssh/id_rsa_pgpool -p ~/.pgpoolkey postgres@server3:"
    </programlisting>
    <para>
     <command>pg_enc -m -k /path/to/.pgpoolkey -u username -p</command>を実行すると、ユーザ名と<acronym>AES256</acronym>で暗号化したパスワードのエントリが<xref linkend="GUC-POOL-PASSWD">に登録されます。
     <xref linkend="GUC-POOL-PASSWD"> がまだ存在しなければ、<filename>pgpool.conf</filename>と同じディレクトリ内に作成されます。
    </para>
    <programlisting>
-[全サーバ]# su - postgres
-[全サーバ]$ pg_enc -m -k ~/.pgpoolkey -u pgpool -p
-db password: [pgpoolユーザのパスワード]
-[全サーバ]$ pg_enc -m -k ~/.pgpoolkey -u postgres -p
-db password: [postgresユーザのパスワード]
+[root@server1 ~]# pg_enc -m -k /var/lib/pgsql/.pgpoolkey -u pgpool -p
+db password: (pgpoolユーザのパスワードを入力)
+trying to read key from file /var/lib/pgsql/.pgpoolkey
 
-# cat /etc/pgpool-II/pool_passwd 
+[root@server1 ~]# pg_enc -m -k /var/lib/pgsql/.pgpoolkey -u postgres -p
+db password: (postgresユーザのパスワードを入力)
+trying to read key from file /var/lib/pgsql/.pgpoolkey
+
+[root@server1 ~]# cat /etc/pgpool-II/pool_passwd 
 pgpool:AESheq2ZMZjynddMWk5sKP/Rw==
 postgres:AESHs/pWL5rtXy2IwuzroHfqg==
    </programlisting>
@@ -941,7 +949,7 @@ delegate_ip = '192.168.100.50'
 
    <para>
     仮想IPの起動/停止、<command>ARP</command>リクエストの送信を行う設定パラメータ
-    <xref linkend="GUC-IF-UP-CMD">、<xref linkend="GUC-IF-DOWN-CMD">、<xref linkend="GUC-ARPING-CMD">に、ネットワーク環境に合わせてネットワークインターフェース名を設定します。
+    <xref linkend="GUC-IF-UP-CMD">、<xref linkend="GUC-IF-DOWN-CMD">、<xref linkend="GUC-ARPING-CMD">に、ネットワーク環境に合わせてネットマスクおよびネットワークインターフェース名を設定します。
     この設定例で使用しているネットワークインターフェースは<literal>enp0s8</literal>となります。
     <varname>if_up/down_cmd</varname>や<varname>arping_cmd</varname>を実行するにはroot権限が必要となりますので、
     一般ユーザで実行できるように<command>ip/arping</command>コマンドに<literal>setuid</literal>を設定するか、<productname>Pgpool-II</productname>起動ユーザ、デフォルトでは<literal>postgres</literal>ユーザ (<productname>Pgpool-II</productname> 4.1以降) がパスワードなしに<command>sudo</command>を実行できるように設定する必要があります。
@@ -1049,23 +1057,24 @@ wd_heartbeat_deadtime = 30
 wd_escalation_command = '/etc/pgpool-II/escalation.sh'
    　</programlisting>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_5_STABLE">escalation.sh</ulink>は
+    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_6_STABLE">escalation.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされています。
    </para>
     <programlisting>
-[全サーバ]# cp -p /etc/pgpool-II/sample_scripts/escalation.sh.sample /etc/pgpool-II/escalation.sh
-[全サーバ]# chown postgres:postgres /etc/pgpool-II/escalation.sh
+[root@server1 ~]# cp -p /etc/pgpool-II/sample_scripts/escalation.sh.sample /etc/pgpool-II/escalation.sh
+[root@server1 ~]# chown postgres:postgres /etc/pgpool-II/escalation.sh
     </programlisting>
 
    <para>
     サーバのホスト名、仮想IP、仮想IPを設定するネットワークインターフェース名を環境に合わせて変更してください。
    </para>
    <programlisting>
-[全サーバ]# vi /etc/pgpool-II/escalation.sh
+[root@server1 ~]# vi /etc/pgpool-II/escalation.sh
 ...
 PGPOOLS=(server1 server2 server3)
 VIP=192.168.100.50
 DEVICE=enp0s8
+CIDR_NETMASK=24
 ...
    </programlisting>
 
@@ -1087,7 +1096,9 @@ DEVICE=enp0s8
    <title>ログの設定</title>
    <para>
     <productname>Pgpool-II</productname> 4.2以降、ログ収集プロセスが追加されました。
-    ここでは、ログ収集プロセス(<literal>logging_collector</literal>)を有効にします。
+    RPM パッケージを使用してインストールした場合、ログ収集プロセス(<literal>logging_collector</literal>)はデフォルトで有効になっています。
+    ログファイルはデフォルトで<filename>/var/log/pgpool_log</filename>に出力されます。
+    要件に合わせて、ログ関連の設定パラメータを適切に調整してください。
    </para>
    <programlisting>
 log_destination = 'stderr'
@@ -1096,23 +1107,16 @@ log_directory = '/var/log/pgpool_log'
 log_filename = 'pgpool-%a.log'
 log_truncate_on_rotation = on
 log_rotation_age = 1d
-log_rotation_size = 10MB
    </programlisting>
    <para>
-    すべてのサーバでログファイルを格納するディレクトリを作成します。
+    これで、<literal>server1</literal>における<productname>Pgpool-II</productname>の設定は完了です。
+    最後に、設定ファイルを他のサーバ<literal>server2</literal>および<literal>server3</literal>にコピーします。
    </para>
    <programlisting>
-[全サーバ]# mkdir /var/log/pgpool_log/
-[全サーバ]# chown postgres:postgres /var/log/pgpool_log/
-   </programlisting>
-
-   <para>
-    これで、<literal>server1</literal>での<filename>pgpool.conf</filename>の設定は完了です。
-    最後に、<literal>server1</literal>の<filename>pgpool.conf</filename>を他のサーバ<literal>server2</literal>、<literal>server3</literal>にコピーします。
-   </para>
-   <programlisting>
-[server1]# scp -p /etc/pgpool-II/pgpool.conf root@server2:/etc/pgpool-II/pgpool.conf
-[server1]# scp -p /etc/pgpool-II/pgpool.conf root@server3:/etc/pgpool-II/pgpool.conf
+[root@server1 ~]# scp -p /etc/pgpool-II/{*.conf,*.sh,pool_passwd} server2:/etc/pgpool-II/
+[root@server1 ~]# ssh server2 "chown postgres:postgres /etc/pgpool-II/{*.conf,*.sh,pool_passwd}"
+[root@server1 ~]# scp -p /etc/pgpool-II/{*.conf,*.sh,pool_passwd} server3:/etc/pgpool-II/
+[root@server1 ~]# ssh server3 "chown postgres:postgres /etc/pgpool-II/{*.conf,*.sh,pool_passwd}"
    </programlisting>
   </sect3>
  </sect2>
@@ -1137,8 +1141,7 @@ log_rotation_size = 10MB
       <productname>PostgreSQL</productname>プライマリサーバがまだ起動していない場合は、まず次のコマンドを実行して<productname>PostgreSQL</productname>起動します。
      </para>
      <programlisting>
-[server1]# su - postgres
-[server1]$ /usr/pgsql-16/bin/pg_ctl start -D $PGDATA
+[root@server1 ~]# su - postgres -c "/usr/pgsql-17/bin/pg_ctl start"
      </programlisting>
      <para>
       <literal>server1</literal>、<literal>server2</literal>および<literal>server3</literal>で以下のコマンドを実行し、<productname>Pgpool-II</productname>を起動します。
@@ -1159,7 +1162,7 @@ log_rotation_size = 10MB
       <productname>Pgpool-II</productname>が起動している状態でPostgreSQLを停止する、想定外のフェイルオーバが起きてしまうので、ご注意ください。
      </para>
      <programlisting>
-# systemctl stop pgpool.service
+[全サーバ]# systemctl stop pgpool.service
      </programlisting>
     </listitem>
    </itemizedlist>
@@ -1233,9 +1236,9 @@ server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER # スタンバ�
     <literal>server1</literal>の<productname>Pgpool-II</productname>を停止するには<productname>Pgpool-II</productname>を停止するか、マシンをシャットダウンします。ここでは、<productname>Pgpool-II</productname>を停止します。
    </para>
    <programlisting>
-[server1]# systemctl stop pgpool.service
+[root@server1 ~]# systemctl stop pgpool.service
 
-[server1]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool -W
+[root@server1 ~]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool -W
 Password:
 3 3 YES server2:9999 Linux server2 server2
 
@@ -1247,9 +1250,9 @@ server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER   # server3が�
     先ほど停止した<productname>Pgpool-II</productname>を再起動し、スタンバイとして起動していることを確認します。
    </para>
    <programlisting>
-[server1]# systemctl start pgpool.service
+[root@server1 ~]# systemctl start pgpool.service
 
-[server1]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool -W
+[root@server1 ~]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool -W
 Password: 
 3 3 YES server2:9999 Linux server2 server2
 
@@ -1279,7 +1282,7 @@ Password for user pgpool:
     フェイルオーバするかどうか確認してみます。
    </para>
    <programlisting>
-[server1]$ pg_ctl -D /var/lib/pgsql/16/data -m immediate stop
+[root@server1 ~]# su - postgres -c "/usr/pgsql-17/bin/pg_ctl -m immediate stop"
    </programlisting>
    <para>
     <literal>ノード1</literal>を停止した後に、フェイルオーバが発生し、<literal>server2</literal>が
