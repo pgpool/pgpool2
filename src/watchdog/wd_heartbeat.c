@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -75,7 +75,7 @@ static int	hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
 static int	ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
 static int	packet_to_string_hb(WdHbPacket * pkt, char *str, int maxlen);
 static void wd_set_reuseport(int sock);
-static int	select_socket_from_list(List *socks, int timeout_sec);
+static int	select_socket_from_list(List *socks);
 
 static int	wd_create_hb_send_socket(WdHbIf * hb_if);
 static List *wd_create_hb_recv_socket(WdHbIf * hb_if);
@@ -87,7 +87,7 @@ static void wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr);
   * Readable socket will be returned among the listening socket list.
   */
 static int
-select_socket_from_list(List *socks, int timeout_sec)
+select_socket_from_list(List *socks)
 {
 	int			select_ret;
 	int			maxsfd = 0;
@@ -95,10 +95,6 @@ select_socket_from_list(List *socks, int timeout_sec)
 	fd_set		rfds;
 	fd_set		efds;
 	ListCell   *lc;
-	struct timeval tv;
-
-	tv.tv_sec = timeout_sec;
-	tv.tv_usec = 0;
 
 	FD_ZERO(&rfds);
 	FD_ZERO(&efds);
@@ -112,7 +108,10 @@ select_socket_from_list(List *socks, int timeout_sec)
 			maxsfd = sock;
 	}
 
-	select_ret = select(maxsfd + 1, &rfds, NULL, &efds, &tv);
+	/*
+	 * select(2) blocks here until some packets arrive.
+	 */
+	select_ret = select(maxsfd + 1, &rfds, NULL, &efds, NULL);
 
 	if (select_ret > 0)
 	{
@@ -123,7 +122,7 @@ select_socket_from_list(List *socks, int timeout_sec)
 			{
 				ereport(DEBUG2,
 						(errmsg("wd_hb_recv_socket fd:%d is readable", sock)));
-				return sock;
+				return sock;	/* ok */
 			}
 			if (FD_ISSET(sock, &efds))
 			{
@@ -141,9 +140,10 @@ select_socket_from_list(List *socks, int timeout_sec)
 	}
 	else
 	{
+		/* this should never happen */
 		ereport(ERROR,
 				(errmsg("failed to get socket data from heartbeat receive socket list"),
-				 errdetail("select() got timeout, exceed %d sec(s)", timeout_sec)));
+				 errdetail("select() returns 0")));
 	}
 
 	return -1;
@@ -598,11 +598,11 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
 
 		/* get readable socket from heartbeat socket list */
-		if ((sock = select_socket_from_list(wd_hb_recv_socks, pool_config->wd_heartbeat_deadtime)) < 0)
+		sock = select_socket_from_list(wd_hb_recv_socks);
+		if (sock < 0)
 		{
 			ereport(ERROR, (errmsg("failed to get heartbeat from heartbeat receiver"),
 							errdetail("select() failed on heartbeat receiver")));
-			continue;
 		}
 
 		/* receive heartbeat signal */
