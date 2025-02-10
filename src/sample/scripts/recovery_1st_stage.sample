@@ -11,8 +11,7 @@ DEST_NODE_ID="$5"
 DEST_NODE_PORT="$6"
 PRIMARY_NODE_HOST="$7"
 
-PGHOME=/usr/pgsql-16
-ARCHIVEDIR=/var/lib/pgsql/archivedir
+PGHOME=/usr/pgsql-17
 REPLUSER=repl
 REPL_SLOT_NAME=$(echo ${DEST_NODE_HOST,,} | tr -- -. _)
 POSTGRESQL_STARTUP_USER=postgres
@@ -51,7 +50,6 @@ ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@$DEST_NODE_HOST "
     set -o errexit
 
     [ -d \"${DEST_NODE_PGDATA}\" ] && rm -rf ${DEST_NODE_PGDATA}
-    [ -d \"${ARCHIVEDIR}\" ] && rm -rf ${ARCHIVEDIR}/*
 
     ${PGHOME}/bin/pg_basebackup -h $PRIMARY_NODE_HOST -U $REPLUSER -p $PRIMARY_NODE_PORT -D $DEST_NODE_PGDATA -X stream
 
@@ -71,7 +69,6 @@ EOT
 
     sed -i \
         -e \"s/#*port = .*/port = ${DEST_NODE_PORT}/\" \
-        -e \"s@#*archive_command = .*@archive_command = 'cp \\\"%p\\\" \\\"${ARCHIVEDIR}/%f\\\"'@\" \
         ${DEST_NODE_PGDATA}/postgresql.conf
 "
 
