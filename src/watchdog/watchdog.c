@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3034,7 +3034,7 @@ static IPC_CMD_PROCESS_RES process_IPC_data_request_from_leader(WDCommandData * 
 	 * if cluster or myself is not in stable state just return cluster in
 	 * transaction
 	 */
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("received the get data request from local pgpool-II on IPC interface")));
 
 	if (get_local_node_state() == WD_STANDBY)
@@ -3059,7 +3059,7 @@ static IPC_CMD_PROCESS_RES process_IPC_data_request_from_leader(WDCommandData * 
 			/*
 			 * we need to wait for the result
 			 */
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("get data request from local pgpool-II node received on IPC interface is forwarded to leader watchdog node \"%s\"",
 							WD_LEADER_NODE->nodeName),
 					 errdetail("waiting for the reply...")));
