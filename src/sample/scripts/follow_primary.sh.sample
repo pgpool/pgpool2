@@ -110,56 +110,6 @@ EOT
 
 "
 
-# If pg_rewind failed, try pg_basebackup 
-if [ $? -ne 0 ]; then
-    echo follow_primary.sh: end: pg_rewind failed. Try pg_basebackup.
-
-    ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@${NODE_HOST} "
-
-        set -o errexit
-
-        [ -d \"${NODE_PGDATA}\" ] && rm -rf ${NODE_PGDATA}
-        [ -d \"${ARCHIVEDIR}\" ] && rm -rf ${ARCHIVEDIR}/*
-        ${PGHOME}/bin/pg_basebackup -h ${NEW_PRIMARY_NODE_HOST} -U $REPLUSER -p ${NEW_PRIMARY_NODE_PORT} -D ${NODE_PGDATA} -X stream
-
-        cat > ${RECOVERYCONF} << EOT
-primary_conninfo = 'host=${NEW_PRIMARY_NODE_HOST} port=${NEW_PRIMARY_NODE_PORT} user=${REPLUSER} application_name=${NODE_HOST} passfile=''/var/lib/pgsql/.pgpass'''
-recovery_target_timeline = 'latest'
-primary_slot_name = '${REPL_SLOT_NAME}'
-EOT
-
-        if [ ${PGVERSION} -ge 12 ]; then
-            sed -i -e \"\\\$ainclude_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'\" \
-                   -e \"/^include_if_exists = '$(echo ${RECOVERYCONF} | sed -e 's/\//\\\//g')'/d\" ${NODE_PGDATA}/postgresql.conf
-            touch ${NODE_PGDATA}/standby.signal
-        else
-            echo \"standby_mode = 'on'\" >> ${RECOVERYCONF}
-        fi
-        sed -i \
-            -e \"s/#*port = .*/port = ${NODE_PORT}/\" \
-            -e \"s@#*archive_command = .*@archive_command = 'cp \\\"%p\\\" \\\"${ARCHIVEDIR}/%f\\\"'@\" \
-            ${NODE_PGDATA}/postgresql.conf
-    "
-
-    if [ $? -ne 0 ]; then
-
-        # drop replication slot
-        ${PGHOME}/bin/psql -h ${NEW_PRIMARY_NODE_HOST} -p ${NEW_PRIMARY_NODE_PORT} postgres \
-            -c "SELECT pg_drop_replication_slot('${REPL_SLOT_NAME}');"  >/dev/null 2>&1
-
-        if [ $? -ne 0 ]; then
-            echo ERROR: follow_primary.sh: drop replication slot \"${REPL_SLOT_NAME}\" failed. You may need to drop replication slot manually.
-        fi
-
-        echo follow_primary.sh: end: pg_basebackup failed
-        exit 1
-    fi
-
-    # start Standby node on ${NODE_HOST}
-    ssh -T ${SSH_OPTIONS} ${POSTGRESQL_STARTUP_USER}@${NODE_HOST} $PGHOME/bin/pg_ctl -l /dev/null -w -D ${NODE_PGDATA} start
-
-fi
-
 # If start Standby successfully, attach this node
 if [ $? -eq 0 ]; then
 
