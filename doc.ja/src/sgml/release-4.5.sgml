@@ -1,6 +1,141 @@
 <!-- doc/src/sgml/release-4.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-5-6">
+ <title>リリース 4.5.6</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2025-02-28</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-02-26 [b6d160f]
+    -->
+    <para>
+     サンプルフォロープライマリスクリプトから<command>pg_basebackup</command>の処理を削除しました。(Bo Peng)
+    </para>
+    <para>
+     <command>pg_rewind</command>が失敗した場合、ユーザーにとって最も安全な方法は手動で復旧することです。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-01-31 [3536f80]
+    -->
+    <para>
+     <function>per_node_error_log()</function>のエラーメッセージでコロンが重複して出力される不具合を修正しました。(Bo Peng)
+    </para>
+    <para>
+     パッチはUmar Hayatによって作成されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-01-12 [15c0a5b]
+    -->
+    <para>
+     <function>pool_signal</function>の不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前は、<function>pool_signal</function>は<literal>SA_RESTART</literal>フラグを設定していませんでした。
+     そのため、シグナルによって中断されたシステムコールは再起動されません。
+     一部のコードは、システムコールがシグナルによって中断された場合に再起動するように準備されています。
+     しかし、すべての箇所で対応できているかは不明なため、フラグを追加しました。
+     なお、PostgreSQLでは常にこのフラグが使用されています。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-12-09 [8d4fb84]
+    -->
+    <para>
+     <xref linkend="guc-pool-passwd">パラメータにデフォルト値以外のファイルが指定されている場合に、<command>pg_md5</command>と<command>pg_enc</command>がパスワードファイルを更新しない問題を修正しました。(Bo Peng)
+    </para>
+    <para>
+     この問題はSadhuprasad Patroによって報告されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-12-04 [6489bb0]
+    2024-12-11 [2a99aa5]
+    -->
+    <para>
+     ストリーミングレプリケーションモードにおけるクエリキャッシュのいくつかの不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+      クエリキャッシュが有効で、フロントエンドから実行メッセージが送信された場合、クエリキャッシュデータが使用可能であれば、Pgpool-IIはそのデータをバックエンドメッセージバッファに挿入します。
+      しかし、キャッシュされたメッセージが不適切な位置に挿入されることで、Pgpool-IIが誤って「kind mismatch」エラーを発生させることがありました。
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       また、クエリキャッシュが有効で、クエリが拡張クエリモードで実行されている場合に、Pgpool-II がストリーミングレプリケーションモードで動作していると、実行メッセージが誤った結果を返す可能性がありました。
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       さらに、複数の実行メッセージが連続して送信された場合、Pgpool-IIは各実行メッセージに対してクエリキャッシュから同じ結果を返していましたが、これは誤りです。
+       本来、2回目以降の実行では0行が返されるべきでした。
+      </para>
+      <para>
+       ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-December/004548.html">[pgpool-hackers: 4547] Bug in query cache</ulink>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-01-17 [3db1305]
+    -->
+    <para>
+     クライアント認証の章を強化しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     pool_passwdに関する説明部分を追加しました。
+     これまで、概要ページにはpool_hba.confの説明のみが記載されていましたが、今回pool_passwdの一般的なガイドを追加しました。
+     これにより、ユーザーがこの章をより理解しやすくなりました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-01-14 [0a38c5d]
+    -->
+    <para>
+     032.dml_adaptive_loadbalanceテストの安定性を向上させました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-5-5">
  <title>リリース 4.5.5</title>
   <note>
