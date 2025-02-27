@@ -1,6 +1,5 @@
 #!/bin/bash
 # This script is run after failover_command to synchronize the Standby with the new Primary.
-# First try pg_rewind. If pg_rewind failed, use pg_basebackup.
 
 set -o xtrace
 
