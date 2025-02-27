@@ -1,3 +1,150 @@
+<sect1 id="release-4-5-6">
+ <title>Release 4.5.6</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2025-02-28</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-02-26 [b6d160f]
+    -->
+    <para>
+     Remove <command>pg_basebackup</command> from the sample follow primary script. (Bo Peng)
+    </para>
+    <para>
+     If <command>pg_rewind</command> fails, the safest way for users is to recover manually.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-01-31 [3536f80]
+    -->
+    <para>
+     Fix <function>per_node_error_log()</function> error message that is printed with two colons. (Bo Peng)
+    </para>
+    <para>
+     Patch is created by Umar Hayat.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-01-12 [15c0a5b]
+    -->
+    <para>
+     Fix <function>pool_signal</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously pool_signal did not set SA_RESTART flag.  Thus any system
+     calls interrupted by a signal does not restart. Some of our code are
+     prepared so that they restart if a system call is interrupted by a
+     signal. But not sure all places are prepared too. So add the
+     flag. Note, <productname>PostgreSQL</productname> always uses the flag.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-12-09 [8d4fb84]
+    -->
+    <para>
+     Fixed an issue where <command>pg_md5</command> and
+     <command>pg_enc</command> would not update the password
+     file if a file other than the default value was specified
+     in the <xref linkend="guc-pool-passwd"> parameter. (Bo Peng)
+    </para>
+    <para>
+     This issue is reported by Sadhuprasad Patro.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2024-12-04 [6489bb0]
+    2024-12-11 [2a99aa5]
+    -->
+    <para>
+     Fix several query cache bugs in streaming replication mode. (Tatsuo Ishii)
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       When query cache is enabled and an execute message is sent from
+       frontend, <productname>Pgpool-II</productname> injects query cache
+       data into backend message buffer if query cache data is available.
+       But it was possible that the cached message is inserted at
+       inappropriate position and <productname>Pgpool-II</productname>
+       mistakenly raised "kind mismatch" error.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       If query cache is enabled and query is operated in extended query mode
+       and pgpool is running in streaming replication mode, an execute
+       message could return incorrect results.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Another trouble is when multiple execute messages are sent
+       consecutively.  In this case Pgpool-II returned exactly the same
+       results from query cache for each execute message. This is wrong since
+       the second or subsequent executes should return 0 rows.
+      </para>
+      <para>
+       Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2024-December/004548.html">[pgpool-hackers: 4547] Bug in query cache</ulink>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-01-17 [3db1305]
+    -->
+    <para>
+     Enhance client authentication chapter. (Tatsuo Ishii)
+    </para>
+    <para>
+     Add intro about pool_passwd. Previously there was only description on
+     pool_hba.conf in the overview page. A general guide to
+     <xref linkend="guc-pool-passwd">
+     will help users to understand this chapter.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-01-14 [0a38c5d]
+    -->
+    <para>
+     Stabilize 032.dml_adaptive_loadbalance (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-5-5">
  <title>Release 4.5.5</title>
   <note>
