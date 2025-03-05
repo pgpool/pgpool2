@@ -79,6 +79,16 @@
      -->
      ストリーミングレプリケーションのチェックを行う<productname>PostgreSQL</>ユーザ名を指定します。
      このユーザはLOGIN権限を持ち、すべてのバックエンドに存在しなければなりません。
+     更にこのユーザは、<productname>PostgreSQL</productname>のスーパーユーザか、"pg_monitor"グループに所属していなければなりません。
+     <note>
+      <para>
+       <xref linkend="guc-sr-check-user">をpg_monitorグループに所属させるには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
+       <programlisting>
+GRANT pg_monitor TO sr_check_user;
+       </programlisting>
+       <productname>PostgreSQL</productname> 9.6にはpg_monitorグループがないので、<xref linkend="guc-sr-check-user">は<productname>PostgreSQL</productname>のスーパーユーザーでなければなりません。
+    </para>
+   </note>
     </para>
     <para>
      <!--
