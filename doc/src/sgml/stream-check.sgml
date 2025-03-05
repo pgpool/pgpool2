@@ -52,6 +52,23 @@
      Default is <literal>''</literal>(empty).
      The user must have LOGIN privilege and exist on all the
      <productname>PostgreSQL</> backends.
+     Moreover the user must be a <productname>PostgreSQL</productname>
+     super user or in "pg_monitor" group.
+   <note>
+    <para>
+     To make <xref linkend="guc-sr-check-user"> in pg_monitor
+     group, execute following SQL command
+     by <productname>PostgreSQL</productname> super user (replace
+     "sr_check_user" with the setting of <xref linkend="guc-sr-check-user">):
+     <programlisting>
+GRANT pg_monitor TO sr_check_user;
+     </programlisting>
+     For <productname>PostgreSQL</productname> 9.6, there's no
+     pg_monitor group and <xref linkend="guc-sr-check-user"> must
+     be <productname>PostgreSQL</productname> super user.
+    </para>
+   </note>
+
     </para>
     <para>
      If <link linkend="runtime-ssl">SSL</link> is enabled, the
