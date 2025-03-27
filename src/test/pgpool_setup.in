@@ -77,7 +77,7 @@ PGBIN=${PGBIN:-"@@PGSQL_BIN_DIR@@"}
 # LD_LIBRARY_PATH 
 LPATH=${PGLIB:-"@@PGSQL_LIB_DIR@@"}
 # unix socket directory
-PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp"}
+PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp,/var/run/postgresql"}
 # initdb args
 INITDBARG="--no-locale -E UTF_8"
 # Use replication slot

@@ -22,7 +22,7 @@ export log=$dir/log
 fail=0
 ok=0
 timeout=0
-PGSOCKET_DIR=/tmp
+PGSOCKET_DIR=/tmp,/var/run/postgresql
 
 CRED=$(tput setaf 1)
 CGREEN=$(tput setaf 2)
