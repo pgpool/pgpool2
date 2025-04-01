@@ -76,8 +76,24 @@ PGPOOLDIR=${PGPOOLDIR:-"@@PGPOOL_CONFIG_DIR@@"}
 PGBIN=${PGBIN:-"@@PGSQL_BIN_DIR@@"}
 # LD_LIBRARY_PATH 
 LPATH=${PGLIB:-"@@PGSQL_LIB_DIR@@"}
-# unix socket directory
+# unix socket directories
 PGSOCKET_DIR=${PGSOCKET_DIR:-"/tmp,/var/run/postgresql"}
+# remove inaccessible diretories from PGSOCKET_DIR
+tmp=`echo $PGSOCKET_DIR|sed "s/,/ /"`
+dir=""
+first=true
+for i in $tmp
+do
+    if [ -w $i ];then
+	if [ $first != "true" ];then
+	    dir="$dir,$i"
+	else
+	    dir=$i
+	fi
+    fi
+    first=false
+done
+PGSOCKET_DIR=$dir
 # initdb args
 INITDBARG="--no-locale -E UTF_8"
 # Use replication slot
