@@ -281,10 +281,20 @@
     <listitem>
      <para>
       Specifies the time in seconds to terminate the cached connections
-      to the PostgreSQL backend. This serves as the cached connection expiration time.
+      to the <productname>PostgreSQL</> backend. This serves as the cached connection expiration time.
      </para>
      <para>
-      The default is 0, which means the cached connections will not be disconnected.
+      If a client connects to the process which holds the cached
+      connections, a calculation on
+      the <varname>connection_life_time</varname> is not performed
+      until the client disconnects. Thus it is possible that the cached
+      connections are kept for longer time than this value. To avoid
+      this, it is recommended to set shorter value
+      to <xref linkend="guc-client-idle-limit">.
+     </para>
+     <para>
+      The default is 0, which means the cached connections will not be
+      disconnected.
      </para>
      <para>
       This parameter can only be set at server start.
