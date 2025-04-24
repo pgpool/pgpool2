@@ -445,6 +445,11 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
       これはキャッシュされた接続の有効期間として働きます。
      </para>
      <para>
+      このキャッシュを保持するプロセスに接続中のクライアントがある場合は、その接続が終了するまで<varname>connection_life_time</varname>の有効期間が来たかどうかの計算は行われません。
+      したがって、このパラメータの設定値よりも長時間キャッシュされたコネクションが保持されることがあり得ます。
+      これを避けたい場合は、<xref linkend="guc-client-idle-limit">を短めに設定することをお勧めします。
+     </para>
+     <para>
       <!--
       The default is 0, which means the cached connections will not be disconnected.
       -->
