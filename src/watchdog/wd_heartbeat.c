@@ -275,7 +275,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 
 	if ((gai_ret = getaddrinfo(NULL, portstr, &hints, &res)) != 0)
 	{
-		ereport(ERROR,
+		ereport(WARNING,
 				(errmsg("getaddrinfo() failed with error \"%s\"", gai_strerror(gai_ret))));
 		pfree(portstr);
 		return NIL;
@@ -304,25 +304,29 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 		if ((sock = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol)) < 0)
 		{
 			/* socket create failed */
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog heartbeat receive socket"),
 					 errdetail("create socket failed with reason: \"%m\"")));
+			continue;
 		}
 
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1)
 		{
-			close(sock);
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog heartbeat receive socket"),
 					 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%m\"")));
+			close(sock);
+			continue;
 		}
 		if (walk->ai_family == AF_INET6)
 		{
 			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &one, sizeof(one)) == -1)
 			{
-				ereport(ERROR,
+				ereport(LOG,
 						(errmsg("failed to set IPPROTO_IPV6 option to watchdog heartbeat recv socket"),
 						 errdetail("setsockopt(IPV6_V6ONLY) failed with reason: \"%m\"")));
+				close(sock);
+				continue;
 			}
 		}
 
@@ -338,25 +342,29 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 
 					if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
 					{
-						close(sock);
-						ereport(ERROR,
+						ereport(LOG,
 								(errmsg("failed to create watchdog heartbeat receive socket"),
 								 errdetail("setsockopt(SO_BINDTODEVICE) failed with reason: \"%m\"")));
+						close(sock);
+						continue;
 					}
 					ereport(LOG,
 							(errmsg("creating watchdog heartbeat receive socket."),
 							 errdetail("bind receive socket to device: \"%s\"", i.ifr_name)));
-
 				}
 				else
+				{
 					ereport(LOG,
 							(errmsg("failed to create watchdog heartbeat receive socket."),
 							 errdetail("setsockopt(SO_BINDTODEVICE) requires root privilege")));
+					continue;
+				}
 			}
 #else
 			ereport(LOG,
 					(errmsg("failed to create watchdog heartbeat receive socket"),
 					 errdetail("setsockopt(SO_BINDTODEVICE) is not available on this platform")));
+			continue;
 #endif
 		}
 
@@ -371,7 +379,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 				inet_ntop(AF_INET6, &((struct sockaddr_in6 *) walk->ai_addr)->sin6_addr, buf, walk->ai_addrlen);
 				break;
 			default:
-				ereport(ERROR, (errmsg("invalid incoming socket family data")));
+				ereport(LOG, (errmsg("invalid incoming socket family data")));
 				break;
 		}
 		ereport(LOG,
@@ -397,19 +405,18 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 		/* bind failed finally */
 		if (!bind_is_done)
 		{
+			ereport(LOG,
+					(errmsg("failed to create watchdog heartbeat receive socket")));
 			close(sock);
-			ereport(ERROR,
-					(errmsg("failed to create watchdog heartbeat receive socket"),
-					 errdetail("bind socket failed with reason: \"%m\"")));
 			continue;
 		}
 
 		if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0)
 		{
-			close(sock);
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog heartbeat receive socket"),
 					 errdetail("setting close-on-exec flag failed with reason: \"%m\"")));
+			close(sock);
 			continue;
 		}
 
