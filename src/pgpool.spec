@@ -70,7 +70,7 @@ Requires(preun):  chkconfig
 Requires(preun):  initscripts
 Requires(postun): initscripts
 %endif
-Obsoletes:      postgresql-pgpool
+Obsoletes:      postgresql-pgpool < %{version}
 
 # original pgpool archive name
 %define archive_name pgpool-II-%{version}
