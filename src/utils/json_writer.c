@@ -26,6 +26,7 @@
 #include "utils/palloc.h"
 #include "utils/json_writer.h"
 
+static void jw_put_string_escape(JsonNode * jNode, char *string);
 static inline int jw_get_current_element_count(JsonNode * jNode);
 static inline void jw_inc_current_element_count(JsonNode * jNode);
 static inline JWElementType jw_get_current_element_type(JsonNode * jNode);
@@ -67,9 +68,50 @@ jw_put_string(JsonNode * jNode, char *key, char *value)
 
 	if (jw_get_current_element_count(jNode) > 0)
 		appendStringInfoChar(jNode->buf, ',');
-	appendStringInfo(jNode->buf, "\"%s\":\"%s\"", key, value);
+	jw_put_string_escape(jNode, key);
+	appendStringInfoChar(jNode->buf, ':');
+	jw_put_string_escape(jNode, value);
 	jw_inc_current_element_count(jNode);
 	return true;
+}
+
+static void
+jw_put_string_escape(JsonNode * jNode, char *string)
+{
+	int i;
+
+	appendStringInfoChar(jNode->buf, '"');
+	for (i = 0; string[i] != '\0'; i++)
+	{
+		switch (string[i])
+		{
+			case '\"':
+				appendStringInfo(jNode->buf, "\\\"");
+				break;
+			case '\\':
+				appendStringInfo(jNode->buf, "\\\\");
+				break;
+			case '\b':
+				appendStringInfo(jNode->buf, "\\b");
+				break;
+			case '\f':
+				appendStringInfo(jNode->buf, "\\f");
+				break;
+			case '\n':
+				appendStringInfo(jNode->buf, "\\n");
+				break;
+			case '\r':
+				appendStringInfo(jNode->buf, "\\r");
+				break;
+			case '\t':
+				appendStringInfo(jNode->buf, "\\t");
+				break;
+			default:
+				appendStringInfoChar(jNode->buf, string[i]);
+				break;
+		}
+	}
+	appendStringInfoChar(jNode->buf, '"');
 }
 
 /* for compatibility reasons we pack bool in int*/
