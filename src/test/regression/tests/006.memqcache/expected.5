@@ -1,0 +1,37 @@
+FE=> Query (query="CREATE TABLE regress_test(i int)")
+<= BE CommandComplete(CREATE TABLE)
+<= BE ReadyForQuery(I)
+FE=> Query (query="INSERT INTO regress_test VALUES(1)")
+<= BE CommandComplete(INSERT 0 1)
+<= BE ReadyForQuery(I)
+FE=> Parse(stmt="S0", query="SELECT * FROM regress_test WHERE i = 1")
+FE=> Bind(stmt="S0", portal="P0")
+FE=> Describe(portal="P0")
+FE=> Execute(portal="P0")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE RowDescription
+<= BE DataRow
+<= BE CommandComplete(SELECT 1)
+<= BE ReadyForQuery(I)
+FE=> Parse(stmt="S2", query="UPDATE regress_test SET i = 2")
+FE=> Bind(stmt="S2", portal="P2")
+FE=> Execute(portal="P2")
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE CommandComplete(UPDATE 1)
+<= BE ReadyForQuery(I)
+FE=> Bind(stmt="S0", portal="P0")
+FE=> Describe(portal="P0")
+FE=> Execute(portal="P0")
+FE=> Sync
+<= BE BindComplete
+<= BE RowDescription
+<= BE CommandComplete(SELECT 0)
+<= BE ReadyForQuery(I)
+FE=> Query (query="DROP TABLE regress_test")
+<= BE CommandComplete(DROP TABLE)
+<= BE ReadyForQuery(I)
+FE=> Terminate

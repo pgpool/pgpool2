@@ -488,7 +488,7 @@ echo "done."
 echo "memory_cache_enabled = on" >> etc/pgpool.conf
 cd ..
 
-for i in 1 2 3 4 4
+for i in 1 2 3 4 4 5
 do
     #
     # case 1: failed with kind mismatch error at #5.
@@ -501,7 +501,15 @@ do
     # case 4: various cases including portal suspended
     # Note that case4 is executed twice to make sure that
     # the test works for either query cache exists or does not exist
+    #
+    # case 5: simple cache invalidation test.
     cd $TESTDIR
+
+    # case 5 includes UPDATE, and we want the result without disturbed
+    # by replication delay.
+    if [ $i = 5 ];then
+	echo "backend_weight1 = 0" >> etc/pgpool.conf
+    fi
     ./startall
     wait_for_pgpool_startup
     timeout 1 $PGPROTO -d test -f ../query_cache_bug$i.data |& del_details_from_error > result

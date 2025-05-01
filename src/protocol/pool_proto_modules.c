@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -897,6 +897,9 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	/* obtain number of returning rows */
 	p = contents + strlen(contents) + 1;
 	memcpy(&num_rows, p, sizeof(num_rows));
+	num_rows = ntohl(num_rows);
+	ereport(DEBUG1,
+			(errmsg("Execute: num_rows: %d", num_rows)));
 
 	bind_msg = pool_get_sent_message('B', contents, POOL_SENT_MESSAGE_CREATED);
 	if (!bind_msg)
@@ -928,11 +931,12 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	query = bind_msg->query_context->original_query;
 
 	/*
-	 * If execute message's parameter is not 0, set partial_fetch flag to true
-	 * so that subsequent execute message knows that the portal started with
-	 * partial fetching.
+	 * If execute message's parameter is not 0 and the query is cache safe
+	 * (i.e. read only SELECT), set partial_fetch flag to true so that
+	 * subsequent execute message knows that the portal started with partial
+	 * fetching.
 	 */
-	if (num_rows != 0)
+	if (num_rows != 0 && query_context->is_cache_safe && !query_cache_disabled())
 	{
 		query_context->partial_fetch = true;
 		elog(DEBUG1, "set partial_fetch in execute");
