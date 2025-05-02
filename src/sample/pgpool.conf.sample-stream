@@ -1,6 +1,6 @@
-# ----------------------------
-# pgPool-II configuration file
-# ----------------------------
+# --------------------------------
+# Pgpool-II 4.6 configuration file
+# --------------------------------
 #
 # This file consists of lines of the form:
 #
