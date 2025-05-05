@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2018	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -221,7 +221,7 @@ calculate_hmac_sha256(const char *data, int len, char *buf)
 	unsigned int res_len = WD_AUTH_HASH_LEN;
 	HMAC_CTX   *ctx = NULL;
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
 	ctx = HMAC_CTX_new();
 	HMAC_CTX_reset(ctx);
 #else
@@ -233,7 +233,7 @@ calculate_hmac_sha256(const char *data, int len, char *buf)
 	HMAC_Init_ex(ctx, key, strlen(key), EVP_sha256(), NULL);
 	HMAC_Update(ctx, (unsigned char *) data, len);
 	HMAC_Final(ctx, (unsigned char *) str, &res_len);
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined (LIBRESSL_VERSION_NUMBER))
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
 	HMAC_CTX_reset(ctx);
 	HMAC_CTX_free(ctx);
 #else
