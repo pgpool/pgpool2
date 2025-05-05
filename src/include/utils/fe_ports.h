@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,6 +28,7 @@
 #error "This file is not expected to be compiled for pgpool utilities only"
 #endif
 
+#include <stdarg.h>
 #include <stdlib.h>
 #ifndef FE_PORTS
 #define FE_PORTS
