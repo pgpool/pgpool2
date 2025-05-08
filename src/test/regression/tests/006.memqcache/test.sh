@@ -540,7 +540,7 @@ echo "done."
 echo "memory_cache_enabled = on" >> etc/pgpool.conf
 cd ..
 
-for i in 1 2 3 4 4 5
+for i in 1 2 3 4 4 5 6 7
 do
     #
     # case 1: failed with kind mismatch error at #5.
@@ -555,6 +555,11 @@ do
     # the test works for either query cache exists or does not exist
     #
     # case 5: simple cache invalidation test.
+    #
+    # case 6: execute INSERT without parse message cache invalidation test.
+    #
+    # case 7: similar to case 6 except this uses an explicit transaction.
+
     cd $TESTDIR
 
     # case 5 includes UPDATE, and we want the result without disturbed
