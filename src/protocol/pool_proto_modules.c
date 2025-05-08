@@ -1772,6 +1772,33 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	}
 
 	/*
+	 * If query cache is enabled and we updating table, save table oids. It
+	 * maybe possible that Parse() already collected the information but if
+	 * Bind is called without prior parse (this could happen if named prepared
+	 * statement is used), we miss the information. So we re-collect the
+	 * information here. This could result in duplicate oids in oid table, but
+	 * it's Okay. The duplication will be ignored anyway.
+	 */
+	if (pool_config->memory_cache_enabled)
+	{
+		/*
+		 * Save table oids if we are updating the table.
+		 */
+		if (!query_context->is_parse_error)
+		{
+			int			num_oids;
+			int		   *oids;
+			int			i;
+
+			num_oids = pool_extract_table_oids(query_context->parse_tree,
+											   &oids);
+			/* Save to oid buffer */
+			for (i = 0; i < num_oids; i++)
+					pool_add_dml_table_oid(oids[i]);
+		}
+	}
+
+	/*
 	 * Start a transaction if necessary in replication mode
 	 */
 	if (REPLICATION)
