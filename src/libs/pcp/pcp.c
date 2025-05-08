@@ -41,6 +41,7 @@
 #include "pool.h"
 #include "pcp/pcp.h"
 #include "pcp/pcp_stream.h"
+#include "utils/fe_ports.h"
 #include "utils/pool_path.h"
 #include "utils/palloc.h"
 #include "utils/pool_process_reporting.h"
@@ -229,6 +230,12 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		snprintf(port_str, sizeof(port_str), "%d", port);
 		password_from_file = PasswordFromFile(pcpConn, hostname, port_str, username);
 		password = password_from_file;
+
+		/*
+		 * If reading password from .pcppass file fails, try to read it from prompt.
+		 */
+		if (password == NULL || *password == '\0')
+			password = simple_prompt("Password: ", 100, false);
 	}
 
 	if (pcp_authorize(pcpConn, username, password) < 0)
@@ -2087,17 +2094,15 @@ PasswordFromFile(PCPConnInfo * pcpConn, char *hostname, char *port, char *userna
 
 	if (!S_ISREG(stat_buf.st_mode))
 	{
-		if (pcpConn->Pfdebug)
-			fprintf(pcpConn->Pfdebug, "WARNING: password file \"%s\" is not a plain file\n", pgpassfile);
+		fprintf(stderr, "WARNING: password file \"%s\" is not a plain file\n", pgpassfile);
 		return NULL;
 	}
 
 	/* If password file is insecure, alert the user and ignore it. */
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 	{
-		if (pcpConn->Pfdebug)
-			fprintf(pcpConn->Pfdebug, "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n",
-					pgpassfile);
+		fprintf(stderr, "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n",
+				pgpassfile);
 		return NULL;
 	}
 
