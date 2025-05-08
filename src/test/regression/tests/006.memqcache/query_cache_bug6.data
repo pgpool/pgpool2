@@ -1,0 +1,38 @@
+# Test case for query cache invalidation bug.
+# 
+
+# create a test table "regress_test".
+'Q'	"CREATE TABLE regress_test(i int)"
+'Y'
+
+# create named statement S1 for INSERT.
+'P'	"S1"	"INSERT INTO regress_test VALUES(1)"	0
+'B'	""	"S1"	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+# create query cache.
+'P'	"S2"	"SELECT * FROM regress_test WHERE i = 1"	0
+'B'	""	"S2"	0	0	0   
+'E'	""	0
+'S'
+'Y'
+
+# INSERT one more row without bind message.
+'B'	""	"S1"	0	0	0
+'E'	""	0
+'S'
+'Y'
+
+# This should return 2 rows if query cache validation succeeds.
+'B'	""	"S2"	0	0	0   
+'E'	""	0
+'S'
+'Y'
+
+# drop the test table.
+'Q'	"DROP TABLE regress_test"
+'Y'
+
+'X'
