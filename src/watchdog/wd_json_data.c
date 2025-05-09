@@ -540,8 +540,8 @@ get_watchdog_node_from_json(char *json_data, int data_len, char **authkey)
 	if (json_get_long_value_for_key(root, "StartupTimeSecs", &wdNode->startup_time.tv_sec))
 	{
 		bool		escalated;
-		long		seconds_since_node_startup;
-		long		seconds_since_current_state;
+		time_t		seconds_since_node_startup;
+		time_t		seconds_since_current_state;
 		struct timeval current_time;
 
 		gettimeofday(&current_time, NULL);
@@ -640,8 +640,8 @@ ERROR_EXIT:
 bool
 parse_beacon_message_json(char *json_data, int data_len,
 						  int *state,
-						  long *seconds_since_node_startup,
-						  long *seconds_since_current_state,
+						  time_t *seconds_since_node_startup,
+						  time_t *seconds_since_current_state,
 						  int *quorumStatus,
 						  int *standbyNodesCount,
 						  bool *escalated)
