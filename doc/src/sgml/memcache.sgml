@@ -99,6 +99,19 @@
   </para>
  </note>
 
+ <note>
+  <para>
+   If multiple functions having the same name are registered and one
+   of them returns TIMESTAMP WITH TIMEZONE or TIME WITH
+   TIMEZONE, <productname>Pgpool-II</productname> thinks that the
+   query cannot be cached even if it uses a version of function which
+   does not return TIMESTAMP WITH TIMEZONE or TIME WITH TIMEZONE. In
+   this case you can create a wrapper function returning TIMESTAMP
+   WITHOUT TIMEZONE or TIME WITHOUT TIMEZONE, or use /*FORCE QUERY
+   CACHE*/ comment so that you can use the query cache.
+  </para>
+ </note>
+
  <para>
   On the other hand, it might be slower than the normal path
   in some cases, because it adds some overhead to store cache.
