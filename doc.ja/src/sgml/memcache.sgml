@@ -136,6 +136,13 @@
   </para>
  </note>
 
+ <note>
+  <para>
+   関数が同じ名前で複数登録されていて、その中にTIMESTAMP WITH TIMEZONE、TIME WITH TIMEZONEを返す関数が含まれている場合、実際にSQL文の中で使われている関数がTIMESTAMP WITH TIMEZONEを返さないものであっても、<productname>Pgpool-II</productname>は、キャッシュできないと判断します。
+   その場合は、その関数のラッパー関数を作成し、TIMESTAMP WITHOUT TIMEZONEあるいはTIME WITHOUT TIMEZONEを返すようにするか、/*FORCE QUERY CACHE*/コメントを使用することによってクエリキャッシュが使えます。
+  </para>
+ </note>
+
  <para>
   <!--
   In memory cache saves the pair of SELECT statement
