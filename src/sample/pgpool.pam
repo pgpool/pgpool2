@@ -1,3 +1,2 @@
 #%PAM-1.0
-auth		required	pam_permit.so
-account		required	pam_permit.so
+# create your own PAM configurations
