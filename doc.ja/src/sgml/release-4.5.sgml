@@ -3,10 +3,110 @@
 
 <sect1 id="release-4-5-7">
  <title>リリース 4.5.7</title>
-  <note>
-   <title>リリース日</title>
-   <simpara>2025-05-15</simpara>
-  </note>
+ <note>
+  <title>リリース日</title>
+  <simpara>2025-05-15</simpara>
+ </note>
+
+ <sect2>
+  <title>概要</title>
+  <para>
+   このリリースには、セキュリティ修正が含まれています。
+  </para>
+  <para>
+   <productname>Pgpool-II</productname>のクライアント認証メカニズムには認証バイパスの脆弱性があります。
+   本来であれば認証が必要な場合でも、認証処理がスキップされてしまう可能性があります。
+   この脆弱性を悪用することで、攻撃者が任意のユーザとしてログインし、データベース内の情報を参照・改ざんしたり、データベースを停止させたりすることができる可能性があります。(CVE-2025-46801)
+  </para>
+  <para>
+   なお、本脆弱性の影響を受けるのは、下記のパターン1から3いずれかの条件を満たす場合に限られます。
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     パターン 1：次の条件をすべて満たす場合、本脆弱性の影響を受ける可能性があります。
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       <filename>pool_hba.conf</filename>で<literal>password</literal>認証方式を使用している
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       allow_clear_text_frontend_auth = off
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <filename>pool_passwd</filename>に対象ユーザのパスワードが設定されていない
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <filename>pg_hba.conf</filename>で<literal>scram-sha-256</literal>または<literal>md5</literal>認証方式を使用している
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <para>
+     パターン 2：次の条件をすべて満たす場合、本脆弱性の影響を受ける可能性があります。
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       enable_pool_hba = off
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <filename>pg_hba.conf</filename>で<literal>password</literal>、<literal>pam</literal>、<literal>ldap</literal>のいずれかの認証方式を使用している
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <para>
+     パターン 3：次の条件をすべて満たす場合、本脆弱性の影響を受ける可能性があります。
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       rawモードを使用している (backend_clustering_mode = 'raw')
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <filename>pool_hba.conf</filename>で<literal>md5</literal>認証方式を使用している
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       allow_clear_text_frontend_auth = off
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <filename>pool_passwd</filename>に対象ユーザのパスワードがテキストまたはAES形式で登録されている
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <filename>pg_hba.conf</filename>で<literal>password</literal>、<literal>pam</literal>、<literal>ldap</literal>のいずれかの認証方式を使用している
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+  </itemizedlist>
+  <para>
+   この脆弱性の影響を受けるのは、<productname>Pgpool-II</productname> 4.0系および4.1系のすべてのバージョン、4.2.0-4.2.21、4.3.0-4.3.14、4.4.0-4.4.11、4.5.0-4.5.6、4.6.0です。
+   <productname>Pgpool-II</productname> 4.6.1、4.5.7、4.4.12、4.3.15、4.2.22以降へのアップグレードを強くお勧めします。
+   それができない場合は、発生条件パターンに当てはまらない設定の組み合わせに変更してください。
+  </para>
+ </sect2>
 
  <sect2>
   <title>変更点</title>
