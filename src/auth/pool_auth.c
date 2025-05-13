@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -37,9 +37,6 @@
 #include "auth/md5.h"
 #include <unistd.h>
 
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -64,10 +61,8 @@
 static POOL_STATUS pool_send_backend_key_data(POOL_CONNECTION * frontend, int pid, int key, int protoMajor);
 static int	do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int protoMajor);
 static void pool_send_auth_fail(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp);
-static int	do_crypt(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int protoMajor);
 static int do_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int protoMajor,
 	   char *storedPassword, PasswordType passwordType);
-static int	do_md5_single_backend(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int protoMajor);
 static void send_md5auth_request(POOL_CONNECTION * frontend, int protoMajor, char *salt);
 static int	read_password_packet(POOL_CONNECTION * frontend, int protoMajor, char *password, int *pwdSize);
 static int	send_password_packet(POOL_CONNECTION * backend, int protoMajor, char *password);
@@ -464,30 +459,6 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 		}
 	}
 
-	/* crypt authentication? */
-	else if (authkind == AUTH_REQ_CRYPT)
-	{
-		for (i = 0; i < NUM_BACKENDS; i++)
-		{
-			if (!VALID_BACKEND(i))
-				continue;
-
-			ereport(DEBUG1,
-					(errmsg("authentication backend"),
-					 errdetail("trying crypt authentication")));
-
-			authkind = do_crypt(CONNECTION(cp, i), frontend, 0, protoMajor);
-
-			if (authkind < 0)
-			{
-				pool_send_auth_fail(frontend, cp);
-				ereport(ERROR,
-						(errmsg("failed to authenticate with backend"),
-						 errdetail("do_crypt_text_password failed in slot %d", i)));
-			}
-		}
-	}
-
 	/* md5 authentication? */
 	else if (authkind == AUTH_REQ_MD5)
 	{
@@ -497,41 +468,38 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 		/*
 		 * check if we can use md5 authentication.
 		 */
-		if (!RAW_MODE && NUM_BACKENDS > 1)
+		if (get_auth_password(MAIN(cp), frontend, 0,
+							  &password, &passwordType) == false)
 		{
-			if (get_auth_password(MAIN(cp), frontend, 0,
-								  &password, &passwordType) == false)
+			/*
+			 * We do not have any password, we can still get the password
+			 * from client using plain text authentication if it is
+			 * allowed by user
+			 */
+			if (frontend->pool_hba == NULL && pool_config->allow_clear_text_frontend_auth)
 			{
-				/*
-				 * We do not have any password, we can still get the password
-				 * from client using plain text authentication if it is
-				 * allowed by user
-				 */
-				if (frontend->pool_hba == NULL && pool_config->allow_clear_text_frontend_auth)
+				ereport(LOG,
+						(errmsg("using clear text authentication with frontend"),
+						 errdetail("backend will still use md5 auth"),
+						 errhint("you can disable this behavior by setting allow_clear_text_frontend_auth to off")));
+				authenticate_frontend_clear_text(frontend);
+				/* now check again if we have a password now */
+				if (get_auth_password(MAIN(cp), frontend, 0,
+									  &password, &passwordType) == false)
 				{
-					ereport(LOG,
-							(errmsg("using clear text authentication with frontend"),
-							 errdetail("backend will still use md5 auth"),
-							 errhint("you can disable this behavior by setting allow_clear_text_frontend_auth to off")));
-					authenticate_frontend_clear_text(frontend);
-					/* now check again if we have a password now */
-					if (get_auth_password(MAIN(cp), frontend, 0,
-										  &password, &passwordType) == false)
-					{
-						ereport(ERROR,
-								(errmsg("failed to authenticate with backend using md5"),
-								 errdetail("unable to get the password")));
-					}
+					ereport(ERROR,
+							(errmsg("failed to authenticate with backend using md5"),
+							 errdetail("unable to get the password")));
 				}
 			}
-			/* we have a password to use, validate the password type */
-			if (passwordType != PASSWORD_TYPE_PLAINTEXT && passwordType != PASSWORD_TYPE_MD5
-				&& passwordType != PASSWORD_TYPE_AES)
-			{
-				ereport(ERROR,
-						(errmsg("failed to authenticate with backend using md5"),
-						 errdetail("valid password not found")));
-			}
+		}
+		/* we have a password to use, validate the password type */
+		if (passwordType != PASSWORD_TYPE_PLAINTEXT && passwordType != PASSWORD_TYPE_MD5
+			&& passwordType != PASSWORD_TYPE_AES)
+		{
+			ereport(ERROR,
+					(errmsg("failed to authenticate with backend using md5"),
+					 errdetail("valid password not found")));
 		}
 
 		for (i = 0; i < NUM_BACKENDS; i++)
@@ -838,19 +806,16 @@ pool_do_reauth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 				do_clear_text_password(MAIN(cp), frontend, 1, protoMajor);
 				break;
 
-			case AUTH_REQ_CRYPT:
-				/* crypt password */
-				do_crypt(MAIN(cp), frontend, 1, protoMajor);
-				break;
-
 			case AUTH_REQ_MD5:
 				/* md5 password */
 				authenticate_frontend_md5(MAIN(cp), frontend, 1, protoMajor);
 				break;
+
 			case AUTH_REQ_SASL:
 				/* SCRAM */
 				authenticate_frontend_SCRAM(MAIN(cp), frontend, 1);
 				break;
+
 			default:
 				ereport(ERROR,
 						(errmsg("authentication failed"),
@@ -1017,6 +982,7 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 	char	   *pwd = NULL;
 	int			kind;
 	PasswordType passwordType = PASSWORD_TYPE_UNKNOWN;
+	bool		rtn;
 
 	if (reauth && frontend->frontend_authenticated)
 	{
@@ -1024,7 +990,23 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 		return 0;
 	}
 
-	if (get_auth_password(backend, frontend, reauth, &pwd, &passwordType) == false)
+	rtn = get_auth_password(backend, frontend, reauth, &pwd, &passwordType);
+
+	/*
+	 * If pool_hba.conf == "password", we should already have frontend
+	 * password.  When reauth, we want the password, rather than
+	 * backend->password, which is returned by get_auth_password() if
+	 * pool_passwd does not have an entry for the user.
+	 */
+	if (reauth && rtn && frontend->passwordMapping == NULL &&
+		frontend->pwd_size > 0 &&
+		frontend->passwordType == PASSWORD_TYPE_PLAINTEXT)
+	{
+		pwd = frontend->password;
+		passwordType = frontend->passwordType;
+	}
+
+	else if (!rtn || frontend->pwd_size == 0)
 	{
 		/*
 		 * We do not have any password, we can still get the password
@@ -1043,8 +1025,7 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 			authenticate_frontend_clear_text(frontend);
 
 			/* now check again if we have a password now */
-
-			if (get_auth_password(backend, frontend, reauth, &pwd, &passwordType) == false)
+			if (get_auth_password(backend, frontend, 0, &pwd, &passwordType) == false)
 			{
 				ereport(FATAL,
 						(return_code(2),
@@ -1110,157 +1091,6 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 		backend->pwd_size = size;
 		memcpy(backend->password, pwd, backend->pwd_size);
 		backend->passwordType = PASSWORD_TYPE_PLAINTEXT;
-	}
-	return kind;
-}
-
-/*
- * perform crypt authentication
- */
-static int
-do_crypt(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int protoMajor)
-{
-	char		salt[2];
-	static int	size;
-	static char password[MAX_PASSWORD_SIZE];
-	char		response;
-	int			kind;
-	int			len;
-
-	if (!reauth)
-	{
-		/* read salt */
-		pool_read(backend, salt, sizeof(salt));
-	}
-	else
-	{
-		memcpy(salt, backend->salt, sizeof(salt));
-	}
-
-	/* main? */
-	if (IS_MAIN_NODE_ID(backend->db_node_id))
-	{
-		pool_write(frontend, "R", 1);	/* authentication */
-		if (protoMajor == PROTO_MAJOR_V3)
-		{
-			len = htonl(10);
-			pool_write(frontend, &len, sizeof(len));
-		}
-		kind = htonl(4);		/* crypt authentication */
-		pool_write(frontend, &kind, sizeof(kind));	/* indicating crypt
-													 * authentication */
-		pool_write_and_flush(frontend, salt, sizeof(salt)); /* salt */
-
-		/* read password packet */
-		if (protoMajor == PROTO_MAJOR_V2)
-		{
-			pool_read(frontend, &size, sizeof(size));
-		}
-		else
-		{
-			char		k;
-
-			pool_read(frontend, &k, sizeof(k));
-			if (k != 'p')
-			{
-				ereport(ERROR,
-						(errmsg("crypt authentication failed"),
-						 errdetail("invalid password packet. Packet does not starts with \"p\"")));
-			}
-			pool_read(frontend, &size, sizeof(size));
-		}
-
-		if ((ntohl(size) - 4) > sizeof(password))
-		{
-			ereport(ERROR,
-					(errmsg("crypt authentication failed"),
-					 errdetail("password is too long, password size is %d", ntohl(size) - 4)));
-		}
-
-		pool_read(frontend, password, ntohl(size) - 4);
-	}
-
-	/* connection reusing? */
-	if (reauth)
-	{
-		ereport(DEBUG1,
-				(errmsg("performing crypt authentication"),
-				 errdetail("size: %d saved_size: %d", (ntohl(size) - 4), backend->pwd_size)));
-
-		if ((ntohl(size) - 4) != backend->pwd_size)
-			ereport(ERROR,
-					(errmsg("crypt authentication failed"),
-					 errdetail("password size does not match")));
-
-
-		if (memcmp(password, backend->password, backend->pwd_size) != 0)
-			ereport(ERROR,
-					(errmsg("crypt authentication failed"),
-					 errdetail("password does not match")));
-
-		return 0;
-	}
-
-	/* send password packet to backend */
-	if (protoMajor == PROTO_MAJOR_V3)
-		pool_write(backend, "p", 1);
-	pool_write(backend, &size, sizeof(size));
-	pool_write_and_flush(backend, password, ntohl(size) - 4);
-	pool_read(backend, &response, sizeof(response));
-
-	if (response != 'R')
-	{
-		if (response == 'E')	/* Backend has thrown an error instead */
-		{
-			char	   *message = NULL;
-
-			if (pool_extract_error_message(false, backend, protoMajor, false, &message) == 1)
-			{
-				ereport(ERROR,
-						(errmsg("crypt authentication failed"),
-						 errdetail("%s", message ? message : "backend throws authentication error")));
-			}
-			if (message)
-				pfree(message);
-		}
-		ereport(ERROR,
-				(errmsg("crypt authentication failed"),
-				 errdetail("invalid packet from backend. backend does not return R while processing clear text password authentication")));
-	}
-
-	if (protoMajor == PROTO_MAJOR_V3)
-	{
-		pool_read(backend, &len, sizeof(len));
-
-		if (ntohl(len) != 8)
-			ereport(ERROR,
-					(errmsg("crypt authentication failed"),
-					 errdetail("invalid packet from backend. incorrect authentication packet size (%d)", ntohl(len))));
-	}
-
-	/* expect to read "Authentication OK" response. kind should be 0... */
-	pool_read(backend, &kind, sizeof(kind));
-
-	/* if authenticated, save info */
-	if (kind == 0)
-	{
-		int			msglen;
-
-		pool_write(frontend, "R", 1);
-
-		if (protoMajor == PROTO_MAJOR_V3)
-		{
-			msglen = htonl(8);
-			pool_write(frontend, &msglen, sizeof(msglen));
-		}
-
-		msglen = htonl(0);
-		pool_write_and_flush(frontend, &msglen, sizeof(msglen));
-
-		backend->auth_kind = 4;
-		backend->pwd_size = ntohl(size) - 4;
-		memcpy(backend->password, password, backend->pwd_size);
-		memcpy(backend->salt, salt, sizeof(salt));
 	}
 	return kind;
 }
@@ -1540,13 +1370,6 @@ authenticate_frontend_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend,
 	PasswordType storedPasswordType = PASSWORD_TYPE_UNKNOWN;
 	char	   *storedPassword = NULL;
 
-	if (RAW_MODE || NUM_BACKENDS == 1)
-	{
-		if (backend)
-			do_md5_single_backend(backend, frontend, reauth, protoMajor);
-		return;					/* This will be handled later */
-	}
-
 	if (get_auth_password(backend, frontend, reauth,&storedPassword, &storedPasswordType) == false)
 	{
 		ereport(FATAL,
@@ -1616,79 +1439,12 @@ authenticate_frontend_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend,
 }
 
 /*
- * perform MD5 authentication
+ * Get user's password from various sources. Firstly try pool_passwd and
+ * return it if the user's password is there. If reauth == 0 (first time the
+ * user connect to pgpool) and the password is in frontend, return it. If
+ * reauth != 0 (reuse connection pool) and the password is in backendm return
+ * it.
  */
-static int
-do_md5_single_backend(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int protoMajor)
-{
-	char		salt[4];
-	static int	size;
-	static char password[MAX_PASSWORD_SIZE];
-	int			kind;
-
-	if (!reauth)
-	{
-		/* read salt from backend */
-		pool_read(backend, salt, sizeof(salt));
-		ereport(DEBUG1,
-				(errmsg("performing md5 authentication"),
-				 errdetail("DB node id: %d salt: %hhx%hhx%hhx%hhx", backend->db_node_id,
-						   salt[0], salt[1], salt[2], salt[3])));
-	}
-	else
-	{
-		/* Use the saved salt */
-		memcpy(salt, backend->salt, sizeof(salt));
-	}
-
-	/* Send md5 auth request to frontend */
-	send_md5auth_request(frontend, protoMajor, salt);
-
-	/* Read password packet */
-	read_password_packet(frontend, protoMajor, password, &size);
-
-	/* connection reusing? compare it with saved password */
-	if (reauth)
-	{
-		if (backend->passwordType != PASSWORD_TYPE_MD5)
-			ereport(ERROR,
-					(errmsg("md5 authentication failed"),
-					 errdetail("invalid password type")));
-
-		if (size != backend->pwd_size)
-			ereport(ERROR,
-					(errmsg("md5 authentication failed"),
-					 errdetail("password does not match")));
-
-		if (memcmp(password, backend->password, backend->pwd_size) != 0)
-			ereport(ERROR,
-					(errmsg("md5 authentication failed"),
-					 errdetail("password does not match")));
-		return 0;
-	}
-	else
-	{
-		/* Send password packet to backend and receive auth response */
-		kind = send_password_packet(backend, protoMajor, password);
-		if (kind < 0)
-			ereport(ERROR,
-					(errmsg("md5 authentication failed"),
-					 errdetail("backend replied with invalid kind")));
-
-		/* If authenticated, reply back to frontend and save info */
-		if (kind == AUTH_REQ_OK)
-		{
-			send_auth_ok(frontend, protoMajor);
-			backend->passwordType = PASSWORD_TYPE_MD5;
-			backend->auth_kind = AUTH_REQ_MD5;
-			backend->pwd_size = size;
-			memcpy(backend->password, password, backend->pwd_size);
-			memcpy(backend->salt, salt, sizeof(salt));
-		}
-	}
-	return kind;
-}
-
 static bool
 get_auth_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth,
 				  char **password, PasswordType *passwordType)
@@ -1703,7 +1459,8 @@ get_auth_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int rea
 		 * check if we have password stored in the frontend connection. that
 		 * could come by using the clear text auth
 		 */
-		if (frontend->pwd_size > 0 && frontend->passwordType == PASSWORD_TYPE_PLAINTEXT)
+		if (!reauth &&
+			frontend->pwd_size > 0 && frontend->passwordType == PASSWORD_TYPE_PLAINTEXT)
 		{
 			*password = frontend->password;
 			*passwordType = frontend->passwordType;
@@ -1748,9 +1505,6 @@ do_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int pr
 	char		encbuf[POOL_PASSWD_LEN + 1];
 	char	   *pool_passwd = NULL;
 
-	if (RAW_MODE || NUM_BACKENDS == 1)
-		return do_md5_single_backend(backend, frontend, reauth, protoMajor);
-
 	if (passwordType == PASSWORD_TYPE_AES)
 	{
 		/*
@@ -1792,8 +1546,8 @@ do_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int pr
 		 * already received the password from frontend using the clear text
 		 * auth, we may not need to authenticate it
 		 */
-		if (pool_config->allow_clear_text_frontend_auth &&
-			frontend->auth_kind == AUTH_REQ_PASSWORD &&
+		if ((pool_config->allow_clear_text_frontend_auth ||
+			 frontend->auth_kind == AUTH_REQ_PASSWORD) &&
 			frontend->pwd_size > 0 &&
 			frontend->passwordType == PASSWORD_TYPE_PLAINTEXT)
 		{
@@ -2119,8 +1873,8 @@ do_SCRAM(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, int protoMajor, 
 		 * already received the password from frontend using the clear text
 		 * auth, we may not need to authenticate it
 		 */
-		if (pool_config->allow_clear_text_frontend_auth &&
-			frontend->auth_kind == AUTH_REQ_PASSWORD &&
+		if ((pool_config->allow_clear_text_frontend_auth ||
+			 frontend->auth_kind == AUTH_REQ_PASSWORD) &&
 			frontend->pwd_size > 0 &&
 			frontend->passwordType == PASSWORD_TYPE_PLAINTEXT)
 		{
