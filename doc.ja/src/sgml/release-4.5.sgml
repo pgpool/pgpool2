@@ -1,6 +1,161 @@
 <!-- doc/src/sgml/release-4.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-5-7">
+ <title>リリース 4.5.7</title>
+  <note>
+   <title>リリース日</title>
+   <simpara>2025-05-15</simpara>
+  </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-05-02 [32dee13dd]
+    -->
+    <para>
+     設定ファイルにメジャーバージョンを追加しました。 (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-05-08 [e3451b560]
+    -->
+    <para>
+     クエリキャッシュにおける、古くからあるバインド時のバグを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     名前付きステートメントを準備すると、バインド後にパースメッセージなしで実行することが可能です。
+     問題は、実行時またはCOMMIT時にクエリキャッシュを無効化するために必要なテーブルOIDが、パースメッセージ処理（Parse()）でのみ収集されていたことです。
+     そのため、前回の実行後にパースなしでバインドを実行すると、テーブルOIDが収集されず、pgpoolはクエリキャッシュの無効化に失敗していました。
+     バインド時にもテーブルOIDを収集するよう修正しました。
+     006.memqcacheに回帰テストを追加しました。
+    </para>
+    <para>
+     この問題はEmond Achilleas Mantziosによって報告され、テストプログラムが提供されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-April/009430.html">[pgpool-general: 9427] Clarification on query results cache visibility</ulink>
+    </para>
+   </listitem>
+    <listitem>
+    <!--
+    2025-05-02 [1dfacffed]
+    -->
+    <para>
+     クエリキャッシュの無効化に失敗する問題を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     実行メッセージを受信すると、pgpoolは最大行数パラメータをチェックします。この値が0でない場合、pgpoolはpool_handle_query_cache()にクエリキャッシュを作成しないよう指示するために、"partial_fetch"フラグを設定します。
+     問題は、コミット2a99aa5d1が、INSERT/UPDATE/DELETEであっても実行メッセージパラメータが0以外（ほとんどの場合1）に設定され、pgpoolがSELECT以外の場合でもこのフラグを設定することを見落としていることです。
+     この結果、このフラグが true の場合、pool_handle_query_cache() 内の後続のコードでキャッシュの無効化がスキップされるため、クエリキャッシュの無効化に失敗していました。
+     フラグを設定する前にクエリが読み取り専用の SELECT であるかどうかを確認するように Execute() を修正しました。
+    </para>
+    <para>
+     この問題はEmond Achilleas Mantziosによって報告され、テストプログラムが提供されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-April/009430.html">[pgpool-general: 9427] Clarification on query results cache visibility</ulink>
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-05-05 [5947ba418]
+    -->
+    <para>
+     OpenBSDへ移植する際の問題を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004583.html">[pgpool-hackers: 4582] Make pgpool build on OpenBSD</ulink>
+    </para>
+    <para>
+     このパッチはMartijn van Durenによって作成されました。
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-05-01 [14c94473b]
+    -->
+    <para>
+     json_writerが特殊文字を正確にエンコードできない問題を修正しました。(Bo Peng)
+    </para>
+    <para>
+     <xref linkend="guc-wd-authkey">が特殊文字を含んでいる状態でwatchdogを起動すると<productname>Pgpool-II</productname>がクラッシュしていました。
+    </para>
+     <para>
+    このパッチはMartijn van Durenによって作成され、Bo Pengによって微修正されました。
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-03-04 [e1e32536f]
+    -->
+    <para>
+     リロード時に<xref linkend="guc-pool-passwd">を開くようにストリーミングレプリケーションチェックとヘルスチェックプロセスを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ストリーミングレプリケーションチェックとヘルスチェックはリロード前に<xref linkend="guc-pool-passwd">を開いていませんでした。
+     もし<xref linkend="guc-sr-check-password">か<xref linkend="guc-health-check-password">が空文字列の時は、<xref linkend="guc-pool-passwd">からパスワードを得ます。
+     そのためこれらのプロセスはリロード時に<xref linkend="guc-pool-passwd">の古いコンテンツを読み取ります。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-04-24 [e50114280]
+    -->
+    <para>
+     <xref linkend="guc-connection-life-time">の説明を改善しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-connection-life-time">が計算されるタイミングは、接続キャッシュを保持しているプロセスからクライアントが切断されたときであることを追記しました。
+    </para>
+    <para>
+      ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-April/004578.html">[pgpool-hackers: 4577] Doc: enhance the description on connection_life_time</ulink>
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-03-05 [a3086943f]
+    -->
+    <para>
+     <xref linkend="guc-sr-check-user">についての説明を改善しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     スーパーユーザーか<literal>pg_monitor</literal>グループであるべきです。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-04-01 [7969146b7]
+    2025-03-27 [05a727e8d]
+    -->
+    <para>
+     回帰テストで複数のソケットディレクトリを使用できるように修正しました。(Taiki Koshino, Tatsuo Ishii, Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-5-6">
  <title>リリース 4.5.6</title>
   <note>
