@@ -1,9 +1,123 @@
 <sect1 id="release-4-5-7">
  <title>Release 4.5.7</title>
-  <note>
-   <title>Release Date</title>
-   <simpara>2025-05-15</simpara>
-  </note>
+ <note>
+  <title>Release Date</title>
+  <simpara>2025-05-15</simpara>
+ </note>
+
+ <sect2>
+  <title>Overview</title>
+  <para>
+   This release contains a security fix.
+  </para>
+  <para>
+   An authentication bypass vulnerability exists in the client authentication
+   mechanism of <productname>Pgpool-II</productname>.
+   In <productname>Pgpool-II</productname>, authentication may be bypassed even
+   when it is supposed to be enforced. As a result, an attacker could log in as
+   any user, potentially leading to information disclosure, data tampering, or
+   even a complete shutdown of the database. (CVE-2025-46801)
+  </para>
+  <para>
+   This vulnerability affects systems where the authentication configuration
+   matches one of the following patterns:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Pattern 1: This vulnerability occurs when all of the following conditions are met:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       The <literal>password</literal> authentication method is used in
+       <filename>pool_hba.conf</filename>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       allow_clear_text_frontend_auth = off
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The user's password is not set in <filename>pool_passwd</filename>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The <literal>scram-sha-256</literal> or <literal>md5</literal> authentication
+       method is used in <filename>pg_hba.conf</filename>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <para>
+     Pattern 2: This vulnerability occurs when all of the following conditions are met:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       enable_pool_hba = off
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       One of the following authentication methods is used in pg_hba.conf:
+       <literal>password</literal>, <literal>pam</literal>, or <literal>ldap</literal>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <para>
+     Pattern 3: This vulnerability occurs when all of the following conditions are met:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Raw mode is used (backend_clustering_mode = 'raw')
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The <literal>md5</literal> authentication method is used in
+       <filename>pool_hba.conf</filename>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       allow_clear_text_frontend_auth = off
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The user's password is registered in <filename>pool_passwd</filename> in plain
+       text or AES format
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       One of the following authentication methods is used in
+       <filename>pg_hba.conf</filename>:
+       <literal>password</literal>, <literal>pam</literal>, or <literal>ldap</literal>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+  </itemizedlist>
+  <para>
+   All versions of Pgpool-II 4.0 and 4.1 series, 4.2.0 to 4.2.21, 4.3.0 to 4.3.14,
+   4.4.0 to 4.4.11, 4.5.0 to 4.5.6 and 4.6.0 are affected by this vulnerability.
+   It is strongly recommended to upgrade to <productname>Pgpool-II</productname>
+   4.6.1, 4.5.7, 4.4.12, 4.3.15 and 4.2.22 or later.
+   Alternatively, you can modify your settings so that they do not match any of
+   the vulnerable configuration patterns.
+  </para>
+ </sect2>
 
  <sect2>
   <title>Changes</title>
