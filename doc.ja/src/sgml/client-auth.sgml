@@ -37,7 +37,11 @@
  </para>
 
  <para>
-  クライアントが<productname>Pgpool-II</productname>に接続する際の認証用のパスワードを管理するのが<filename>pool_passwd</filename>ファイルです（詳細は<xref linkend="guc-pool-passwd">をご覧ください。)<filename>pool_passwd</filename>に登録されるパスワードは、<productname>PostgreSQL</productname>に登録されるパスワードと一致している必要があります。<productname>PostgreSQL</productname>に登録されたパスワードを変更しても、<filename>pool_passwd</filename>のパスワードは自動変更されないことに注意してください。<link linkend="auth-scram">scram-shar-256認証</link>と<link linkend="auth-md5">MD5認証</link>では、<filename>pool_passwd</filename>にユーザ名とパスワードを登録するのが必須ですが、<link linkend="auth-password">clear text password認証</link>では必須ではありません。このため、<filename>pool_passwd</filename>のパスワードの保守を避けたい場合には、<link linkend="auth-password">clear text password認証</link>の検討をお勧めします。
+  クライアントが<productname>Pgpool-II</productname>に接続する際の認証用のパスワードを管理するのが<filename>pool_passwd</filename>ファイルです（詳細は<xref linkend="guc-pool-passwd">をご覧ください。)
+   <filename>pool_passwd</filename>に登録されるパスワードは、<productname>PostgreSQL</productname>に登録されるパスワードと一致している必要があります。
+   <productname>PostgreSQL</productname>に登録されたパスワードを変更しても、<filename>pool_passwd</filename>のパスワードは自動変更されないことに注意してください。
+   <link linkend="auth-scram">scram-shar-256認証</link>と<link linkend="auth-md5">MD5認証</link>では、<filename>pool_passwd</filename>にユーザ名とパスワードを登録するのが必須ですが、<link linkend="auth-password">clear text password認証</link>、あるいは<xref linkend="guc-allow-clear-text-frontend-auth">が有効である場合では必須ではありません。
+  このため、<filename>pool_passwd</filename>のパスワードの保守を避けたい場合には、<link linkend="auth-password">clear text password認証</link>あるいは<xref linkend="guc-allow-clear-text-frontend-auth">の検討をお勧めします。
  </para>
 
  <sect1 id="auth-pool-hba-conf">
@@ -721,7 +725,7 @@
    <!--
    The following subsections describe the authentication methods in more detail.
    -->
-   以下の小節では、認証方式について詳細に説明します。
+   以下の小節では、<filename>pool_hba.conf</filename>で指定する認証方式について詳細に説明します。
   </para>
 
   <sect2 id="auth-trust">
@@ -807,17 +811,6 @@
     そのため、<productname>Pgpool-II</productname>の<literal>md5</literal>認証は<xref linkend="guc-pool-passwd">認証ファイルを使ってサポートしています。
    </para>
 
-   <note>
-    <para>
-     <!--
-     If <productname>Pgpool-II</productname> is operated in raw
-     mode or there's only 1 backend configured, you don't need to
-     setup <xref linkend="guc-pool-passwd">.
-     -->
-     <productname>Pgpool-II</productname>をrawモードで使用している場合、あるいはバックエンドが1つしかない場合は、<xref linkend="guc-pool-passwd">を設定する必要はありません。
-    </para>
-   </note>
-
    <sect3 id="md5-authentication-file-format">
     <!--
     <title>Authentication file format</title>
@@ -830,7 +823,7 @@
      must contain the user password in either plain text
      <literal>md5</literal> or <literal>AES</literal> encrypted format.
      -->
-     <literal>md5</literal>認証を使用するには、<xref linkend="guc-pool-passwd">認証ファイルに平文、<literal>md5</literal>または<literal>AES</literal>暗号化形式のいずれかのユーザのパスワード
+     <literal>md5</literal>認証を使用するには、<xref linkend="guc-pool-passwd">認証ファイルに平文、<literal>AES</literal>、<literal>md5</literal>暗号化形式のいずれかのユーザのパスワード
       が含まれている必要があります。
     </para>
     <para>
@@ -839,11 +832,15 @@
      -->
      <literal>pool_passwd</literal>ファイルは以下の形式の行を含みます。
      <programlisting>
-      "username:plain_text_passwd"
+      "username:TEXT_plain_text_passwd"
      </programlisting>
      <programlisting>
-      "username:encrypted_passwd"
+      "username:AES_encrypted_passwd"
      </programlisting>
+     <programlisting>
+      "username:md5_encrypted_passwd"
+     </programlisting>
+      (実際には、"TEXT"、"AES"、"md5"の後の"_"は存在しません。)
     </para>
    </sect3>
 
@@ -889,6 +886,7 @@
      -->
      2. <filename>pool_hba.conf</filename>にmd5認証のエントリを作成します。
      詳細については<xref linkend="auth-pool-hba-conf">を参照してください。
+     <filename>pool_hba.conf</filename>を有効にしない場合は、<productname>PostgreSQL</productname>の<filename>pg_hba.conf</filename>でmd5認証が指定されていることを確認してください。
     </para>
     <para>
      <!--
@@ -941,11 +939,12 @@
      <literal>SCRAM</literal>認証を使用する場合、<xref linkend="guc-pool-passwd">認証ファイルは平文もしくは<literal>AES</literal>暗号化ファーマットのユーザパスワードを含んでる必要があります。
 
       <programlisting>
-       "username:plain_text_passwd"
+       "username:TEXT_plain_text_passwd"
       </programlisting>
       <programlisting>
        "username:AES_encrypted_passwd"
       </programlisting>
+      (実際には、"TEXT"あるいは"AES"の後の"_"は存在しません。)
       <note>
        <para>
 	<!--
@@ -1004,6 +1003,7 @@
      -->
      2- <filename>pool_hba.conf</filename>に適切なscram-sha-256エントリを追加します。
      詳細は<xref linkend="auth-pool-hba-conf">を参照してください。
+     <filename>pool_hba.conf</filename>を有効にしない場合は、<productname>PostgreSQL</productname>の<filename>pg_hba.conf</filename>でscram-sha-256認証が指定されていることを確認してください。
     </para>
     <para>
      <!--
@@ -1096,11 +1096,8 @@
     To enable PAM authentication, you need to create a service-configuration
     file for <productname>Pgpool-II</productname> in the system's
     PAM configuration directory (which is usually at <literal>"/etc/pam.d"</literal>).
-    A sample service-configuration file is installed as
-    <filename>"share/pgpool-II/pgpool.pam"</filename> under the install directory.
     -->
     PAM認証を有効にするには、<productname>Pgpool-II</productname>のサービス設定ファイルをシステムのPAM設定ディレクトリ（通常は<literal>"/etc/pam.d"</literal>にあります）に作成しなければなりません。
-    サービス設定ファイルのサンプルはインストールディレクトリ下に<literal>"share/pgpool-II/pgpool.pam"</literal>としてインストールされています。
    </para>
 
    <note>
