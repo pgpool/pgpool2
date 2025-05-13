@@ -1,3 +1,171 @@
+<sect1 id="release-4-5-7">
+ <title>Release 4.5.7</title>
+  <note>
+   <title>Release Date</title>
+   <simpara>2025-05-15</simpara>
+  </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-05-02 [32dee13dd]
+    -->
+    <para>
+     Add major version information to the configuration file. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-05-08 [e3451b560]
+    -->
+    <para>
+     Fix long standing bind bug with query cache. (Tatsuo Ishii)
+    </para>
+    <para>
+     When a named statement is prepared, it is possible to bind then execute without a parse message.
+     Problem is, table oids which are necessary to invalidate query cache at execute or COMMIT was
+     collected only in parse messages process (Parse()). Thus if bind is executed
+     without parse after previous execute, no table oids were collected, and pgpool failed to invalidate query cache.
+     Fix is collecting table oids at bind time too.
+     Add regression test to 006.memqcache.
+    </para>
+    <para>
+     Problem reported by and test program provided by Achilleas Mantzios.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-April/009430.html">[pgpool-general: 9427] Clarification on query results cache visibility</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-02 [1dfacffed]
+    -->
+    <para>
+     Fix query cache invalidation bug. (Tatsuo Ishii)
+    </para>
+    <para>
+     When an execute message is received, pgpool checks its max number of rows paramter. If it's not zero,
+     pgpool sets "partial_fetch" flag to instruct pool_handle_query_cache() to not create query cache.
+     Problem is, commit 2a99aa5d1 missed that even INSERT/UPDATE/DELETE sets the execute message parameter to non 0 (mostly 1)
+     and pgpool set the flag for even none SELECTs. This resulted in failing to invalidate query cache because if the flag is true,
+     subsequent code in pool_handle_query_cache() skips cache invalidation.
+     To fix this change Execute() to check if the query is read only SELECT before setting the flag.
+     Also add test to 006.memqcache.
+    </para>
+    <para>
+     Problem reported by and a test program provided by Achilleas Mantzios.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-April/009430.html">[pgpool-general: 9427] Clarification on query results cache visibility</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-05 [5947ba418]
+    -->
+    <para>
+     Fix portability to OpenBSD. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004583.html">[pgpool-hackers: 4582] Make pgpool build on OpenBSD</ulink>
+    </para>
+    <para>
+     The patch was created by Martijn van Duren.
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-05-01 [14c94473b]
+    -->
+    <para>
+     Fix json_writer did not properly encode special characters. (Bo Peng)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname> would crash when the watchdog was enabled if <xref linkend="guc-wd-authkey"> contained special characters (e.g., a backslash).
+    </para>
+    <para>
+     The patch was created by Martijn van Duren and slightly modified by Bo Peng.
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-03-04 [e1e32536f]
+    -->
+    <para>
+      Fix sr check and health check to reopen <xref linkend="guc-pool-passwd"> upon reload. (Tatsuo Ishii)
+    </para>
+    <para>
+      The streaming replication check and health check process forgot to
+      reopen <xref linkend="guc-pool-passwd"> upon reload.  If <xref linkend="guc-sr-check-password"> or
+      <xref linkend="guc-health-check-password"> is empty string, the password is obtained from
+      <xref linkend="guc-pool-passwd">. Thus those process read outdated content of <xref linkend="guc-pool-passwd">
+      upon reload.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-04-24 [e50114280]
+    -->
+    <para>
+     Enhance the description on <xref linkend="guc-connection-life-time"> (Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="guc-connection-life-time"> is a config value to determine the life time of
+     cached connections to <productname>PostgreSQL</productname> backend. Current document lacks a
+     description that the expiration calculation is actually done at the
+     time when the client disconnects to the process which holds the cached
+     connections.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-April/004578.html">[pgpool-hackers: 4577] Doc: enhance the description on connection_life_time</ulink>
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-03-05 [a3086943f]
+    -->
+    <para>
+     Enhance the explanation on <xref linkend="guc-sr-check-user">. (Tatsuo Ishii)
+    </para>
+    <para>
+     It must be a superuser or in the <literal>pg_monitor</literal> group.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-04-01 [7969146b7]
+    2025-03-27 [05a727e8d]
+    -->
+    <para>
+     Allow regression tests to use multiple socket directories. (Taiki Koshino, Tatsuo Ishii, Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-5-6">
  <title>Release 4.5.6</title>
   <note>
