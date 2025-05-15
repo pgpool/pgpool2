@@ -58,22 +58,23 @@ fi
 # create user
 # $1: username
 # $2: "scram", "md5", "password", "pam" or "ldap".
+# $3: port
 # If "password" is specified, encryption method becomes 'scram-sha-256'.
 function add_user()
 {
-    createuser $1
+    createuser -p $3 $1
     if [ $2 = "scram" ];then
-	psql -c "SET password_encryption = 'scram-sha-256'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
+	psql -p $3 -c "SET password_encryption = 'scram-sha-256'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
     elif [ $2 = "md5" ];then
-	psql -c "SET password_encryption = 'md5'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
+	psql -p $3 -c "SET password_encryption = 'md5'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
     elif [ $2 = "password" ];then
-	psql -c "SET password_encryption = 'scram-sha-256'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
+	psql -p $3 -c "SET password_encryption = 'scram-sha-256'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
     elif [ "$DO_PAM_TEST" = "true" -a $2 = "pam" ];then
-	psql -c "SET password_encryption = 'scram-sha-256'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
+	psql -p $3 -c "SET password_encryption = 'scram-sha-256'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
     elif [ "$DO_PAM_TEST" != "true" -a $2 = "pam" ];then
 	echo "do nothing because DO_PAM_TEST is not true and auth method is pam"
     elif [ "$DO_LDAP_TEST" = "true" -a $2 = "ldap" ];then
-	psql -c "SET password_encryption = 'scram-sha-256'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
+	psql -p $3 -c "SET password_encryption = 'scram-sha-256'; ALTER USER $1 WITH ENCRYPTED PASSWORD '$1'"
     elif [ "$DO_LDAP_TEST" != "true" -a $2 = "ldap" ];then
 	echo "do nothing because DO_LDAP_TEST is not true and auth method is ldap"
     else
@@ -275,7 +276,13 @@ function do_auth
 	    pg_hba=$5
 	    expected=$6
 
-	    add_user $username $pg_hba
+	    add_user $username $pg_hba $PGPORT
+
+	    # for logical replication and slony, we need to manually
+	    # add PostgreSQL user to node 1.
+	    if [ $mode = 'l' -o $mode = 'y' ];then
+		add_user $username $pg_hba "11003"
+	    fi
 	    add_pool_hba $username $pool_hba $PGPOOL_VERSION_DIGIT
 	    add_pool_passwd $username $pool_passwd $PGPOOL_VERSION_DIGIT
 	    add_pg_hba $username $pg_hba
@@ -433,13 +440,10 @@ chmod 0600 $PGPOOLKEYFILE
 #----------------------------------------
 # Test execution starts here
 
-# pgpool_setup does not create a replication environment for logical
-# replication mode and slony mode, which makes the test failed
-# horribly because PostgreSQL roles are not replicated.  Therefore we
-# skip the tests for these modes.
-
-for mode in s r i n
+# Full test (6 clustering modes) takes too long time and it causes
+# timeout.  For now, we skip logical replication and slony mode.
 #for mode in s r i n l y
+for mode in s r i n
 do
     echo "==== testing mode: $mode ==="
     anyfail=""
