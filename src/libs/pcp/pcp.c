@@ -8,7 +8,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -98,19 +98,17 @@ static char *pwdfMatchesString(char *buf, char *token);
 PCPConnInfo *
 pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfdebug)
 {
-	struct sockaddr_in addr;
 	struct sockaddr_un unix_addr;
-	struct hostent *hp;
 	char	   *password_from_file = NULL;
 	char		os_user[256];
 	PCPConnInfo *pcpConn = palloc0(sizeof(PCPConnInfo));
 	int			fd;
 	int			on = 1;
-	int			len;
 
 	pcpConn->connState = PCP_CONNECTION_NOT_CONNECTED;
 	pcpConn->Pfdebug = Pfdebug;
 
+	/* Unix domain socket? */
 	if (hostname == NULL || *hostname == '\0' || *hostname == '/')
 	{
 		char	   *path;
@@ -154,49 +152,79 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 	}
 	else
 	{
-		fd = socket(AF_INET, SOCK_STREAM, 0);
-		if (fd < 0)
+		/* Inet domain socket case */
+		char	   *portstr;
+		int			ret;
+		struct addrinfo *res;
+		struct addrinfo *walk;
+		struct addrinfo hints;
+
+		/*
+		 * getaddrinfo() requires a string because it also accepts service names,
+		 * such as "http".
+		 */
+		if (asprintf(&portstr, "%d", port) == -1)
 		{
 			pcp_internal_error(pcpConn,
-							   "ERROR: failed to create INET domain socket with error \"%s\"", strerror(errno));
+							   "ERROR: asprintf() failed");
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
 
-		if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
-					   (char *) &on, sizeof(on)) < 0)
-		{
-			close(fd);
+		memset(&hints, 0, sizeof(struct addrinfo));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
 
+		if ((ret = getaddrinfo(hostname, portstr, &hints, &res)) != 0)
+		{
 			pcp_internal_error(pcpConn,
-							   "ERROR: set socket option failed with error \"%s\"", strerror(errno));
+							   "ERROR: getaddrinfo failed \"%s\"",
+							   gai_strerror(ret));
 			pcpConn->connState = PCP_CONNECTION_BAD;
+			free(portstr);
 			return pcpConn;
 		}
 
-		memset((char *) &addr, 0, sizeof(addr));
-		addr.sin_family = AF_INET;
-		hp = gethostbyname(hostname);
-		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-		{
-			close(fd);
-			pcp_internal_error(pcpConn,
-							   "ERROR: could not retrieve hostname. gethostbyname failed with error \"%s\"", strerror(errno));
-			pcpConn->connState = PCP_CONNECTION_BAD;
-			return pcpConn;
+		free(portstr);
 
+		fd = -1;
+		for (walk = res; walk != NULL; walk = walk->ai_next)
+		{
+			fd = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol);
+			if (fd < 0)
+			{
+				pcp_internal_error(pcpConn,
+								   "ERROR: failed to create INET domain socket with error \"%s\"",
+								   strerror(errno));
+				return pcpConn;
+			}
+
+			if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
+						   (char *) &on, sizeof(on)) < 0)
+			{
+				close(fd);
+				pcp_internal_error(pcpConn,
+								   "ERROR: set socket option failed with error \"%s\"", strerror(errno));
+				pcpConn->connState = PCP_CONNECTION_BAD;
+				return pcpConn;
+			}
+
+			if (connect(fd, walk->ai_addr, walk->ai_addrlen) < 0)
+			{
+				close(fd);
+				pcp_internal_error(pcpConn,
+								   "ERROR: connection to host \"%s\" failed with error \"%s\"", hostname, strerror(errno));
+				pcpConn->connState = PCP_CONNECTION_BAD;
+				return pcpConn;
+			}
+			break;	/* successfully connected */
 		}
-		memmove((char *) &(addr.sin_addr),
-				(char *) hp->h_addr,
-				hp->h_length);
-		addr.sin_port = htons(port);
 
-		len = sizeof(struct sockaddr_in);
-		if (connect(fd, (struct sockaddr *) &addr, len) < 0)
+		/* no address available */
+		if (fd == -1)
 		{
-			close(fd);
 			pcp_internal_error(pcpConn,
-							   "ERROR: connection to host \"%s\" failed with error \"%s\"", hostname, strerror(errno));
+							   "ERROR: connection to host \"%s\" failed", hostname);
 			pcpConn->connState = PCP_CONNECTION_BAD;
 			return pcpConn;
 		}
@@ -211,6 +239,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		pcpConn->connState = PCP_CONNECTION_BAD;
 		return pcpConn;
 	}
+
 	pcpConn->connState = PCP_CONNECTION_CONNECTED;
 
 	/*
