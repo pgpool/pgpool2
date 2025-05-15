@@ -141,6 +141,52 @@
   <itemizedlist>
    <listitem>
     <!--
+    2025-05-13 [bcc6727]
+    -->
+    <para>
+     Fix incorrect client authentication in some cases. (Tatsuo Ishii)
+    </para>
+    <para>
+     If enable_pool_hba = on, it's auth method is "password", no
+     password is registered in pool_passwd, and auth method in
+     pg_hba.conf is "scram-sha-256" or "md5", for the first time when
+     a client connects to pgpool, authentication is performed as
+     expected. But if a client connects to the cached connection, any
+     password from the client is accepted.
+    </para>
+    <para>
+     Also if enable_pool_hba = off, in some cases a client is not
+     asked password for the first time, or when a client connects to
+     cached connection, even if it should be.
+    </para>
+    <para>
+     In addition to fixing above, following changes are made:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Remove single PostgreSQL code path to simplify the authentication code.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Remove crypt authentication support for frontend and
+       backend. The feature had not been documented and never
+       tested. Moreover crypt authentication was removed long time
+       ago in PostgreSQL (8.4, 2009).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Add new regression test "040.client_auth". The test performs
+       exhaustive client authentication tests using a test
+       specification file formatted in CSV.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+   <listitem>
+    <!--
     2025-05-08 [e3451b560]
     -->
     <para>
