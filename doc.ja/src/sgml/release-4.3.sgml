@@ -127,6 +127,44 @@
   <itemizedlist>
    <listitem>
     <!--
+    2025-05-13 [5397090]
+    -->
+    <para>
+     クライアント認証が正しく実行されない場合があるのを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     enable_pool_hbaがonで、auth methodが"password"、pool_passwdにパスワードが登録されておらず、pg_hba.confの認証方式が"scram-sha-256"か"md5"の場合、クライアントが最初にpgpoolに接続したときには認証が期待通りに実行されます。
+     しかし、クライアントがキャッシュされたコネクションに接続すると、任意のパスワードが通ってしまいます。
+    </para>
+    <para>
+     また、enable_pool_hba = offのいくつかのケースでは、本来パスワードが聞かれるはずが、最初からパスワードが聞かれない、あるいはキャッシュされたコネクションに接続した時にはパスワードが聞かれないことがありました。
+    </para>
+    <para>
+     上記を修正するのに加え、以下の変更を行いました。
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       認証コードを単純化するために、PostgreSQLが1台の時のコードパスを削除しました。
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       crypt認証のサポートをフロントエンドとバックエンドから削除しました。
+       この機能はドキュメントに書かれておらず、テストもされていませんでした。
+       また、crypt認証はPostgreSQLではだいぶ以前(8.4, 2009)に削除されています。
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       新しい回帰テストの"040.client_auth"を追加しました。
+       このテストは、CSV形式のテスト設定ファイルを使って、包括的なクライアント認証のテストを実施します。
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+   <listitem>
+    <!--
     2025-05-08 [e3451b560]
     -->
     <para>
