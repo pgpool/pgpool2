@@ -1067,7 +1067,7 @@ do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, in
 		if (size != backend->pwd_size)
 			ereport(ERROR,
 					(errmsg("clear text password authentication failed"),
-					 errdetail("password size does not match")));
+					 errdetail("password does not match")));
 
 		if (memcmp(pwd, backend->password, backend->pwd_size) != 0)
 			ereport(ERROR,
