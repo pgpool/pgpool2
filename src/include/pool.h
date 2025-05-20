@@ -653,4 +653,8 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 extern void do_worker_child(void);
 extern int	get_query_result(POOL_CONNECTION_POOL_SLOT * *slots, int backend_id, char *query, POOL_SELECT_RESULT * *res);
 
+/* utils/pg_strong_random.c */
+void pg_strong_random_init(void);
+bool pg_strong_random(void *buf, size_t len);
+
 #endif							/* POOL_H */

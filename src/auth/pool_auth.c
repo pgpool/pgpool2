@@ -68,7 +68,6 @@ static int	read_password_packet(POOL_CONNECTION * frontend, int protoMajor, char
 static int	send_password_packet(POOL_CONNECTION * backend, int protoMajor, char *password);
 static int	send_auth_ok(POOL_CONNECTION * frontend, int protoMajor);
 static void sendAuthRequest(POOL_CONNECTION * frontend, int protoMajor, int32 auth_req_type, char *extradata, int extralen);
-static long PostmasterRandom(void);
 
 static int	pg_SASL_continue(POOL_CONNECTION * backend, char *payload, int payloadlen, void *sasl_state, bool final);
 static void *pg_SASL_init(POOL_CONNECTION * backend, char *payload, int payloadlen, char *username, char *storedPassword);
@@ -1771,27 +1770,16 @@ send_auth_ok(POOL_CONNECTION * frontend, int protoMajor)
 	return 0;
 }
 
-
+/*
+ * Generate random bytes
+ */
 void
 pool_random(void *buf, size_t len)
 {
-	int			ret = 0;
-#ifdef USE_SSL
-	ret = RAND_bytes(buf, len);
-#endif
-	/* if RND_bytes fails or not present use the old technique */
-	if (ret == 0)
-	{
-		int			i;
-		char	   *ptr = buf;
-
-		for (i = 0; i < len; i++)
-		{
-			long		rand = PostmasterRandom();
-
-			ptr[i] = (rand % 255) + 1;
-		}
-	}
+	if (!pg_strong_random(buf, len))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate random bytes")));
 }
 
 /*
@@ -1802,45 +1790,6 @@ pool_random_salt(char *md5Salt)
 {
 	pool_random(md5Salt, 4);
 }
-
-/*
- * PostmasterRandom
- */
-static long
-PostmasterRandom(void)
-{
-	extern struct timeval random_start_time;
-	static unsigned int random_seed = 0;
-
-	/*
-	 * Select a random seed at the time of first receiving a request.
-	 */
-	if (random_seed == 0)
-	{
-		do
-		{
-			struct timeval random_stop_time;
-
-			gettimeofday(&random_stop_time, NULL);
-
-			/*
-			 * We are not sure how much precision is in tv_usec, so we swap
-			 * the high and low 16 bits of 'random_stop_time' and XOR them
-			 * with 'random_start_time'. On the off chance that the result is
-			 * 0, we loop until it isn't.
-			 */
-			random_seed = random_start_time.tv_usec ^
-				((random_stop_time.tv_usec << 16) |
-				 ((random_stop_time.tv_usec >> 16) & 0xffff));
-		}
-		while (random_seed == 0);
-
-		srandom(random_seed);
-	}
-
-	return random();
-}
-
 
 static bool
 do_SCRAM(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, int protoMajor, int message_length,
