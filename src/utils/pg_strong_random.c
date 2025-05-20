@@ -26,6 +26,9 @@
 
 #include "pool.h"
 
+#ifndef USE_SSL
+#include <errno.h>
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
