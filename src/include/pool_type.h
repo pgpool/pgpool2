@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2015	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -221,6 +221,12 @@ typedef unsigned int AuthRequest;
 typedef uint8 bits8;			/* >= 8 bits */
 typedef uint16 bits16;			/* >= 16 bits */
 typedef uint32 bits32;			/* >= 32 bits */
+
+/*
+ * 64-bit integers
+ */
+#define INT64CONST(x)  INT64_C(x)
+#define UINT64CONST(x) UINT64_C(x)
 
 /*
  * stdint.h limits aren't guaranteed to be present and aren't guaranteed to

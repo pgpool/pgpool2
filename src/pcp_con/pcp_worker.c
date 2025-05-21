@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -112,7 +112,6 @@ pcp_worker_main(int port)
 
 	char		salt[4];
 	int			random_salt = 0;
-	struct timeval uptime;
 	char		tos;
 	int			rsize;
 
@@ -121,9 +120,6 @@ pcp_worker_main(int port)
 
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
-
-	gettimeofday(&uptime, NULL);
-	srandom((unsigned int) (getpid() ^ uptime.tv_usec));
 
 	/* set up signal handlers */
 	signal(SIGTERM, die);
