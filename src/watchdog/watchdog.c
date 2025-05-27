@@ -862,7 +862,6 @@ wd_create_recv_socket(int port)
 {
 	int			one = 1;
 	int			sock = -1;
-	int			saved_errno;
 	int			gai_ret,
 				n = 0,
 				target_n = n;
@@ -909,12 +908,10 @@ wd_create_recv_socket(int port)
 		if ((sock = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol)) < 0)
 		{
 			/* socket create failed */
-			saved_errno = errno;
-			freeaddrinfo(res);
-			errno = saved_errno;
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
 					 errdetail("create socket failed with reason: \"%m\"")));
+			continue;
 		}
 
 		socket_set_nonblock(sock);
@@ -922,76 +919,71 @@ wd_create_recv_socket(int port)
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one)) == -1)
 		{
 			/* setsockopt(SO_REUSEADDR) failed */
-			saved_errno = errno;
-			freeaddrinfo(res);
-			close(sock);
-			errno = saved_errno;
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
 					 errdetail("setsockopt(SO_REUSEADDR) failed with reason: \"%m\"")));
+			close(sock);
+			continue;
 		}
 		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one)) == -1)
 		{
 			/* setsockopt(TCP_NODELAY) failed */
-			saved_errno = errno;
-			freeaddrinfo(res);
-			close(sock);
-			errno = saved_errno;
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
 					 errdetail("setsockopt(TCP_NODELAY) failed with reason: \"%m\"")));
+			close(sock);
+			continue;
 		}
 		if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(one)) == -1)
 		{
 			/* setsockopt(SO_KEEPALIVE) failed */
-			saved_errno = errno;
-			freeaddrinfo(res);
-			close(sock);
-			errno = saved_errno;
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
 					 errdetail("setsockopt(SO_KEEPALIVE) failed with reason: \"%m\"")));
+			close(sock);
+			continue;
 		}
 		if (walk->ai_family == AF_INET6)
 		{
 			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &one, sizeof(one)) == -1)
 			{
-				saved_errno = errno;
-				freeaddrinfo(res);
-				close(sock);
-				errno = saved_errno;
-				ereport(ERROR,
+				ereport(LOG,
 						(errmsg("failed to set IPPROTO_IPV6 option to watchdog receive socket"),
 						 errdetail("setsockopt(IPV6_V6ONLY) failed with reason: \"%m\"")));
+				close(sock);
+				continue;
 			}
 		}
 		if (bind(sock, walk->ai_addr, walk->ai_addrlen) < 0)
 		{
 			/* bind failed */
-			saved_errno = errno;
-			freeaddrinfo(res);
-			close(sock);
-			errno = saved_errno;
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
 					 errdetail("bind on \"TCP:%d\" failed with reason: \"%m\"", port)));
+			close(sock);
+			continue;
 		}
 
 		if (listen(sock, MAX_WATCHDOG_NUM * 2) < 0)
 		{
 			/* listen failed */
-			saved_errno = errno;
-			freeaddrinfo(res);
-			close(sock);
-			errno = saved_errno;
-			ereport(ERROR,
+			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
 					 errdetail("listen failed with reason: \"%m\"")));
+			close(sock);
+			continue;
 		}
 
 		socks = lappend_int(socks, sock);
 		n++;
 	}
+
+	/*
+	 * Fatal error. No recevive sockets were created.
+	 */
+	if (n == 0)
+		ereport(FATAL,
+				(errmsg("failed to create any of watchdog receive sockets")));
 
 	if (target_n != n)
 		ereport(WARNING,
