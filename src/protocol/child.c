@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2024	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -49,7 +49,6 @@
 #include "pool_config_variables.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
-#include "utils/pg_prng.h"
 #include "utils/pool_ssl.h"
 #include "utils/pool_ipc.h"
 #include "utils/pool_relcache.h"
@@ -102,9 +101,6 @@ static int opt_sort(const void *a, const void *b);
 
 static bool unix_fds_not_isset(int* fds, int num_unix_fds, fd_set* opt);
 
-static void initialize_prng(void);
-static TimestampTz GetCurrentTimestamp(void);
-
 /*
  * Non 0 means SIGTERM (smart shutdown) or SIGINT (fast shutdown) has arrived
  */
@@ -150,12 +146,6 @@ bool		stop_now = false;
 static bool connection_pool_initialized = false;
 
 /*
- * prng state
- */
-pg_prng_state prng_state_d;
-pg_prng_state *prng_state;
-
-/*
 * child main loop
 */
 void
@@ -163,6 +153,8 @@ do_child(int *fds)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	POOL_CONNECTION_POOL *volatile backend = NULL;
+	struct timeval now;
+	struct timezone tz;
 
 	/* counter for child_max_connections.  "volatile" declaration is necessary
 	 * so that this is counted up even if long jump is issued due to
@@ -223,8 +215,13 @@ do_child(int *fds)
 	pool_init_process_context();
 
 	/* initialize random seed */
-	prng_state = &prng_state_d;
-	initialize_prng();
+	gettimeofday(&now, &tz);
+
+#if defined(sun) || defined(__sun)
+	srand((unsigned int) now.tv_usec);
+#else
+	srandom((unsigned int) now.tv_usec);
+#endif
 
 	/* initialize connection pool */
 	if (pool_init_cp())
@@ -2221,56 +2218,4 @@ void
 set_process_status(ProcessStatus status)
 {
 	pool_get_my_process_info()->status = status;
-}
-
-/*
- * imported from backend/utils/adt/timestamp.c
- */
-/*
- * GetCurrentTimestamp -- get the current operating system time
- *
- * Result is in the form of a TimestampTz value, and is expressed to the
- * full precision of the gettimeofday() syscall
- */
-static TimestampTz
-GetCurrentTimestamp(void)
-{
-	TimestampTz result;
-	struct timeval tp;
-
-	gettimeofday(&tp, NULL);
-
-	result = (TimestampTz) tp.tv_sec -
-		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-	result = (result * USECS_PER_SEC) + tp.tv_usec;
-
-	return result;
-}
-
-/*
- * imported from backend/utils/adt/pseudorandomfuncs.c
- * and modified.
- */
-/*
- * initialize_prng() -
- *
- *	Initialize (seed) the PRNG, if not done yet in this process.
- */
-static void
-initialize_prng(void)
-{
-	/*
-	 * If possible, seed the PRNG using high-quality random bits. Should
-	 * that fail for some reason, we fall back on a lower-quality seed
-	 * based on current time and PID.
-	 */
-	if (!pg_prng_strong_seed(prng_state))
-	{
-		TimestampTz now = GetCurrentTimestamp();
-		uint64		iseed;
-
-		/* Mix the PID with the most predictable bits of the timestamp */
-		iseed = (uint64) now ^ ((uint64) getpid() << 32);
-		pg_prng_seed(prng_state, iseed);
-	}
 }

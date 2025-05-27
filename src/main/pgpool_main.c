@@ -210,6 +210,8 @@ volatile	User1SignalSlot *user1SignalSlot = NULL;	/* User 1 signal slot on
 														 * shmem */
 int		current_child_process_count;
 
+struct timeval random_start_time;
+
 /*
  * To track health check process ids
  */
@@ -300,6 +302,9 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	 * discard the content
 	 */
 	volatile bool first = true;
+
+	/* For PostmasterRandom */
+	gettimeofday(&random_start_time, NULL);
 
 	processState = INITIALIZING;
 

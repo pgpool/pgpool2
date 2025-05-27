@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2020	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,7 +28,6 @@
 #include "protocol/pool_connection_pool.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
-#include "utils/pg_prng.h"
 #include "utils/pool_ipc.h"
 #include "utils/pool_stream.h"
 #include "utils/pool_ssl.h"
@@ -44,8 +43,6 @@ static int	choose_db_node_id(char *str);
 static void free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp);
 static void si_enter_critical_region(void);
 static void si_leave_critical_region(void);
-
-extern	pg_prng_state *prng_state;
 
 /*
  * create a persistent connection
@@ -327,8 +324,11 @@ select_load_balancing_node(void)
 	 */
 	int			suggested_node_id = -2;
 
-	r = pg_prng_double(prng_state);
-//	elog(LOG, "pg_prng_double: %f", r);
+#if defined(sun) || defined(__sun)
+	r = (((double) rand()) / RAND_MAX);
+#else
+	r = (((double) random()) / RAND_MAX);
+#endif
 
 	/*
 	 * Check user_redirect_preference_list
@@ -490,7 +490,11 @@ select_load_balancing_node(void)
 				}
 			}
 
-			r = pg_prng_double(prng_state) * total_weight;
+#if defined(sun) || defined(__sun)
+			r = (((double) rand()) / RAND_MAX) * total_weight;
+#else
+			r = (((double) random()) / RAND_MAX) * total_weight;
+#endif
 
 			selected_slot = PRIMARY_NODE_ID;
 			total_weight = 0.0;
@@ -569,7 +573,11 @@ select_load_balancing_node(void)
 		}
 	}
 
-	r = pg_prng_double(prng_state) * total_weight;
+#if defined(sun) || defined(__sun)
+	r = (((double) rand()) / RAND_MAX) * total_weight;
+#else
+	r = (((double) random()) / RAND_MAX) * total_weight;
+#endif
 
 	total_weight = 0.0;
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -634,7 +642,11 @@ select_load_balancing_node(void)
 			}
 		}
 
-		r = pg_prng_double(prng_state) * total_weight;
+#if defined(sun) || defined(__sun)
+		r = (((double) rand()) / RAND_MAX) * total_weight;
+#else
+		r = (((double) random()) / RAND_MAX) * total_weight;
+#endif
 
 		selected_slot = PRIMARY_NODE_ID;
 
