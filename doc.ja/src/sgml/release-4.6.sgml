@@ -1,3 +1,67 @@
+<sect1 id="release-4-6-2">
+ <title>リリース 4.6.2</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2025-05-30</simpara>
+ </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-05-17 [2c84c4358]
+    -->
+    <para>
+     認証失敗時に不要な情報を表示しないように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前は、クライアント認証に失敗した際に「password size does not match」というメッセージが表示されていました。
+     これは攻撃者がパスワードを推測する手助けとなる可能性がありました。
+     このメッセージを「password does not match」に変更しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-15 [f49d239a4]
+    -->
+    <para>
+     pcpクライアントがIPv6アドレスに接続できるようなりました。(Tatsuo Ishii)
+    </para>
+    <para>
+     すでにpcpサーバはIPv6アドレスへの接続を許可していましたが、これまでpcpクライアントは接続できませんでした。
+     今回の変更により、pcpクライアントもIPv6アドレスへ接続可能になります。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-May/009484.html">[pgpool-general: 9481] Does pgpool 4.6.0 support pure ipv6 configuration?</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-05-27 [61223a1e4]
+    -->
+    <para>
+     IPv6が無効化されている環境におけるwatchdog受信用ソケット作成に関する不具合を修正しました。(<ulink url="https://github.com/pgpool/pgpool2/issues/99">#99</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     IPv6ネットワークが利用できない場合、watchdogプロセスが起動しない問題がありました。
+     従来、<function>wd_create_recv_socket()</function>関数はIPv6ソケットの作成や処理に失敗するとelog(ERROR)を発行していました。
+     しかし、<function>wd_create_recv_socket()</function>が呼ばれる時点では例外スタックが確立されておらず、elogは<literal>ERROR</literal>を<literal>FATAL</literal>に変換してしまいます。
+     これによりwatchdogプロセスが終了し、その結果pgpoolプロセスも終了してしまいました。
+     この問題を修正するために、elog(ERROR)の呼び出しをelog(LOG)に変更しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-6-1">
  <title>リリース 4.6.1</title>
  <note>

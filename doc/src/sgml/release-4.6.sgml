@@ -1,3 +1,70 @@
+<sect1 id="release-4-6-2">
+ <title>Release 4.6.2</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2025-05-30</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-05-17 [2c84c4358]
+    -->
+    <para>
+     Suppress unnecessary information upon authentication failure. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously a message "password size does not match" was displayed when
+     client authentication failed. This could help an attacker to guess
+     password. Replace it just "password does not match".
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-15 [f49d239a4]
+    -->
+    <para>
+     Allow pcp clients to connect to IPv6 addresses. (Tatsuo Ishii)
+    </para>
+    <para>
+     We have already allowed pcp server to connect to IPv6 addresses, but
+     pcp clients were not allowed to connect to them until today. This
+     commit allows pcp clients to connect to IPv6 addresses.
+
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-May/009484.html">[pgpool-general: 9481] Does pgpool 4.6.0 support pure ipv6 configuration?</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-05-27 [61223a1e4]
+    -->
+    <para>
+     Fix watchdog receive socket creation without IPv6. (<ulink url="https://github.com/pgpool/pgpool2/issues/99">#99</ulink>) (Tatsuo Ishii)
+    </para>
+    <para>
+     When IPv6 network is not available, it was possible that watchdog
+     process won't start. Previously <function>wd_create_recv_socket()</function>
+     issued elog(ERROR) if creation or handling IPv6 socket failed.
+     Unfortunately at the time when <function>wd_create_recv_socket()</function>
+     is called, the exception stack is not established, and elog happily
+     converts <literal>ERROR</literal> to <literal>FATAL</literal>,
+     which causes exiting watchdog process, thus exiting pgpool process.
+     To fix this, the elog(ERROR) calls are changed to elog(LOG).
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-6-1">
  <title>Release 4.6.1</title>
  <note>
