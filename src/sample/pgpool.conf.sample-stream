@@ -824,17 +824,17 @@ backend_clustering_mode = 'streaming_replication'
 
 #wd_lost_node_removal_timeout = 0s
                                     # Timeout after which the cluster membership of LOST watchdog
-                                    # nodes gets revoked. After that the node node does not
-                                    # count towards the quorum and consensus computations
-                                    # setting timeout to 0 will never revoke the membership
+                                    # nodes gets revoked. After that the node does not
+                                    # count towards the quorum and consensus computations.
+                                    # Setting timeout to 0 will never revoke the membership
                                     # of LOST nodes
 
 #wd_no_show_node_removal_timeout = 0s
                                     # Time to wait for Watchdog node to connect to the cluster.
                                     # After that time the cluster membership of NO-SHOW node gets
                                     # revoked and it does not count towards the quorum and
-                                    # consensus computations
-                                    # setting timeout to 0 will not revoke the membership
+                                    # consensus computations.
+                                    # Setting timeout to 0 will not revoke the membership
                                     # of NO-SHOW nodes
 
 
