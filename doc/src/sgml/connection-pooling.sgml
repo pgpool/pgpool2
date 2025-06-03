@@ -183,12 +183,15 @@
     </term>
     <listitem>
      <para>
-      Specifies the time in seconds to terminate a <productname>Pgpool-II
-      </productname> child process if it remains idle. The new child process
+      Specifies the time in seconds to terminate
+      a <productname>Pgpool-II
+      </productname> child process if it remains idle because no client is connecting to it.
+      The new child process
       is immediately spawned by <productname>Pgpool-II</productname> when it
       is terminated because of <varname>child_life_time</varname>.
       <varname>child_life_time</varname> is a measure to prevent the
       memory leaks and other unexpected errors in <productname>Pgpool-II
+
       </productname> children.
      </para>
      <note>

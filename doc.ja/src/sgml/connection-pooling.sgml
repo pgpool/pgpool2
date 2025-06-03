@@ -293,7 +293,7 @@ pgbench -n -S -p 9999 -c 32 -C -S -T 300 test
       memory leaks and other unexpected errors in <productname>Pgpool-II
      </productname> children.
       -->
-      <productname>Pgpool-II</productname>の子プロセスがアイドル状態のままでいるときに、それを強制終了するまでの時間を秒単位で指定します。
+      クライアントが<productname>Pgpool-II</productname>の子プロセスに接続しないアイドル状態のままでいるときに、それを強制終了するまでの時間を秒単位で指定します。
       <varname>child_life_time</varname>により終了された時には、すぐに新しい子プロセスが<productname>Pgpool-II</productname>により起動されます。
       <varname>child_life_time</varname>は<productname>Pgpool-II</productname>子プロセスのメモリリークやその他の不測のエラーに備えた予防措置です。
      </para>
