@@ -905,6 +905,9 @@ wd_create_recv_socket(int port)
 
 	for (walk = res; walk != NULL; walk = walk->ai_next)
 	{
+		bool	bind_is_done;
+		int		bind_tries;
+
 		if ((sock = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol)) < 0)
 		{
 			/* socket create failed */
@@ -954,9 +957,24 @@ wd_create_recv_socket(int port)
 				continue;
 			}
 		}
-		if (bind(sock, walk->ai_addr, walk->ai_addrlen) < 0)
+
+		bind_is_done = false;
+		for (bind_tries = 0; !bind_is_done && bind_tries < 5; bind_tries++)
 		{
-			/* bind failed */
+			if (bind(sock, walk->ai_addr, walk->ai_addrlen) < 0)
+			{
+				/* bind failed */
+				ereport(LOG,
+						(errmsg("failed to create watchdog receive socket. retrying..."),
+						 errdetail("bind on \"TCP:%d\" failed with reason: \"%m\"", port)));
+				sleep(1);
+			}
+			else
+				bind_is_done = true;
+		}
+		/* bind failed finally */
+		if (!bind_is_done)
+		{
 			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
 					 errdetail("bind on \"TCP:%d\" failed with reason: \"%m\"", port)));
