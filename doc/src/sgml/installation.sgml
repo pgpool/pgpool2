@@ -113,10 +113,54 @@
  <sect1 id="install-requirements">
   <title>Requirements</title>
 
+  <sect2 id="platform-requirements">
+  <title>System requirements</title>
   <para>
-   In general, a modern Unix-compatible platform should be able to run
-   <productname>Pgpool-II</>. Windows is not supported.
+   <productname>Pgpool-II</productname> is supposed to run on most
+   UNIX compatible environments.  Windows is not supported.
+   Followings are the list of platforms the development community
+   have been verifying. Other platforms have not been verified.
+   <itemizedlist>
+    <listitem>
+     <para>
+      Rocky Linux 9 (x86_64)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Rocky Linux 8 (x86_64)
+     </para>
+    </listitem>
+   </itemizedlist>
+   Linux distributions compatible with them should
+   run <productname>Pgpool-II</productname>.
   </para>
+
+  <para>
+   <ulink url="https://pgpool.net/mediawiki/index.php/Apt_Repository">packages</ulink>
+   for Debian/Ubuntu are provided.
+  </para>
+
+  <para>
+   We have some reports from users who successfully
+   run <productname>Pgpool-II</productname>.
+   <itemizedlist>
+    <listitem>
+     <para>
+      Ubuntu 20.04 (x86_64)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      OpenBSD
+     </para>
+    </listitem>
+   </itemizedlist>
+   </para>
+ </sect2>
+
+ <sect2 id="software-requirements">
+  <title>Software requirements</title>
 
   <para>
    The following software packages are required for building
@@ -218,6 +262,7 @@
    4 GB. Use the <command>df</command> command to check free disk
    space.
   </para>
+ </sect2>
  </sect1>
 
  <sect1 id="install-getsource">
