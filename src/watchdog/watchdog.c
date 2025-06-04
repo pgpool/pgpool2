@@ -907,13 +907,27 @@ wd_create_recv_socket(int port)
 	{
 		bool	bind_is_done;
 		int		bind_tries;
+		int		ret;
+		char	buf[INET6_ADDRSTRLEN + 1];
+
+		memset(buf, 0, sizeof(buf));
+		if ((ret = getnameinfo((struct sockaddr *) walk->ai_addr, walk->ai_addrlen,
+							   buf, sizeof(buf), NULL, 0, NI_NUMERICHOST)) != 0)
+		{
+			ereport(LOG,
+					(errmsg("failed to create INET domain socket"),
+					 errdetail("getnameinfo() failed: \"%s\"", gai_strerror(ret))));
+		}
+
+		ereport(LOG,
+				(errmsg("setting up watchdog receive socket for %s:%d", buf, port)));
 
 		if ((sock = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol)) < 0)
 		{
 			/* socket create failed */
 			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
-					 errdetail("create socket failed with reason: \"%m\"")));
+					 errdetail("create socket on %s:%d failed with reason: \"%m\"", buf, port)));
 			continue;
 		}
 
@@ -966,7 +980,7 @@ wd_create_recv_socket(int port)
 				/* bind failed */
 				ereport(LOG,
 						(errmsg("failed to create watchdog receive socket. retrying..."),
-						 errdetail("bind on \"TCP:%d\" failed with reason: \"%m\"", port)));
+						 errdetail("bind on \"%s:%d\" failed with reason: \"%m\"", buf, port)));
 				sleep(1);
 			}
 			else
@@ -977,7 +991,7 @@ wd_create_recv_socket(int port)
 		{
 			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
-					 errdetail("bind on \"TCP:%d\" failed with reason: \"%m\"", port)));
+					 errdetail("bind on %s:%d failed", buf, port)));
 			close(sock);
 			continue;
 		}
@@ -987,7 +1001,7 @@ wd_create_recv_socket(int port)
 			/* listen failed */
 			ereport(LOG,
 					(errmsg("failed to create watchdog receive socket"),
-					 errdetail("listen failed with reason: \"%m\"")));
+					 errdetail("listen on %s:%d failed with reason: \"%m\"", buf, port)));
 			close(sock);
 			continue;
 		}
