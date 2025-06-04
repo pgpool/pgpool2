@@ -89,16 +89,50 @@
   <title>Requirements</title>
   -->
   <title>必要条件</title>
-
+  <sect2 id="platform-requirements">
+  <title>動作環境</title>
   <para>
-   <!--
-   In general, a modern Unix-compatible platform should be able to run
-   <productname>Pgpool-II</>. Windows is not supported.
-   -->
-   通常、最近のUnix互換プラットフォームならば<productname>Pgpool-II</>を動作させることができるはずです。
+   <productname>Pgpool-II</productname>はほとんどのUNIX互換環境で動作すると思われます。
    Windows はサポートされてません。
+   開発コミュニティが動作検証しているのは以下のものです。
+   これ以外は開発コミュニティは動作検証を行っていません。
+   <itemizedlist>
+    <listitem>
+     <para>
+      Rocky Linux 9 (x86_64)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Rocky Linux 8 (x86_64)
+     </para>
+    </listitem>
+   </itemizedlist>
+   これらと互換性のあるLinuxディストリビューションでも動作するはずです。
   </para>
 
+  <para>
+   Debian/Ubuntuに関しては<ulink url="https://pgpool.net/mediawiki/index.php/Apt_Repository">パッケージ</ulink>が提供されています。
+  </para>
+  <para>
+   ユーザから動作報告があったのは以下のものです。
+   <itemizedlist>
+    <listitem>
+     <para>
+      Ubuntu 20.04 (x86_64)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      OpenBSD
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </sect2>
+
+ <sect2 id="software-requirements">
+  <title>ソフトウェア要件</title>
   <para>
    <!--
    The following software packages are required for building
@@ -237,6 +271,7 @@
    リグレッションテストを実行する場合は、一時的に最大で4ギガバイトの領域がさらに必要になります。
    ディスクの空き容量を確認するためには<command>df</command>コマンドを使います。
   </para>
+</sect2>
  </sect1>
 
  <sect1 id="install-getsource">
