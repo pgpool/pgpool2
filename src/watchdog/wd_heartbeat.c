@@ -271,7 +271,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = 0;
-	hints.ai_flags = AI_NUMERICSERV;
+	hints.ai_flags = AI_NUMERICSERV | AI_PASSIVE;
 
 	if ((gai_ret = getaddrinfo(NULL, portstr, &hints, &res)) != 0)
 	{
