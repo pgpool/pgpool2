@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,6 +28,7 @@
 #include "protocol/pool_connection_pool.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
+#include "utils/pg_prng.h"
 #include "utils/pool_ipc.h"
 #include "utils/pool_stream.h"
 #include "utils/pool_ssl.h"
@@ -43,6 +44,8 @@ static int	choose_db_node_id(char *str);
 static void free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp);
 static void si_enter_critical_region(void);
 static void si_leave_critical_region(void);
+
+static void initialize_prng(pg_prng_state *state);
 
 /*
  * create a persistent connection
@@ -299,7 +302,8 @@ pool_free_startup_packet(StartupPacket *sp)
 /*
  * Select load balancing node. This function is called when:
  * 1) client connects
- * 2) the node previously selected for the load balance node is down
+ * 2) an SQL executes (if statement_level_load_balance is enabled)
+ * 3) the node previously selected for the load balance node is down
  */
 int
 select_load_balancing_node(void)
@@ -317,6 +321,9 @@ select_load_balancing_node(void)
 	uint64		lowest_delay;
 	int 		lowest_delay_nodes[NUM_BACKENDS];
 
+	/* prng state data for load balancing */
+	static		pg_prng_state backsel_state;
+
 	/*
 	 * -2 indicates there's no database_redirect_preference_list. -1 indicates
 	 * database_redirect_preference_list exists and any of standby nodes
@@ -324,11 +331,10 @@ select_load_balancing_node(void)
 	 */
 	int			suggested_node_id = -2;
 
-#if defined(sun) || defined(__sun)
-	r = (((double) rand()) / RAND_MAX);
-#else
-	r = (((double) random()) / RAND_MAX);
-#endif
+	/* initialize prng if necessary */
+	initialize_prng(&backsel_state);
+
+	r = pg_prng_double(&backsel_state);
 
 	/*
 	 * Check user_redirect_preference_list
@@ -490,11 +496,7 @@ select_load_balancing_node(void)
 				}
 			}
 
-#if defined(sun) || defined(__sun)
-			r = (((double) rand()) / RAND_MAX) * total_weight;
-#else
-			r = (((double) random()) / RAND_MAX) * total_weight;
-#endif
+			r = pg_prng_double(&backsel_state) * total_weight;
 
 			selected_slot = PRIMARY_NODE_ID;
 			total_weight = 0.0;
@@ -573,11 +575,7 @@ select_load_balancing_node(void)
 		}
 	}
 
-#if defined(sun) || defined(__sun)
-	r = (((double) rand()) / RAND_MAX) * total_weight;
-#else
-	r = (((double) random()) / RAND_MAX) * total_weight;
-#endif
+	r = pg_prng_double(&backsel_state) * total_weight;
 
 	total_weight = 0.0;
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -642,11 +640,7 @@ select_load_balancing_node(void)
 			}
 		}
 
-#if defined(sun) || defined(__sun)
-		r = (((double) rand()) / RAND_MAX) * total_weight;
-#else
-		r = (((double) random()) / RAND_MAX) * total_weight;
-#endif
+		r = pg_prng_double(&backsel_state) * total_weight;
 
 		selected_slot = PRIMARY_NODE_ID;
 
@@ -674,6 +668,27 @@ select_load_balancing_node(void)
 			(errmsg("selecting load balance node"),
 			 errdetail("selected backend id is %d", selected_slot)));
 	return selected_slot;
+}
+
+/*
+ * initialize_prng() -
+ *
+ *	Initialize (seed) the PRNG, if not done yet in this process.
+ */
+static void
+initialize_prng(pg_prng_state *state)
+{
+	static bool prng_seed_set = false;
+	uint64	seed;
+
+	if (unlikely(!prng_seed_set))
+	{
+		/* initialize prng */
+		if (!pg_strong_random(&seed, sizeof(seed)))
+			seed = UINT64CONST(1); /* Pick a value, as long as it spreads */
+		pg_prng_seed(state, seed);
+		prng_seed_set = true;
+	}
 }
 
 /*

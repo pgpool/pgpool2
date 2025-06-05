@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -153,8 +153,6 @@ do_child(int *fds)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	POOL_CONNECTION_POOL *volatile backend = NULL;
-	struct timeval now;
-	struct timezone tz;
 
 	/* counter for child_max_connections.  "volatile" declaration is necessary
 	 * so that this is counted up even if long jump is issued due to
@@ -213,15 +211,6 @@ do_child(int *fds)
 
 	/* Initialize per process context */
 	pool_init_process_context();
-
-	/* initialize random seed */
-	gettimeofday(&now, &tz);
-
-#if defined(sun) || defined(__sun)
-	srand((unsigned int) now.tv_usec);
-#else
-	srandom((unsigned int) now.tv_usec);
-#endif
 
 	/* initialize connection pool */
 	if (pool_init_cp())
