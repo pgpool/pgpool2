@@ -1191,7 +1191,7 @@ json_get_int_value_for_key(json_value * source, const char *key, int *value)
 }
 
 int
-json_get_long_value_for_key(json_value * source, const char *key, long *value)
+json_get_long_value_for_key(json_value * source, const char *key, time_t *value)
 {
 	json_value *jNode;
 
