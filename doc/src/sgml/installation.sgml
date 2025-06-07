@@ -399,8 +399,20 @@ autoreconf -fi
     <term><option>--with-pam</option></term>
     <listitem>
      <para>
-      <productname>Pgpool-II</productname> binaries will be built with PAM authentication support.
+      <productname>Pgpool-II</productname> binaries will be built
+      with <link linkend="auth-pam">PAM authentication</link> support.
       PAM authentication support is disabled by default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>--with-ldap</option></term>
+    <listitem>
+     <para>
+      <productname>Pgpool-II</productname> binaries will be built
+      with <link linkend="auth-ldap">LDAP authentication</link>
+      support.  LDAP authentication support is disabled by default.
      </para>
     </listitem>
    </varlistentry>
