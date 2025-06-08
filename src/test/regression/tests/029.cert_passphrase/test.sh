@@ -103,7 +103,9 @@ wait_for_pgpool_startup
 
 $PSQL -h localhost -c "select 1" test
 
-grep "could not load private key file" log/pgpool.log|grep "bad decrypt"
+# The error message is typically "bad decrypt".
+# But it seems sometimes "wrong tag".
+grep "could not load private key file" log/pgpool.log|egrep "bad decrypt|wrong tag"
 if [ $? != 0 ];then
     echo "Checking cert with invalid password failed."
     ./shutdownall
