@@ -8,6 +8,35 @@
   and its interactions with the operating system.
  </para>
 
+ <sect1 id="kernel-resource">
+  <title>Managing kernel resouces</title>
+
+  <indexterm>
+   <primary>kernel resouces</primary>
+  </indexterm>
+
+  <para>
+   To run <productname>Pgpool-II</productname> System V shared memory
+   and System V semaphore are necessary. Although on linux enough
+   amount of both resources are provided, other platforms may need to
+   configure the kernel parameters.
+  </para>
+  <para>
+   The minimum requirement of System V shared memory is around 140 MB.
+   If you plan to use more than default 64MB
+   of <link linkend="runtime-in-memory-query-cache">query
+   cache</link>, you may need more shared memory.  Number of necessary
+   shared memory segments is 3.  Usually the kernel provides enough
+   shared memory segments.
+  </para>
+  
+  <para>
+   The minimum requirement of System V semaphore is around 10.  Number
+   of necessary semaphore sets is 3.  Usually the kernel provides
+   enough semaphore sets.
+  </para>
+ </sect1>
+
  <sect1 id="pgpool-II-user">
   <title>The <productname>Pgpool-II</productname> User Account</title>
 
