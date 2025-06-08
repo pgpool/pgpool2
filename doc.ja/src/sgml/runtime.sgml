@@ -14,6 +14,31 @@
   本章では、<productname>Pgpool-II</>サーバの設定と実行方法、そしてオペレーティングシステムとの相互作用について説明します。 
  </para>
 
+ <sect1 id="kernel-resource">
+  <title>カーネルリソースの管理</title>
+
+  <indexterm>
+   <primary>カーネルリソース</primary>
+  </indexterm>
+
+  <para>
+   <productname>Pgpool-II</productname>を動かすためには、System V共有メモリとSystem Vセマフォが必要です。
+   どちらもLinuxでは十分な量が提供されますが、他のプラットフォームではカーネルパラメータの調整が必要かも知れません。
+  </para>
+  <para>
+   System V共有メモリは、最低でも約140MB必要です。
+   デフォルトの64MBより多い<link linkend="runtime-in-memory-query-cache">クエリキャッシュ</link>を使用する場合は、更に追加が必要になるかもしません。
+   共有メモリの必要セグメント数は3です。
+   通常カーネルは十分な共有メモリセグメント数があるはずです。
+  </para>
+  
+  <para>
+   System Vセマフォは、約10個ほど使用します。
+   必要セット数は1です。
+   通常カーネルには十分なSystem Vセマフォ数があるはずです。
+  </para>
+ </sect1>
+
  <sect1 id="pgpool-II-user">
   <!--
   <title>The <productname>Pgpool-II</productname> User Account</title>
