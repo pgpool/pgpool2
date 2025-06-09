@@ -5098,7 +5098,7 @@ SetHBDestIfFunc(int elevel)
 			{
 				strlcpy(g_pool_config.hb_dest_if[idx].addr, addrs[j], WD_MAX_HOST_NAMELEN - 1);
 				g_pool_config.hb_dest_if[idx].dest_port = hbNodeInfo->dest_port;
-				if (n_if_name > j + 1)
+				if (n_if_name > j )
 				{
 					strlcpy(g_pool_config.hb_dest_if[idx].if_name, if_names[j], WD_MAX_IF_NAME_LEN - 1);
 					pfree(if_names[j]);
