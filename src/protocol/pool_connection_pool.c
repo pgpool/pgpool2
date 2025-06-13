@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -780,6 +780,7 @@ connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	struct addrinfo *res;
 	struct addrinfo *walk;
 	struct addrinfo hints;
+	int	retry_cnt = 5;	/* getaddrinfo() retry count in case EAI_AGAIN */
 
 	/*
 	 * getaddrinfo() requires a string because it also accepts service names,
@@ -798,13 +799,34 @@ connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((ret = getaddrinfo(host, portstr, &hints, &res)) != 0)
+	for (;;)
 	{
-		ereport(WARNING,
-				(errmsg("failed to connect to PostgreSQL server, getaddrinfo() failed with error \"%s\"", gai_strerror(ret))));
+		if ((ret = getaddrinfo(host, portstr, &hints, &res)) != 0)
+		{
+			if (!retry || ret != EAI_AGAIN)
+			{
+				ereport(WARNING,
+						(errmsg("failed to connect to PostgreSQL server, getaddrinfo() failed with error \"%s\"",
+								gai_strerror(ret))));
+				free(portstr);
+				return -1;
+			}
 
-		free(portstr);
-		return -1;
+			retry_cnt--;
+
+			if (retry_cnt <= 0)
+			{
+				ereport(WARNING,
+						(errmsg("failed to connect to PostgreSQL server, getaddrinfo() failed due to retry count over")));
+				free(portstr);
+				return -1;
+			}
+			ereport(LOG,
+					(errmsg("failed to connect to PostgreSQL server, getaddrinfo() failed. retrying...")));
+			sleep(1);
+		}
+		else
+			break;
 	}
 
 	free(portstr);
