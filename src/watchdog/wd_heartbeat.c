@@ -357,6 +357,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 					ereport(LOG,
 							(errmsg("failed to create watchdog heartbeat receive socket."),
 							 errdetail("setsockopt(SO_BINDTODEVICE) requires root privilege")));
+					close(sock);
 					continue;
 				}
 			}
@@ -364,6 +365,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 			ereport(LOG,
 					(errmsg("failed to create watchdog heartbeat receive socket"),
 					 errdetail("setsockopt(SO_BINDTODEVICE) is not available on this platform")));
+			close(sock);
 			continue;
 #endif
 		}
