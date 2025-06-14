@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -943,13 +943,15 @@ create_conn(char *hostname, int port, char *password)
 	}
 
 	snprintf(conninfo, sizeof(conninfo),
-			 "host='%s' port='%d' dbname='%s' user='%s' password='%s' connect_timeout='%d'",
+			 "host='%s' port='%d' dbname='%s' user='%s' password='%s' connect_timeout='%d' application_name='%s'",
 			 hostname,
 			 port,
 			 pool_config->wd_lifecheck_dbname,
 			 pool_config->wd_lifecheck_user,
 			 password ? password : "",
-			 pool_config->wd_interval / 2 + 1);
+			 pool_config->wd_interval / 2 + 1,
+			 "lifecheck_ping");
+
 	conn = PQconnectdb(conninfo);
 
 	if (PQstatus(conn) != CONNECTION_OK)
