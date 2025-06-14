@@ -203,11 +203,8 @@ wd_create_hb_send_socket(WdHbIf * hb_if)
 		{
 			if (geteuid() == 0) /* check root privileges */
 			{
-				struct ifreq i;
-
-				strlcpy(i.ifr_name, hb_if->if_name, sizeof(i.ifr_name));
-
-				if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
+				if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
+							   hb_if->if_name, strlen(hb_if->if_name)) == -1)
 				{
 					close(sock);
 					ereport(ERROR,
@@ -217,7 +214,7 @@ wd_create_hb_send_socket(WdHbIf * hb_if)
 				}
 				ereport(LOG,
 						(errmsg("creating socket for sending heartbeat"),
-						 errdetail("bind send socket to device: %s", i.ifr_name)));
+						 errdetail("bind send socket to device: %s", hb_if->if_name)));
 			}
 			else
 				ereport(LOG,
@@ -336,11 +333,8 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 			{
 				if (geteuid() == 0) /* check root privileges */
 				{
-					struct ifreq i;
-
-					strlcpy(i.ifr_name, hb_if->if_name, sizeof(i.ifr_name));
-
-					if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) == -1)
+					if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
+								   hb_if->if_name, strlen(hb_if->if_name)) == -1)
 					{
 						ereport(LOG,
 								(errmsg("failed to create watchdog heartbeat receive socket"),
@@ -350,7 +344,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 					}
 					ereport(LOG,
 							(errmsg("creating watchdog heartbeat receive socket."),
-							 errdetail("bind receive socket to device: \"%s\"", i.ifr_name)));
+							 errdetail("bind receive socket to device: \"%s\"", hb_if->if_name)));
 				}
 				else
 				{
