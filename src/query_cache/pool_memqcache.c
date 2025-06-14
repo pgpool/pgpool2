@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2131,10 +2131,8 @@ pool_shared_memory_cache_size(void)
 				 errdetail("memqcache_total_size %ld should be greater or equal to memqcache_cache_block_size %d",
 						   pool_config->memqcache_total_size,
 						   pool_config->memqcache_cache_block_size)));
+	elog(DEBUG1, "memcache blocks :%ld", num_blocks);
 
-	ereport(LOG,
-			(errmsg("memory cache initialized"),
-			 errdetail("memcache blocks :%ld", num_blocks)));
 	/* Remember # of blocks */
 	pool_set_memqcache_blocks(num_blocks);
 	size = pool_config->memqcache_cache_block_size * num_blocks;

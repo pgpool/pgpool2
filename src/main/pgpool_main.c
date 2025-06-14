@@ -3047,8 +3047,6 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 		elog(DEBUG1, "watchdog: %zu bytes requested for shared memory", MAXALIGN(wd_ipc_get_shared_mem_size()));
 	}
 
-	ereport(LOG,
-			(errmsg("allocating (%zu) bytes of shared memory segment",size)));
 	initialize_shared_memory_main_segment(size);
 
 	/* Move the backend descriptors to shared memory */

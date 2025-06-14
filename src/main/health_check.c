@@ -556,7 +556,7 @@ health_check_stats_shared_memory_size(void)
 	size_t	size;
 
 	size =  MAXALIGN(sizeof(POOL_HEALTH_CHECK_STATISTICS) * MAX_NUM_BACKENDS);
-	elog(LOG, "health_check_stats_shared_memory_size: requested size: %lu", size);
+	elog(DEBUG1, "health_check_stats_shared_memory_size: requested size: %lu", size);
 	return size;
 }
 
