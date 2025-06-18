@@ -136,7 +136,7 @@ $ pcp_node_info -w -p 11001 -n 1
 2. ノードのポート番号
 3. ステータス
 4. ロードバランスウェイト
-5. バックエンド状態名
+5. バックエンドステータス名
 6. 実際のバックエンドの状態 (Pgpool-II 4.3以降。PQpingParamsで取得)
 7. バックエンドの役割
 8. 実際のバックエンドの役割(Pgpool-II 4.3以降。pg_is_in_recoveryで取得)
@@ -148,9 +148,9 @@ $ pcp_node_info -w -p 11001 -n 1
   </para>
   <para>
    <!--
-    3 (status) is represented by a digit from [0 to 3].
+   <emphasis>3 (status)</> is represented by a digit from [0 to 3].
    -->
-   3 (ステータス)は [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。
+   <emphasis>3（ステータス）</>は [0..3] までの数字で表わされます。各数字の意味は以下のとおりです。
   </para>
   <para>
    <itemizedlist>
@@ -170,10 +170,21 @@ $ pcp_node_info -w -p 11001 -n 1
    <!--
    4 (load balance weight) is displayed in normalized format.
    -->
-   4 (ロードバランスウェイト)は0から1に正規化されたフォーマットで出力されます。
+   <emphasis>4（ロードバランスウェイト）</>は0から1に正規化されたフォーマットで出力されます。
   </para>
   <para>
-   6は実際のバックエンドの状態をリアルタイムで取得して表示します。
+   <!--
+   <emphasis>5 (status name)</> indicates the status of a
+   <productname>PostgreSQL</productname> node as recognized by
+   <productname>Pgpool-II</productname>. It corresponds to the numeric value
+   shown in "<emphasis>3 (status)</>" and represents the node's internal state
+   in a human-readable format maintained by <productname>Pgpool-II</productname>.
+   -->
+   <emphasis>5（バックエンドステータス名）</>は<productname>Pgpool-II</productname>から見た<productname>PostgreSQL</productname>ノードのステータス名を示します。
+   これは、上記「<emphasis>3（ステータス）</>」の数値に対応する状態名（文字列）であり、<productname>Pgpool-II</productname>が内部的に保持しているノードの状態を、可読性の高い形式で表現したものです。
+  </para>
+  <para>
+   <emphasis>6（実際のバックエンドの状態）</>は実際のバックエンドの状態をリアルタイムで取得して表示します。
    情報の取得は、このコマンドが実行された時に<function>PQpingParams</function>を呼び出すことによって行われます。
    <function>PQpingParams</function>は<productname>PostgreSQL</productname> 9.1以降でのみサポートされています。
    <productname>Pgpool-II</productname>が<productname>PostgreSQL</productname> 9.0以前とともに構築されると、この列は"unknown"と表示されます。
@@ -182,7 +193,10 @@ $ pcp_node_info -w -p 11001 -n 1
     逆に、5が"up"なのに、6が"down"というのは起こらないはずです。
   </para>
   <para>
-   8は実際のバックエンドの状態をリアルタイムで取得して表示します。
+   <emphasis>7（バックエンドの役割）</>は<productname>Pgpool-II</productname>から見た<productname>PostgreSQL</productname>ノードの役割（primaryまたはstandby）を示します。<productname>Pgpool-II</productname>が内部的に保持している情報に基づいて表示されます。
+  </para>
+  <para>
+   <emphasis>8（実際のバックエンドの役割）</>は実際のバックエンドの役割（primaryまたはstandby）をリアルタイムで取得して表示します。
    その結果はストリーミングレプリケーションモードでは、"primary"か"standby"ですが、情報が取得できなければ"unknown"と表示します。
    <productname>Pgpool-II</productname>はノードID順にバックエンドノードを調べ、最後に見つけたスタンバイ以外のノードをプライマリとするので、誤ってスタンバイ以外のノードが複数できたときなどには、7と8が一致しないことはありえます。
    （このコマンドはそのような状態を見つけるのに役立ちます。)
@@ -190,11 +204,30 @@ $ pcp_node_info -w -p 11001 -n 1
    ストリーミングレプリケーションモードと違って、<function>pg_is_in_recovery</function>は呼び出されず、7と8が異なる値になることはありません。
   </para>
   <para>
-   9, 10, 11は、<xref linkend="guc-sr-check-period">が0以外でなければ正しく表示されません。
-   また、10, 11は、<xref linkend="guc-sr-check-user">が<productname>PostgreSQL</productname>のスーパーユーザーであるか、"pg_monitor"グループに所属していなけれ正しく表示されません。
+   <emphasis>9, 10, 11</>を正しく表示させるに、<xref linkend="guc-sr-check-period">が0以外に設定されている必要があります。
+    さらに10, 11を正しく表示させるには、以下の追加設定が必要です。
+   <itemizedlist>
+    <listitem>
+     <para>
+      <xref linkend="guc-backend-application-name">パラメータを設定する必要があります。
+     </para>
+     <para>
+      各<varname>backend_application_nameX</varname>に設定された値が、該当ノードの<varname>primary_conninfo</varname>の<varname>application_name</varname>に指定された値と一致している必要があります。
+     </para>
+     <para>
+      特に、<productname>Pgpool-II</productname>の<xref linkend="pcp-recovery-node">コマンドを用いてスタンバイノードを構築し、コミュニティ提供のサンプルスクリプトを使用している場合は、<varname>backend_application_nameX</varname>の値を<varname>backend_hostnameX</varname>と一致させてください。
+      具体的な設定例については<xref linkend="example-cluster-pgpool-config-backend-settings">をご参照ください。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <xref linkend="guc-sr-check-user">が<productname>PostgreSQL</productname>のスーパーユーザーであるか、もしくは<literal>pg_monitor</literal>ロールの権限が付与されている必要があります。
+     </para>
+    </listitem>
+   </itemizedlist>
    <note>
     <para>
-    <xref linkend="guc-sr-check-user">をpg_monitorグループに所属させるには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
+    <xref linkend="guc-sr-check-user">に<literal>pg_monitor</literal>ロールの権限を付与するには、以下のSQLコマンドを<productname>PostgreSQL</productname>スーパーユーザーで実行してください（"sr_check_user"を<xref linkend="guc-sr-check-user">の設定値で置き換えてください）
 	 <programlisting>
 GRANT pg_monitor TO sr_check_user;
 	 </programlisting>
