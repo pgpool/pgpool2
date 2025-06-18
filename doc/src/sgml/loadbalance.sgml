@@ -44,8 +44,10 @@
      <para>
       either
       in <xref linkend="runtime-config-streaming-replication-mode">,
-      <xref linkend="guc-replication-mode">
-      or <xref linkend="guc-snapshot-isolation-mode">
+      <xref linkend="guc-replication-mode">,
+       <xref linkend="guc-snapshot-isolation-mode"> or
+	<link linkend="runtime-config-logical-replication-mode">logical
+	replication mode</link>.
      </para>
     </listitem>
     <listitem>

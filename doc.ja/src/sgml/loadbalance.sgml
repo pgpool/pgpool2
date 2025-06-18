@@ -63,7 +63,7 @@
       <xref linkend="guc-replication-mode">
       or <xref linkend="guc-snapshot-isolation-mode">
       -->
-      <xref linkend="runtime-config-streaming-replication-mode">、<xref linkend="guc-replication-mode">、<xref linkend="guc-snapshot-isolation-mode">のどれかである。
+      <xref linkend="runtime-config-streaming-replication-mode">、<xref linkend="guc-replication-mode">、<xref linkend="guc-snapshot-isolation-mode">、<link linkend="runtime-config-logical-replication-mode">ロジカルレプリケーションモード</link>のどれかである。
      </para>
     </listitem>
     <listitem>
