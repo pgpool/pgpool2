@@ -100,7 +100,7 @@ $ pcp_node_info -w -p 11001 -n 1
    </literallayout>
   </para>
   <para>
-   3 (status) is represented by a digit from [0 to 3].
+   <emphasis>3 (status)</> is represented by a digit from [0 to 3].
    <itemizedlist>
     <listitem><para>0 - This state is only used during the initialization. PCP will never display it. </para></listitem>
     <listitem><para>1 - Node is up. No connections yet. </para></listitem>
@@ -109,10 +109,17 @@ $ pcp_node_info -w -p 11001 -n 1
    </itemizedlist>
   </para>
   <para>
-   4 (load balance weight) is displayed in normalized format (0 - 1).
+   <emphasis>4 (load balance weight)</> is displayed in normalized format (0 - 1).
   </para>
   <para>
-   6 shows the backend status in real time.  The info is obtained by
+   <emphasis>5 (status name)</> indicates the status of a
+   <productname>PostgreSQL</productname> node as recognized by
+   <productname>Pgpool-II</productname>. It corresponds to the numeric value
+   shown in "<emphasis>3 (status)</>" and represents the node's internal state
+   in a human-readable format maintained by <productname>Pgpool-II</productname>.
+  </para>
+  <para>
+   <emphasis>6 (actual backend status)</> shows the backend status in real time.  The info is obtained by
    calling <function>PQpingParams</function> at the time when the
    command is invoked. <function>PQpingParams</function> is only
    available in <productname>PostgreSQL</productname> 9.1 or later. If
@@ -129,7 +136,13 @@ $ pcp_node_info -w -p 11001 -n 1
    is "down".
   </para>
   <para>
-   8 shows the backend status in real time. The result will be either
+   <emphasis>7 (backend role)</> indicates the role of a <productname>PostgreSQL</productname>
+   node (primary or standby) from the perspective of
+   <productname>Pgpool-II</productname>, based on its internally maintained
+   information.
+  </para>
+  <para>
+   <emphasis>8 (actual backend role)</> shows the backend status in real time. The result will be either
    "primary" or "standby", and possibly "unknown" if information
    retrieval failed. Since <productname>Pgpool-II</productname>
    searches backend nodes in the node id order and assumes the last
@@ -142,15 +155,41 @@ $ pcp_node_info -w -p 11001 -n 1
    7 and 8 will be always the same.
   </para>
   <para>
-   To correctly 9, 10, 11 are displayed, <xref linkend="guc-sr-check-period"> must not
-   be 0.  10, 11 will not be displayed
-   if <xref linkend="guc-sr-check-user"> is
-   not <productname>PostgreSQL</productname> super user nor it's not
-   in "pg_monitor" group.
+   To correctly display <emphasis>9, 10 and 11</>, <xref linkend="guc-sr-check-period">
+   must not be 0.
+   Additionally, to correctly display <emphasis>10 and 11</>, the following
+   settings are required.
+   <itemizedlist>
+    <listitem>
+     <para>
+      <xref linkend="guc-backend-application-name"> must be configured.
+     </para>
+     <para>
+      The value set for each <varname>backend_application_nameX</varname>
+      must match the value specified in <varname>application_name</varname>
+      of <varname>primary_conninfo</varname> for the corresponding node.
+     </para>
+     <para>
+      In particular, when creating standby nodes using Pgpool-II's
+      <xref linkend="pcp-recovery-node"> command and community-provided
+      sample scripts, please ensure that the value of
+      <varname>backend_application_nameX</varname> matches that of
+      <varname>backend_hostnameX</varname>. For specific configuration examples,
+      please refer to <xref linkend="example-cluster-pgpool-config-backend-settings">.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <xref linkend="guc-sr-check-user"> must either be a
+      <productname>PostgreSQL</productname> superuser or have been granted the
+      privileges of the <literal>pg_monitor</literal> role.
+     </para>
+    </listitem>
+   </itemizedlist>
    <note>
     <para>
-     To make <xref linkend="guc-sr-check-user"> in pg_monitor
-     group, execute following SQL command
+     To grant the privileges of the <literal>pg_monitor</literal> role to
+     <xref linkend="guc-sr-check-user">, execute following SQL command
      by <productname>PostgreSQL</productname> super user (replace
      "sr_check_user" with the setting of <xref linkend="guc-sr-check-user">):
      <programlisting>
