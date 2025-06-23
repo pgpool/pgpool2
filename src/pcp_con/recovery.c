@@ -95,7 +95,7 @@ start_recovery(int recovery_node)
 	conn = connect_backend_libpq(backend);
 	if (conn == NULL)
 	{
-		if(chceck_password_type_is_not_md5(pool_config->recovery_user, pool_config->recovery_password) == -1)
+		if(check_password_type_is_not_md5(pool_config->recovery_user, pool_config->recovery_password) == -1)
 		{
 			ereport(ERROR,
 					(errmsg("the password of recovery_user %s is invalid format",
