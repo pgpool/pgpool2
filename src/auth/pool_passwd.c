@@ -702,7 +702,7 @@ read_pool_key(char *key_file_path)
  * -2: password is not found
  */
 int
-chceck_password_type_is_not_md5(char *username, char *password_in_config)
+check_password_type_is_not_md5(char *username, char *password_in_config)
 {
 	PasswordType passwordType = PASSWORD_TYPE_UNKNOWN;
 
