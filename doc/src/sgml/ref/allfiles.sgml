@@ -45,3 +45,4 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY pgpoolAdmPcpNodeCount SYSTEM "pgpool_adm_pcp_node_count.sgml">
 <!ENTITY pgpoolAdmPcpAttachNode SYSTEM "pgpool_adm_pcp_attach_node.sgml">
 <!ENTITY pgpoolAdmPcpDetachNode SYSTEM "pgpool_adm_pcp_detach_node.sgml">
+<!ENTITY pgpoolAdmPcpProcInfo SYSTEM "pgpool_adm_pcp_proc_info.sgml">

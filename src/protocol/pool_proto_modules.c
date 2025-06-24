@@ -398,6 +398,11 @@ SimpleQuery(POOL_CONNECTION * frontend,
 		pool_start_query(query_context, contents, len, node);
 
 		/*
+		 * Initialize ProcessInfo->node_ids and ProcessInfo->statement.
+		 */
+		init_pi_set();
+
+		/*
 		 * Check if the transaction is in abort status. If so, we do nothing
 		 * and just return an error message to frontend, execpt for
 		 * transaction COMMIT or ROLLBACK (TO) command.
@@ -758,6 +763,8 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			session_context->uncompleted_message = NULL;
 	}
 
+	/* initialize backend send statement bitmap */
+	init_pi_set();
 
 	if (!RAW_MODE)
 	{
@@ -1148,6 +1155,9 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 	/* check if query is "COMMIT" or "ROLLBACK" */
 	commit = is_commit_or_rollback_query(node);
+
+	/* initialize backend send statement bitmap */
+	init_pi_set();
 
 	if (!SL_MODE)
 	{
@@ -3780,11 +3790,56 @@ generate_error_message(char *prefix, int specific_error, char *query)
 void
 per_node_statement_log(POOL_CONNECTION_POOL * backend, int node_id, char *query)
 {
+	ProcessInfo	*pi = pool_get_my_process_info();
 	POOL_CONNECTION_POOL_SLOT *slot = backend->slots[node_id];
 
 	if (pool_config->log_per_node_statement)
 		ereport(LOG,
 				(errmsg("DB node id: %d backend pid: %d statement: %s", node_id, ntohl(slot->pid), query)));
+	
+	pi_set(node_id);
+	StrNCpy(pi->statement, query, MAXSTMTLEN);
+}
+
+/*
+ * Initialize ProcessInfo->node_ids and ProcessInfo->statement.
+ */
+void
+init_pi_set(void)
+{
+	ProcessInfo	*pi = pool_get_my_process_info();
+
+	memset(pi->node_ids, 0, sizeof(pi->node_ids));
+	pi->statement[0] = '\0';
+}
+
+/*
+ * Set ProcessInfo->node_ids.
+ */
+void
+pi_set(int node_id)
+{
+	ProcessInfo	*pi = pool_get_my_process_info();
+
+	if (node_id < BITS_PER_TYPE(uint64))
+		pi->node_ids[0] |= (1 << node_id);
+	else
+		pi->node_ids[1] |= (1 << (node_id - BITS_PER_TYPE(uint64)));
+}
+
+/*
+ * Returns true if node_id bit in ProcessInfo->node_ids is on.
+ */
+bool
+is_pi_set(uint64 *node_ids, int node_id)
+{
+	int	set;
+
+	if (node_id < BITS_PER_TYPE(uint64))
+		set = node_ids[0] & (1 << node_id);
+	else
+		set = node_ids[1] & (1 << (node_id - BITS_PER_TYPE(uint64)));
+	return set != 0;
 }
 
 /*

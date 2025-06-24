@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -85,7 +85,10 @@ int * pool_report_pools_offsets(int *n)
 		offsetof(POOL_REPORT_POOLS, pool_backendpid),
 		offsetof(POOL_REPORT_POOLS, pool_connected),
 		offsetof(POOL_REPORT_POOLS, status),
-		offsetof(POOL_REPORT_POOLS, load_balance_node)
+		offsetof(POOL_REPORT_POOLS, load_balance_node),
+		offsetof(POOL_REPORT_POOLS, client_host),
+		offsetof(POOL_REPORT_POOLS, client_port),
+		offsetof(POOL_REPORT_POOLS, statement)
 	};
 
 	*n = sizeof(offsettbl)/sizeof(int);

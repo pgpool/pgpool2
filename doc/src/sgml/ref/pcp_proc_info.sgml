@@ -85,14 +85,11 @@ Pgpool-II documentation
   <para>
    Here is an example output:
    <programlisting>
-$ pcp_proc_info -p 1100
-test postgres 2021-09-28 04:16:00 (4:56 before process restarting) 1 3 0 2021-09-28 04:16:16 2021-09-28 04:16:16 0 2021-09-28 04:16:33 1 30795 0 30750 0 Wait for connection
-test postgres 2021-09-28 04:16:00 (4:56 before process restarting) 1 3 0 2021-09-28 04:16:16 2021-09-28 04:16:16 0 2021-09-28 04:16:33 1 30796 0 30750 1 Wait for connection
-test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 34 (4:26 before client disconnected)  1 30763 1 30751 0 Idle
-test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 34 (4:26 before client disconnected)  1 30764 1 30751 1 Idle
-$ pcp_proc_info -p 11001 30751
-test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 58 (4:02 before client disconnected)  1 30763 1 30751 0 Idle
-test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 58 (4:02 before client disconnected)  1 30764 1 30751 1 Idle
+$ pcp_proc_info -p 11001
+test t-ishii 2025-06-24 10:53:35 0 3 0 2025-06-24 10:55:58 2025-06-24 10:55:59 0  1 1336703 1 1336537 0 Idle 0 192.168.10.11 39216
+test t-ishii 2025-06-24 10:53:35 0 3 0 2025-06-24 10:55:58 2025-06-24 10:55:59 0  1 1336704 1 1336537 1 Idle 1 192.168.10.11 39216
+test t-ishii 2025-06-24 10:53:35 (4:03 before process restarting) 1 3 0 2025-06-24 10:53:42 2025-06-24 10:53:42 0 2025-06-24 10:55:37 1 1336573 0 1336544 0 Wait for connection 0 192.168.10.11 39162
+test t-ishii 2025-06-24 10:53:35 (4:03 before process restarting) 1 3 0 2025-06-24 10:53:42 2025-06-24 10:53:42 0 2025-06-24 10:55:37 1 1336574 0 1336544 1 Wait for connection 0 192.168.10.11 39162
    </programlisting>
   </para>
   <para>
@@ -115,6 +112,9 @@ test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 
     15. PostgreSQL backend id
     16. process status
     17. 1 if backend is load balance node and frontend connected, 0 otherwise
+    18. client's host name
+    19. client's port number (not shown if Unix domain socket or localhost)
+    20. SQL statement last executed
    </literallayout>
   </para>
   <para>
@@ -129,76 +129,88 @@ test kawamoto 2021-09-28 04:16:00 0 3 0 2021-09-28 04:16:03 2021-09-28 04:16:03 
   <programlisting>
 $ pcp_proc_info -p 11001 --verbose
 Database                  : test
-Username                  : postgres
-Start time                : 2021-09-28 04:16:00 (2:52 before process restarting)
-Client connection count   : 1
-Major                     : 3
-Minor                     : 0
-Backend connection time   : 2021-09-28 04:16:16
-Client connection time    : 2021-09-28 04:16:16
-Client idle duration      : 0
-Client disconnection time : 2021-09-28 04:16:33
-Pool Counter              : 1
-Backend PID               : 30795
-Connected                 : 0
-PID                       : 30750
-Backend ID                : 0
-Status                    : Wait for connection
-Load balance node         : 0
-
-Database                  : test
-Username                  : postgres
-Start time                : 2021-09-28 04:16:00 (2:52 before process restarting)
-Client connection count   : 1
-Major                     : 3
-Minor                     : 0
-Backend connection time   : 2021-09-28 04:16:16
-Client connection time    : 2021-09-28 04:16:16
-Client idle duration      : 0
-Client disconnection time : 2021-09-28 04:16:33
-Pool Counter              : 1
-Backend PID               : 30796
-Connected                 : 0
-PID                       : 30750
-Backend ID                : 1
-Status                    : Wait for connection
-Load balance node         : 0
-
-Database                  : test
-Username                  : kawamoto
-Start time                : 2021-09-28 04:16:00
+Username                  : t-ishii
+Start time                : 2025-06-24 10:53:35
 Client connection count   : 0
 Major                     : 3
 Minor                     : 0
-Backend connection time   : 2021-09-28 04:16:03
-Client connection time    : 2021-09-28 04:16:03
-Client idle duration      : 158 (2:22 before client disconnected)
-Client disconnection time :
+Backend connection time   : 2025-06-24 10:55:58
+Client connection time    : 2025-06-24 10:55:59
+Client idle duration      : 0
+Client disconnection time : 
 Pool Counter              : 1
-Backend PID               : 30763
+Backend PID               : 1336703
 Connected                 : 1
-PID                       : 30751
+PID                       : 1336537
 Backend ID                : 0
 Status                    : Idle
-Load balance node         : 1
+Load balance node         : 0
+client_host               : 192.168.10.11
+client_port               : 39216
+statement                 : 
 
 Database                  : test
-Username                  : kawamoto
-Start time                : 2021-09-28 04:16:00
+Username                  : t-ishii
+Start time                : 2025-06-24 10:53:35
 Client connection count   : 0
 Major                     : 3
 Minor                     : 0
-Backend connection time   : 2021-09-28 04:16:03
-Client connection time    : 2021-09-28 04:16:03
-Client idle duration      : 158 (2:22 before client disconnected)
-Client disconnection time :
+Backend connection time   : 2025-06-24 10:55:58
+Client connection time    : 2025-06-24 10:55:59
+Client idle duration      : 0
+Client disconnection time : 
 Pool Counter              : 1
-Backend PID               : 30764
+Backend PID               : 1336704
 Connected                 : 1
-PID                       : 30751
+PID                       : 1336537
 Backend ID                : 1
 Status                    : Idle
 Load balance node         : 1
+client_host               : 192.168.10.11
+client_port               : 39216
+statement                 : select 1;
+
+Database                  : test
+Username                  : t-ishii
+Start time                : 2025-06-24 10:53:35 (4:33 before process restarting)
+Client connection count   : 1
+Major                     : 3
+Minor                     : 0
+Backend connection time   : 2025-06-24 10:53:42
+Client connection time    : 2025-06-24 10:53:42
+Client idle duration      : 0
+Client disconnection time : 2025-06-24 10:55:37
+Pool Counter              : 1
+Backend PID               : 1336573
+Connected                 : 0
+PID                       : 1336544
+Backend ID                : 0
+Status                    : Wait for connection
+Load balance node         : 0
+client_host               : 192.168.10.11
+client_port               : 39162
+statement                 : DISCARD ALL
+
+Database                  : test
+Username                  : t-ishii
+Start time                : 2025-06-24 10:53:35 (4:33 before process restarting)
+Client connection count   : 1
+Major                     : 3
+Minor                     : 0
+Backend connection time   : 2025-06-24 10:53:42
+Client connection time    : 2025-06-24 10:53:42
+Client idle duration      : 0
+Client disconnection time : 2025-06-24 10:55:37
+Pool Counter              : 1
+Backend PID               : 1336574
+Connected                 : 0
+PID                       : 1336544
+Backend ID                : 1
+Status                    : Wait for connection
+Load balance node         : 0
+client_host               : 192.168.10.11
+client_port               : 39162
+statement                 : 
   </programlisting>
  </refsect1>
 

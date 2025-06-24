@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1685,6 +1685,20 @@ get_pools(int *nrows)
 					StrNCpy(pools[lines].load_balance_node, "1", POOLCONFIG_MAXPROCESSSTATUSLEN);
 				else
 					StrNCpy(pools[lines].load_balance_node, "0", POOLCONFIG_MAXPROCESSSTATUSLEN);
+
+				StrNCpy(pools[lines].client_host, pi->client_host, NI_MAXHOST);
+				StrNCpy(pools[lines].client_port, pi->client_port, NI_MAXSERV);
+
+				/*
+				 * If this the statement was sent to backend id
+				 * report the statement.
+				 */
+				if (is_pi_set(pi->node_ids, backend_id))
+				{
+					StrNCpy(pools[lines].statement, pi->statement, MAXSTMTLEN);
+					elog(LOG, "pi->node_ids[0]:%ld pi->node_ids[1]:%ld",
+						 pi->node_ids[0], pi->node_ids[1]);
+				}
 				lines++;
 			}
 		}
@@ -1705,7 +1719,7 @@ pools_reporting(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 								  "backend_id", "database", "username", "backend_connection_time",
 								  "client_connection_time", "client_disconnection_time", "client_idle_duration",
 								  "majorversion", "minorversion", "pool_counter", "pool_backendpid", "pool_connected",
-								  "status", "load_balance_node"};
+								  "status", "load_balance_node", "client_host", "client_port", "statement"};
 	int		n;
 	int		*offsettbl;
 	int		nrows;

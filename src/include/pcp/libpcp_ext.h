@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -26,12 +26,17 @@
 #ifndef LIBPCP_EXT_H
 #define LIBPCP_EXT_H
 
+#include <netdb.h>
+
 #include <signal.h>
 #include <stdio.h>
 
 #ifndef PGPOOL_ADM
 #include "parser/pg_config_manual.h"
 #endif
+
+/* returns number of bits in the data type or variable */
+#define	BITS_PER_TYPE(type)	(sizeof(type) * BITS_PER_BYTE)
 
 /*
  * startup packet definitions (v2) stolen from PostgreSQL
@@ -170,6 +175,9 @@ typedef struct
  * process information
  * This object put on shared memory.
  */
+
+#define MAXSTMTLEN	1024
+
 typedef struct
 {
 	pid_t		pid;			/* OS's process id */
@@ -180,6 +188,10 @@ typedef struct
 										 * this process */
 	int			client_connection_count;	/* how many times clients used this process */
 	ProcessStatus	status;
+	char	client_host[NI_MAXHOST];	/* client host. Only valid if status != WAIT_FOR_CONNECT */
+	char	client_port[NI_MAXSERV];	/* client port. Only valid if status != WAIT_FOR_CONNECT */
+	char	statement[MAXSTMTLEN];	/* the last statement sent to backend */
+	uint64	node_ids[2];			/* "statement" is sent to the node id (bitmap) */
 	bool		need_to_restart;	/* If non 0, exit this child process as
 									 * soon as current session ends. Typical
 									 * case this flag being set is failback a
@@ -266,6 +278,9 @@ typedef struct
 	char		pool_connected[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		status[POOLCONFIG_MAXPROCESSSTATUSLEN + 1];
 	char		load_balance_node[POOLCONFIG_MAXPROCESSSTATUSLEN + 1];
+	char		client_host[NI_MAXHOST];
+	char		client_port[NI_MAXSERV];
+	char		statement[MAXSTMTLEN];
 }			POOL_REPORT_POOLS;
 
 /* version struct */

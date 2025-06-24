@@ -1898,11 +1898,18 @@ static POOL_CONNECTION *
 get_connection(int front_end_fd, SockAddr *saddr)
 {
 	POOL_CONNECTION *cp;
+	ProcessInfo	*pi;
 
 	ereport(DEBUG1,
 			(errmsg("I am %d accept fd %d", getpid(), front_end_fd)));
 
 	pool_getnameinfo_all(saddr, remote_host, remote_port);
+
+	/* save remote client host and port info onto shared memory */
+	pi = pool_get_my_process_info();
+	StrNCpy(pi->client_host, remote_host, NI_MAXHOST);
+	StrNCpy(pi->client_port, remote_port, NI_MAXSERV);
+
 	print_process_status(remote_host, remote_port);
 
 	set_ps_display("accept connection", false);

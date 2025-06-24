@@ -51,13 +51,40 @@ else
     fi
 fi
 
+#
+# test for pcp_proc_info, pgpool_adm: pcp_proc_info
+WHOAMI=`whoami`
+./shutdownall
+./startall
+wait_for_pgpool_startup
+$PSQL -a -h localhost -c "SELECT pg_sleep(1)" test &
+$PSQL -a -h localhost test > result 2>&1 <<EOF
+CREATE EXTENSION pgpool_adm;
+SELECT database, status, client_host, statement FROM pcp_proc_info
+(host => '', port => $PCP_PORT, username => '$WHOAMI', password => '$WHOAMI')
+WHERE connected = '1' AND backend_id = '0' AND statement = 'SELECT pg_sleep(1)'
+EOF
+if [ $? != 0 ];then
+    r2=fail
+    echo "test2 failed"
+else
+    cmp  ../expected result
+    if [ $? != 0 ];then
+	r2=fail
+	echo "test2 failed"
+    else
+	r2=ok
+    fi
+fi
+wait
 ./shutdownall
 
-if [ $r1 = ok ]; then
+if [ $r1 = ok -a $r2 = ok ]; then
     echo "all test succeeded"
     exit 0
 else
     echo "some tests failed"
     echo "test1: $r1"
+    echo "test2: $r2"
     exit 1
 fi

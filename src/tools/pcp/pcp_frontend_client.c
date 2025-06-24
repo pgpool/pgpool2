@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -735,14 +735,15 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		"Database", "Username", "Start time", "Client connection count",
 		"Major", "Minor", "Backend connection time", "Client connection time",
 		"Client idle duration", "Client disconnection time", "Pool Counter", "Backend PID",
-		"Connected", "PID", "Backend ID", "Status", "Load balance node"
+		"Connected", "PID",	"Backend ID", "Status", "Load balance node",
+		"client_host", "client_port", "statement"
 	};
 	const char *types[] = {
 		"s", "s", "s", "s",
 		"s", "s", "s", "s",
 		"s", "s", "s", "s",
 		"s", "s", "s", "s",
-		"s"
+		"s", "s", "s", "s"
 	};
 
 
@@ -750,7 +751,7 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		format = format_titles(titles, types, sizeof(titles)/sizeof(char *));
 	else
 	{
-		format = "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n";
+		format = "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n";
 	}
 
 	for (i = 0; i < array_size; i++)
@@ -780,7 +781,10 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 			   pools->pool_pid,
 			   pools->backend_id,
 			   pools->status,
-			   pools->load_balance_node);
+			   pools->load_balance_node,
+			   pools->client_host,
+			   pools->client_port,
+			   pools->statement);
 	}
 	if (printed == false)
 		printf("No process information available\n\n");

@@ -254,6 +254,7 @@
   &pgpoolAdmPcpNodeCount
   &pgpoolAdmPcpAttachNode
   &pgpoolAdmPcpDetachNode
+  &pgpoolAdmPcpProcInfo
 
  </reference>
 

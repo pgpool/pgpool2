@@ -1,0 +1,257 @@
+<!--
+doc/src/sgml/ref/pgpool_adm_pcp_proc_info.sgml
+Pgpool-II documentation
+-->
+
+<refentry id="PGPOOL-ADM-PCP-PROC-INFO">
+ <indexterm zone="pgpool-adm-pcp-proc-info">
+  <primary>pgpool_adm_pcp_proc_info</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>pgpool_adm_pcp_proc_info</refentrytitle>
+  <manvolnum>3</manvolnum>
+  <refmiscinfo>pgpool_adm extension</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pgpool_adm_pcp_proc_info</refname>
+  <refpurpose>
+   <productname>Pgpool-II</productname>の子プロセスの情報を表示する関数
+   </refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <funcsynopsis>
+   <funcprototype>
+    <funcdef><function>pcp_proc_info</function> returns record</funcdef>
+    <paramdef>text <parameter>host</parameter></paramdef>
+    <paramdef>integer <parameter>port</parameter></paramdef>
+    <paramdef>text <parameter>username</parameter></paramdef>
+    <paramdef>text <parameter>password</parameter></paramdef>
+    <paramdef>out <parameter>database text</parameter></paramdef>
+    <paramdef>out <parameter>username text</parameter></paramdef>
+    <paramdef>out <parameter>start_time text</parameter></paramdef>
+    <paramdef>out <parameter>client_connection_count text</parameter></paramdef>
+    <paramdef>out <parameter>major text</parameter></paramdef>
+    <paramdef>out <parameter>minor text</parameter></paramdef>
+    <paramdef>out <parameter>backend_connection_time text</parameter></paramdef>
+    <paramdef>out <parameter>client_connection_time text</parameter></paramdef>
+    <paramdef>out <parameter>client_idle_duration text</parameter></paramdef>
+    <paramdef>out <parameter>client_disconnection_time text</parameter></paramdef>
+    <paramdef>out <parameter>pool_counter text</parameter></paramdef>
+    <paramdef>out <parameter>backend_pid text</parameter></paramdef>
+    <paramdef>out <parameter>connected text</parameter></paramdef>
+    <paramdef>out <parameter>pid text</parameter></paramdef>
+    <paramdef>out <parameter>backend_id text</parameter></paramdef>
+    <paramdef>out <parameter>status text</parameter></paramdef>
+    <paramdef>out <parameter>load_balance_node text</parameter></paramdef>
+    <paramdef>out <parameter>client_host text</parameter></paramdef>
+    <paramdef>out <parameter>client_port text</parameter></paramdef>
+    <paramdef>out <parameter>statement </parameter></paramdef>
+   </funcprototype>
+
+   <funcprototype>
+    <funcdef><function>pcp_proc_info</function> returns record</funcdef>
+    <paramdef>integer <parameter>node_id</parameter></paramdef>
+    <paramdef>text <parameter>pcp_server</parameter></paramdef>
+    <paramdef>out <parameter>database text</parameter></paramdef>
+    <paramdef>out <parameter>username text</parameter></paramdef>
+    <paramdef>out <parameter>start_time text</parameter></paramdef>
+    <paramdef>out <parameter>client_connection_count text</parameter></paramdef>
+    <paramdef>out <parameter>major text</parameter></paramdef>
+    <paramdef>out <parameter>minor text</parameter></paramdef>
+    <paramdef>out <parameter>backend_connection_time text</parameter></paramdef>
+    <paramdef>out <parameter>client_connection_time text</parameter></paramdef>
+    <paramdef>out <parameter>client_idle_duration text</parameter></paramdef>
+    <paramdef>out <parameter>client_disconnection_time text</parameter></paramdef>
+    <paramdef>out <parameter>pool_counter text</parameter></paramdef>
+    <paramdef>out <parameter>backend_pid text</parameter></paramdef>
+    <paramdef>out <parameter>connected text</parameter></paramdef>
+    <paramdef>out <parameter>pid text</parameter></paramdef>
+    <paramdef>out <parameter>backend_id text</parameter></paramdef>
+    <paramdef>out <parameter>status text</parameter></paramdef>
+    <paramdef>out <parameter>load_balance_node text</parameter></paramdef>
+    <paramdef>out <parameter>client_host text</parameter></paramdef>
+    <paramdef>out <parameter>client_port text</parameter></paramdef>
+    <paramdef>out <parameter>statement </parameter></paramdef>
+   </funcprototype>
+
+  </funcsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="R3-PCP-PROC-INFO-3">
+  <title>説明</title>
+  <para>
+   <function>pcp_proc_info</function>
+   <productname>Pgpool-II</productname>の子プロセスの情報を表示します。
+   表示される情報は<xref linkend="pcp-proc-info">と同じです。
+   すべてのデータ型は"text"です。
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>引数</title>
+  <para>
+   <variablelist>
+
+    <varlistentry>
+     <term><replaceable class="parameter">pcp_server</replaceable></term>
+     <listitem>
+      <para>
+       pcpサーバの外部サーバ名
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>他の引数</option></term>
+     <listitem>
+      <para>
+       <xref linkend="pcp-common-options">を参照ください。
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>使用例</title>
+  <para>
+   以下の例では、検索条件で"connected"列 = '1'を指定して、現在クライアントから接続のあるプロセス情報のみを表示しています。
+   このpsqlセッションでfrom pcp_proc_infoを呼び出していて、その情報は行1と2に表示されています。
+   select文はbackend_id = '0'（おそらくprimaryです)にのみ送信されているので、行1の"status"列は"Execute command"となっており、"statement"列には実行したselect文が表示されていますが、backend_id = '1'にはselect文が送信されていないので、行2のstatementは空白となっています。
+   </para>
+   <para>
+    別psqlセッションの情報は行2, 3に表示されています。
+    この例では"select 1"は"backend_id" = '1'（おそらくstandby)に送信されています。
+   <programlisting>
+test=# select * from pcp_proc_info(host => '', port => 11001, username => 't-ishii', password => 't-ishii') where connected = '1';
+-[ RECORD 1 ]-------------+----------------------------------------------------------------------------------------------------------------------------
+database                  | test
+username                  | t-ishii
+start_time                | 2025-02-22 20:56:08
+client_connection_count   | 0
+major                     | 3
+minor                     | 0
+backend_connection_time   | 2025-02-22 20:58:37
+client_connection_time    | 2025-02-22 20:58:37
+client_idle_duration      | 0
+client_disconnection_time | 
+pool_counter              | 1
+backend_pid               | 14750
+connected                 | 1
+pid                       | 14585
+backend_id                | 0
+status                    | Execute command
+load_balance_node         | 1
+client_host               | 127.0.0.1
+client_port               | 59120
+statement                 | select * from pcp_proc_info(host => '', port => 11001, username => 't-ishii', password => 't-ishii') where connected = '1';
+-[ RECORD 2 ]-------------+----------------------------------------------------------------------------------------------------------------------------
+database                  | test
+username                  | t-ishii
+start_time                | 2025-02-22 20:56:08
+client_connection_count   | 0
+major                     | 3
+minor                     | 0
+backend_connection_time   | 2025-02-22 20:58:37
+client_connection_time    | 2025-02-22 20:58:37
+client_idle_duration      | 0
+client_disconnection_time | 
+pool_counter              | 1
+backend_pid               | 14751
+connected                 | 1
+pid                       | 14585
+backend_id                | 1
+status                    | Execute command
+load_balance_node         | 0
+client_host               | 127.0.0.1
+client_port               | 59120
+statement                 | 
+-[ RECORD 3 ]-------------+----------------------------------------------------------------------------------------------------------------------------
+database                  | test
+username                  | t-ishii
+start_time                | 2025-02-22 20:56:08
+client_connection_count   | 0
+major                     | 3
+minor                     | 0
+backend_connection_time   | 2025-02-22 20:58:56
+client_connection_time    | 2025-02-22 20:58:56
+client_idle_duration      | 0
+client_disconnection_time | 
+pool_counter              | 1
+backend_pid               | 14767
+connected                 | 1
+pid                       | 14601
+backend_id                | 0
+status                    | Idle
+load_balance_node         | 0
+client_host               | 127.0.0.1
+client_port               | 54072
+statement                 | 
+-[ RECORD 4 ]-------------+----------------------------------------------------------------------------------------------------------------------------
+database                  | test
+username                  | t-ishii
+start_time                | 2025-02-22 20:56:08
+client_connection_count   | 0
+major                     | 3
+minor                     | 0
+backend_connection_time   | 2025-02-22 20:58:56
+client_connection_time    | 2025-02-22 20:58:56
+client_idle_duration      | 0
+client_disconnection_time | 
+pool_counter              | 1
+backend_pid               | 14768
+connected                 | 1
+pid                       | 14601
+backend_id                | 1
+status                    | Idle
+load_balance_node         | 1
+client_host               | 127.0.0.1
+client_port               | 54072
+statement                 | select 1;
+   </programlisting>
+  </para>
+  <para>
+   次の例では、"pgpool_query_info"という関数を登録し、pgpool_adm_pcp_proc_info、pgpool_adm_pcp_node_info、pgpool_adm_pcp_pool_statusを結合してpgpoolの子プロセスが最後に実行したクエリを、次の情報と一緒に表示します。
+   usernae, database, client host, client port, pgpool host, pgpool
+   port, pgpool pid, backend host, backend port, backend pid, backend
+   role and SQL statement。
+   <programlisting>
+create function pgpool_query_info(pcp_host text, pcp_port int, pgpool_username text, password text)
+returns table (username text, database text, client_host text, client_port text,
+pgpool_host text, pgpool_port text, pgpool_pid text,
+backend_host text, backend_port text, backend_pid text, backend_role text, statement text) as $$
+select p.username, p.database, p.client_host,p.client_port,
+$1 as pgpool_host, s.value as pgpool_port, p.pid as pgpool_pid,
+b.host as backend_host, b.port as backend_port, p.backend_pid as backend_pid,
+b.role as backend_role,
+p.statement
+from pcp_proc_info(host=> $1, port => $2, username => $3, password => $4) as p,
+pcp_node_info(node_id=>p.backend_id::int, host => $1, port => $2,
+username => $3, password => $4) as b,
+pcp_pool_status(host=> $1, port => $2, username => $3, password => $4) as s
+where p.connected = 1::text and p.statement != '' and
+p.statement !~ 'pcp_proc_info' and p.statement !~ 'pgpool_query_info' and
+s.item = 'port'
+$$
+language SQL;
+CREATE FUNCTION
+
+select * from pgpool_query_info('192.168.10.11', 11001, 't-ishii', 't-ishii');
+ username | database |  client_host  | client_port |  pgpool_host  | pgpool_port | pgpool_pid | backend_host | backend_port | backend_pid | backend_role | statement 
+----------+----------+---------------+-------------+---------------+-------------+------------+--------------+--------------+-------------+--------------+-----------
+ t-ishii  | test     | 192.168.10.11 | 60542       | 192.168.10.11 | 11000       | 1356156    | localhost    | 11002        | 1356240     | Primary      | select 2;
+ t-ishii  | test     | 192.168.10.11 | 43856       | 192.168.10.11 | 11000       | 1356167    | localhost    | 11003        | 1356255     | Standby      | select 1;
+(2 rows)
+   </programlisting>
+  </para>
+  <para>
+   表示データの詳細に関しては<xref linkend="pcp-proc-info">をご覧ください。
+  </para>
+
+ </refsect1>
+
+</refentry>

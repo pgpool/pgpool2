@@ -751,3 +751,179 @@ Timestamp str2timestamp(char *str)
 												  Int32GetDatum(-1))));
 }
 
+/**
+ * host_or_srv: server name or ip address of the pgpool server
+ * port: pcp port number
+ * user: user to connect with
+ * pass: password
+ **/
+Datum
+_pcp_proc_info(PG_FUNCTION_ARGS)
+{
+	MemoryContext oldcontext;
+	FuncCallContext *funcctx;
+	int32		nrows;
+	int32		call_cntr;
+	int32		max_calls;
+	AttInMetadata *attinmeta;
+	PCPConnInfo *pcpConnInfo;
+	PCPResultInfo *pcpResInfo;
+
+	int			an;
+
+#define NUM_COLS	20	/* number of columns */
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		TupleDesc	tupdesc;
+		char	   *host_or_srv = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* switch to memory context appropriate for multiple function calls */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		if (PG_NARGS() == 4)
+		{
+			char	   *user,
+					   *pass;
+			int			port;
+
+			port = PG_GETARG_INT16(1);
+			user = text_to_cstring(PG_GETARG_TEXT_PP(2));
+			pass = text_to_cstring(PG_GETARG_TEXT_PP(3));
+			pcpConnInfo = connect_to_server(host_or_srv, port, user, pass);
+		}
+		else if (PG_NARGS() == 1)
+			pcpConnInfo = connect_to_server_from_foreign_server(host_or_srv);
+		else
+		{
+			MemoryContextSwitchTo(oldcontext);
+			ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Wrong number of argument.")));
+		}
+
+		pcpResInfo = pcp_process_info(pcpConnInfo, 0);
+		if (pcpResInfo == NULL || PCPResultStatus(pcpResInfo) != PCP_RES_COMMAND_OK)
+		{
+			char	   *error = pcp_get_last_error(pcpConnInfo) ? pstrdup(pcp_get_last_error(pcpConnInfo)) : NULL;
+
+			pcp_disconnect(pcpConnInfo);
+			pcp_free_connection(pcpConnInfo);
+
+			MemoryContextSwitchTo(oldcontext);
+			ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("failed to get pool status"),
+							errdetail("%s\n", error ? error : "unknown reason")));
+		}
+
+		nrows = pcp_result_slot_count(pcpResInfo);
+		pcp_disconnect(pcpConnInfo);
+		/* Construct a tuple descriptor for the result rows */
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 120000)
+		tupdesc = CreateTemplateTupleDesc(NUM_COLS);
+#else
+		tupdesc = CreateTemplateTupleDesc(NUM_COLS, false);
+#endif
+		an = 1;
+		TupleDescInitEntry(tupdesc, an++, "database", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "username", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "start_time", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "client_connection_count", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "major", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "minor", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "backend_connection_time", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "client_connection_time", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "client_idle_duration", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "client_disconnection_time", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "pool_counter", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "backend_pid", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "connected", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "pid", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "backend_id", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "status", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "load_balance_node", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "client_host", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "client_port", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, an++, "statement", TEXTOID, -1, 0);
+
+		/*
+		 * Generate attribute metadata needed later to produce tuples from raw
+		 * C strings
+		 */
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+
+		if (nrows > 0)
+		{
+			funcctx->max_calls = nrows;
+
+			/* got results, keep track of them */
+			funcctx->user_fctx = pcpConnInfo;
+		}
+		else
+		{
+			/* fast track when no results */
+			MemoryContextSwitchTo(oldcontext);
+			SRF_RETURN_DONE(funcctx);
+		}
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+
+	/* initialize per-call variables */
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+
+	pcpConnInfo = (PCPConnInfo *) funcctx->user_fctx;
+	pcpResInfo = (PCPResultInfo *) pcpConnInfo->pcpResInfo;
+	attinmeta = funcctx->attinmeta;
+
+	if (call_cntr < max_calls)	/* executed while there is more left to send */
+	{
+		char	   *values[NUM_COLS];
+		HeapTuple	tuple;
+		Datum		result;
+		int			i = 0;
+		POOL_REPORT_POOLS *pools = (POOL_REPORT_POOLS *) pcp_get_binary_data(pcpResInfo, call_cntr);
+
+		values[i++] = pstrdup(pools->database);
+		values[i++] = pstrdup(pools->username);
+		values[i++] = pstrdup(pools->process_start_time);
+		values[i++] = pstrdup(pools->client_connection_count);
+		values[i++] = pstrdup(pools->pool_majorversion);
+		values[i++] = pstrdup(pools->pool_minorversion);
+		values[i++] = pstrdup(pools->backend_connection_time);
+		values[i++] = pstrdup(pools->client_connection_time);
+		values[i++] = pstrdup(pools->client_idle_duration);
+		values[i++] = pstrdup(pools->client_disconnection_time);
+		values[i++] = pstrdup(pools->pool_counter);
+		values[i++] = pstrdup(pools->pool_backendpid);
+		values[i++] = pstrdup(pools->pool_connected);
+		values[i++] = pstrdup(pools->pool_pid);
+		values[i++] = pstrdup(pools->backend_id);
+		values[i++] = pstrdup(pools->status);
+		values[i++] = pstrdup(pools->load_balance_node);
+		values[i++] = pstrdup(pools->client_host);
+		values[i++] = pstrdup(pools->client_port);
+		values[i++] = pstrdup(pools->statement);
+
+		/* build the tuple */
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+
+		/* make the tuple into a datum */
+		result = HeapTupleGetDatum(tuple);
+
+		SRF_RETURN_NEXT(funcctx, result);
+	}
+	else
+	{
+		/* do when there is no more left */
+		pcp_free_connection(pcpConnInfo);
+		SRF_RETURN_DONE(funcctx);
+	}
+}
