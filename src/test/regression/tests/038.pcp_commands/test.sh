@@ -60,7 +60,7 @@ wait_for_pgpool_startup
 $PSQL -a -h localhost -c "SELECT pg_sleep(1)" test &
 $PSQL -a -h localhost test > result 2>&1 <<EOF
 CREATE EXTENSION pgpool_adm;
-SELECT database, status, client_host, statement FROM pcp_proc_info
+SELECT database, status, case when client_host = '127.0.0.1' or client_host = '::1' then 'localhost' end, statement FROM pcp_proc_info
 (host => '', port => $PCP_PORT, username => '$WHOAMI', password => '$WHOAMI')
 WHERE connected = '1' AND backend_id = '0' AND statement = 'SELECT pg_sleep(1)'
 EOF
