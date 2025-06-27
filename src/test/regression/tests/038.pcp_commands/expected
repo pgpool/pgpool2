@@ -1,8 +1,4 @@
-CREATE EXTENSION pgpool_adm;
 CREATE EXTENSION
-SELECT database, status, case when client_host = '127.0.0.1' or client_host = '::1' then 'localhost' end, statement FROM pcp_proc_info
-(host => '', port => 11001, username => 't-ishii', password => 't-ishii')
-WHERE connected = '1' AND backend_id = '0' AND statement = 'SELECT pg_sleep(1)'
  database |     status      |   case    |     statement      
 ----------+-----------------+-----------+--------------------
  test     | Execute command | localhost | SELECT pg_sleep(1)
