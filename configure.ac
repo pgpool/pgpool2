@@ -105,7 +105,7 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_PID_T
 AC_HEADER_TIME
-
+AC_C_BIGENDIAN
 
 dnl ===== Copied from PostgreSQL's configure start =====
 dnl
