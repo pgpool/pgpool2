@@ -79,6 +79,7 @@ static void authenticate_frontend_SCRAM(POOL_CONNECTION * backend, POOL_CONNECTI
 static void authenticate_frontend_clear_text(POOL_CONNECTION * frontend);
 static bool get_auth_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth,
 				  char **password, PasswordType *passwordType);
+static void ProcessNegotiateProtocol(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp);
 
 /*
  * Do authentication. Assuming the only caller is
@@ -342,6 +343,7 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 
 	protoMajor = MAIN_CONNECTION(cp)->sp->major;
 
+read_kind:
 	kind = pool_read_kind(cp);
 	if (kind < 0)
 		ereport(ERROR,
@@ -364,6 +366,12 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 				(errmsg("backend authentication failed"),
 				 errdetail("backend response with kind \'E\' when expecting \'R\'"),
 				 errhint("This issue can be caused by version mismatch (current version %d)", protoMajor)));
+	}
+	else if (kind == 'v')
+	{
+		/* NegotiateProtocolVersion received */
+		ProcessNegotiateProtocol(frontend, cp);
+		goto read_kind;
 	}
 	else if (kind != 'R')
 		ereport(ERROR,
@@ -597,8 +605,11 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 
 		}
 
-		send_auth_ok(frontend, protoMajor);
-		authkind = 0;
+		if (kind == 'R')
+		{
+			send_auth_ok(frontend, protoMajor);
+			authkind = 0;
+		}
 	}
 
 	else
@@ -756,7 +767,16 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 			CONNECTION_SLOT(cp, i)->key = cp->info[i].key = key;
 
 			cp->info[i].major = sp->major;
-			cp->info[i].minor = sp->minor;
+
+			/*
+			 * If NegotiateProtocol message has been received, set the minor
+			 * version. Othewise use the version in the StartupMessage.
+			 */
+			if (CONNECTION_SLOT(cp, i)->nplen > 0)
+				cp->info[i].minor = CONNECTION_SLOT(cp, i)->negotiated_minor;
+			else
+				cp->info[i].minor = sp->minor;
+
 			strlcpy(cp->info[i].database, sp->database, sizeof(cp->info[i].database));
 			strlcpy(cp->info[i].user, sp->user, sizeof(cp->info[i].user));
 			cp->info[i].counter = 1;
@@ -779,15 +799,30 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 }
 
 /*
-* do re-authentication for reused connection. if success return 0 otherwise throws ereport.
+* do re-authentication for reused connection. if success return 0 otherwise
+* throws ereport.
 */
 int
 pool_do_reauth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 {
 	int			protoMajor;
 	int			msglen;
+	POOL_CONNECTION_POOL_SLOT	*sp;
 
 	protoMajor = MAJOR(cp);
+
+	/*
+	 * If NegotiateProtocolMsg has been received from backend, forward it to
+	 * frontend. If the frontend dislike it, it will disconnect the
+	 * connection. Otherwise it will silently continue.
+	 */
+	sp = CONNECTION_SLOT(cp, MAIN_NODE_ID);
+	if (protoMajor == PROTO_MAJOR_V3 && sp->nplen > 0)
+	{
+		elog(DEBUG1, "negotiateProtocol message is forwarded to frontend at reauth");
+		pool_write_and_flush(frontend, sp->negotiateProtocolMsg,
+							 sp->nplen);
+	}
 
 	/*
 	 * if hba is enabled we would already have passed authentication
@@ -822,6 +857,9 @@ pool_do_reauth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 		}
 	}
 
+	/*
+	 * Send auth ok
+	 */
 	pool_write(frontend, "R", 1);
 
 	if (protoMajor == PROTO_MAJOR_V3)
@@ -832,7 +870,10 @@ pool_do_reauth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 
 	msglen = htonl(0);
 	pool_write_and_flush(frontend, &msglen, sizeof(msglen));
+
+	/* send BackendKeyData */
 	pool_send_backend_key_data(frontend, MAIN_CONNECTION(cp)->pid, MAIN_CONNECTION(cp)->key, protoMajor);
+
 	return 0;
 }
 
@@ -2073,4 +2114,71 @@ pg_SASL_continue(POOL_CONNECTION * backend, char *payload, int payloadlen, void 
 		return -1;
 
 	return 0;
+}
+
+/*
+ * Forward NegotiateProtocol message to frontend.
+ *
+ * When this function is called, message kind has been already read.
+ */
+static void
+ProcessNegotiateProtocol(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
+{
+	int32	len;
+	int32	savelen;
+	int32	protoMajor;
+	int32	protoMinor;
+	int32	protov;
+	bool	forwardMsg = false;
+	int		i;
+
+	elog(DEBUG1, "Forwarding NegotiateProtocol message to frontend");
+	pool_write(frontend, "v", 1);	/* forward message kind */
+	savelen = len = pool_read_int(cp);		/* message length including self */
+	pool_write(frontend, &len, 4);	/* forward message length */
+	len = ntohl(len) - 4;			/* length of rest of the message */
+	protov = pool_read_int(cp);	/* read protocol version */
+	protoMajor = PG_PROTOCOL_MAJOR(ntohl(protov));		/* protocol major version */
+	protoMinor = PG_PROTOCOL_MINOR(ntohl(protov));	/* protocol minor version */
+	pool_write(frontend, &protov, 4);	/* forward protocol version */
+	elog(DEBUG1, "protocol verion offered: major: %d minor: %d", protoMajor, protoMinor);
+	len -= 4;
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (VALID_BACKEND(i))
+		{
+			POOL_CONNECTION_POOL_SLOT	*sp;
+			char	*p;
+			char	*np;
+			Size	nplen;
+
+			p = pool_read2(CONNECTION(cp, i), len);
+			if (!forwardMsg)
+			{
+				pool_write_and_flush(frontend, p, len);	/* forward rest of message */
+				forwardMsg = true;
+			}
+			/* save negatiate protocol version */
+			sp = CONNECTION_SLOT(cp, i);
+			sp->negotiated_major = protoMajor;
+			sp->negotiated_minor = protoMinor;
+
+			/* save negatiate protocol message */
+			nplen = 1 +	/* message kind */
+				sizeof(savelen) +	/* message length */
+				sizeof(protov) +	/* protocol version */
+				len;				/* rest of message */
+			/* allocate message area */
+			sp->negotiateProtocolMsg = MemoryContextAlloc(TopMemoryContext, nplen);
+			np = sp->negotiateProtocolMsg;
+			sp->nplen = nplen;	/* set message length */
+
+			*np++ = 'v';
+			memcpy(np, &savelen, sizeof(savelen));
+			np += sizeof(savelen);
+			memcpy(np, &protov, sizeof(protov));
+			np += sizeof(protov);
+			memcpy(np, p, len);
+		}
+	}
 }

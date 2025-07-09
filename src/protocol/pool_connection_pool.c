@@ -235,6 +235,8 @@ pool_discard_cp(char *user, char *database, int protoMajor)
 		}
 		CONNECTION_SLOT(p, i)->sp = NULL;
 		pool_close(CONNECTION(p, i));
+		if (CONNECTION_SLOT(p, i)->negotiateProtocolMsg)
+			pfree(CONNECTION_SLOT(p, i)->negotiateProtocolMsg);
 		pfree(CONNECTION_SLOT(p, i));
 	}
 
@@ -945,7 +947,7 @@ static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
 			continue;
 		}
 
-		s = palloc(sizeof(POOL_CONNECTION_POOL_SLOT));
+		s = palloc0(sizeof(POOL_CONNECTION_POOL_SLOT));
 
 		if (create_cp(s, i) == NULL)
 		{

@@ -4,7 +4,9 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2025	PgPool Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -102,6 +104,41 @@ typedef enum
 	POOL_SOCKET_ERROR,
 	POOL_SOCKET_EOF
 }			POOL_SOCKET_STATE;
+
+/*
+ * Imported from src/include/libpq/pqcomm.h as of PostgreSQL 18.
+ *
+ * These manipulate the frontend/backend protocol version number.
+ *
+ * The major number should be incremented for incompatible changes.  The minor
+ * number should be incremented for compatible changes (eg. additional
+ * functionality).
+ *
+ * If a backend supports version m.n of the protocol it must actually support
+ * versions m.[0..n].  Backend support for version m-1 can be dropped after a
+ * `reasonable' length of time.
+ *
+ * A frontend isn't required to support anything other than the current
+ * version.
+ */
+
+#define PG_PROTOCOL_MAJOR(v)	((v) >> 16)
+#define PG_PROTOCOL_MINOR(v)	((v) & 0x0000ffff)
+#define PG_PROTOCOL_FULL(v)	(PG_PROTOCOL_MAJOR(v) * 10000 + PG_PROTOCOL_MINOR(v))
+#define PG_PROTOCOL(m,n)	(((m) << 16) | (n))
+
+/*
+ * The earliest and latest frontend/backend protocol version supported.
+ */
+
+#define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(3,0)
+#define PG_PROTOCOL_LATEST		PG_PROTOCOL(3,2)
+
+typedef uint32 ProtocolVersion; /* FE/BE protocol version number */
+
+typedef ProtocolVersion MsgType;
+
+/* end of importing */
 
 /* protocol major version numbers */
 #define PROTO_MAJOR_V2	2
@@ -262,6 +299,15 @@ typedef struct
 	time_t		closetime;		/* absolute time in second when the connection
 								 * closed if 0, that means the connection is
 								 * under use. */
+	/*
+	 * Protocol version after negotiation. If nplen == 0, no negotiation has
+	 * been done.
+	 */
+	int			negotiated_major;
+	int			negotiated_minor;
+	char		*negotiateProtocolMsg;	/* Raw NegotiateProtocol messag */
+	int32		nplen;			/* message length of NegotiateProtocol messag */
+
 }			POOL_CONNECTION_POOL_SLOT;
 
 typedef struct

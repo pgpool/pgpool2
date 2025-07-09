@@ -637,8 +637,8 @@ read_startup_packet(POOL_CONNECTION * cp)
 
 	sp->len = len;
 	memcpy(&protov, sp->startup_packet, sizeof(protov));
-	sp->major = ntohl(protov) >> 16;
-	sp->minor = ntohl(protov) & 0x0000ffff;
+	sp->major = PG_PROTOCOL_MAJOR(ntohl(protov));
+	sp->minor = PG_PROTOCOL_MINOR(ntohl(protov));
 	cp->protoVersion = sp->major;
 
 	switch (sp->major)
