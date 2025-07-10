@@ -1,0 +1,5 @@
+#! /bin/sh
+tools/pgindent/pgindent \
+	--typedefs=tools/pgindent/typedefs.list \
+	--excludes=tools/pgindent/exclude_files \
+	.

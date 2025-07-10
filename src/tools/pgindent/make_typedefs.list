@@ -1,0 +1,2 @@
+#! /bin/sh
+cat doxygen.list enums.list typedefs.list.PostgreSQL| sort -u > typedefs.list

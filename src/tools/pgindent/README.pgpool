@@ -1,0 +1,16 @@
+In addition to original PostgreSQL's files followings are added:
+
+- doxygen.list:	Pgpool-II's typedefs extraced by doxygen. Plus manually added typedefs that were not detected by doxygen.
+- enums.list:	Pgpool-II's enums manually extracted from source code.
+- exclude_files:	files that should not be touched pgindent.
+- run_pgindent:	handy script to run pgindent. Should be run at src directory.
+- typedefs.list.PostgreSQL:	PostgreSQL's typedefs. To prepare for that doxygen misses some typedefs.
+- make_typedefs.list: handy script to generate typedefs.list.
+
+The steps to run pgindent are follows:
+
+1. Add new typedefs to doxygen.list. You can add it to the end of the file.
+2. Add new enums to enums.list. You can add it to the end of the file.
+3. If necessary update typedefs.list.PostgreSQL by copying PostgreSQL's typedefs.list.
+4. Run make_typedefs/list to generate typedefs.list.
+5. Run pgindent by using run_pgindent at src directory.
