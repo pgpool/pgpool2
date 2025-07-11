@@ -193,7 +193,7 @@ get_wd_runtime_variable_value(char* wd_authkey, char *varName)
 
 			case VALUE_DATA_TYPE_LONG:
 				{
-					long		longVal;
+					time_t		longVal;
 
 					if (json_get_long_value_for_key(root, WD_JSON_KEY_VALUE_DATA, &longVal))
 					{
