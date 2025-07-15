@@ -751,7 +751,7 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		format = format_titles(titles, types, sizeof(titles)/sizeof(char *));
 	else
 	{
-		format = "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n";
+		format = "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n";
 	}
 
 	for (i = 0; i < array_size; i++)
