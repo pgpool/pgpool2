@@ -951,15 +951,15 @@ pgpool_port2 = 9999
   <variablelist>
 
    <varlistentry id="guc-wd-lifecheck-method" xreflabel="wd_lifecheck_method">
-    <term><varname>wd_lifecheck_method</varname> (<type>string</type>)
+    <term><varname>wd_lifecheck_method</varname> (<type>enum</type>)
      <indexterm>
       <primary><varname>wd_lifecheck_method</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
-      Specifies the method of life check. This can be either of <literal>'heartbeat'</literal> (default),
-      <literal>'query'</literal> or <literal>'external'</literal>.
+      Specifies the method of life check. This can be either of <literal>heartbeat</literal> (default),
+      <literal>query</literal> or <literal>external</literal>.
      </para>
      <para>
       <literal>heartbeat</literal>: In this mode, watchdog sends the heartbeat signals (<acronym>UDP</acronym> packets)

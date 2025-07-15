@@ -24,7 +24,7 @@
       from <filename>pgpool.conf.sample</filename>.
       Make sure your <filename>pgpool.conf</filename> includes following line:
       <programlisting>
-backend_clustering_mode = 'streaming_replication'
+backend_clustering_mode = streaming_replication
       </programlisting>
      </para>
     </listitem>

@@ -310,7 +310,7 @@ GRANT pg_monitor TO sr_check_user;
   </varlistentry>
 
   <varlistentry id="guc-log-standby-delay" xreflabel="log_standby_delay">
-   <term><varname>log_standby_delay</varname> (<type>string</type>)
+   <term><varname>log_standby_delay</varname> (<type>enum</type>)
     <indexterm>
      <primary><varname>log_standby_delay</varname> configuration parameter</primary>
     </indexterm>
@@ -334,17 +334,17 @@ GRANT pg_monitor TO sr_check_user;
 
       <tbody>
        <row>
-	<entry><literal>'none'</literal></entry>
+	<entry><literal>none</literal></entry>
 	<entry>Never log the standby delay</entry>
        </row>
 
        <row>
-	<entry><literal>'always'</literal></entry>
+	<entry><literal>always</literal></entry>
 	<entry>Log the standby delay if it's greater than 0, every time the replication delay is checked</entry>
        </row>
 
        <row>
-	<entry><literal>'if_over_threshold'</literal></entry>
+	<entry><literal>if_over_threshold</literal></entry>
 	<entry>Only log the standby delay, when it exceeds <xref linkend="guc-delay-threshold"> or <xref linkend="guc-delay-threshold-by-time"> value (the default)</entry>
        </row>
       </tbody>

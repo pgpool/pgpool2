@@ -627,7 +627,7 @@ pgpool:4aa0cb9673e84b06d4c8a848c80eb5d0
    </para>
    <programlisting>
 [root@server1 ~]# vi /etc/pgpool-II/pgpool.conf 
-backend_clustering_mode = 'streaming_replication'
+backend_clustering_mode = streaming_replication
    </programlisting>
   </sect3>
 

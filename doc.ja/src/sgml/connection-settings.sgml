@@ -976,9 +976,9 @@
   <para>
    このモードはもっともよく使われており、推薦できるクラスタリングモードです。
    このモードでは<productname>PostgreSQL</productname>が個々のサーバをレプリケーションします。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>に'streaming_replication'を設定してください。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>にstreaming_replicationを設定してください。
     <programlisting>
-backend_clustering_mode = 'streaming_replication'
+backend_clustering_mode = streaming_replication
     </programlisting>
    このモードでは127台までのストリーミングレプリケーションスタンバイサーバを使用できます。
    また、スタンバイサーバをまったく使用しないことも可能です。
@@ -1004,9 +1004,9 @@ backend_clustering_mode = 'streaming_replication'
    between <productname>PostgreSQL</> backends.
    -->
    このモードでは<productname>PostgreSQL</>間のデータレプリケーションを<productname>Pgpool-II</productname>に行わせます。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>に'native_replication'を設定してください。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>にnative_replicationを設定してください。
     <programlisting>
-backend_clustering_mode = 'native_replication'
+backend_clustering_mode = native_replication
     </programlisting>
    このモードでは127台までのレプリカサーバを使用できます。
    また、レプリカサーバをまったく使用しないことも可能です。
@@ -1575,9 +1575,9 @@ backend_clustering_mode = 'native_replication'
   <para>
    このモードは、ネイティブレプリケーションモードと似ていますが、更にノードをまたがる可視性の一貫性を保証します。
    実装は研究論文<xref linkend="mishima2009">に基づいています。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>に'snapshot_isolation'を設定してください。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>にsnapshot_isolationを設定してください。
     <programlisting>
-backend_clustering_mode = 'snapshot_isolation'
+backend_clustering_mode = snapshot_isolation
     </programlisting>
    たとえば、以下のようなノードにまたがる可視性の一貫性がないことからくるノード間のデータ不整合を防ぐことができます。
    ここで、S1, S2はセッションを表し、N1, N2はPostgreSQLのサーバ1と2を表します。
@@ -1646,9 +1646,9 @@ S2/N2: COMMIT;
 
   <para>
    このモードでは<productname>PostgreSQL</productname>が個々のサーバをレプリケーションします。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>に'logical_replication'を設定してください。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>にlogical_replicationを設定してください。
     <programlisting>
-backend_clustering_mode = 'logical_replication'
+backend_clustering_mode = logical_replication
     </programlisting>
    このモードでは127台までのロジカルレプリケーションサーバを使用できます。
    また、スタンバイサーバをまったく使用しないことも可能です。
@@ -1666,9 +1666,9 @@ backend_clustering_mode = 'logical_replication'
   <para>
    このモードでは<productname>Pgpool-II</productname>を<acronym>Slony-I</acronym>と組み合わせて使用します。
    Slony-Iが実際にデータのレプリケーションを行います。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>に'slony'を設定してください。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>にslonyを設定してください。
     <programlisting>
-backend_clustering_mode = 'slony'
+backend_clustering_mode = slony
     </programlisting>
    このモードでは127台までのレプリカサーバを使用できます。
    また、レプリカサーバをまったく使用しないことも可能です。
@@ -1689,9 +1689,9 @@ backend_clustering_mode = 'slony'
    このモードでは、<productname>Pgpool-II</>はデータベースの同期に関しては関与しません。
    システム全体に意味の有る動作をさせるのはユーザの責任となります。
    このモードでは負荷分散は<emphasis>できません</emphasis>。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>に'raw'を設定してください。
+   このモードを有効にするには<varname>backend_clustering_mode</varname>にrawを設定してください。
     <programlisting>
-backend_clustering_mode = 'raw'
+backend_clustering_mode = raw
     </programlisting>
   </para>
  </sect2>

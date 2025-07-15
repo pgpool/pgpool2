@@ -1320,7 +1320,7 @@
   <variablelist>
 
    <varlistentry id="guc-wd-lifecheck-method" xreflabel="wd_lifecheck_method">
-    <term><varname>wd_lifecheck_method</varname> (<type>string</type>)
+    <term><varname>wd_lifecheck_method</varname> (<type>enum</type>)
      <indexterm>
       <!--
       <primary><varname>wd_lifecheck_method</varname> configuration parameter</primary>
@@ -1331,11 +1331,11 @@
     <listitem>
      <para>
       <!--
-      Specifies the method of life check. This can be either of <literal>'heartbeat'</literal> (default),
-      <literal>'query'</literal> or <literal>'external'</literal>.
+      Specifies the method of life check. This can be either of <literal>heartbeat</literal> (default),
+      <literal>query</literal> or <literal>external</literal>.
       -->
       死活監視の方法を指定します。
-      指定できる値は <literal>'heartbeat'</literal> (デフォルト)、<literal>'query'</literal>、または<literal>'external'</literal> です。
+      指定できる値は <literal>heartbeat</literal> (デフォルト)、<literal>query</literal>、または<literal>external</literal> です。
      </para>
      <para>
       <!--
@@ -1345,7 +1345,7 @@
       If there are no signal for a certain period, watchdog regards is as failure
       of the <productname>Pgpool-II</productname> .
       -->
-      <literal>'heartbeat'</literal>を指定した場合には、監視は「ハートビートモード」で行われます。
+      <literal>heartbeat</literal>を指定した場合には、監視は「ハートビートモード」で行われます。
       watchdog は一定間隔でハートビート信号（UDP パケット）を他の<productname>Pgpool-II</productname>へ送信します。
       またwatchdogは他の<productname>Pgpool-II</productname>から送られてくる信号を受信します。
       これが一定時間以上途絶えた場合にはその<productname>Pgpool-II</productname>に障害が発生したと判断します。

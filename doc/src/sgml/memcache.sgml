@@ -192,7 +192,7 @@
   <variablelist>
 
    <varlistentry id="guc-memqcache-method" xreflabel="memqcache_method">
-    <term><varname>memqcache_method</varname> (<type>string</type>)
+    <term><varname>memqcache_method</varname> (<type>enum</type>)
      <indexterm>
       <primary><varname>memqcache_method</varname> configuration parameter</primary>
      </indexterm>
@@ -215,12 +215,12 @@
 
        <tbody>
 	<row>
-	 <entry><literal>'shmem'</literal></entry>
+	 <entry><literal>shmem</literal></entry>
 	 <entry>Use shared memory</entry>
 	</row>
 
 	<row>
-	 <entry><literal>'memcached'</literal></entry>
+	 <entry><literal>memcached</literal></entry>
 	 <entry>Use <ulink url="http://memcached.org/">memcached</ulink></entry>
 	</row>
 
@@ -245,7 +245,7 @@
       If you are not sure which memqcache_method to be used, start with <varname>shmem</varname>.
      </para>
      <para>
-      Default is <literal>'shmem'</literal>.
+      Default is <literal>shmem</literal>.
      </para>
 
      <para>

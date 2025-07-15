@@ -1039,7 +1039,7 @@ app_name_redirect_preference_list &gt; database_redirect_preference_list &gt; us
    </varlistentry>
 
    <varlistentry id="guc-disable-load-balance-on-write" xreflabel="disable_load_balance_on_write">
-    <term><varname>disable_load_balance_on_write</varname> (<type>string</type>)
+    <term><varname>disable_load_balance_on_write</varname> (<type>enum</type>)
      <indexterm>
       <primary><varname>disable_load_balance_on_write</varname> configuration parameter</primary>
      </indexterm>

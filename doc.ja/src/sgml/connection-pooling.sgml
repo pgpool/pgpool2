@@ -1214,7 +1214,7 @@ local0.*    /var/log/pgpool.log
    </varlistentry>
 
    <varlistentry id="guc-log-backend-messages" xreflabel="log_backend_messages">
-    <term><varname>log_backend_messages</varname> (<type>boolean</type>)
+    <term><varname>log_backend_messages</varname> (<type>enum</type>)
      <indexterm>
       <!--
       <primary><varname>log_backend_messages</varname> configuration parameter</primary>

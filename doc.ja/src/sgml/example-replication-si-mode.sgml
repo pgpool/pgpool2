@@ -433,7 +433,7 @@ default_transaction_isolation = 'repeatable read'
       ネイティブレプリケーションモードの場合
      </para>
      <programlisting>
-backend_clustering_mode = 'native_replication'
+backend_clustering_mode = native_replication
      </programlisting>
     </listitem>
     <listitem>
@@ -441,7 +441,7 @@ backend_clustering_mode = 'native_replication'
       スナップショットアイソレーションモードの場合
      </para>
      <programlisting>
-backend_clustering_mode = 'snapshot_isolation'
+backend_clustering_mode = snapshot_isolation
      </programlisting>
     </listitem>
    </itemizedlist>

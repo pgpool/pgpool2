@@ -655,10 +655,10 @@
    This mode is most popular and recommended clustering mode. In this
    mode <productname>PostgreSQL</productname> is responsible to
    replicate each servers. To enable this mode, use
-   'streaming_replication' for
+   streaming_replication for
    <varname>backend_clustering_mode</varname>.
     <programlisting>
-backend_clustering_mode = 'streaming_replication'
+backend_clustering_mode = streaming_replication
     </programlisting>
    In this mode you can have up to 127 streaming replication standby servers.
    Also it is possible not to have standby server at all.
@@ -686,10 +686,10 @@ backend_clustering_mode = 'streaming_replication'
   <para>
    This mode makes the <productname>Pgpool-II</productname> to
    replicate data between <productname>PostgreSQL</productname>
-   backends.  To enable this mode, use 'native_replication' for
+   backends.  To enable this mode, use native_replication for
    <varname>backend_clustering_mode</varname>.
     <programlisting>
-backend_clustering_mode = 'native_replication'
+backend_clustering_mode = native_replication
     </programlisting>
    In this mode you can have up to 127 standby replication servers.
    Also it is possible not to have standby server at all.
@@ -1117,10 +1117,10 @@ backend_clustering_mode = 'native_replication'
    This mode is similar to the native replication mode except it adds
    the visibility consistency among nodes. The implementation is based
    on a research paper <xref linkend="mishima2009">.
-   To enable this mode, use 'snapshot_isolation' for
+   To enable this mode, use snapshot_isolation for
    <varname>backend_clustering_mode</varname>.
     <programlisting>
-backend_clustering_mode = 'snapshot_isolation'
+backend_clustering_mode = snapshot_isolation
     </programlisting>
    For example, you can avoid following inconsistency among nodes caused by the
    visibility inconsistency. Here S1 and S2 denotes sessions, while N1
@@ -1194,10 +1194,10 @@ default_transaction_isolation = 'repeatable read'
   <para>
    In this mode
    <productname>PostgreSQL</productname> is responsible to replicate
-   each servers. To enable this mode, use 'logical_replication' for
+   each servers. To enable this mode, use logical_replication for
    <varname>backend_clustering_mode</varname>.
     <programlisting>
-backend_clustering_mode = 'logical_replication'
+backend_clustering_mode = logical_replication
     </programlisting>
    In this mode you can have up to 127 logical replication standby servers.
    Also it is possible not to have standby server at all.
@@ -1218,10 +1218,10 @@ backend_clustering_mode = 'logical_replication'
   <para>
    This mode is used to couple <productname>Pgpool-II</productname>
    with <acronym>Slony-I</acronym>.  Slony-I is responsible for doing
-   the actual data replication. To enable this mode, use 'slony' for
+   the actual data replication. To enable this mode, use slony for
    <varname>backend_clustering_mode</varname>.
     <programlisting>
-backend_clustering_mode = 'slony'
+backend_clustering_mode = slony
     </programlisting>
    In this mode you can have up to 127 replica servers.  Also it is
    possible not to have replica server at all.
@@ -1247,9 +1247,9 @@ backend_clustering_mode = 'slony'
    In this mode, <productname>Pgpool-II</> does not care about the database synchronization.
    It's user's responsibility to make the whole system does a meaningful thing.
    Load balancing is <emphasis>not</emphasis> possible in the mode.
-   To enable this mode, use 'raw' for <varname>backend_clustering_mode</varname>.
+   To enable this mode, use raw for <varname>backend_clustering_mode</varname>.
    <programlisting>
-backend_clustering_mode = 'raw'
+backend_clustering_mode = raw
    </programlisting>
   </para>
  </sect2>

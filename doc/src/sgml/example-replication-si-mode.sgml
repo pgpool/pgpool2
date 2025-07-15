@@ -432,7 +432,7 @@ default_transaction_isolation = 'repeatable read'
       Native replication mode
      </para>
      <programlisting>
-backend_clustering_mode = 'native_replication'
+backend_clustering_mode = native_replication
      </programlisting>
     </listitem>
     <listitem>
@@ -440,7 +440,7 @@ backend_clustering_mode = 'native_replication'
       Snapshot isolation mode
      </para>
      <programlisting>
-backend_clustering_mode = 'snapshot_isolation'
+backend_clustering_mode = snapshot_isolation
      </programlisting>
     </listitem>
    </itemizedlist>
