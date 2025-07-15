@@ -2490,7 +2490,7 @@ static POOL_STATUS close_standby_transactions(POOL_CONNECTION * frontend,
 			per_node_statement_log(backend, i, "COMMIT");
 			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend),
 						   MAIN_CONNECTION(backend)->pid,
-						   MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+						   MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0) != POOL_CONTINUE)
 				ereport(ERROR,
 						(errmsg("unable to close standby transactions"),
 						 errdetail("do_command returned DEADLOCK status")));

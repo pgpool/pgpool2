@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -663,7 +663,8 @@ pool_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 												   CONNECTION(backend, i),
 												   MAJOR(backend),
 												   MAIN_CONNECTION(backend)->pid,
-												   MAIN_CONNECTION(backend)->key);
+												   MAIN_CONNECTION(backend)->key,
+												   MAIN_CONNECTION(backend)->keylen);
 
 		/*
 		 * Check if some error detected.  If so, emit log. This is useful when
@@ -880,7 +881,8 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context,
 													   CONNECTION(backend, i),
 													   MAJOR(backend),
 													   MAIN_CONNECTION(backend)->pid,
-													   MAIN_CONNECTION(backend)->key);
+													   MAIN_CONNECTION(backend)->key,
+													   MAIN_CONNECTION(backend)->keylen);
 
 			/*
 			 * Check if some error detected.  If so, emit log. This is useful

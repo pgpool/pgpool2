@@ -185,7 +185,7 @@ typedef struct CancelPacket
 {
 	int			protoVersion;	/* Protocol version */
 	int			pid;			/* backend process id */
-	int			key;			/* cancel key */
+	char		key[MAX_CANCELKEY_LENGTH];			/* cancel key */
 }			CancelPacket;
 
 #define MAX_PASSWORD_SIZE		1024
@@ -294,7 +294,12 @@ typedef struct
 {
 	StartupPacket *sp;			/* startup packet info */
 	int			pid;			/* backend pid */
-	int			key;			/* cancel key */
+	char		key[MAX_CANCELKEY_LENGTH];			/* cancel key */
+	/*
+	 * Cancel key length. In protocol version 3.0, it is 4.
+	 * In 3.2 or later, the maximum length is 256.
+	 */
+	int32		keylen;
 	POOL_CONNECTION *con;
 	time_t		closetime;		/* absolute time in second when the connection
 								 * closed if 0, that means the connection is
@@ -655,7 +660,7 @@ extern void pcp_main(int *fds);
 extern void do_child(int *fds);
 extern void child_exit(int code);
 
-extern void cancel_request(CancelPacket * sp);
+extern void cancel_request(CancelPacket * sp, int32 len);
 extern void check_stop_request(void);
 extern void pool_initialize_private_backend_status(void);
 extern int	send_to_pg_frontend(char *data, int len, bool flush);

@@ -151,7 +151,8 @@ extern int RowDescription(POOL_CONNECTION * frontend,
 			   POOL_CONNECTION_POOL * backend,
 			   short *result);
 
-extern void wait_for_query_response_with_trans_cleanup(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, int protoVersion, int pid, int key);
+extern void wait_for_query_response_with_trans_cleanup(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
+													   int protoVersion, int pid, char *key, int keylen);
 extern POOL_STATUS wait_for_query_response(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, int protoVersion);
 extern bool is_select_query(Node *node, char *sql);
 extern bool is_commit_query(Node *node);

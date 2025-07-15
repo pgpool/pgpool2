@@ -624,14 +624,16 @@ read_startup_packet(POOL_CONNECTION * cp)
 	len = ntohl(len);
 	len -= sizeof(len);
 
-	if (len <= 0 || len >= MAX_STARTUP_PACKET_LENGTH)
+	if (len < 4 || len > MAX_STARTUP_PACKET_LENGTH)
 		ereport(ERROR,
 				(errmsg("failed while reading startup packet"),
 				 errdetail("incorrect packet length (%d)", len)));
 
 	sp->startup_packet = palloc0(len);
 
-	/* read startup packet */
+	/*
+	 * Read startup packet except the length of the message.
+	 */
 	pool_read_with_error(cp, sp->startup_packet, len,
 						 "startup packet");
 
@@ -861,7 +863,8 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 						do_command(frontend, CONNECTION(backend, i),
 								   command_buf, MAJOR(backend),
 								   MAIN_CONNECTION(backend)->pid,
-								   MAIN_CONNECTION(backend)->key, 0);
+								   MAIN_CONNECTION(backend)->key,
+								   MAIN_CONNECTION(backend)->keylen, 0);
 					}
 					PG_CATCH();
 					{
@@ -902,7 +905,7 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
  * process cancel request
  */
 void
-cancel_request(CancelPacket * sp)
+cancel_request(CancelPacket * sp, int32 splen)
 {
 	int			len;
 	int			fd;
@@ -911,8 +914,8 @@ cancel_request(CancelPacket * sp)
 				j,
 				k;
 	ConnectionInfo *c = NULL;
-	CancelPacket cp;
 	bool		found = false;
+	int32		keylen;	/* cancel key length */
 
 	if (pool_config->log_client_messages)
 		ereport(LOG,
@@ -921,7 +924,20 @@ cancel_request(CancelPacket * sp)
 	ereport(DEBUG1,
 			(errmsg("Cancel request received")));
 
-	/* look for cancel key from shmem info */
+	/*
+	 * Cancel key length is cancel message length - cancel request code -
+	 * process id.
+	 */
+	keylen = splen - sizeof(int32) - sizeof(int32);
+
+	/*
+	 * Look for cancel key from shmem info.  Frontend should have saved one of
+	 * cancel key among backend groups and sent it in the cancel request
+	 * message. We are looking for the backend which has the same cancel key
+	 * and pid. The query we want to cancel should have been running one the
+	 * backend group. So some of query cancel requests may not work but it
+	 * should not be a problem. They are just ignored by the backend.
+	 */
 	for (i = 0; i < pool_config->num_init_children; i++)
 	{
 		for (j = 0; j < pool_config->max_pool; j++)
@@ -931,14 +947,19 @@ cancel_request(CancelPacket * sp)
 				c = pool_coninfo(i, j, k);
 				ereport(DEBUG2,
 						(errmsg("processing cancel request"),
-						 errdetail("connection info: address:%p database:%s user:%s pid:%d key:%d i:%d",
-								   c, c->database, c->user, ntohl(c->pid), ntohl(c->key), i)));
-				if (c->pid == sp->pid && c->key == sp->key)
+						 errdetail("connection info: address:%p database:%s user:%s pid:%d sp.pid:%d keylen:%d sp.keylen:%d i:%d",
+								   c, c->database, c->user, ntohl(c->pid), ntohl(sp->pid),
+								   c->keylen, keylen, i)));
+				if (c->pid == sp->pid && c->keylen == keylen &&
+					memcmp(c->key, sp->key, keylen) == 0)
 				{
 					ereport(DEBUG1,
 							(errmsg("processing cancel request"),
-							 errdetail("found pid:%d key:%d i:%d", ntohl(c->pid), ntohl(c->key), i)));
+							 errdetail("found pid:%d keylen:%d i:%d", ntohl(c->pid), c->keylen, i)));
 
+					/*
+					 * "c" is a pointer to i th child, j th pool, and 0 th backend.
+					 */
 					c = pool_coninfo(i, j, 0);
 					found = true;
 					goto found;
@@ -951,12 +972,19 @@ found:
 	if (!found)
 	{
 		ereport(LOG,
-				(errmsg("invalid cancel key: pid:%d key:%d", ntohl(sp->pid), ntohl(sp->key))));
+				(errmsg("invalid cancel key: pid:%d keylen:%d", ntohl(sp->pid), keylen)));
 		return;					/* invalid key */
 	}
 
+	/*
+	 * We are sending cancel request message to all backend groups.  So some
+	 * of query cancel requests may not work but it should not be a
+	 * problem. They are just ignored by the backend.
+	 */
 	for (i = 0; i < NUM_BACKENDS; i++, c++)
 	{
+		int32	cancel_request_code;
+
 		if (!VALID_BACKEND(i))
 			continue;
 
@@ -978,18 +1006,18 @@ found:
 
 		pool_set_db_node_id(con, i);
 
-		len = htonl(sizeof(len) + sizeof(CancelPacket));
-		pool_write(con, &len, sizeof(len));
-
-		cp.protoVersion = sp->protoVersion;
-		cp.pid = c->pid;
-		cp.key = c->key;
+		len = htonl(splen + sizeof(int32));	/* splen does not include packet length field */
+		pool_write(con, &len, sizeof(len));	/* send cancel messages length */
+		cancel_request_code = htonl(PG_PROTOCOL(1234,5678));	/* cancel request code */
+		pool_write(con, &cancel_request_code, sizeof(int32));
+		pool_write(con, &c->pid, sizeof(int32));	/* send pid */
+		pool_write(con, c->key, keylen);	/* send cancel key */
 
 		ereport(LOG,
-				(errmsg("forwarding cancel request to backend"),
-				 errdetail("canceling backend pid:%d key: %d", ntohl(cp.pid), ntohl(cp.key))));
+				(errmsg("forwarding cancel request to backend %d", i),
+				 errdetail("canceling backend pid: %d keylen: %d", ntohl(sp->pid), keylen)));
 
-		if (pool_write_and_flush_noerror(con, &cp, sizeof(CancelPacket)) < 0)
+		if (pool_flush_noerror(con) < 0)
 			ereport(WARNING,
 					(errmsg("failed to send cancel request to backend %d", i)));
 
@@ -1978,7 +2006,7 @@ retry_startup:
 	/* cancel request? */
 	if (sp->major == 1234 && sp->minor == 5678)
 	{
-		cancel_request((CancelPacket *) sp->startup_packet);
+		cancel_request((CancelPacket *) sp->startup_packet, sp->len);
 		pool_free_startup_packet(sp);
 		connection_count_down();
 		return NULL;

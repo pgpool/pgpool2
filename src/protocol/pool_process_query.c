@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -512,7 +512,8 @@ send_simplequery_message(POOL_CONNECTION * backend, int len, char *string, int m
  */
 
 void
-wait_for_query_response_with_trans_cleanup(POOL_CONNECTION * frontend, POOL_CONNECTION * backend, int protoVersion, int pid, int key)
+wait_for_query_response_with_trans_cleanup(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
+										   int protoVersion, int pid, char *key, int keylen)
 {
 	PG_TRY();
 	{
@@ -527,8 +528,8 @@ wait_for_query_response_with_trans_cleanup(POOL_CONNECTION * frontend, POOL_CONN
 
 			cancel_packet.protoVersion = htonl(PROTO_CANCEL);
 			cancel_packet.pid = pid;
-			cancel_packet.key = key;
-			cancel_request(&cancel_packet);
+			memcpy(cancel_packet.key, key, keylen);
+			cancel_request(&cancel_packet, keylen + sizeof(int32) + sizeof(int32));
 		}
 
 		PG_RE_THROW();
@@ -1481,7 +1482,7 @@ pool_send_readyforquery(POOL_CONNECTION * frontend)
  */
 POOL_STATUS
 do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
-		   char *query, int protoMajor, int pid, int key, int no_ready_for_query)
+		   char *query, int protoMajor, int pid, char *key, int keylen, int no_ready_for_query)
 {
 	int			len;
 	char		kind;
@@ -1502,7 +1503,8 @@ do_command(POOL_CONNECTION * frontend, POOL_CONNECTION * backend,
 											   backend,
 											   protoMajor,
 											   pid,
-											   key);
+											   key,
+											   keylen);
 
 	/*
 	 * We must check deadlock error here. If a deadlock error is detected by a
@@ -2767,7 +2769,7 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 		else
 		{
 			status = do_command(frontend, MAIN(backend), qbuf, MAJOR(backend), MAIN_CONNECTION(backend)->pid,
-								MAIN_CONNECTION(backend)->key, 0);
+								MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0);
 		}
 	}
 	else if (lock_kind == 2)
@@ -2825,7 +2827,7 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 			else
 			{
 				status = do_command(frontend, MAIN(backend), qbuf, MAJOR(backend), MAIN_CONNECTION(backend)->pid,
-									MAIN_CONNECTION(backend)->key, 0);
+									MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen ,0);
 			}
 		}
 	}
@@ -2843,7 +2845,8 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 		{
 			if (deadlock_detected)
 				status = do_command(frontend, CONNECTION(backend, i), POOL_ERROR_QUERY, PROTO_MAJOR_V3,
-									MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0);
+									MAIN_CONNECTION(backend)->pid,
+									MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0);
 			else
 			{
 				if (lock_kind == 1)
@@ -2858,7 +2861,8 @@ insert_lock(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *qu
 					else
 					{
 						status = do_command(frontend, CONNECTION(backend, i), qbuf, PROTO_MAJOR_V3,
-											MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0);
+											MAIN_CONNECTION(backend)->pid,
+											MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0);
 					}
 				}
 				else if (lock_kind == 2 || lock_kind == 3)
@@ -2933,7 +2937,8 @@ static POOL_STATUS add_lock_target(POOL_CONNECTION * frontend, POOL_CONNECTION_P
 		per_node_statement_log(backend, MAIN_NODE_ID, "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE");
 
 		if (do_command(frontend, MAIN(backend), "LOCK TABLE pgpool_catalog.insert_lock IN SHARE ROW EXCLUSIVE MODE",
-					   PROTO_MAJOR_V3, MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+					   PROTO_MAJOR_V3, MAIN_CONNECTION(backend)->pid,
+					   MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0) != POOL_CONTINUE)
 			ereport(ERROR,
 					(errmsg("unable to add lock target"),
 					 errdetail("do_command returned DEADLOCK status")));
@@ -3043,7 +3048,8 @@ static POOL_STATUS insert_oid_into_insert_lock(POOL_CONNECTION * frontend,
 
 	per_node_statement_log(backend, MAIN_NODE_ID, qbuf);
 	status = do_command(frontend, MAIN(backend), qbuf, PROTO_MAJOR_V3,
-						MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0);
+						MAIN_CONNECTION(backend)->pid,
+						MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0);
 	return status;
 }
 
@@ -4140,7 +4146,8 @@ start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * ba
 				per_node_statement_log(backend, i, "BEGIN");
 
 				if (do_command(frontend, CONNECTION(backend, i), "BEGIN", MAJOR(backend),
-							   MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
+							   MAIN_CONNECTION(backend)->pid,
+							   MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0) != POOL_CONTINUE)
 					ereport(ERROR,
 							(errmsg("unable to start the internal transaction"),
 							 errdetail("do_command returned DEADLOCK status")));
@@ -4205,7 +4212,8 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 				PG_TRY();
 				{
 					if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend),
-								   MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
+								   MAIN_CONNECTION(backend)->pid,
+								   MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 1) != POOL_CONTINUE)
 					{
 						ereport(ERROR,
 								(errmsg("unable to COMMIT the transaction"),
@@ -4258,7 +4266,8 @@ end_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * back
 			PG_TRY();
 			{
 				if (do_command(frontend, MAIN(backend), "COMMIT", MAJOR(backend),
-							   MAIN_CONNECTION(backend)->pid, MAIN_CONNECTION(backend)->key, 1) != POOL_CONTINUE)
+							   MAIN_CONNECTION(backend)->pid,
+							   MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 1) != POOL_CONTINUE)
 				{
 					ereport(ERROR,
 							(errmsg("unable to COMMIT the transaction"),

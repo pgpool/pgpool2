@@ -137,6 +137,11 @@ typedef enum
 }			ProcessStatus;
 
 /*
+ * mamimum cancel key length
+*/
+#define	MAX_CANCELKEY_LENGTH	256
+
+/*
  * Connection pool information. Placed on shared memory area.
  */
 typedef struct
@@ -147,7 +152,8 @@ typedef struct
 	int			major;			/* protocol major version */
 	int			minor;			/* protocol minor version */
 	int			pid;			/* backend process id */
-	int			key;			/* cancel key */
+	char		key[MAX_CANCELKEY_LENGTH];			/* cancel key */
+	int32		keylen;			/* cancel key length */
 	int			counter;		/* used counter */
 	time_t		create_time;	/* connection creation time */
 	time_t		client_connection_time;	/* client connection time */

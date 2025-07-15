@@ -58,7 +58,8 @@
 #define MAX_SASL_PAYLOAD_LEN 1024
 
 
-static POOL_STATUS pool_send_backend_key_data(POOL_CONNECTION * frontend, int pid, int key, int protoMajor);
+static void pool_send_backend_key_data(POOL_CONNECTION * frontend, int pid,
+									   char *key, int32 keylen, int protoMajor);
 static int	do_clear_text_password(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int protoMajor);
 static void pool_send_auth_fail(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp);
 static int do_md5(POOL_CONNECTION * backend, POOL_CONNECTION * frontend, int reauth, int protoMajor,
@@ -92,9 +93,7 @@ connection_do_auth(POOL_CONNECTION_POOL_SLOT * cp, char *password)
 	int			length;
 	int			auth_kind;
 	char		state;
-	char	   *p;
-	int			pid,
-				key;
+	int			pid;
 	bool		keydata_done;
 
 	/*
@@ -244,6 +243,9 @@ connection_do_auth(POOL_CONNECTION_POOL_SLOT * cp, char *password)
 
 		switch (kind)
 		{
+			char	*p;
+			int32	keylen;
+
 			case 'K':			/* backend key data */
 				keydata_done = true;
 				ereport(DEBUG1,
@@ -251,12 +253,14 @@ connection_do_auth(POOL_CONNECTION_POOL_SLOT * cp, char *password)
 
 				/* read message length */
 				pool_read_with_error(cp->con, &length, sizeof(length), "message length for authentication kind 'K'");
-				if (ntohl(length) != 12)
+				length = ntohl(length);
+				keylen = length - sizeof(int32) - sizeof(int32);
+				if (keylen > MAX_CANCELKEY_LENGTH)
 				{
 					ereport(ERROR,
 							(errmsg("failed to authenticate"),
-							 errdetail("invalid backend key data length. received %d bytes when expecting 12 bytes"
-									   ,ntohl(length))));
+							 errdetail("invalid backend key data length. received %d bytes exceeding %d", 
+									   ntohl(length), MAX_CANCELKEY_LENGTH)));
 				}
 
 				/* read pid */
@@ -264,9 +268,9 @@ connection_do_auth(POOL_CONNECTION_POOL_SLOT * cp, char *password)
 				cp->pid = pid;
 
 				/* read key */
-				pool_read_with_error(cp->con, &key, sizeof(key),
-									 "key for authentication kind 'K'");
-				cp->key = key;
+				keylen = length - sizeof(int32) - sizeof(int32);
+				p = pool_read2(cp->con, keylen);
+				memcpy(cp->key, p, keylen);
 				break;
 
 			case 'Z':			/* Ready for query */
@@ -332,14 +336,15 @@ pool_do_auth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 {
 	signed char kind;
 	int			pid;
-	int			key;
 	int			protoMajor;
 	int			length;
 	int			authkind;
 	int			i;
 	int			message_length = 0;
 	StartupPacket *sp;
-
+	int32		keylen;	/* cancel key length */
+	char	cancel_key[MAX_CANCELKEY_LENGTH];
+	char		*p;
 
 	protoMajor = MAIN_CONNECTION(cp)->sp->major;
 
@@ -722,17 +727,23 @@ read_kind:
 	}
 
 	/*
-	 * message length (V3 only)
+	 * Read BackendKeyData message length.
 	 */
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
-		if ((length = pool_read_message_length(cp)) != 12)
+		length = pool_read_message_length(cp);
+		keylen = length - sizeof(int32) - sizeof(int32);
+		if (keylen > MAX_CANCELKEY_LENGTH)
 		{
 			ereport(ERROR,
-					(errmsg("authentication failed"),
-					 errdetail("invalid messages length(%d) for BackendKeyData", length)));
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("cancel key length exceeds 256 bytes")));
 		}
 	}
+	else
+			keylen = 4;
+
+	elog(DEBUG1, "cancel key length: %d", keylen);
 
 	/*
 	 * OK, read pid and secret key
@@ -758,13 +769,17 @@ read_kind:
 			CONNECTION_SLOT(cp, i)->pid = cp->info[i].pid = pid;
 
 			/* read key */
-			if (pool_read(CONNECTION(cp, i), &key, sizeof(key)) < 0)
+			p = pool_read2(CONNECTION(cp, i), keylen);
+			if (p == NULL)
 			{
 				ereport(ERROR,
 						(errmsg("authentication failed"),
-						 errdetail("failed to read key in slot %d", i)));
+						 errdetail("failed to read key of length: %d in slot %d", keylen, i)));
 			}
-			CONNECTION_SLOT(cp, i)->key = cp->info[i].key = key;
+			memcpy(CONNECTION_SLOT(cp, i)->key, p, keylen);
+			memcpy(cp->info[i].key, p, keylen);
+			memcpy(cancel_key, p, keylen);
+			CONNECTION_SLOT(cp, i)->keylen = cp->info[i].keylen = keylen;
 
 			cp->info[i].major = sp->major;
 
@@ -791,10 +806,13 @@ read_kind:
 				(errmsg("authentication failed"),
 				 errdetail("pool_do_auth: all backends are down")));
 	}
-	if (pool_send_backend_key_data(frontend, pid, key, protoMajor))
-		ereport(ERROR,
-				(errmsg("authentication failed"),
-				 errdetail("failed to send backend data to frontend")));
+
+	/*
+	 * We send the BackendKeyData to frontend, which belongs to the last
+	 * backend in the backend group.
+	 */
+	pool_send_backend_key_data(frontend, pid, cancel_key,
+							   MAIN_CONNECTION(cp)->keylen, protoMajor);
 	return 0;
 }
 
@@ -872,7 +890,8 @@ pool_do_reauth(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 	pool_write_and_flush(frontend, &msglen, sizeof(msglen));
 
 	/* send BackendKeyData */
-	pool_send_backend_key_data(frontend, MAIN_CONNECTION(cp)->pid, MAIN_CONNECTION(cp)->key, protoMajor);
+	pool_send_backend_key_data(frontend, MAIN_CONNECTION(cp)->pid, MAIN_CONNECTION(cp)->key,
+							   MAIN_CONNECTION(cp)->keylen, protoMajor);
 
 	return 0;
 }
@@ -903,29 +922,27 @@ pool_send_auth_fail(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * cp)
 }
 
 /*
- * Send backend key data to frontend. if success return 0 otherwise non 0.
+ * Send backend key data to frontend.
  */
-static POOL_STATUS pool_send_backend_key_data(POOL_CONNECTION * frontend, int pid, int key, int protoMajor)
+static void
+pool_send_backend_key_data(POOL_CONNECTION * frontend, int pid,
+						   char *key, int32 keylen, int protoMajor)
 {
 	char		kind;
-	int			len;
+	int32		len;
 
 	/* Send backend key data */
 	kind = 'K';
 	pool_write(frontend, &kind, 1);
 	if (protoMajor == PROTO_MAJOR_V3)
 	{
-		len = htonl(12);
+		len = htonl(sizeof(int32) + sizeof(int32) + keylen);
 		pool_write(frontend, &len, sizeof(len));
 	}
 	ereport(DEBUG1,
-			(errmsg("sending backend key data"),
-			 errdetail("send pid %d to frontend", ntohl(pid))));
-
+			(errmsg("sending backend key data")));
 	pool_write(frontend, &pid, sizeof(pid));
-	pool_write_and_flush(frontend, &key, sizeof(key));
-
-	return 0;
+	pool_write_and_flush(frontend, key, keylen);
 }
 
 static void
