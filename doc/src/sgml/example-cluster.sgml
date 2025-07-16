@@ -188,25 +188,25 @@
     <tbody>
      <row>
       <entry morerows='1'>Failover</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/failover.sh.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/V4_2_STABLE/src/sample/scripts/failover.sh.sample">/etc/pgpool-II/sample_scripts/failover.sh.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-FAILOVER-COMMAND"> to perform failover</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/follow_primary.sh.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/V4_2_STABLE/src/sample/scripts/follow_primary.sh.sample">/etc/pgpool-II/sample_scripts/follow_primary.sh.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-FOLLOW-PRIMARY-COMMAND"> to synchronize the Standby with the new Primary after failover.</entry>
      </row>
      <row>
       <entry morerows='1'>Online recovery</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/recovery_1st_stage.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/V4_2_STABLE/src/sample/scripts/recovery_1st_stage.sample">/etc/pgpool-II/sample_scripts/recovery_1st_stage.sample</ulink></entry>
       <entry>Run by <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> to recovery a Standby node</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/pgpool_remote_start.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/V4_2_STABLE/src/sample/scripts/pgpool_remote_start.sample">/etc/pgpool-II/sample_scripts/pgpool_remote_start.sample</ulink></entry>
       <entry>Run after <xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND"> to start the Standby node</entry>
      </row>
      <row>
       <entry morerows='1'>Watchdog</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_2_STABLE">/etc/pgpool-II/escalation.sh.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/V4_2_STABLE/src/sample/scripts/escalation.sh.sample">/etc/pgpool-II/sample_scripts/escalation.sh.sample</ulink></entry>
       <entry>Run by <xref linkend="guc-wd-escalation-command"> to switch the Active/Standby Pgpool-II safely</entry>
      </row>
     </tbody>
