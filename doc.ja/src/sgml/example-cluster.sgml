@@ -188,25 +188,25 @@
     <tbody>
      <row>
       <entry morerows='1'>自動フェイルオーバ</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/failover.sh.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/failover.sh.sample">/etc/pgpool-II/sample_scripts/failover.sh.sample</ulink></entry>
       <entry>フェイルオーバを実行するスクリプト。<xref linkend="GUC-FAILOVER-COMMAND">で使用します。</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/follow_primary.sh.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/follow_primary.sh.sample">/etc/pgpool-II/sample_scripts/follow_primary.sh.sample</ulink></entry>
       <entry>上記フェイルオーバスクリプトが実行された後に、新しいプライマリサーバとスタンバイサーバを同期させるスクリプト。<xref linkend="GUC-FOLLOW-PRIMARY-COMMAND">で使用します。 PostgreSQLサーバが2台の場合はこのスクリプトの設定は不要です。</entry>
      </row>
      <row>
       <entry morerows='1'>オンラインリカバリ</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/recovery_1st_stage.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/recovery_1st_stage.sample">/etc/pgpool-II/sample_scripts/recovery_1st_stage.sample</ulink></entry>
       <entry>スタンバイサーバをリカバリするスクリプト。<xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND">で使用します。</entry>
      </row>
      <row>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/pgpool_remote_start.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/pgpool_remote_start.sample">/etc/pgpool-II/sample_scripts/pgpool_remote_start.sample</ulink></entry>
       <entry>上記<xref linkend="GUC-RECOVERY-1ST-STAGE-COMMAND">が実行された後に、スタンバイノードを起動させるスクリプト。</entry>
      </row>
      <row>
       <entry morerows='1'>Watchdog</entry>
-      <entry><ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_6_STABLE">/etc/pgpool-II/sample_scripts/escalation.sh.sample</ulink></entry>
+      <entry><ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/escalation.sh.sample">/etc/pgpool-II/sample_scripts/escalation.sh.sample</ulink></entry>
       <entry>
        任意の設定。Pgpool-IIのリーダー/スタンバイ切り替え時に、旧Watchdogリーダープロセスの異常終了によって旧Watchdogリーダーで仮想IPが起動したまま、新しいリーダーノードで仮想IPが起動されることを防ぐために、新しいリーダー以外で起動している仮想IPを停止するスクリプト。<xref linkend="guc-wd-escalation-command">で使用します。
       </entry>
