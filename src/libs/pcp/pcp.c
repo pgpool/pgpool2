@@ -66,7 +66,7 @@ static int	setNextResultBinaryData(PCPResultInfo * res, void *value, int datalen
 static void setResultIntData(PCPResultInfo * res, unsigned int slotno, int value);
 
 static void process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len);
-static void	process_health_check_stats_response(PCPConnInfo * pcpConn, char *buf, int len);
+static void process_health_check_stats_response(PCPConnInfo * pcpConn, char *buf, int len);
 static void process_command_complete_response(PCPConnInfo * pcpConn, char *buf, int len);
 static void process_watchdog_info_response(PCPConnInfo * pcpConn, char *buf, int len);
 static void process_process_info_response(PCPConnInfo * pcpConn, char *buf, int len);
@@ -160,8 +160,8 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		struct addrinfo hints;
 
 		/*
-		 * getaddrinfo() requires a string because it also accepts service names,
-		 * such as "http".
+		 * getaddrinfo() requires a string because it also accepts service
+		 * names, such as "http".
 		 */
 		if (asprintf(&portstr, "%d", port) == -1)
 		{
@@ -217,7 +217,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 				pcpConn->connState = PCP_CONNECTION_BAD;
 				return pcpConn;
 			}
-			break;	/* successfully connected */
+			break;				/* successfully connected */
 		}
 
 		/* no address available */
@@ -261,7 +261,8 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 		password = password_from_file;
 
 		/*
-		 * If reading password from .pcppass file fails, try to read it from prompt.
+		 * If reading password from .pcppass file fails, try to read it from
+		 * prompt.
 		 */
 		if (password == NULL || *password == '\0')
 			password = simple_prompt("Password: ", 100, false);
@@ -674,7 +675,7 @@ pcp_terminate_pgpool(PCPConnInfo * pcpConn, char mode, char command_scope)
 		pcp_internal_error(pcpConn, "invalid PCP connection");
 		return NULL;
 	}
-	if (command_scope == 'l')	/*local only*/
+	if (command_scope == 'l')	/* local only */
 		pcp_write(pcpConn->pcpConn, "T", 1);
 	else
 		pcp_write(pcpConn->pcpConn, "t", 1);
@@ -748,7 +749,7 @@ pcp_node_count(PCPConnInfo * pcpConn)
 static void
 process_node_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
-	char       *index;
+	char	   *index;
 	BackendInfo *backend_info = NULL;
 
 	if (strcmp(buf, "ArraySize") == 0)
@@ -952,17 +953,18 @@ pcp_health_check_stats(PCPConnInfo * pcpConn, int nid)
 }
 
 PCPResultInfo *
-pcp_reload_config(PCPConnInfo * pcpConn,char command_scope)
+pcp_reload_config(PCPConnInfo * pcpConn, char command_scope)
 {
-	int                     wsize;
+	int			wsize;
+
 /*
  * pcp packet format for pcp_reload_config
  * z[size][command_scope]
  */
 	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-	   pcp_internal_error(pcpConn, "invalid PCP connection");
-	   return NULL;
+		pcp_internal_error(pcpConn, "invalid PCP connection");
+		return NULL;
 	}
 
 	pcp_write(pcpConn->pcpConn, "Z", 1);
@@ -970,25 +972,26 @@ pcp_reload_config(PCPConnInfo * pcpConn,char command_scope)
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
 	pcp_write(pcpConn->pcpConn, &command_scope, sizeof(char));
 	if (PCPFlush(pcpConn) < 0)
-	   return NULL;
+		return NULL;
 	if (pcpConn->Pfdebug)
-	   fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"Z\", len=%d\n", ntohl(wsize));
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"Z\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'Z');
 }
 
 PCPResultInfo *
-pcp_log_rotate(PCPConnInfo * pcpConn,char command_scope)
+pcp_log_rotate(PCPConnInfo * pcpConn, char command_scope)
 {
-	int                     wsize;
+	int			wsize;
+
 /*
  * pcp packet format for pcp_log_rotate
  * v[size][command_scope]
  */
 	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-	   pcp_internal_error(pcpConn, "invalid PCP connection");
-	   return NULL;
+		pcp_internal_error(pcpConn, "invalid PCP connection");
+		return NULL;
 	}
 
 	pcp_write(pcpConn->pcpConn, "V", 1);
@@ -996,9 +999,9 @@ pcp_log_rotate(PCPConnInfo * pcpConn,char command_scope)
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
 	pcp_write(pcpConn->pcpConn, &command_scope, sizeof(char));
 	if (PCPFlush(pcpConn) < 0)
-	   return NULL;
+		return NULL;
 	if (pcpConn->Pfdebug)
-	   fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"Z\", len=%d\n", ntohl(wsize));
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"Z\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'V');
 }
@@ -1006,21 +1009,21 @@ pcp_log_rotate(PCPConnInfo * pcpConn,char command_scope)
 PCPResultInfo *
 pcp_invalidate_query_cache(PCPConnInfo * pcpConn)
 {
-	int                     wsize;
+	int			wsize;
 
 	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
-	   pcp_internal_error(pcpConn, "invalid PCP connection");
-	   return NULL;
+		pcp_internal_error(pcpConn, "invalid PCP connection");
+		return NULL;
 	}
 
 	pcp_write(pcpConn->pcpConn, "G", 1);
 	wsize = htonl(sizeof(int));
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));
 	if (PCPFlush(pcpConn) < 0)
-	   return NULL;
+		return NULL;
 	if (pcpConn->Pfdebug)
-	   fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"G\", len=%d\n", ntohl(wsize));
+		fprintf(pcpConn->Pfdebug, "DEBUG: send: tos=\"G\", len=%d\n", ntohl(wsize));
 
 	return process_pcp_response(pcpConn, 'G');
 }
@@ -1032,16 +1035,16 @@ pcp_invalidate_query_cache(PCPConnInfo * pcpConn)
  * len:		length of the data
  */
 static void
-process_health_check_stats_response
-(PCPConnInfo * pcpConn, char *buf, int len)
+			process_health_check_stats_response
+			(PCPConnInfo * pcpConn, char *buf, int len)
 {
 	POOL_HEALTH_CHECK_STATS *stats;
-	int		*offsets;
-	int		n;
-	int		i;
-	char	*p;
-	int		maxstr;
-	char	c[] = "CommandComplete";
+	int		   *offsets;
+	int			n;
+	int			i;
+	char	   *p;
+	int			maxstr;
+	char		c[] = "CommandComplete";
 
 	if (strcmp(buf, c) != 0)
 	{
@@ -1054,19 +1057,19 @@ process_health_check_stats_response
 
 	/* Allocate health stats memory */
 	stats = palloc0(sizeof(POOL_HEALTH_CHECK_STATS));
-	p = (char *)stats;
+	p = (char *) stats;
 
 	/* Calculate total packet length */
 	offsets = pool_health_check_stats_offsets(&n);
 
 	for (i = 0; i < n; i++)
 	{
-		if (i == n -1)
+		if (i == n - 1)
 			maxstr = sizeof(POOL_HEALTH_CHECK_STATS) - offsets[i];
 		else
 			maxstr = offsets[i + 1] - offsets[i];
 
-		StrNCpy(p + offsets[i], buf, maxstr -1);
+		StrNCpy(p + offsets[i], buf, maxstr - 1);
 		buf += strlen(buf) + 1;
 	}
 
@@ -1173,11 +1176,12 @@ static void
 process_process_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 {
 	char	   *index;
-	int			*offsets;
-	int			i, n;
+	int		   *offsets;
+	int			i,
+				n;
 	int			maxstr;
-	char		*p;
-	POOL_REPORT_POOLS	*pools = NULL;
+	char	   *p;
+	POOL_REPORT_POOLS *pools = NULL;
 
 	offsets = pool_report_pools_offsets(&n);
 
@@ -1202,17 +1206,17 @@ process_process_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 			goto INVALID_RESPONSE;
 
 		pools = palloc0(sizeof(POOL_REPORT_POOLS));
-		p = (char *)pools;
+		p = (char *) pools;
 		buf += strlen(buf) + 1;
 
 		for (i = 0; i < n; i++)
 		{
-			if (i == n -1)
+			if (i == n - 1)
 				maxstr = sizeof(POOL_REPORT_POOLS) - offsets[i];
 			else
 				maxstr = offsets[i + 1] - offsets[i];
 
-			StrNCpy(p + offsets[i], buf, maxstr -1);
+			StrNCpy(p + offsets[i], buf, maxstr - 1);
 			buf += strlen(buf) + 1;
 		}
 
@@ -1523,7 +1527,8 @@ _pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully, bool switchov
 	int			wsize;
 	char		node_id[16];
 	char	   *sendchar;
-	char		*switchover_option;	/* n: just change node status, s: switchover primary */
+	char	   *switchover_option;	/* n: just change node status, s:
+									 * switchover primary */
 
 	if (PCPConnectionStatus(pcpConn) != PCP_CONNECTION_OK)
 	{
@@ -1546,10 +1551,10 @@ _pcp_promote_node(PCPConnInfo * pcpConn, int nid, bool gracefully, bool switchov
 	pcp_write(pcpConn->pcpConn, sendchar, 1);
 
 	/* calculate send buffer size */
-	wsize = sizeof(char);	/* protocol. 'j' or 'J' */
+	wsize = sizeof(char);		/* protocol. 'j' or 'J' */
 	wsize += strlen(node_id);	/* node id + space */
-	wsize += sizeof(char);	/* promote option */
-	wsize += sizeof(int);	/* buffer length */
+	wsize += sizeof(char);		/* promote option */
+	wsize += sizeof(int);		/* buffer length */
 	wsize = htonl(wsize);
 
 	pcp_write(pcpConn->pcpConn, &wsize, sizeof(int));

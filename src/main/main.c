@@ -355,7 +355,7 @@ main(int argc, char **argv)
 		}
 		else
 			strlcpy(pool_passwd, pool_config->pool_passwd,
-				 sizeof(pool_passwd));
+					sizeof(pool_passwd));
 
 		pool_init_pool_passwd(pool_passwd, POOL_PASSWD_R);
 	}
@@ -534,7 +534,7 @@ stop_me(void)
 
 	for (;;)
 	{
-		int		cnt = 5;	/* sending signal retry interval */
+		int			cnt = 5;	/* sending signal retry interval */
 
 		if (kill(pid, stop_sig) == -1)
 		{
@@ -550,8 +550,11 @@ stop_me(void)
 			fprintf(stderr, ".");
 			sleep(1);
 			cnt--;
-			/* If pgpool did not stop within 5 seconds, break the loop and try
-			 * to send the signal again */
+
+			/*
+			 * If pgpool did not stop within 5 seconds, break the loop and try
+			 * to send the signal again
+			 */
 			if (cnt <= 0)
 				break;
 		}

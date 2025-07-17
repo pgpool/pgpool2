@@ -39,7 +39,7 @@
  * initialize parameter structure
  */
 int
-pool_init_params(ParamStatus * params)
+pool_init_params(ParamStatus *params)
 {
 	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
@@ -56,7 +56,7 @@ pool_init_params(ParamStatus * params)
  * discard parameter structure
  */
 void
-pool_discard_params(ParamStatus * params)
+pool_discard_params(ParamStatus *params)
 {
 	int			i;
 
@@ -81,7 +81,7 @@ pool_discard_params(ParamStatus * params)
  * if not found, NULL is returned
  */
 char *
-pool_find_name(ParamStatus * params, char *name, int *pos)
+pool_find_name(ParamStatus *params, char *name, int *pos)
 {
 	int			i;
 
@@ -100,7 +100,7 @@ pool_find_name(ParamStatus * params, char *name, int *pos)
  * return name and value by index.
  */
 int
-pool_get_param(ParamStatus * params, int index, char **name, char **value)
+pool_get_param(ParamStatus *params, int index, char **name, char **value)
 {
 	if (index < 0 || index >= params->num)
 		return -1;
@@ -115,7 +115,7 @@ pool_get_param(ParamStatus * params, int index, char **name, char **value)
  * add or replace name/value pair
  */
 int
-pool_add_param(ParamStatus * params, char *name, char *value)
+pool_add_param(ParamStatus *params, char *name, char *value)
 {
 	int			pos;
 	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
@@ -152,7 +152,7 @@ pool_add_param(ParamStatus * params, char *name, char *value)
 }
 
 void
-pool_param_debug_print(ParamStatus * params)
+pool_param_debug_print(ParamStatus *params)
 {
 	int			i;
 

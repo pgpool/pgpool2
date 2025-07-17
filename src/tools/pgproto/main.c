@@ -201,7 +201,7 @@ connect_db(char *host, char *port, char *user, char *database)
 	char		conninfo[1024];
 	PGconn	   *conn;
 	size_t		n;
-	char	*app_name_str = " application_name=pgproto";
+	char	   *app_name_str = " application_name=pgproto";
 
 	conninfo[0] = '\0';
 	n = sizeof(conninfo);

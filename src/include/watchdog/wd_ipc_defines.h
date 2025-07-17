@@ -42,7 +42,7 @@ typedef enum WDFailoverCMDResults
 	FAILOVER_RES_BUILDING_CONSENSUS,
 	FAILOVER_RES_CONSENSUS_MAY_FAIL,
 	FAILOVER_RES_TIMEOUT
-}			WDFailoverCMDResults;
+} WDFailoverCMDResults;
 
 typedef enum WDValueDataType
 {
@@ -50,7 +50,7 @@ typedef enum WDValueDataType
 	VALUE_DATA_TYPE_STRING,
 	VALUE_DATA_TYPE_BOOL,
 	VALUE_DATA_TYPE_LONG
-}			WDValueDataType;
+} WDValueDataType;
 
 /* IPC MESSAGES TYPES */
 #define WD_REGISTER_FOR_NOTIFICATION		'0'

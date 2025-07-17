@@ -24,7 +24,7 @@
 
 extern void start_recovery(int recovery_node);
 extern void finish_recovery(void);
-extern int wait_connection_closed(void);
-extern int ensure_conn_counter_validity(void);
+extern int	wait_connection_closed(void);
+extern int	ensure_conn_counter_validity(void);
 
-#endif /* recovery_h */
+#endif							/* recovery_h */

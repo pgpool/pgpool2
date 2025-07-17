@@ -63,13 +63,13 @@
 memcached_st *memc;
 #endif
 
-static char *encode_key(const char *s, char *buf, POOL_CONNECTION_POOL * backend);
+static char *encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend);
 #ifdef DEBUG
 static void dump_cache_data(const char *data, size_t len);
 #endif
-static int	pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_t datalen, int num_oids, int *oids);
-static int	send_cached_messages(POOL_CONNECTION * frontend, const char *qcache, int qcachelen);
-static void send_message(POOL_CONNECTION * conn, char kind, int len, const char *data);
+static int	pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *data, size_t datalen, int num_oids, int *oids);
+static int	send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, int qcachelen);
+static void send_message(POOL_CONNECTION *conn, char kind, int len, const char *data);
 #ifdef USE_MEMCACHED
 static int	delete_cache_on_memcached(const char *key);
 #endif
@@ -78,23 +78,23 @@ static int	pool_get_dropdb_table_oids(int **oids, int dboid);
 static void pool_discard_dml_table_oid(void);
 static void pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlink, int dboid);
 static int	pool_get_database_oid(void);
-static void pool_add_table_oid_map(POOL_CACHEKEY * cachkey, int num_table_oids, int *table_oids);
+static void pool_add_table_oid_map(POOL_CACHEKEY *cachkey, int num_table_oids, int *table_oids);
 static void pool_reset_memqcache_buffer(bool reset_dml_oids);
-static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, char *data, int size, time_t expire);
-static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash);
-static char *pool_get_item_shmem_cache(POOL_QUERY_HASH * query_hash, int *size, int *sts);
-static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY * cache_array, POOL_TEMP_QUERY_CACHE * cache);
-static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache, char kind, char *data, int data_len);
-static void pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache, int num_oids, int *oids);
-static POOL_INTERNAL_BUFFER * pool_create_buffer(void);
-static void pool_discard_buffer(POOL_INTERNAL_BUFFER * buffer);
-static void pool_add_buffer(POOL_INTERNAL_BUFFER * buffer, void *data, size_t len);
-static void *pool_get_buffer(POOL_INTERNAL_BUFFER * buffer, size_t *len);
+static POOL_CACHEID *pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char *data, int size, time_t expire);
+static POOL_CACHEID *pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash);
+static char *pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, int *sts);
+static POOL_QUERY_CACHE_ARRAY *pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array, POOL_TEMP_QUERY_CACHE *cache);
+static void pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char kind, char *data, int data_len);
+static void pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, int num_oids, int *oids);
+static POOL_INTERNAL_BUFFER *pool_create_buffer(void);
+static void pool_discard_buffer(POOL_INTERNAL_BUFFER *buffer);
+static void pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len);
+static void *pool_get_buffer(POOL_INTERNAL_BUFFER *buffer, size_t *len);
 #ifdef NOT_USED
-static char *pool_get_buffer_pointer(POOL_INTERNAL_BUFFER * buffer);
+static char *pool_get_buffer_pointer(POOL_INTERNAL_BUFFER *buffer);
 #endif
 static char *pool_get_current_cache_buffer(size_t *len);
-static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER * buffer);
+static size_t pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer);
 static void pool_check_and_discard_cache_buffer(int num_oids, int *oids);
 
 static void pool_set_memqcache_blocks(int num_blocks);
@@ -104,36 +104,36 @@ static void pool_reset_fsmm(size_t size);
 static void *pool_fsmm_address(void);
 static void pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space);
 static POOL_CACHE_BLOCKID pool_get_block(size_t free_space);
-static POOL_CACHE_ITEM_HEADER * pool_cache_item_header(POOL_CACHEID * cacheid);
+static POOL_CACHE_ITEM_HEADER *pool_cache_item_header(POOL_CACHEID *cacheid);
 static int	pool_init_cache_block(POOL_CACHE_BLOCKID blockid);
 #if NOT_USED
 static void pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid);
 #endif
-static int	pool_delete_item_shmem_cache(POOL_CACHEID * cacheid);
+static int	pool_delete_item_shmem_cache(POOL_CACHEID *cacheid);
 static char *block_address(int blockid);
-static POOL_CACHE_ITEM_POINTER * item_pointer(char *block, int i);
-static POOL_CACHE_ITEM_HEADER * item_header(char *block, int i);
+static POOL_CACHE_ITEM_POINTER *item_pointer(char *block, int i);
+static POOL_CACHE_ITEM_HEADER *item_header(char *block, int i);
 static POOL_CACHE_BLOCKID pool_reuse_block(void);
 #ifdef SHMEMCACHE_DEBUG
 static void dump_shmem_cache(POOL_CACHE_BLOCKID blockid);
 #endif
 
 static int	pool_hash_reset(int nelements);
-static int	pool_hash_insert(POOL_QUERY_HASH * key, POOL_CACHEID * cacheid, bool update);
-static uint32 create_hash_key(POOL_QUERY_HASH * key);
+static int	pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool update);
+static uint32 create_hash_key(POOL_QUERY_HASH *key);
 static volatile POOL_HASH_ELEMENT *get_new_hash_element(void);
-static void put_back_hash_element(volatile POOL_HASH_ELEMENT * element);
+static void put_back_hash_element(volatile POOL_HASH_ELEMENT *element);
 static bool is_free_hash_element(void);
-static void inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen);
+static void inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qcachelen);
 #ifdef USE_MEMCACHED
-static int delete_all_cache_on_memcached(void);
+static int	delete_all_cache_on_memcached(void);
 #endif
 static char *create_fake_cache(size_t *len);
 
 /*
  * if true, shared memory is locked in this process now.
  */
-static int is_shmem_locked;
+static int	is_shmem_locked;
 
 /*
  * Connect to Memcached
@@ -172,7 +172,7 @@ memcached_connect(void)
 	{
 		ereport(WARNING,
 				(errmsg("failed to connect to memcached, server push error:\"%s\"\n", memcached_strerror(memc, rc))));
-		memc = (memcached_st *) - 1;
+		memc = (memcached_st *) -1;
 		return -1;
 	}
 	memcached_server_list_free(servers);
@@ -207,7 +207,7 @@ memcached_disconnect(void)
  */
 void
 memqcache_register(char kind,
-				   POOL_CONNECTION * frontend,
+				   POOL_CONNECTION *frontend,
 				   char *data,
 				   int data_len)
 {
@@ -239,7 +239,7 @@ memqcache_register(char kind,
  * Commit SELECT results to cache storage.
  */
 static int
-pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_t datalen, int num_oids, int *oids)
+pool_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *data, size_t datalen, int num_oids, int *oids)
 {
 #ifdef USE_MEMCACHED
 	memcached_return rc;
@@ -301,7 +301,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 		}
 		else
 		{
-			cacheid = pool_add_item_shmem_cache(&query_hash, data, datalen,memqcache_expire);
+			cacheid = pool_add_item_shmem_cache(&query_hash, data, datalen, memqcache_expire);
 			if (cacheid == NULL)
 			{
 				ereport(LOG,
@@ -349,7 +349,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
  * Commit SELECT system catalog results to cache storage.
  */
 int
-pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_t datalen)
+pool_catalog_commit_cache(POOL_CONNECTION_POOL *backend, char *query, char *data, size_t datalen)
 {
 #ifdef USE_MEMCACHED
 	memcached_return rc;
@@ -457,7 +457,7 @@ pool_catalog_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *dat
  * 1: not found
  */
 int
-pool_fetch_cache(POOL_CONNECTION_POOL * backend, const char *query, char **buf, size_t *len)
+pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, char **buf, size_t *len)
 {
 	char	   *ptr;
 	char		tmpkey[MAX_KEY];
@@ -559,7 +559,7 @@ pool_fetch_cache(POOL_CONNECTION_POOL * backend, const char *query, char **buf, 
  * create cache key as md5(username + query string + database name)
  */
 static char *
-encode_key(const char *s, char *buf, POOL_CONNECTION_POOL * backend)
+encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 {
 	char	   *strkey;
 	int			u_length;
@@ -632,7 +632,7 @@ dump_cache_data(const char *data, size_t len)
  * send cached messages
  */
 static int
-send_cached_messages(POOL_CONNECTION * frontend, const char *qcache, int qcachelen)
+send_cached_messages(POOL_CONNECTION *frontend, const char *qcache, int qcachelen)
 {
 	int			msg = 0;
 	int			i = 0;
@@ -685,7 +685,7 @@ send_cached_messages(POOL_CONNECTION * frontend, const char *qcache, int qcachel
  * send message to frontend
  */
 static void
-send_message(POOL_CONNECTION * conn, char kind, int len, const char *data)
+send_message(POOL_CONNECTION *conn, char kind, int len, const char *data)
 {
 	ereport(DEBUG2,
 			(errmsg("memcache: sending messages: kind '%c', len=%d, data=%p", kind, len, data)));
@@ -734,13 +734,13 @@ delete_cache_on_memcached(const char *key)
  * If use_fake_cache is true, make up "CommandComplete 0" result and use it.
  */
 POOL_STATUS
-pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
-							 POOL_CONNECTION_POOL * backend,
+pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
+							 POOL_CONNECTION_POOL *backend,
 							 char *contents, bool use_fake_cache, bool *foundp)
 {
 	char	   *qcache;
 	size_t		qcachelen;
-	volatile int	sts;
+	volatile int sts;
 	pool_sigset_t oldmask;
 
 	ereport(DEBUG1,
@@ -849,14 +849,17 @@ pool_fetch_from_memory_cache(POOL_CONNECTION * frontend,
 static char *
 create_fake_cache(size_t *len)
 {
-	char		*qcache, *p;
-	int32		mlen;	/* message length including self */
-	static		char*	msg = "SELECT 0";
+	char	   *qcache,
+			   *p;
+	int32		mlen;			/* message length including self */
+	static char *msg = "SELECT 0";
 
-	*len = sizeof(char)	+	/* message kind */
-		sizeof(int32) +		/* packet length including self */
-		sizeof(msg);	/* Command Complete message with 0 row returned */
-	mlen = *len - 1;	/* message length does not include message kind */
+	*len = sizeof(char) +		/* message kind */
+		sizeof(int32) +			/* packet length including self */
+		sizeof(msg);			/* Command Complete message with 0 row
+								 * returned */
+	mlen = *len - 1;			/* message length does not include message
+								 * kind */
 	mlen = htonl(mlen);
 	p = qcache = palloc(*len);
 	*p++ = 'C';
@@ -1026,7 +1029,7 @@ pool_is_allow_to_cache(Node *node, char *query)
 	/*
 	 * TABLESAMPLE is not allowed to cache.
 	 */
-	if (IsA(node, SelectStmt) &&((SelectStmt *) node)->fromClause)
+	if (IsA(node, SelectStmt) && ((SelectStmt *) node)->fromClause)
 	{
 		List	   *tbl_list = ((SelectStmt *) node)->fromClause;
 		ListCell   *tbl;
@@ -1091,17 +1094,18 @@ pool_is_allow_to_cache(Node *node, char *query)
 	/*
 	 * If Data-modifying statements in WITH clause, it's not allowed to cache.
 	 */
-	if(IsA(node, SelectStmt) && ((SelectStmt *) node)->withClause)
+	if (IsA(node, SelectStmt) && ((SelectStmt *) node)->withClause)
 	{
-		ListCell	*lc;
-		WithClause	*withClause = ((SelectStmt *) node)->withClause;
+		ListCell   *lc;
+		WithClause *withClause = ((SelectStmt *) node)->withClause;
 
 		foreach(lc, withClause->ctes)
 		{
-			CommonTableExpr *cte = (CommonTableExpr *)lfirst(lc);
-			if(IsA(cte->ctequery, InsertStmt) ||
-			   IsA(cte->ctequery, DeleteStmt) ||
-			   IsA(cte->ctequery, UpdateStmt))
+			CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+
+			if (IsA(cte->ctequery, InsertStmt) ||
+				IsA(cte->ctequery, DeleteStmt) ||
+				IsA(cte->ctequery, UpdateStmt))
 			{
 				return false;
 			}
@@ -1192,9 +1196,10 @@ pool_extract_table_oids(Node *node, int **oidsp)
 		num_oids = pool_extract_withclause_oids((Node *) stmt->withClause, *oidsp);
 		table = make_table_name_from_rangevar(stmt->relation);
 	}
-	else if(IsA(node, SelectStmt))
+	else if (IsA(node, SelectStmt))
 	{
 		SelectStmt *stmt = (SelectStmt *) node;
+
 		num_oids = pool_extract_withclause_oids((Node *) stmt->withClause, *oidsp);
 		table = NULL;
 	}
@@ -1300,8 +1305,8 @@ pool_extract_table_oids(Node *node, int **oidsp)
 	}
 	else if (IsA(node, ExplainStmt))
 	{
-		ListCell	*cell;
-		DefElem		*def;
+		ListCell   *cell;
+		DefElem    *def;
 		ExplainStmt *stmt = (ExplainStmt *) node;
 
 		foreach(cell, stmt->options)
@@ -1354,12 +1359,12 @@ pool_extract_withclause_oids(Node *node, int *oidsp)
 	ListCell   *lc;
 	WithClause *with;
 
-	if(oidsp == NULL)
+	if (oidsp == NULL)
 	{
 		return 0;
 	}
 
-	if(!node || !IsA(node, WithClause))
+	if (!node || !IsA(node, WithClause))
 	{
 		return 0;
 	}
@@ -1367,20 +1372,24 @@ pool_extract_withclause_oids(Node *node, int *oidsp)
 	with = (WithClause *) node;
 	foreach(lc, with->ctes)
 	{
-		CommonTableExpr *cte = (CommonTableExpr *)lfirst(lc);
-		if(IsA(cte->ctequery, InsertStmt))
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+
+		if (IsA(cte->ctequery, InsertStmt))
 		{
 			InsertStmt *stmt = (InsertStmt *) cte->ctequery;
+
 			table = make_table_name_from_rangevar(stmt->relation);
 		}
-		else if(IsA(cte->ctequery, DeleteStmt))
+		else if (IsA(cte->ctequery, DeleteStmt))
 		{
 			DeleteStmt *stmt = (DeleteStmt *) cte->ctequery;
+
 			table = make_table_name_from_rangevar(stmt->relation);
 		}
-		else if(IsA(cte->ctequery, UpdateStmt))
+		else if (IsA(cte->ctequery, UpdateStmt))
 		{
 			UpdateStmt *stmt = (UpdateStmt *) cte->ctequery;
+
 			table = make_table_name_from_rangevar(stmt->relation);
 		}
 		else
@@ -1475,7 +1484,7 @@ pool_get_dropdb_table_oids(int **oids, int dboid)
 	int			num_oids = 0;
 	DIR		   *dir;
 	struct dirent *dp;
-	char		*path;
+	char	   *path;
 
 	path = psprintf("%s/%d", pool_config->memqcache_oiddir, dboid);
 	if ((dir = opendir(path)) == NULL)
@@ -1554,7 +1563,7 @@ pool_get_database_oid(void)
  * Query to convert table name to oid
  */
 	int			oid = 0;
-	static POOL_RELCACHE * relcache;
+	static POOL_RELCACHE *relcache;
 	POOL_CONNECTION_POOL *backend;
 
 	backend = pool_get_session_context(false)->backend;
@@ -1592,7 +1601,7 @@ pool_get_database_oid_from_dbname(char *dbname)
 {
 	int			dboid = 0;
 	POOL_SELECT_RESULT *res;
-	char		*query;
+	char	   *query;
 
 	POOL_CONNECTION_POOL *backend;
 
@@ -1626,11 +1635,11 @@ pool_get_database_oid_from_dbname(char *dbname)
  * (pool_handle_query_cache -> pool_commit_cache -> pool_add_table_oid_map)
  */
 static void
-pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_oids)
+pool_add_table_oid_map(POOL_CACHEKEY *cachekey, int num_table_oids, int *table_oids)
 {
 	char	   *dir;
 	int			dboid;
-	char		*path;
+	char	   *path;
 	int			i;
 	int			len;
 
@@ -1803,7 +1812,7 @@ pool_add_table_oid_map(POOL_CACHEKEY * cachekey, int num_table_oids, int *table_
 void
 pool_discard_oid_maps(void)
 {
-	char		*command;
+	char	   *command;
 
 	command = psprintf("/bin/rm -fr %s/[0-9]*",
 					   pool_config->memqcache_oiddir);
@@ -1821,7 +1830,7 @@ pool_discard_oid_maps(void)
 void
 pool_discard_oid_maps_by_db(int dboid)
 {
-	char		*command;
+	char	   *command;
 
 	if (pool_is_shmem_cache())
 	{
@@ -1851,7 +1860,7 @@ static void
 pool_invalidate_query_cache(int num_table_oids, int *table_oid, bool unlinkp, int dboid)
 {
 	char	   *dir;
-	char		*path;
+	char	   *path;
 	int			i;
 	int			len;
 	POOL_CACHEKEY buf;
@@ -2214,7 +2223,8 @@ delete_all_cache_on_memcached(void)
 /*
  * Clear query cache on shmem or memcached
  */
-void clear_query_cache(void)
+void
+clear_query_cache(void)
 {
 	/*
 	 * Clear all the shared memory cache and oid maps.
@@ -2259,8 +2269,8 @@ pool_memory_cache_address(void)
 void
 pool_init_whole_cache_blocks(void)
 {
-	int		blocks = pool_get_memqcache_blocks();
-	int		i;
+	int			blocks = pool_get_memqcache_blocks();
+	int			i;
 
 	for (i = 0; i < blocks; i++)
 	{
@@ -2370,7 +2380,8 @@ pool_reset_fsmm(size_t size)
  * See https://en.wikipedia.org/wiki/Page_replacement_algorithm#Clock for more details.
  * It would be nice if we could use true clock algorithm someday.
  */
-static POOL_CACHE_BLOCKID pool_reuse_block(void)
+static POOL_CACHE_BLOCKID
+pool_reuse_block(void)
 {
 	int			maxblock = pool_get_memqcache_blocks();
 	char	   *block = block_address(*pool_fsmm_clock_hand);
@@ -2413,7 +2424,8 @@ static POOL_CACHE_BLOCKID pool_reuse_block(void)
 /*
  * Get block id which has enough space
  */
-static POOL_CACHE_BLOCKID pool_get_block(size_t free_space)
+static POOL_CACHE_BLOCKID
+pool_get_block(size_t free_space)
 {
 	int			encode_value;
 	unsigned char *p = pool_fsmm_address();
@@ -2505,7 +2517,8 @@ pool_update_fsmm(POOL_CACHE_BLOCKID blockid, size_t free_space)
  * The cache id is overwritten by the subsequent call to this function.
  * On error returns NULL.
  */
-static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, char *data, int size, time_t expire)
+static POOL_CACHEID *
+pool_add_item_shmem_cache(POOL_QUERY_HASH *query_hash, char *data, int size, time_t expire)
 {
 	static POOL_CACHEID cacheid;
 	POOL_CACHE_BLOCKID blockid;
@@ -2788,7 +2801,7 @@ static POOL_CACHEID * pool_add_item_shmem_cache(POOL_QUERY_HASH * query_hash, ch
  * Detail is set to *sts. (0: success, 1: not found, -1: error)
  */
 static char *
-pool_get_item_shmem_cache(POOL_QUERY_HASH * query_hash, int *size, int *sts)
+pool_get_item_shmem_cache(POOL_QUERY_HASH *query_hash, int *size, int *sts)
 {
 	POOL_CACHEID *cacheid;
 	POOL_CACHE_ITEM_HEADER *cih;
@@ -2838,7 +2851,8 @@ pool_get_item_shmem_cache(POOL_QUERY_HASH * query_hash, int *size, int *sts)
  * On success returns cache id.
  * The cache id is overwritten by the subsequent call to this function.
  */
-static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash)
+static POOL_CACHEID *
+pool_find_item_on_shmem_cache(POOL_QUERY_HASH *query_hash)
 {
 	static POOL_CACHEID cacheid;
 	POOL_CACHEID *c;
@@ -2867,6 +2881,7 @@ static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash
 			 */
 			pool_shmem_unlock();
 			pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
+
 			/*
 			 * There is a window between pool_shmem_unlock() and
 			 * pool_shmem_lock().  We need to get POOL_CACHEID and
@@ -2905,7 +2920,7 @@ static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash
  * FSMM is also updated.
  */
 static int
-pool_delete_item_shmem_cache(POOL_CACHEID * cacheid)
+pool_delete_item_shmem_cache(POOL_CACHEID *cacheid)
 {
 	POOL_CACHE_BLOCK_HEADER *bh;
 	POOL_CACHE_ITEM_POINTER *cip;
@@ -3018,7 +3033,8 @@ pool_delete_item_shmem_cache(POOL_CACHEID * cacheid)
 /*
  * Returns item header specified by cache id.
  */
-static POOL_CACHE_ITEM_HEADER * pool_cache_item_header(POOL_CACHEID * cacheid)
+static POOL_CACHE_ITEM_HEADER *
+pool_cache_item_header(POOL_CACHEID *cacheid)
 {
 	POOL_CACHE_BLOCK_HEADER *bh;
 
@@ -3107,7 +3123,7 @@ pool_wipe_out_cache_block(POOL_CACHE_BLOCKID blockid)
 
 #undef LOCK_TRACE
 
-static int memq_lock_fd = 0;
+static int	memq_lock_fd = 0;
 
 /*
  * Acquire lock: XXX giant lock
@@ -3117,7 +3133,7 @@ pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 {
 	if (memq_lock_fd == 0)
 	{
-		char *path;
+		char	   *path;
 
 		path = psprintf("%s/%s", pool_config->logdir, QUERY_CACHE_LOCK_FILE);
 		memq_lock_fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
@@ -3131,11 +3147,11 @@ pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 	}
 
 #ifdef LOCK_TRACE
-		elog(LOG, "LOCK TRACE: try to acquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK? "LOCK_EX" : "LOCK_SH");
+	elog(LOG, "LOCK TRACE: try to acquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK ? "LOCK_EX" : "LOCK_SH");
 #endif
 	if (pool_is_shmem_cache() && !is_shmem_locked)
 	{
-		if (flock(memq_lock_fd, type == POOL_MEMQ_EXCLUSIVE_LOCK? LOCK_EX : LOCK_SH))
+		if (flock(memq_lock_fd, type == POOL_MEMQ_EXCLUSIVE_LOCK ? LOCK_EX : LOCK_SH))
 		{
 			ereport(FATAL,
 					(errmsg("Failed to lock file for query cache"),
@@ -3144,7 +3160,7 @@ pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 		}
 
 #ifdef LOCK_TRACE
-		elog(LOG, "LOCK TRACE: acquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK? "LOCK_EX" : "LOCK_SH");
+		elog(LOG, "LOCK TRACE: acquire lock %s", type == POOL_MEMQ_EXCLUSIVE_LOCK ? "LOCK_EX" : "LOCK_SH");
 #endif
 		is_shmem_locked = true;
 	}
@@ -3189,14 +3205,15 @@ block_address(int blockid)
 	char	   *p;
 
 	p = pool_memory_cache_address() +
-		(uint64)blockid * pool_config->memqcache_cache_block_size;
+		(uint64) blockid * pool_config->memqcache_cache_block_size;
 	return p;
 }
 
 /*
  * Returns i th item pointer in block address block
  */
-static POOL_CACHE_ITEM_POINTER * item_pointer(char *block, int i)
+static POOL_CACHE_ITEM_POINTER *
+item_pointer(char *block, int i)
 {
 	return (POOL_CACHE_ITEM_POINTER *) (block + sizeof(POOL_CACHE_BLOCK_HEADER) +
 										sizeof(POOL_CACHE_ITEM_POINTER) * i);
@@ -3205,7 +3222,8 @@ static POOL_CACHE_ITEM_POINTER * item_pointer(char *block, int i)
 /*
  * Returns i th item header in block address block
  */
-static POOL_CACHE_ITEM_HEADER * item_header(char *block, int i)
+static POOL_CACHE_ITEM_HEADER *
+item_header(char *block, int i)
 {
 	POOL_CACHE_ITEM_POINTER *cip;
 
@@ -3267,7 +3285,7 @@ pool_create_query_cache_array(void)
  * Discard query cache array
  */
 void
-pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY * cache_array)
+pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array)
 {
 	int			i;
 
@@ -3291,7 +3309,8 @@ pool_discard_query_cache_array(POOL_QUERY_CACHE_ARRAY * cache_array)
 /*
  * Add query cache array
  */
-static POOL_QUERY_CACHE_ARRAY * pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY * cache_array, POOL_TEMP_QUERY_CACHE * cache)
+static POOL_QUERY_CACHE_ARRAY *
+pool_add_query_cache_array(POOL_QUERY_CACHE_ARRAY *cache_array, POOL_TEMP_QUERY_CACHE *cache)
 {
 	size_t		size;
 	POOL_QUERY_CACHE_ARRAY *cp = cache_array;
@@ -3348,7 +3367,7 @@ pool_create_temp_query_cache(char *query)
  * Discard temp query cache
  */
 void
-pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache)
+pool_discard_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache)
 {
 	if (!temp_cache)
 		return;
@@ -3374,7 +3393,7 @@ pool_discard_current_temp_query_cache(void)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_QUERY_CONTEXT *query_context;
-	POOL_TEMP_QUERY_CACHE * temp_cache;
+	POOL_TEMP_QUERY_CACHE *temp_cache;
 
 	session_context = pool_get_session_context(true);
 	query_context = session_context->query_context;
@@ -3394,7 +3413,7 @@ pool_discard_current_temp_query_cache(void)
  * Data must be FE/BE protocol packet.
  */
 static void
-pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache, char kind, char *data, int data_len)
+pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, char kind, char *data, int data_len)
 {
 	POOL_INTERNAL_BUFFER *buffer;
 	size_t		buflen;
@@ -3455,7 +3474,7 @@ pool_add_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache, char kind, char *d
  * Add table oids used by SELECT to temp query cache.
  */
 static void
-pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache, int num_oids, int *oids)
+pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE *temp_cache, int num_oids, int *oids)
 {
 	POOL_INTERNAL_BUFFER *buffer;
 
@@ -3482,7 +3501,8 @@ pool_add_oids_temp_query_cache(POOL_TEMP_QUERY_CACHE * temp_cache, int num_oids,
 /*
  * Create and return internal buffer
  */
-static POOL_INTERNAL_BUFFER * pool_create_buffer(void)
+static POOL_INTERNAL_BUFFER *
+pool_create_buffer(void)
 {
 	POOL_INTERNAL_BUFFER *p;
 
@@ -3494,7 +3514,7 @@ static POOL_INTERNAL_BUFFER * pool_create_buffer(void)
  * Discard internal buffer
  */
 static void
-pool_discard_buffer(POOL_INTERNAL_BUFFER * buffer)
+pool_discard_buffer(POOL_INTERNAL_BUFFER *buffer)
 {
 	if (buffer)
 	{
@@ -3508,7 +3528,7 @@ pool_discard_buffer(POOL_INTERNAL_BUFFER * buffer)
  * Add data to internal buffer
  */
 static void
-pool_add_buffer(POOL_INTERNAL_BUFFER * buffer, void *data, size_t len)
+pool_add_buffer(POOL_INTERNAL_BUFFER *buffer, void *data, size_t len)
 {
 #define POOL_ALLOCATE_UNIT 8192
 
@@ -3547,7 +3567,7 @@ pool_add_buffer(POOL_INTERNAL_BUFFER * buffer, void *data, size_t len)
  * Data length is returned to len.
  */
 static void *
-pool_get_buffer(POOL_INTERNAL_BUFFER * buffer, size_t *len)
+pool_get_buffer(POOL_INTERNAL_BUFFER *buffer, size_t *len)
 {
 	void	   *p;
 
@@ -3568,7 +3588,7 @@ pool_get_buffer(POOL_INTERNAL_BUFFER * buffer, size_t *len)
  * Get internal buffer length.
  */
 static size_t
-pool_get_buffer_length(POOL_INTERNAL_BUFFER * buffer)
+pool_get_buffer_length(POOL_INTERNAL_BUFFER *buffer)
 {
 	if (buffer == NULL)
 		return 0;
@@ -3581,7 +3601,7 @@ pool_get_buffer_length(POOL_INTERNAL_BUFFER * buffer)
  * Get internal buffer pointer.
  */
 static char *
-pool_get_buffer_pointer(POOL_INTERNAL_BUFFER * buffer)
+pool_get_buffer_pointer(POOL_INTERNAL_BUFFER *buffer)
 {
 	if (buffer == NULL)
 		return NULL;
@@ -3688,7 +3708,7 @@ pool_check_and_discard_cache_buffer(int num_oids, int *oids)
  * For other case At Ready for Query handle query cache.
  */
 void
-pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node, char state,
+pool_handle_query_cache(POOL_CONNECTION_POOL *backend, char *query, Node *node, char state,
 						bool partial_fetch)
 {
 	POOL_SESSION_CONTEXT *session_context;
@@ -3819,7 +3839,8 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 		/* Discard buffered data */
 		pool_reset_memqcache_buffer(true);
 	}
-	else if (partial_fetch)		/* cannot create cache because of partial fetch */
+	else if (partial_fetch)		/* cannot create cache because of partial
+								 * fetch */
 	{
 		/* Discard buffered data */
 		pool_reset_memqcache_buffer(true);
@@ -3907,9 +3928,9 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 			else
 			{
 				/*
-				 * If we are inside a transaction, we cannot invalidate
-				 * query cache yet. However we can clear cache buffer, if
-				 * DML/DDL modifies the TABLE which SELECT uses.
+				 * If we are inside a transaction, we cannot invalidate query
+				 * cache yet. However we can clear cache buffer, if DML/DDL
+				 * modifies the TABLE which SELECT uses.
 				 */
 				if (num_oids > 0 && pool_config->memqcache_auto_cache_invalidation)
 				{
@@ -3995,7 +4016,7 @@ pool_handle_query_cache(POOL_CONNECTION_POOL * backend, char *query, Node *node,
 /*
  * Create and initialize query cache stats
  */
-static POOL_QUERY_CACHE_STATS * stats;
+static POOL_QUERY_CACHE_STATS *stats;
 int
 pool_init_memqcache_stats(void)
 {
@@ -4178,7 +4199,7 @@ pool_hash_init(int nelements)
 
 	for (i = 0; i < nelements2 - 1; i++)
 	{
-		hash_elements[i].next = (POOL_HASH_ELEMENT *) & hash_elements[i + 1];
+		hash_elements[i].next = (POOL_HASH_ELEMENT *) &hash_elements[i + 1];
 	}
 	hash_elements[nelements2 - 1].next = NULL;
 	hash_free = hash_elements;
@@ -4212,6 +4233,7 @@ pool_hash_size(int nelements)
 
 	return size;
 }
+
 /*
  * Reset hash table on shared memory "nelements" is max number of
  * hash keys. The actual number of hash key is rounded up to power of
@@ -4254,7 +4276,7 @@ pool_hash_reset(int nelements)
 
 	for (i = 0; i < nelements2 - 1; i++)
 	{
-		hash_elements[i].next = (POOL_HASH_ELEMENT *) & hash_elements[i + 1];
+		hash_elements[i].next = (POOL_HASH_ELEMENT *) &hash_elements[i + 1];
 	}
 	hash_elements[nelements2 - 1].next = NULL;
 	hash_free = hash_elements;
@@ -4267,9 +4289,9 @@ pool_hash_reset(int nelements)
  * If found, returns cache id, otherwise NULL.
  */
 POOL_CACHEID *
-pool_hash_search(POOL_QUERY_HASH * key)
+pool_hash_search(POOL_QUERY_HASH *key)
 {
-	volatile	POOL_HASH_ELEMENT *element;
+	volatile POOL_HASH_ELEMENT *element;
 
 	uint32		hash_key = create_hash_key(key);
 
@@ -4312,7 +4334,7 @@ pool_hash_search(POOL_QUERY_HASH * key)
 		if (memcmp((const void *) element->hashkey.query_hash,
 				   (const void *) key->query_hash, sizeof(key->query_hash)) == 0)
 		{
-			return (POOL_CACHEID *) & element->cacheid;
+			return (POOL_CACHEID *) &element->cacheid;
 		}
 		element = element->next;
 	}
@@ -4325,7 +4347,7 @@ pool_hash_search(POOL_QUERY_HASH * key)
  * rather than throw an error.
  */
 static int
-pool_hash_insert(POOL_QUERY_HASH * key, POOL_CACHEID * cacheid, bool update)
+pool_hash_insert(POOL_QUERY_HASH *key, POOL_CACHEID *cacheid, bool update)
 {
 	POOL_HASH_ELEMENT *element;
 	POOL_HASH_ELEMENT *new_element;
@@ -4410,7 +4432,7 @@ pool_hash_insert(POOL_QUERY_HASH * key, POOL_CACHEID * cacheid, bool update)
  * Delete MD5 key and associated cache id from shmem hash table.
  */
 int
-pool_hash_delete(POOL_QUERY_HASH * key)
+pool_hash_delete(POOL_QUERY_HASH *key)
 {
 	POOL_HASH_ELEMENT *element;
 	POOL_HASH_ELEMENT **delete_point;
@@ -4431,7 +4453,7 @@ pool_hash_delete(POOL_QUERY_HASH * key)
 	 * Look for delete location
 	 */
 	found = false;
-	delete_point = (POOL_HASH_ELEMENT * *) & (hash_header->elements[hash_key].element);
+	delete_point = (POOL_HASH_ELEMENT **) &(hash_header->elements[hash_key].element);
 	element = hash_header->elements[hash_key].element;
 
 	while (element)
@@ -4470,7 +4492,7 @@ pool_hash_delete(POOL_QUERY_HASH * key)
  * string. We use top most 8 characters of MD5 string for calculation.
 */
 static uint32
-create_hash_key(POOL_QUERY_HASH * key)
+create_hash_key(POOL_QUERY_HASH *key)
 {
 #define POOL_HASH_NCHARS 8
 
@@ -4490,7 +4512,7 @@ create_hash_key(POOL_QUERY_HASH * key)
 static volatile POOL_HASH_ELEMENT *
 get_new_hash_element(void)
 {
-	volatile	POOL_HASH_ELEMENT *elm;
+	volatile POOL_HASH_ELEMENT *elm;
 
 	if (!hash_free->next)
 	{
@@ -4515,7 +4537,7 @@ get_new_hash_element(void)
  * Put back hash element to free list.
  */
 static void
-put_back_hash_element(volatile POOL_HASH_ELEMENT * element)
+put_back_hash_element(volatile POOL_HASH_ELEMENT *element)
 {
 	POOL_HASH_ELEMENT *elm;
 
@@ -4634,7 +4656,7 @@ pool_get_shmem_storage_stats(void)
  * actually replies with Data row and Command Complete message.
  */
 static void
-inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen)
+inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qcachelen)
 {
 	char		kind;
 	int			len;
@@ -4698,18 +4720,19 @@ inject_cached_message(POOL_CONNECTION * backend, char *qcache, int qcachelen)
 		 * Count up number of received messages to compare with the number of
 		 * pending messages
 		 */
-		switch(kind)
+		switch (kind)
 		{
-			case '1':	/* parse complete */
-			case '2':	/* bind complete */
-			case '3':	/* close complete */
-			case 'C':	/* command complete */
-			case 's':	/* portal suspended */
-			case 'T':	/* row description */
-				msg_cnt++;	/* count up number of messages */
+			case '1':			/* parse complete */
+			case '2':			/* bind complete */
+			case '3':			/* close complete */
+			case 'C':			/* command complete */
+			case 's':			/* portal suspended */
+			case 'T':			/* row description */
+				msg_cnt++;		/* count up number of messages */
 				elog(DEBUG1, "count up message %c msg_cnt: %d", kind, msg_cnt);
 				break;
-			case 'E':	/* ErrorResponse */
+			case 'E':			/* ErrorResponse */
+
 				/*
 				 * If we receive ErrorResponse, it is likely that the last
 				 * Execute caused an error and we can stop reading messsages
@@ -4822,7 +4845,8 @@ InvalidateQueryCache(int tableoid, int dboid)
  * the entry since it's relatively expensive. It needs to rewrite the whole
  * file in the worst case.
  */
-bool query_cache_delete_by_stmt(char *query, POOL_CONNECTION_POOL * backend)
+bool
+query_cache_delete_by_stmt(char *query, POOL_CONNECTION_POOL *backend)
 {
 	bool		rtn = true;
 	pool_sigset_t oldmask;
@@ -4839,7 +4863,7 @@ bool query_cache_delete_by_stmt(char *query, POOL_CONNECTION_POOL * backend)
 	if (pool_is_shmem_cache())
 
 	{
-		POOL_QUERY_HASH		hashkey;
+		POOL_QUERY_HASH hashkey;
 
 		memcpy(hashkey.query_hash, key, POOL_MD5_HASHKEYLEN);
 		cacheid = pool_hash_search(&hashkey);

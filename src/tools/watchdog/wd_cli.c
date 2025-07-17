@@ -61,31 +61,31 @@ LifeCheckCluster *gslifeCheckCluster = NULL;
 
 
 static void usage(void);
-static bool validate_number(char* ptr);
+static bool validate_number(char *ptr);
 const char *get_progname(const char *argv0);
 static void print_lifecheck_cluster(bool include_nodes, bool verbose);
-static void print_node_info(LifeCheckNode* lifeCheckNode, bool verbose);
+static void print_node_info(LifeCheckNode *lifeCheckNode, bool verbose);
 
 static bool fetch_watchdog_nodes_data(char *authkey, bool debug);
-static bool inform_node_is_alive(LifeCheckNode * node, char *message, char* authkey);
-static bool inform_node_is_dead(LifeCheckNode * node, char *message, char* authkey);
+static bool inform_node_is_alive(LifeCheckNode *node, char *message, char *authkey);
+static bool inform_node_is_dead(LifeCheckNode *node, char *message, char *authkey);
 
 static void load_watchdog_nodes_from_json(char *json_data, int len);
 static char *get_node_status_change_json(int nodeID, int nodeStatus, char *message, char *authKey);
 
-static void print_node_info(LifeCheckNode* lifeCheckNode, bool verbose);
-static LifeCheckNode* get_node_by_options(char *node_name, char* node_host, int node_port, int node_id);
+static void print_node_info(LifeCheckNode *lifeCheckNode, bool verbose);
+static LifeCheckNode *get_node_by_options(char *node_name, char *node_host, int node_port, int node_id);
 
 int
 main(int argc, char **argv)
 {
-	LifeCheckNode* lifeCheckNode;
-	char*		conf_file_path = NULL;
-	char*		node_host = NULL;
-	char*		node_name = NULL;
-	char*		wd_authkey = NULL;
-	char*		socket_dir = NULL;
-	char*		message = NULL;
+	LifeCheckNode *lifeCheckNode;
+	char	   *conf_file_path = NULL;
+	char	   *node_host = NULL;
+	char	   *node_name = NULL;
+	char	   *wd_authkey = NULL;
+	char	   *socket_dir = NULL;
+	char	   *message = NULL;
 	int			node_wd_port = -1;
 	int			node_id = -1;
 	int			port = -1;
@@ -98,7 +98,7 @@ main(int argc, char **argv)
 	bool		all_nodes = false;
 	bool		status_ALIVE = false;
 	bool		status_DEAD = false;
-	
+
 	/* here we put all the allowed long options for all utilities */
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, '?'},
@@ -150,15 +150,15 @@ main(int argc, char **argv)
 				all_nodes = true;
 				break;
 
-			case 'i': /* Info Request */
-			{
-				info_req = true;
-				if (inform_status)
+			case 'i':			/* Info Request */
 				{
-					fprintf(stderr, "ERROR: Invalid option, 'info' and 'inform' are mutually exclusive options\n");
-					exit(EXIT_FAILURE);
+					info_req = true;
+					if (inform_status)
+					{
+						fprintf(stderr, "ERROR: Invalid option, 'info' and 'inform' are mutually exclusive options\n");
+						exit(EXIT_FAILURE);
+					}
 				}
-			}
 				break;
 
 			case 'I':
@@ -173,13 +173,13 @@ main(int argc, char **argv)
 					fprintf(stderr, "ERROR: Invalid option, 'info' and 'inform' are mutually exclusive options\n");
 					exit(EXIT_FAILURE);
 				}
-				if (strcasecmp("DEAD",optarg) == 0)
+				if (strcasecmp("DEAD", optarg) == 0)
 					status_DEAD = true;
-				else if (strcasecmp("ALIVE",optarg) == 0)
+				else if (strcasecmp("ALIVE", optarg) == 0)
 					status_ALIVE = true;
 				else
 				{
-					fprintf(stderr, "ERROR: Invalid node status \"%s\", Allowed options are DEAD or ALIVE''\n",optarg);
+					fprintf(stderr, "ERROR: Invalid node status \"%s\", Allowed options are DEAD or ALIVE''\n", optarg);
 					exit(EXIT_FAILURE);
 				}
 				break;
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 				}
 				if (validate_number(optarg) == false)
 				{
-					fprintf(stderr, "ERROR: Invalid value %s, node-id can only contain numeric values\n",optarg);
+					fprintf(stderr, "ERROR: Invalid value %s, node-id can only contain numeric values\n", optarg);
 					exit(EXIT_FAILURE);
 				}
 				node_id = atoi(optarg);
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 				}
 				if (validate_number(optarg) == false)
 				{
-					fprintf(stderr, "ERROR: Invalid value %s, node-port can only contain numeric values\n",optarg);
+					fprintf(stderr, "ERROR: Invalid value %s, node-port can only contain numeric values\n", optarg);
 					exit(EXIT_FAILURE);
 				}
 				node_wd_port = atoi(optarg);
@@ -278,7 +278,7 @@ main(int argc, char **argv)
 			case 'p':
 				if (validate_number(optarg) == false)
 				{
-					fprintf(stderr, "ERROR: Invalid value %s, port can only contain numeric values\n",optarg);
+					fprintf(stderr, "ERROR: Invalid value %s, port can only contain numeric values\n", optarg);
 					exit(EXIT_FAILURE);
 				}
 				port = atoi(optarg);
@@ -291,7 +291,7 @@ main(int argc, char **argv)
 
 			case '?':
 			default:
-				
+
 				/*
 				 * getopt_long should already have emitted a complaint
 				 */
@@ -334,11 +334,11 @@ main(int argc, char **argv)
 		}
 
 		if (debug)
-			printf("DEBUG: From config %s:%d\n",pool_config->wd_ipc_socket_dir,
-					pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].wd_port);
+			printf("DEBUG: From config %s:%d\n", pool_config->wd_ipc_socket_dir,
+				   pool_config->wd_nodes.wd_node_info[pool_config->pgpool_node_id].wd_port);
 
 		pfree(conf_file_path);
-		/* only use values from pg_config that are not provided explicitly*/
+		/* only use values from pg_config that are not provided explicitly */
 		if (wd_authkey == NULL)
 			wd_authkey = pstrdup(pool_config->wd_authkey);
 		if (port < 0)
@@ -353,29 +353,31 @@ main(int argc, char **argv)
 	if (socket_dir == NULL)
 		socket_dir = pstrdup("/tmp");
 
-	if(debug)
+	if (debug)
 	{
-		fprintf(stderr, "DEBUG: setting IPC address to %s:%d\n",socket_dir,port);
+		fprintf(stderr, "DEBUG: setting IPC address to %s:%d\n", socket_dir, port);
 	}
 
-	wd_set_ipc_address(socket_dir,port);
+	wd_set_ipc_address(socket_dir, port);
 	wd_ipc_conn_initialize();
 
-	if(debug)
+	if (debug)
 	{
-		char c_node_id[10],c_wd_port[10];
-		snprintf(c_node_id, sizeof(c_node_id), "%d",node_id);
-		snprintf(c_wd_port, sizeof(c_wd_port), "%d",node_wd_port);
+		char		c_node_id[10],
+					c_wd_port[10];
+
+		snprintf(c_node_id, sizeof(c_node_id), "%d", node_id);
+		snprintf(c_wd_port, sizeof(c_wd_port), "%d", node_wd_port);
 
 		fprintf(stderr, "DEBUG: OPERATION:%s ALL NODE CRITERIA = %s\n",
-				info_req?"\"INFO REQUEST\"":"\"INFORM NODE STATUS\"",
-				all_nodes?"TRUE":"FALSE"
-				);
+				info_req ? "\"INFO REQUEST\"" : "\"INFORM NODE STATUS\"",
+				all_nodes ? "TRUE" : "FALSE"
+			);
 		fprintf(stderr, "DEBUG: Search criteria:[ID=%s AND Name=%s AND Host=%s AND WDPort=%s]\n",
-				(node_id < 0)?"ANY":c_node_id,
-				node_name?node_name:"ANY",
-				node_host?node_host:"ANY",
-				(node_wd_port < 0)?"ANY":c_wd_port);
+				(node_id < 0) ? "ANY" : c_node_id,
+				node_name ? node_name : "ANY",
+				node_host ? node_host : "ANY",
+				(node_wd_port < 0) ? "ANY" : c_wd_port);
 	}
 
 	fetch_watchdog_nodes_data(wd_authkey, debug);
@@ -398,15 +400,17 @@ main(int argc, char **argv)
 	lifeCheckNode = get_node_by_options(node_name, node_host, node_wd_port, node_id);
 	if (!lifeCheckNode)
 	{
-		char c_node_id[10],c_wd_port[10];
+		char		c_node_id[10],
+					c_wd_port[10];
+
 		fprintf(stderr, "ERROR: unable to find the node with the requested criteria\n");
-		snprintf(c_node_id, sizeof(c_node_id), "%d",node_id);
-		snprintf(c_wd_port, sizeof(c_wd_port), "%d",node_wd_port);
+		snprintf(c_node_id, sizeof(c_node_id), "%d", node_id);
+		snprintf(c_wd_port, sizeof(c_wd_port), "%d", node_wd_port);
 		fprintf(stderr, "Criteria:[ID=%s AND Name=%s AND Host=%s AND WDPort=%s]\n",
-				(node_id < 0)?"ANY":c_node_id,
-				node_name?node_name:"ANY",
-				node_host?node_host:"ANY",
-				(node_wd_port < 0)?"ANY":c_wd_port);
+				(node_id < 0) ? "ANY" : c_node_id,
+				node_name ? node_name : "ANY",
+				node_host ? node_host : "ANY",
+				(node_wd_port < 0) ? "ANY" : c_wd_port);
 		exit(EXIT_FAILURE);
 
 	}
@@ -414,27 +418,27 @@ main(int argc, char **argv)
 	{
 		print_lifecheck_cluster(false, verbose);
 		print_node_info(lifeCheckNode, verbose);
-		exit (0);
+		exit(0);
 	}
 
 	if (status_DEAD)
 	{
 		if (inform_node_is_dead(lifeCheckNode, message, wd_authkey))
 		{
-			fprintf(stderr,"INFO: informed watchdog about node id %d is dead\n",node_id);
+			fprintf(stderr, "INFO: informed watchdog about node id %d is dead\n", node_id);
 			exit(0);
 		}
-		fprintf(stderr,"ERROR: failed to inform watchdog about node id %d is dead\n",node_id);
+		fprintf(stderr, "ERROR: failed to inform watchdog about node id %d is dead\n", node_id);
 		exit(EXIT_FAILURE);
 	}
 	else if (status_ALIVE)
 	{
 		if (inform_node_is_alive(lifeCheckNode, message, wd_authkey))
 		{
-			fprintf(stderr,"INFO: informed watchdog about node id %d is alive\n",node_id);
+			fprintf(stderr, "INFO: informed watchdog about node id %d is alive\n", node_id);
 			exit(0);
 		}
-		fprintf(stderr,"ERROR: failed to inform watchdog about node id %d is alive\n",node_id);
+		fprintf(stderr, "ERROR: failed to inform watchdog about node id %d is alive\n", node_id);
 		exit(EXIT_FAILURE);
 	}
 
@@ -449,7 +453,7 @@ get_progname(const char *argv0)
 
 
 static bool
-validate_number(char* ptr)
+validate_number(char *ptr)
 {
 	while (*ptr)
 	{
@@ -461,7 +465,7 @@ validate_number(char* ptr)
 }
 
 static bool
-inform_node_status(LifeCheckNode * node, char *message, char* authkey)
+inform_node_status(LifeCheckNode *node, char *message, char *authkey)
 {
 	int			node_status,
 				x;
@@ -482,8 +486,8 @@ inform_node_status(LifeCheckNode * node, char *message, char* authkey)
 	else
 		return false;
 
-	fprintf(stderr,"INFO: informing the node status change to watchdog");
-	fprintf(stderr,"INFO: node id :%d status = \"%s\" message:\"%s\"", node->ID, new_status, message);
+	fprintf(stderr, "INFO: informing the node status change to watchdog");
+	fprintf(stderr, "INFO: node id :%d status = \"%s\" message:\"%s\"", node->ID, new_status, message);
 
 	json_data = get_node_status_change_json(node->ID, node_status, message, authkey);
 	if (json_data == NULL)
@@ -517,8 +521,8 @@ fetch_watchdog_nodes_data(char *authkey, bool debug)
 		return false;
 	}
 
-	if(debug)
-		printf("DEBUG:************\n%s\n************\n",json_data);
+	if (debug)
+		printf("DEBUG:************\n%s\n************\n", json_data);
 
 	load_watchdog_nodes_from_json(json_data, strlen(json_data));
 	pfree(json_data);
@@ -599,23 +603,24 @@ load_watchdog_nodes_from_json(char *json_data, int len)
 
 
 static bool
-inform_node_is_dead(LifeCheckNode * node, char *message, char* authkey)
+inform_node_is_dead(LifeCheckNode *node, char *message, char *authkey)
 {
 	node->nodeState = NODE_DEAD;
 	return inform_node_status(node, message, authkey);
 }
 
 static bool
-inform_node_is_alive(LifeCheckNode * node, char *message, char* authkey)
+inform_node_is_alive(LifeCheckNode *node, char *message, char *authkey)
 {
 	node->nodeState = NODE_ALIVE;
 	return inform_node_status(node, message, authkey);
 }
 
-static LifeCheckNode*
-get_node_by_options(char *node_name, char* node_host, int node_port, int node_id)
+static LifeCheckNode *
+get_node_by_options(char *node_name, char *node_host, int node_port, int node_id)
 {
-	int i;
+	int			i;
+
 	if (!gslifeCheckCluster)
 		return NULL;
 	for (i = 0; i < gslifeCheckCluster->nodeCount; i++)
@@ -624,9 +629,9 @@ get_node_by_options(char *node_name, char* node_host, int node_port, int node_id
 			continue;
 		if (node_port >= 0 && node_port != gslifeCheckCluster->lifeCheckNodes[i].wdPort)
 			continue;
-		if (node_name && strcasecmp(gslifeCheckCluster->lifeCheckNodes[i].nodeName, node_name) != 0 )
+		if (node_name && strcasecmp(gslifeCheckCluster->lifeCheckNodes[i].nodeName, node_name) != 0)
 			continue;
-		if (node_host && strcasecmp(gslifeCheckCluster->lifeCheckNodes[i].hostName, node_host) != 0 )
+		if (node_host && strcasecmp(gslifeCheckCluster->lifeCheckNodes[i].hostName, node_host) != 0)
 			continue;
 
 		return &gslifeCheckCluster->lifeCheckNodes[i];
@@ -639,15 +644,16 @@ static void
 print_lifecheck_cluster(bool include_nodes, bool verbose)
 {
 	int			i;
+
 	if (!gslifeCheckCluster)
 	{
-		fprintf(stdout,"ERROR: node information not found\n");
+		fprintf(stdout, "ERROR: node information not found\n");
 		return;
 	}
-	fprintf(stdout,"Total Watchdog nodes configured for lifecheck:    %d\n", gslifeCheckCluster->nodeCount);
+	fprintf(stdout, "Total Watchdog nodes configured for lifecheck:    %d\n", gslifeCheckCluster->nodeCount);
 	if (verbose)
-		fprintf(stdout,"*****************\n");
-	if(!include_nodes)
+		fprintf(stdout, "*****************\n");
+	if (!include_nodes)
 		return;
 
 	for (i = 0; i < gslifeCheckCluster->nodeCount; i++)
@@ -657,28 +663,28 @@ print_lifecheck_cluster(bool include_nodes, bool verbose)
 
 
 static void
-print_node_info(LifeCheckNode* lifeCheckNode, bool verbose)
+print_node_info(LifeCheckNode *lifeCheckNode, bool verbose)
 {
 	if (verbose)
 	{
-		fprintf(stdout,"Node ID:           %d\n",lifeCheckNode->ID);
-		fprintf(stdout,"Node Status code:  %d\n",lifeCheckNode->wdState);
-		fprintf(stdout,"Node Status:       %s\n",lifeCheckNode->stateName);
-		fprintf(stdout,"Node Name:         %s\n",lifeCheckNode->nodeName);
-		fprintf(stdout,"Node Host:         %s\n",lifeCheckNode->hostName);
-		fprintf(stdout,"Node WD Port:      %d\n",lifeCheckNode->wdPort);
-		fprintf(stdout,"Node Pgpool Port:  %d\n\n",lifeCheckNode->pgpoolPort);
+		fprintf(stdout, "Node ID:           %d\n", lifeCheckNode->ID);
+		fprintf(stdout, "Node Status code:  %d\n", lifeCheckNode->wdState);
+		fprintf(stdout, "Node Status:       %s\n", lifeCheckNode->stateName);
+		fprintf(stdout, "Node Name:         %s\n", lifeCheckNode->nodeName);
+		fprintf(stdout, "Node Host:         %s\n", lifeCheckNode->hostName);
+		fprintf(stdout, "Node WD Port:      %d\n", lifeCheckNode->wdPort);
+		fprintf(stdout, "Node Pgpool Port:  %d\n\n", lifeCheckNode->pgpoolPort);
 	}
 	else
 	{
-		fprintf(stdout,"%d %d \"%s\"", lifeCheckNode->ID,
+		fprintf(stdout, "%d %d \"%s\"", lifeCheckNode->ID,
 				lifeCheckNode->nodeState,
 				lifeCheckNode->stateName),
-		fprintf(stdout,"\"%s\"",lifeCheckNode->nodeName),
-		fprintf(stdout,"\"%s\" %d %d\n",
-				lifeCheckNode->hostName,
-				lifeCheckNode->wdPort,
-				lifeCheckNode->pgpoolPort);
+			fprintf(stdout, "\"%s\"", lifeCheckNode->nodeName),
+			fprintf(stdout, "\"%s\" %d %d\n",
+					lifeCheckNode->hostName,
+					lifeCheckNode->wdPort,
+					lifeCheckNode->pgpoolPort);
 	}
 }
 
@@ -687,10 +693,10 @@ get_node_status_change_json(int nodeID, int nodeStatus, char *message, char *aut
 {
 	char	   *json_str;
 	JsonNode   *jNode = jw_create_with_object(true);
-	
+
 	if (authKey != NULL && strlen(authKey) > 0)
 		jw_put_string(jNode, WD_IPC_AUTH_KEY, authKey); /* put the auth key */
-	
+
 	/* add the node ID */
 	jw_put_int(jNode, "NodeID", nodeID);
 	/* add the node status */
@@ -698,7 +704,7 @@ get_node_status_change_json(int nodeID, int nodeStatus, char *message, char *aut
 	/* add the node message if any */
 	if (message)
 		jw_put_string(jNode, "Message", message);
-	
+
 	jw_finish_document(jNode);
 	json_str = pstrdup(jw_get_json_string(jNode));
 	jw_destroy(jNode);
@@ -708,12 +714,12 @@ get_node_status_change_json(int nodeID, int nodeStatus, char *message, char *aut
 static void
 usage(void)
 {
-	
+
 	fprintf(stderr, "\nWatchdog CLI for ");
 	fprintf(stderr, "%s version %s (%s)\n", PACKAGE, VERSION, PGPOOLVERSION);
 
 	fprintf(stderr, "\nUsage:\n");
-	fprintf(stderr, "  %s [ operation] [ options] [node search criteria]\n",progname);
+	fprintf(stderr, "  %s [ operation] [ options] [node search criteria]\n", progname);
 
 	fprintf(stderr, "\n Operations:\n");
 	fprintf(stderr, "  -i, --info                  Get the node status for nodes based on node search criteria\n");

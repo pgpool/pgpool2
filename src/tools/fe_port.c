@@ -162,7 +162,8 @@ nowsec(void)
 	return strbuf;
 }
 
-bool errstart(int elevel, const char *filename, int lineno,
+bool
+errstart(int elevel, const char *filename, int lineno,
 		 const char *funcname, const char *domain)
 {
 	_fe_error_level = elevel;

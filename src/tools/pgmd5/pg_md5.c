@@ -213,15 +213,15 @@ main(int argc, char *argv[])
 static void
 update_pool_passwd_from_file(char *conf_file, char *input_file, bool md5auth)
 {
-	FILE	*fp;
+	FILE	   *fp;
 
-	char	buf[MAX_BUFFER_SIZE + 1];
-	char	username[MAX_INPUT_SIZE + 1];
-	char	password[MAX_INPUT_SIZE + 1];
-	char	md5[MD5_PASSWD_LEN + 1];
-	char	*pch;
-	int		len;
-	int		line_count;
+	char		buf[MAX_BUFFER_SIZE + 1];
+	char		username[MAX_INPUT_SIZE + 1];
+	char		password[MAX_INPUT_SIZE + 1];
+	char		md5[MD5_PASSWD_LEN + 1];
+	char	   *pch;
+	int			len;
+	int			line_count;
 
 
 	fprintf(stdout, "trying to read username:password pairs from file %s\n", input_file);
@@ -257,7 +257,7 @@ update_pool_passwd_from_file(char *conf_file, char *input_file, bool md5auth)
 
 		/* Split username and passwords */
 		pch = buf;
-		while( pch && pch != buf + len && *pch != ':')
+		while (pch && pch != buf + len && *pch != ':')
 			pch++;
 		if (*pch == ':')
 			pch++;
@@ -268,7 +268,7 @@ update_pool_passwd_from_file(char *conf_file, char *input_file, bool md5auth)
 			continue;
 		}
 
-		if( (pch-buf) > sizeof(username))
+		if ((pch - buf) > sizeof(username))
 		{
 			fprintf(stdout, "input exceeds maximum username length %d\n\n", MAX_USER_NAME_LEN);
 			continue;
@@ -283,7 +283,7 @@ update_pool_passwd_from_file(char *conf_file, char *input_file, bool md5auth)
 		strncpy(password, pch, sizeof(password));
 
 		fprintf(stdout, "USER: <%s>\n", username);
-		if(md5auth)
+		if (md5auth)
 			update_pool_passwd(conf_file, username, password);
 		else
 		{
@@ -319,11 +319,11 @@ update_pool_passwd(char *conf_file, char *username, char *password)
 		strlcpy(dirnamebuf, conf_file, sizeof(dirnamebuf));
 		dirp = dirname(dirnamebuf);
 		snprintf(pool_passwd, sizeof(pool_passwd), "%s/%s",
-				dirp, pool_config->pool_passwd);
+				 dirp, pool_config->pool_passwd);
 	}
 	else
 		strlcpy(pool_passwd, pool_config->pool_passwd,
-						sizeof(pool_passwd));
+				sizeof(pool_passwd));
 
 	pool_init_pool_passwd(pool_passwd, POOL_PASSWD_RW);
 

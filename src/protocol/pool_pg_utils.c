@@ -41,7 +41,7 @@
 #include "pool_config_variables.h"
 
 static int	choose_db_node_id(char *str);
-static void free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp);
+static void free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp);
 static void si_enter_critical_region(void);
 static void si_leave_critical_region(void);
 
@@ -64,9 +64,9 @@ make_persistent_db_connection(
 	{
 		int			protoVersion;
 		char		data[MAX_USER_AND_DATABASE];
-	}			StartupPacket_v3;
+	} StartupPacket_v3;
 
-	static StartupPacket_v3 * startup_packet;
+	static StartupPacket_v3 *startup_packet;
 	int			len,
 				len1;
 
@@ -200,8 +200,8 @@ make_persistent_db_connection_noerror(
 		 * receives an ERROR, it stops processing and terminates, which is not
 		 * good. This is problematic especially with pcp_node_info, since it
 		 * calls db_node_role(), and db_node_role() calls this function. So if
-		 * the target PostgreSQL is down, EmitErrorReport() sends ERROR message
-		 * to pcp frontend and it stops (see process_pcp_response() in
+		 * the target PostgreSQL is down, EmitErrorReport() sends ERROR
+		 * message to pcp frontend and it stops (see process_pcp_response() in
 		 * src/libs/pcp/pcp.c. To fix this, just eliminate calling
 		 * EmitErrorReport(). This will suppress ERROR message but as you can
 		 * see the comment in this function "does not ereports in case of an
@@ -221,7 +221,7 @@ make_persistent_db_connection_noerror(
  * make_persistent_db_connection and discard_persistent_db_connection.
  */
 static void
-free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp)
+free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT *cp)
 {
 	if (!cp)
 		return;
@@ -245,7 +245,7 @@ free_persistent_db_connection_memory(POOL_CONNECTION_POOL_SLOT * cp)
  * make_persistent_db_connection().
  */
 void
-discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT * cp)
+discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT *cp)
 {
 	int			len;
 
@@ -274,7 +274,7 @@ discard_persistent_db_connection(POOL_CONNECTION_POOL_SLOT * cp)
  * send startup packet
  */
 void
-send_startup_packet(POOL_CONNECTION_POOL_SLOT * cp)
+send_startup_packet(POOL_CONNECTION_POOL_SLOT *cp)
 {
 	int			len;
 
@@ -319,10 +319,10 @@ select_load_balancing_node(void)
 	int			tmp;
 	int			no_load_balance_node_id = -2;
 	uint64		lowest_delay;
-	int 		lowest_delay_nodes[NUM_BACKENDS];
+	int			lowest_delay_nodes[NUM_BACKENDS];
 
 	/* prng state data for load balancing */
-	static		pg_prng_state backsel_state;
+	static pg_prng_state backsel_state;
 
 	/*
 	 * -2 indicates there's no database_redirect_preference_list. -1 indicates
@@ -443,24 +443,27 @@ select_load_balancing_node(void)
 	if (suggested_node_id >= 0)
 	{
 		/*
-		 * If pgpool is running in Streaming Replication mode and delay_threshold
-		 * and prefer_lower_delay_standby are true, we choose the least delayed
-		 * node if suggested_node is standby and delayed over delay_threshold.
+		 * If pgpool is running in Streaming Replication mode and
+		 * delay_threshold and prefer_lower_delay_standby are true, we choose
+		 * the least delayed node if suggested_node is standby and delayed
+		 * over delay_threshold.
 		 */
 		if (STREAM && pool_config->prefer_lower_delay_standby &&
 			suggested_node_id != PRIMARY_NODE_ID &&
 			check_replication_delay(suggested_node_id) < 0)
 		{
 			ereport(DEBUG1,
-				(errmsg("selecting load balance node"),
-				 errdetail("suggested backend %d is streaming delayed over delay_threshold", suggested_node_id)));
+					(errmsg("selecting load balance node"),
+					 errdetail("suggested backend %d is streaming delayed over delay_threshold", suggested_node_id)));
 
 			/*
-			 * The new load balancing node is selected from the
-			 * nodes which have the lowest delay.
+			 * The new load balancing node is selected from the nodes which
+			 * have the lowest delay.
 			 */
 			if (pool_config->delay_threshold_by_time > 0)
-				lowest_delay = pool_config->delay_threshold_by_time * 1000;	/* convert from milli seconds to micro seconds */
+				lowest_delay = pool_config->delay_threshold_by_time * 1000; /* convert from milli
+																			 * seconds to micro
+																			 * seconds */
 			else
 				lowest_delay = pool_config->delay_threshold;
 
@@ -484,7 +487,8 @@ select_load_balancing_node(void)
 					}
 					else if (lowest_delay > BACKEND_INFO(i).standby_delay)
 					{
-						int ii;
+						int			ii;
+
 						lowest_delay = BACKEND_INFO(i).standby_delay;
 						for (ii = 0; ii < NUM_BACKENDS; ii++)
 						{
@@ -628,7 +632,8 @@ select_load_balancing_node(void)
 				}
 				else if (lowest_delay > BACKEND_INFO(i).standby_delay)
 				{
-					int ii;
+					int			ii;
+
 					lowest_delay = BACKEND_INFO(i).standby_delay;
 					for (ii = 0; ii < NUM_BACKENDS; ii++)
 					{
@@ -679,13 +684,13 @@ static void
 initialize_prng(pg_prng_state *state)
 {
 	static bool prng_seed_set = false;
-	uint64	seed;
+	uint64		seed;
 
 	if (unlikely(!prng_seed_set))
 	{
 		/* initialize prng */
 		if (!pg_strong_random(&seed, sizeof(seed)))
-			seed = UINT64CONST(1); /* Pick a value, as long as it spreads */
+			seed = UINT64CONST(1);	/* Pick a value, as long as it spreads */
 		pg_prng_seed(state, seed);
 		prng_seed_set = true;
 	}
@@ -702,17 +707,17 @@ initialize_prng(pg_prng_state *state)
  *
  */
 PGVersion *
-Pgversion(POOL_CONNECTION_POOL * backend)
+Pgversion(POOL_CONNECTION_POOL *backend)
 {
 #define VERSION_BUF_SIZE	10
-	static	PGVersion	pgversion;
-	static	POOL_RELCACHE *relcache;
-	char	*result;
-	char	*p;
-	char	buf[VERSION_BUF_SIZE];
-	int		i;
-	int		major;
-	int		minor;
+	static PGVersion pgversion;
+	static POOL_RELCACHE *relcache;
+	char	   *result;
+	char	   *p;
+	char		buf[VERSION_BUF_SIZE];
+	int			i;
+	int			major;
+	int			minor;
 
 	/*
 	 * First, check local cache. If cache is set, just return it.
@@ -743,7 +748,7 @@ Pgversion(POOL_CONNECTION_POOL * backend)
 	/*
 	 * Search relcache.
 	 */
-	result = (char *)pool_search_relcache(relcache, backend, "version");
+	result = (char *) pool_search_relcache(relcache, backend, "version");
 	if (result == 0)
 	{
 		ereport(FATAL,
@@ -801,7 +806,7 @@ Pgversion(POOL_CONNECTION_POOL * backend)
 	{
 		p++;
 		i = 0;
-		while (i < VERSION_BUF_SIZE -1 && p && *p != '.' && *p != ' ')
+		while (i < VERSION_BUF_SIZE - 1 && p && *p != '.' && *p != ' ')
 		{
 			buf[i++] = *p++;
 		}
@@ -817,7 +822,7 @@ Pgversion(POOL_CONNECTION_POOL * backend)
 	 */
 	p++;
 	i = 0;
-	while (i < VERSION_BUF_SIZE -1 && p && *p != '.' && *p != ' ')
+	while (i < VERSION_BUF_SIZE - 1 && p && *p != '.' && *p != ' ')
 	{
 		buf[i++] = *p++;
 	}
@@ -879,6 +884,7 @@ choose_db_node_id(char *str)
 	}
 	return node_id;
 }
+
 /*
  *---------------------------------------------------------------------------------
  * Snapshot Isolation modules
@@ -1003,7 +1009,7 @@ void
 si_snapshot_acquired(void)
 {
 	POOL_SESSION_CONTEXT *session;
-	int		i;
+	int			i;
 
 	session = pool_get_session_context(true);
 
@@ -1018,9 +1024,10 @@ si_snapshot_acquired(void)
 		if (si_manage_info->snapshot_counter == 0)
 		{
 			/* wakeup all waiting children */
-			for (i = 0; i < pool_config->num_init_children ; i++)
+			for (i = 0; i < pool_config->num_init_children; i++)
 			{
-				pid_t pid = si_manage_info->snapshot_waiting_children[i];
+				pid_t		pid = si_manage_info->snapshot_waiting_children[i];
+
 				if (pid > 0)
 				{
 					elog(SI_DEBUG_LOG_LEVEL, "si_snapshot_acquired: send SIGUSR2 to %d", pid);
@@ -1076,7 +1083,7 @@ void
 si_commit_done(void)
 {
 	POOL_SESSION_CONTEXT *session;
-	int		i;
+	int			i;
 
 	session = pool_get_session_context(true);
 
@@ -1092,9 +1099,10 @@ si_commit_done(void)
 		if (si_manage_info->commit_counter == 0)
 		{
 			/* wakeup all waiting children */
-			for (i = 0; i < pool_config->num_init_children ; i++)
+			for (i = 0; i < pool_config->num_init_children; i++)
 			{
-				pid_t pid = si_manage_info->commit_waiting_children[i];
+				pid_t		pid = si_manage_info->commit_waiting_children[i];
+
 				if (pid > 0)
 				{
 					elog(SI_DEBUG_LOG_LEVEL, "si_commit_done: send SIGUSR2 to %d", pid);
@@ -1117,7 +1125,8 @@ si_commit_done(void)
  * -1: delay exceeds delay_threshold_by_time
  * -2: delay exceeds delay_threshold
  */
-int	check_replication_delay(int node_id)
+int
+check_replication_delay(int node_id)
 {
 	BackendInfo *bkinfo;
 
@@ -1132,7 +1141,7 @@ int	check_replication_delay(int node_id)
 	 * to multiply delay_threshold_by_time by 1000 to normalize.
 	 */
 	if (pool_config->delay_threshold_by_time > 0 &&
-		bkinfo->standby_delay > pool_config->delay_threshold_by_time*1000)
+		bkinfo->standby_delay > pool_config->delay_threshold_by_time * 1000)
 		return -1;
 
 	/*
@@ -1144,4 +1153,3 @@ int	check_replication_delay(int node_id)
 
 	return 0;
 }
-

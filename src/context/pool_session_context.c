@@ -34,11 +34,11 @@
 #include "context/pool_session_context.h"
 
 static POOL_SESSION_CONTEXT session_context_d;
-static POOL_SESSION_CONTEXT * session_context = NULL;
+static POOL_SESSION_CONTEXT *session_context = NULL;
 static void GetTranIsolationErrorCb(void *arg);
 static void init_sent_message_list(void);
-static POOL_PENDING_MESSAGE * copy_pending_message(POOL_PENDING_MESSAGE * message);
-static void dump_sent_message(char *caller, POOL_SENT_MESSAGE * m);
+static POOL_PENDING_MESSAGE *copy_pending_message(POOL_PENDING_MESSAGE *message);
+static void dump_sent_message(char *caller, POOL_SENT_MESSAGE *m);
 static void dml_adaptive_init(void);
 static void dml_adaptive_destroy(void);
 
@@ -52,7 +52,7 @@ static int	Elevel = DEBUG2;
  * Initialize per session context
  */
 void
-pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
+pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	session_context = &session_context_d;
 	ProcessInfo *process_info;
@@ -161,7 +161,7 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 
 	/* Initialize temp tables */
 	pool_temp_tables_init();
-	
+
 	/* Snapshot isolation state */
 	session_context->si_state = SI_NO_SNAPSHOT;
 
@@ -434,7 +434,7 @@ pool_remove_sent_messages(char kind)
  * Destroy sent message
  */
 void
-pool_sent_message_destroy(POOL_SENT_MESSAGE * message)
+pool_sent_message_destroy(POOL_SENT_MESSAGE *message)
 {
 	bool		in_progress;
 	POOL_QUERY_CONTEXT *qc = NULL;
@@ -522,7 +522,7 @@ pool_zap_query_context_in_sent_messages(POOL_QUERY_CONTEXT *query_context)
 }
 
 static void
-dump_sent_message(char *caller, POOL_SENT_MESSAGE * m)
+dump_sent_message(char *caller, POOL_SENT_MESSAGE *m)
 {
 	ereport(DEBUG5,
 			(errmsg("called by %s: sent message: address: %p kind: %c name: =%s= state:%d",
@@ -560,7 +560,7 @@ dml_adaptive_destroy(void)
 POOL_SENT_MESSAGE *
 pool_create_sent_message(char kind, int len, char *contents,
 						 int num_tsparams, const char *name,
-						 POOL_QUERY_CONTEXT * query_context)
+						 POOL_QUERY_CONTEXT *query_context)
 {
 	POOL_SENT_MESSAGE *msg;
 
@@ -589,7 +589,7 @@ pool_create_sent_message(char kind, int len, char *contents,
  * Add a sent message to sent message list
  */
 void
-pool_add_sent_message(POOL_SENT_MESSAGE * message)
+pool_add_sent_message(POOL_SENT_MESSAGE *message)
 {
 	POOL_SENT_MESSAGE *old_msg;
 	POOL_SENT_MESSAGE_LIST *msglist;
@@ -682,7 +682,7 @@ pool_get_sent_message(char kind, const char *name, POOL_SENT_MESSAGE_STATE state
  * Find a sent message by query context.
  */
 POOL_SENT_MESSAGE *
-pool_get_sent_message_by_query_context(POOL_QUERY_CONTEXT * query_context)
+pool_get_sent_message_by_query_context(POOL_QUERY_CONTEXT *query_context)
 {
 	int			i;
 	POOL_SENT_MESSAGE_LIST *msglist;
@@ -705,7 +705,7 @@ pool_get_sent_message_by_query_context(POOL_QUERY_CONTEXT * query_context)
  * Set message state to POOL_SENT_MESSAGE_STATE to POOL_SENT_MESSAGE_CLOSED.
  */
 void
-pool_set_sent_message_state(POOL_SENT_MESSAGE * message)
+pool_set_sent_message_state(POOL_SENT_MESSAGE *message)
 {
 	ereport(DEBUG5,
 			(errmsg("pool_set_sent_message_state: name:%s kind:%c previous state: %d",
@@ -738,8 +738,8 @@ void
 pool_set_writing_transaction(void)
 {
 	/*
-	 * If disable_transaction_on_write is 'off' or 'dml_adaptive', then never turn on writing
-	 * transaction flag.
+	 * If disable_transaction_on_write is 'off' or 'dml_adaptive', then never
+	 * turn on writing transaction flag.
 	 */
 	if (pool_config->disable_load_balance_on_write != DLBOW_OFF && pool_config->disable_load_balance_on_write != DLBOW_DML_ADAPTIVE)
 	{
@@ -968,7 +968,7 @@ init_sent_message_list(void)
  * is used. Returns true if it is not used.
  */
 bool
-can_query_context_destroy(POOL_QUERY_CONTEXT * qc)
+can_query_context_destroy(POOL_QUERY_CONTEXT *qc)
 {
 	int			i;
 	int			count = 0;
@@ -1125,7 +1125,7 @@ pool_pending_message_create(char kind, int len, char *contents)
  * message was sent.
  */
 void
-pool_pending_message_dest_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT * query_context)
+pool_pending_message_dest_set(POOL_PENDING_MESSAGE *message, POOL_QUERY_CONTEXT *query_context)
 {
 	memcpy(message->node_ids, query_context->where_to_send, sizeof(message->node_ids));
 
@@ -1142,7 +1142,7 @@ pool_pending_message_dest_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT
  * which indicates which backend nodes the message was sent.
  */
 void
-pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT * query_context)
+pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE *message, POOL_QUERY_CONTEXT *query_context)
 {
 	int			i;
 
@@ -1168,7 +1168,7 @@ pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE * message, POOL
  * Set query field of message.
  */
 void
-pool_pending_message_query_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT * query_context)
+pool_pending_message_query_set(POOL_PENDING_MESSAGE *message, POOL_QUERY_CONTEXT *query_context)
 {
 	StrNCpy(message->query, query_context->original_query, sizeof(message->query));
 }
@@ -1177,7 +1177,7 @@ pool_pending_message_query_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEX
  * Add one message to the tail of the list.
  */
 void
-pool_pending_message_add(POOL_PENDING_MESSAGE * message)
+pool_pending_message_add(POOL_PENDING_MESSAGE *message)
 {
 	MemoryContext old_context;
 
@@ -1354,7 +1354,7 @@ pool_pending_message_get(POOL_MESSAGE_TYPE type)
  * close message.
  */
 char
-pool_get_close_message_spec(POOL_PENDING_MESSAGE * msg)
+pool_get_close_message_spec(POOL_PENDING_MESSAGE *msg)
 {
 	return *msg->contents;
 }
@@ -1364,7 +1364,7 @@ pool_get_close_message_spec(POOL_PENDING_MESSAGE * msg)
  * The returned pointer is within "msg".
  */
 char *
-pool_get_close_message_name(POOL_PENDING_MESSAGE * msg)
+pool_get_close_message_name(POOL_PENDING_MESSAGE *msg)
 {
 	return (msg->contents) + 1;
 }
@@ -1373,7 +1373,8 @@ pool_get_close_message_name(POOL_PENDING_MESSAGE * msg)
  * Perform deep copy of POOL_PENDING_MESSAGE object in the current memory
  * context except the query context.
  */
-static POOL_PENDING_MESSAGE * copy_pending_message(POOL_PENDING_MESSAGE * message)
+static POOL_PENDING_MESSAGE *
+copy_pending_message(POOL_PENDING_MESSAGE *message)
 {
 	POOL_PENDING_MESSAGE *msg;
 
@@ -1390,7 +1391,7 @@ static POOL_PENDING_MESSAGE * copy_pending_message(POOL_PENDING_MESSAGE * messag
  * context except the query context.
  */
 void
-pool_pending_message_free_pending_message(POOL_PENDING_MESSAGE * message)
+pool_pending_message_free_pending_message(POOL_PENDING_MESSAGE *message)
 {
 	if (message == NULL)
 		return;
@@ -1420,7 +1421,7 @@ pool_pending_message_reset_previous_message(void)
  * Set previous message.
  */
 void
-pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE * message)
+pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE *message)
 {
 	if (!session_context)
 	{
@@ -1521,7 +1522,7 @@ pool_check_pending_message_and_reply(POOL_MESSAGE_TYPE type, char kind)
  * pool_pending_message_free_pending_message.
  */
 POOL_PENDING_MESSAGE *
-pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT * qc)
+pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT *qc)
 {
 	List	   *msgs;
 	POOL_PENDING_MESSAGE *msg;
@@ -1573,7 +1574,7 @@ pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT * qc)
  * the pending message is one of primary or standby node.
  */
 int
-pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE * msg)
+pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE *msg)
 {
 	int			backend_id = -1;
 	int			i;
@@ -1602,8 +1603,8 @@ pool_pending_message_get_message_num_by_backend_id(int backend_id)
 {
 	ListCell   *cell;
 	ListCell   *next;
-	int        cnt = 0;
-	int        i;
+	int			cnt = 0;
+	int			i;
 
 	if (!session_context)
 	{
@@ -1641,6 +1642,7 @@ pool_pending_message_set_flush_request(void)
 	foreach(msg_item, session_context->pending_messages)
 	{
 		POOL_PENDING_MESSAGE *msg = (POOL_PENDING_MESSAGE *) lfirst(msg_item);
+
 		msg->flush_pending = true;
 		ereport(DEBUG5,
 				(errmsg("pool_pending_message_set_flush_request: msg: %s",
@@ -1799,10 +1801,10 @@ pool_temp_tables_destroy(void)
  * If the table already exists, just replace state.
  */
 void
-pool_temp_tables_add(char * tablename, POOL_TEMP_TABLE_STATE state)
+pool_temp_tables_add(char *tablename, POOL_TEMP_TABLE_STATE state)
 {
 	MemoryContext old_context;
-	POOL_TEMP_TABLE * table;
+	POOL_TEMP_TABLE *table;
 
 	if (!session_context)
 		ereport(ERROR,
@@ -1832,7 +1834,7 @@ pool_temp_tables_add(char * tablename, POOL_TEMP_TABLE_STATE state)
  */
 
 POOL_TEMP_TABLE *
-pool_temp_tables_find(char * tablename)
+pool_temp_tables_find(char *tablename)
 {
 	ListCell   *cell;
 
@@ -1842,7 +1844,8 @@ pool_temp_tables_find(char * tablename)
 
 	foreach(cell, session_context->temp_tables)
 	{
-		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
+		POOL_TEMP_TABLE *table = (POOL_TEMP_TABLE *) lfirst(cell);
+
 		if (strcmp(tablename, table->tablename) == 0)
 			return table;
 	}
@@ -1855,9 +1858,9 @@ pool_temp_tables_find(char * tablename)
  * the table state.
  */
 void
-pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE state)
+pool_temp_tables_delete(char *tablename, POOL_TEMP_TABLE_STATE state)
 {
-	POOL_TEMP_TABLE * table;
+	POOL_TEMP_TABLE *table;
 	MemoryContext old_context;
 
 	if (!session_context)
@@ -1914,7 +1917,7 @@ pool_temp_tables_commit_pending(void)
 Retry:
 	foreach(cell, session_context->temp_tables)
 	{
-		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
+		POOL_TEMP_TABLE *table = (POOL_TEMP_TABLE *) lfirst(cell);
 
 		if (table->state == TEMP_TABLE_CREATING)
 		{
@@ -1957,7 +1960,7 @@ pool_temp_tables_remove_pending(void)
 Retry:
 	foreach(cell, session_context->temp_tables)
 	{
-		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
+		POOL_TEMP_TABLE *table = (POOL_TEMP_TABLE *) lfirst(cell);
 
 		if (table->state == TEMP_TABLE_CREATING || table->state == TEMP_TABLE_DROPPING)
 		{
@@ -1985,7 +1988,8 @@ pool_temp_tables_dump(void)
 
 	foreach(cell, session_context->temp_tables)
 	{
-		POOL_TEMP_TABLE * table = (POOL_TEMP_TABLE *)lfirst(cell);
+		POOL_TEMP_TABLE *table = (POOL_TEMP_TABLE *) lfirst(cell);
+
 		ereport(DEBUG1,
 				(errmsg("pool_temp_tables_dump: table %s state: %d",
 						table->tablename, table->state)));

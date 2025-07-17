@@ -43,7 +43,7 @@ typedef enum
 	WATCHDOG_LIFECHECK,
 	GENERAL_CONFIG,
 	CACHE_CONFIG
-}			config_group;
+} config_group;
 
 typedef enum
 {
@@ -58,7 +58,7 @@ typedef enum
 	CONFIG_VAR_TYPE_DOUBLE_ARRAY,
 	CONFIG_VAR_TYPE_STRING_ARRAY,
 	CONFIG_VAR_TYPE_GROUP
-}			config_type;
+} config_type;
 
 /*
  * The possible values of an enum variable are specified by an array of
@@ -96,17 +96,17 @@ typedef enum
 #define DEFAULT_FOR_NO_VALUE_ARRAY_VAR	0x0020
 
 /* From PG's src/include/utils/guc.h */
-#define GUC_UNIT_KB             0x1000  /* value is in kilobytes */
-#define GUC_UNIT_BLOCKS         0x2000  /* value is in blocks */
-#define GUC_UNIT_XBLOCKS        0x3000  /* value is in xlog blocks */
-#define GUC_UNIT_MB             0x4000  /* value is in megabytes */
-#define GUC_UNIT_BYTE           0x8000  /* value is in bytes */
-#define GUC_UNIT_MEMORY         0xF000  /* mask for size-related units */
+#define GUC_UNIT_KB             0x1000	/* value is in kilobytes */
+#define GUC_UNIT_BLOCKS         0x2000	/* value is in blocks */
+#define GUC_UNIT_XBLOCKS        0x3000	/* value is in xlog blocks */
+#define GUC_UNIT_MB             0x4000	/* value is in megabytes */
+#define GUC_UNIT_BYTE           0x8000	/* value is in bytes */
+#define GUC_UNIT_MEMORY         0xF000	/* mask for size-related units */
 
-#define GUC_UNIT_MS            0x10000  /* value is in milliseconds */
-#define GUC_UNIT_S             0x20000  /* value is in seconds */
-#define GUC_UNIT_MIN           0x30000  /* value is in minutes */
-#define GUC_UNIT_TIME          0xF0000  /* mask for time-related units */
+#define GUC_UNIT_MS            0x10000	/* value is in milliseconds */
+#define GUC_UNIT_S             0x20000	/* value is in seconds */
+#define GUC_UNIT_MIN           0x30000	/* value is in minutes */
+#define GUC_UNIT_TIME          0xF0000	/* mask for time-related units */
 #define GUC_UNIT                (GUC_UNIT_MEMORY | GUC_UNIT_TIME)
 
 /*
@@ -335,17 +335,17 @@ struct config_grouped_array_var
 
 extern void InitializeConfigOptions(void);
 extern bool set_one_config_option(const char *name, const char *value,
-					  ConfigContext context, GucSource source, int elevel);
+								  ConfigContext context, GucSource source, int elevel);
 
 extern bool set_config_options(ConfigVariable *head_p,
-				   ConfigContext context, GucSource source, int elevel);
+							   ConfigContext context, GucSource source, int elevel);
 
 
 #ifndef POOL_PRIVATE
-extern bool report_config_variable(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *var_name);
-extern bool report_all_variables(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
-extern bool set_config_option_for_session(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *name, const char *value);
-bool		reset_all_variables(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
+extern bool report_config_variable(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char *var_name);
+extern bool report_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
+extern bool set_config_option_for_session(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, const char *name, const char *value);
+bool		reset_all_variables(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 #endif
 
 #endif							/* POOL_CONFIG_VARIABLES_H */

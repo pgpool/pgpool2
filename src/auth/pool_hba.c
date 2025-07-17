@@ -109,37 +109,37 @@ static HbaToken *copy_hba_token(HbaToken *in);
 static HbaToken *make_hba_token(const char *token, bool quoted);
 
 static bool parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
-				   int elevel, char **err_msg);
+							   int elevel, char **err_msg);
 
 static MemoryContext tokenize_file(const char *filename, FILE *file,
-			  List **tok_lines, int elevel);
-static void sendAuthRequest(POOL_CONNECTION * frontend, AuthRequest areq);
-static void auth_failed(POOL_CONNECTION * frontend);
-static bool hba_getauthmethod(POOL_CONNECTION * frontend);
-static bool check_hba(POOL_CONNECTION * frontend);
+								   List **tok_lines, int elevel);
+static void sendAuthRequest(POOL_CONNECTION *frontend, AuthRequest areq);
+static void auth_failed(POOL_CONNECTION *frontend);
+static bool hba_getauthmethod(POOL_CONNECTION *frontend);
+static bool check_hba(POOL_CONNECTION *frontend);
 static bool check_user(char *user, List *tokens);
 static bool check_db(const char *dbname, const char *user, List *tokens);
 static List *tokenize_inc_file(List *tokens,
-				  const char *outer_filename,
-				  const char *inc_filename,
-				  int elevel,
-				  char **err_msg);
+							   const char *outer_filename,
+							   const char *inc_filename,
+							   int elevel,
+							   char **err_msg);
 static bool
-			check_hostname(POOL_CONNECTION * frontend, const char *hostname);
+			check_hostname(POOL_CONNECTION *frontend, const char *hostname);
 static bool
 			check_ip(SockAddr *raddr, struct sockaddr *addr, struct sockaddr *mask);
 static bool
 			check_same_host_or_net(SockAddr *raddr, IPCompareMethod method);
 static void check_network_callback(struct sockaddr *addr, struct sockaddr *netmask,
-					   void *cb_data);
+								   void *cb_data);
 
 static HbaLine *parse_hba_line(TokenizedLine *tok_line, int elevel);
 static bool pg_isblank(const char c);
 static bool next_token(char **lineptr, char *buf, int bufsz,
-		   bool *initial_quote, bool *terminating_comma,
-		   int elevel, char **err_msg);
+					   bool *initial_quote, bool *terminating_comma,
+					   int elevel, char **err_msg);
 static List *next_field_expand(const char *filename, char **lineptr,
-				  int elevel, char **err_msg);
+							   int elevel, char **err_msg);
 #ifdef NOT_USED
 static POOL_STATUS CheckUserExist(char *username);
 #endif
@@ -154,7 +154,7 @@ static POOL_STATUS CheckUserExist(char *username);
 
 #define PGPOOL_PAM_SERVICE "pgpool" /* Service name passed to PAM */
 
-static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *password);
+static POOL_STATUS CheckPAMAuth(POOL_CONNECTION *frontend, char *user, char *password);
 static int	pam_passwd_conv_proc(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
 
 static struct pam_conv pam_passwd_conv = {
@@ -163,7 +163,7 @@ static struct pam_conv pam_passwd_conv = {
 };
 
 static char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
-static POOL_CONNECTION * pam_frontend_kludge;	/* Workaround for passing
+static POOL_CONNECTION *pam_frontend_kludge;	/* Workaround for passing
 												 * POOL_CONNECTION *frontend
 												 * into pam_passwd_conv_proc */
 #endif							/* USE_PAM */
@@ -189,7 +189,7 @@ static POOL_STATUS CheckLDAPAuth(POOL_CONNECTION *frontend);
  * so declare a prototype here in "#if defined(USE_PAM or USE_LDAP)" to avoid
  * compilation warning.
  */
-static char *recv_password_packet(POOL_CONNECTION * frontend);
+static char *recv_password_packet(POOL_CONNECTION *frontend);
 #endif							/* USE_PAM or USE_LDAP */
 
 /*
@@ -761,6 +761,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	}
 
 #ifdef USE_LDAP
+
 	/*
 	 * Check if the selected authentication method has any mandatory arguments
 	 * that are not set.
@@ -1166,7 +1167,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
  * do frontend <-> pgpool authentication based on pool_hba.conf
  */
 void
-ClientAuthentication(POOL_CONNECTION * frontend)
+ClientAuthentication(POOL_CONNECTION *frontend)
 {
 	POOL_STATUS status = POOL_END;
 	MemoryContext oldContext;
@@ -1182,10 +1183,9 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 
 		/*
 		 * Get the password for the user if it is stored in the pool_password
-		 * file
-		 * authentication process is called in the temporary memory
-		 * context, but password mappings has to live till the life time
-		 * of frontend connection, so call the pool_get_user_credentials in
+		 * file authentication process is called in the temporary memory
+		 * context, but password mappings has to live till the life time of
+		 * frontend connection, so call the pool_get_user_credentials in
 		 * ProcessLoopContext memory context
 		 */
 		oldContext = MemoryContextSwitchTo(ProcessLoopContext);
@@ -1215,7 +1215,7 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 
 #ifdef USE_SSL
 					ereport(FATAL,
-						(return_code(2),
+							(return_code(2),
 							 errmsg("client authentication failed"),
 							 errdetail("no pool_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
 									   hostinfo, frontend->username, frontend->database,
@@ -1323,7 +1323,7 @@ ClientAuthentication(POOL_CONNECTION * frontend)
 
 
 static void
-sendAuthRequest(POOL_CONNECTION * frontend, AuthRequest areq)
+sendAuthRequest(POOL_CONNECTION *frontend, AuthRequest areq)
 {
 	int			wsize;			/* number of bytes to write */
 	int			areq_nbo;		/* areq in network byte order */
@@ -1371,7 +1371,7 @@ sendAuthRequest(POOL_CONNECTION * frontend, AuthRequest areq)
  * Returns NULL if couldn't get password, else palloc'd string.
  */
 static char *
-recv_password_packet(POOL_CONNECTION * frontend)
+recv_password_packet(POOL_CONNECTION *frontend)
 {
 	int			rsize;
 	char	   *passwd;
@@ -1421,7 +1421,7 @@ recv_password_packet(POOL_CONNECTION * frontend)
  * Tell the user the authentication failed.
  */
 static void
-auth_failed(POOL_CONNECTION * frontend)
+auth_failed(POOL_CONNECTION *frontend)
 {
 	int			messagelen;
 	char	   *errmessage;
@@ -1521,7 +1521,7 @@ auth_failed(POOL_CONNECTION * frontend)
  *  we return true and method = uaReject.
  */
 static bool
-hba_getauthmethod(POOL_CONNECTION * frontend)
+hba_getauthmethod(POOL_CONNECTION *frontend)
 {
 	if (check_hba(frontend))
 		return true;
@@ -1535,7 +1535,7 @@ hba_getauthmethod(POOL_CONNECTION * frontend)
 *	request.
 */
 static bool
-check_hba(POOL_CONNECTION * frontend)
+check_hba(POOL_CONNECTION *frontend)
 {
 	ListCell   *line;
 	HbaLine    *hba;
@@ -1672,7 +1672,7 @@ hostname_match(const char *pattern, const char *actual_hostname)
  * Check to see if a connecting IP matches a given host name.
  */
 static bool
-check_hostname(POOL_CONNECTION * frontend, const char *hostname)
+check_hostname(POOL_CONNECTION *frontend, const char *hostname)
 {
 	struct addrinfo *gai_result,
 			   *gai;
@@ -2363,7 +2363,8 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
 /*
  * Check authentication against PAM.
  */
-static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *password)
+static POOL_STATUS
+CheckPAMAuth(POOL_CONNECTION *frontend, char *user, char *password)
 {
 	int			retval;
 	pam_handle_t *pamh = NULL;
@@ -2379,8 +2380,8 @@ static POOL_STATUS CheckPAMAuth(POOL_CONNECTION * frontend, char *user, char *pa
 	 * later used inside the PAM conversation to pass the password to the
 	 * authentication module.
 	 */
-	pam_passwd_conv.appdata_ptr = (char *) password; /* from password above,
-													 * not allocated */
+	pam_passwd_conv.appdata_ptr = (char *) password;	/* from password above,
+														 * not allocated */
 
 	/* Optionally, one can set the service name in pool_hba.conf */
 	if (frontend->pool_hba->pamservice && frontend->pool_hba->pamservice[0] != '\0')
@@ -2673,7 +2674,8 @@ FormatSearchFilter(const char *pattern, const char *user_name)
 /*
  * Check authentication against LDAP.
  */
-static POOL_STATUS CheckLDAPAuth(POOL_CONNECTION * frontend)
+static POOL_STATUS
+CheckLDAPAuth(POOL_CONNECTION *frontend)
 {
 	char	   *passwd;
 	LDAP	   *ldap;
@@ -2722,7 +2724,7 @@ static POOL_STATUS CheckLDAPAuth(POOL_CONNECTION * frontend)
 
 	passwd = recv_password_packet(frontend);
 	if (passwd == NULL)
-		return -2;		/* client wouldn't send password */
+		return -2;				/* client wouldn't send password */
 
 	if (InitializeLDAPConnection(frontend, &ldap) == -1)
 	{
@@ -2925,7 +2927,8 @@ static POOL_STATUS CheckLDAPAuth(POOL_CONNECTION * frontend)
 #endif							/* USE_LDAP */
 
 #ifdef NOT_USED
-static POOL_STATUS CheckUserExist(char *username)
+static POOL_STATUS
+CheckUserExist(char *username)
 {
 	char	   *passwd;
 

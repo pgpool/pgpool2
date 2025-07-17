@@ -51,8 +51,8 @@ typedef struct
 	bool		row_security;	/* true if row security enabled */
 	int			num_oids;		/* number of oids */
 	int			table_oids[POOL_MAX_SELECT_OIDS];	/* table oids */
-	char		table_names[POOL_MAX_SELECT_OIDS][NAMEDATALEN];	/* table names */
-}			SelectContext;
+	char		table_names[POOL_MAX_SELECT_OIDS][NAMEDATALEN]; /* table names */
+} SelectContext;
 
 extern int	pool_get_terminate_backend_pid(Node *node);
 extern bool pool_has_function_call(Node *node);
@@ -68,7 +68,7 @@ extern bool pool_has_pgpool_regclass(void);
 extern bool pool_has_to_regclass(void);
 extern bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
 extern int	pool_table_name_to_oid(char *table_name);
-extern int	pool_extract_table_oids_from_select_stmt(Node *node, SelectContext * ctx);
+extern int	pool_extract_table_oids_from_select_stmt(Node *node, SelectContext *ctx);
 extern RangeVar *makeRangeVarFromNameList(List *names);
 extern char *make_table_name_from_rangevar(RangeVar *rangevar);
 extern char *make_function_name_from_funccall(FuncCall *fcall);

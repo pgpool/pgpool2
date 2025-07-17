@@ -63,7 +63,7 @@ typedef struct
 								 * years */
 	int32		day;			/* days, after time for alignment */
 	int32		month;			/* months and years, after time for alignment */
-} Interval;
+}			Interval;
 
 
 /* Limits on the "precision" option (typmod) for these data types */

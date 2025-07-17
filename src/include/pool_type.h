@@ -108,12 +108,12 @@ typedef enum
 {
 	LOAD_UNSELECTED = 0,
 	LOAD_SELECTED
-}			LOAD_BALANCE_STATUS;
+} LOAD_BALANCE_STATUS;
 
 extern int	assert_enabled;
 extern void ExceptionalCondition(const char *conditionName,
-					 const char *errorType,
-					 const char *fileName, int lineNumber) __attribute__((noreturn));
+								 const char *errorType,
+								 const char *fileName, int lineNumber) __attribute__((noreturn));
 
 #define MAXIMUM_ALIGNOF 8
 

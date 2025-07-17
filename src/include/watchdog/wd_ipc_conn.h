@@ -35,7 +35,7 @@ typedef enum WdCommandResult
 	COMMAND_OK,
 	COMMAND_FAILED,
 	COMMAND_TIMEOUT
-}			WdCommandResult;
+} WdCommandResult;
 
 
 typedef struct WDIPCCmdResult
@@ -43,7 +43,7 @@ typedef struct WDIPCCmdResult
 	char		type;
 	int			length;
 	char	   *data;
-}			WDIPCCmdResult;
+} WDIPCCmdResult;
 
 
 extern void wd_ipc_conn_initialize(void);
@@ -51,8 +51,8 @@ extern void wd_set_ipc_address(char *socket_dir, int port);
 extern size_t estimate_ipc_socket_addr_len(void);
 extern char *get_watchdog_ipc_address(void);
 
-extern WDIPCCmdResult * issue_command_to_watchdog(char type, int timeout_sec, char *data, int data_len, bool blocking);
+extern WDIPCCmdResult *issue_command_to_watchdog(char type, int timeout_sec, char *data, int data_len, bool blocking);
 
-extern void FreeCmdResult(WDIPCCmdResult * res);
+extern void FreeCmdResult(WDIPCCmdResult *res);
 
 #endif							/* WD_IPC_CONN_H */

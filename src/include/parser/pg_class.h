@@ -145,7 +145,7 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
  *		the format of pg_class relation.
  * ----------------
  */
-typedef FormData_pg_class *Form_pg_class;
+typedef FormData_pg_class * Form_pg_class;
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_class_oid_index, 2662, ClassOidIndexId, pg_class, btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_class_relname_nsp_index, 2663, ClassNameNspIndexId, pg_class, btree(relname name_ops, relnamespace oid_ops));
@@ -164,7 +164,7 @@ MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
 #define                  RELKIND_COMPOSITE_TYPE  'c'	/* composite type */
 #define                  RELKIND_FOREIGN_TABLE   'f'	/* foreign table */
 #define                  RELKIND_PARTITIONED_TABLE 'p'	/* partitioned table */
-#define					 RELKIND_PARTITIONED_INDEX 'I'  /* partitioned index */
+#define					 RELKIND_PARTITIONED_INDEX 'I'	/* partitioned index */
 
 #endif							/* NOT_USED_IN_PGPOOL */
 

@@ -916,7 +916,7 @@ typedef struct PartitionBoundSpec
 	List	   *lowerdatums;	/* List of PartitionRangeDatums */
 	List	   *upperdatums;	/* List of PartitionRangeDatums */
 
-	ParseLoc    location;		/* token location, or -1 if unknown */
+	ParseLoc	location;		/* token location, or -1 if unknown */
 } PartitionBoundSpec;
 
 /*
@@ -950,7 +950,7 @@ typedef struct PartitionRangeDatum
 typedef struct SinglePartitionSpec
 {
 	NodeTag		type;
-}			SinglePartitionSpec;
+} SinglePartitionSpec;
 
 /*
  * PartitionCmd - info for ALTER TABLE/INDEX ATTACH/DETACH PARTITION commands
@@ -1299,7 +1299,7 @@ typedef struct RTEPermissionInfo
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
 	Bitmapset  *insertedCols;	/* columns needing INSERT permission */
 	Bitmapset  *updatedCols;	/* columns needing UPDATE permission */
-} RTEPermissionInfo;
+}			RTEPermissionInfo;
 
 /*
  * RangeTblFunction -
@@ -2498,7 +2498,7 @@ typedef struct GrantStmt
 	NodeTag		type;
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	GrantTargetType targtype;	/* type of the grant target */
-	ObjectType  objtype;        /* kind of object being operated on */
+	ObjectType	objtype;		/* kind of object being operated on */
 	List	   *objects;		/* list of RangeVar nodes, ObjectWithArgs
 								 * nodes, or plain names (as String values) */
 	List	   *privileges;		/* list of AccessPriv nodes */
@@ -3491,7 +3491,7 @@ typedef struct InlineCodeBlock
 	Oid			langOid;		/* OID of selected language */
 	bool		langIsTrusted;	/* trusted property of the language */
 	bool		atomic;			/* atomic execution context */
-} InlineCodeBlock;
+}			InlineCodeBlock;
 
 /* ----------------------
  *		CALL statement
@@ -3521,7 +3521,7 @@ typedef struct CallContext
 
 	NodeTag		type;
 	bool		atomic;
-} CallContext;
+}			CallContext;
 
 /* ----------------------
  *		Alter Object Rename Statement

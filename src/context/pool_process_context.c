@@ -30,7 +30,7 @@
 #include "pool_config.h"		/* remove me afterwards */
 
 static POOL_PROCESS_CONTEXT process_context_d;
-static POOL_PROCESS_CONTEXT * process_context;
+static POOL_PROCESS_CONTEXT *process_context;
 
 /*
  * Initialize per process context
@@ -108,7 +108,7 @@ pool_increment_local_session_id(void)
 size_t
 pool_coninfo_size(void)
 {
-	size_t			size;
+	size_t		size;
 
 	size = pool_config->num_init_children *
 		pool_config->max_pool *
@@ -264,13 +264,13 @@ pool_coninfo_backend_pid(int backend_pid, int *backend_node_id)
  * This flag is used to handle pg_terminate_backend()
  */
 void
-pool_set_connection_will_be_terminated(ConnectionInfo * connInfo)
+pool_set_connection_will_be_terminated(ConnectionInfo *connInfo)
 {
 	connInfo->swallow_termination = 1;
 }
 
 void
-pool_unset_connection_will_be_terminated(ConnectionInfo * connInfo)
+pool_unset_connection_will_be_terminated(ConnectionInfo *connInfo)
 {
 	connInfo->swallow_termination = 0;
 }

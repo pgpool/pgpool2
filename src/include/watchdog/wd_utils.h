@@ -39,10 +39,10 @@ extern void wd_check_network_command_configurations(void);
 extern int	watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
 extern char *string_replace(const char *string, const char *pattern, const char *replacement);
 extern void wd_calc_hash(const char *str, int len, char *buf);
-extern int aes_decrypt_with_password(unsigned char *ciphertext, int ciphertext_len,
-						  const char *password, unsigned char *plaintext);
-extern int aes_encrypt_with_password(unsigned char *plaintext, int plaintext_len,
-						  const char *password, unsigned char *ciphertext);
+extern int	aes_decrypt_with_password(unsigned char *ciphertext, int ciphertext_len,
+									  const char *password, unsigned char *plaintext);
+extern int	aes_encrypt_with_password(unsigned char *plaintext, int plaintext_len,
+									  const char *password, unsigned char *ciphertext);
 
 /* wd_escalation.c */
 extern pid_t fork_escalation_process(void);

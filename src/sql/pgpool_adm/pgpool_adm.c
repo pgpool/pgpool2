@@ -38,7 +38,7 @@
 
 static PCPConnInfo * connect_to_server(char *host, int port, char *user, char *pass);
 static PCPConnInfo * connect_to_server_from_foreign_server(char *name);
-static Timestamp	str2timestamp(char *str);
+static Timestamp str2timestamp(char *str);
 
 /**
  * Wrapper around pcp_connect
@@ -612,7 +612,7 @@ _pcp_health_check_stats(PG_FUNCTION_ARGS)
 	POOL_HEALTH_CHECK_STATS *stats;
 	Datum		values[20];		/* values to build the returned tuple from */
 	bool		nulls[] = {false, false, false, false, false, false, false, false, false, false,
-						   false, false, false, false, false, false, false, false, false, false};
+	false, false, false, false, false, false, false, false, false, false};
 	TupleDesc	tupledesc;
 	HeapTuple	tuple;
 	AttrNumber	an;
@@ -711,7 +711,7 @@ _pcp_health_check_stats(PG_FUNCTION_ARGS)
 	values[i++] = Int64GetDatum(atol(stats->min_health_check_duration));
 	values[i++] = Float4GetDatum(atof(stats->average_health_check_duration));
 
-	if (*stats->last_health_check =='\0' )
+	if (*stats->last_health_check == '\0')
 		nulls[i++] = true;
 	else
 		values[i++] = str2timestamp(stats->last_health_check);
@@ -771,7 +771,7 @@ _pcp_proc_info(PG_FUNCTION_ARGS)
 
 	int			an;
 
-#define NUM_COLS	20	/* number of columns */
+#define NUM_COLS	20			/* number of columns */
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())

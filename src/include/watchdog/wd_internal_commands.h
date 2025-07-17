@@ -42,7 +42,7 @@ typedef enum WD_LOCK_STANDBY_TYPE
 	WD_INVALID_LOCK,
 	/* currently we have only one lock */
 	WD_FOLLOW_PRIMARY_LOCK
-}WD_LOCK_STANDBY_TYPE;
+} WD_LOCK_STANDBY_TYPE;
 
 
 extern WdCommandResult wd_start_recovery(void);
@@ -51,9 +51,9 @@ extern WDFailoverCMDResults wd_send_failback_request(int node_id, unsigned char 
 extern WDFailoverCMDResults wd_degenerate_backend_set(int *node_id_set, int count, unsigned char flags);
 extern WDFailoverCMDResults wd_promote_backend(int node_id, unsigned char flags);
 
-extern WdCommandResult wd_execute_cluster_command(char* clusterCommand,List *argsList);
+extern WdCommandResult wd_execute_cluster_command(char *clusterCommand, List *argsList);
 
-extern WDPGBackendStatus * get_pg_backend_status_from_leader_wd_node(void);
+extern WDPGBackendStatus *get_pg_backend_status_from_leader_wd_node(void);
 
 extern WD_STATES wd_internal_get_watchdog_local_node_state(void);
 extern int	wd_internal_get_watchdog_quorum_state(void);

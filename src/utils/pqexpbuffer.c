@@ -415,4 +415,3 @@ appendBinaryPQExpBuffer(PQExpBuffer str, const char *data, size_t datalen)
 
 #undef malloc
 #undef free
-

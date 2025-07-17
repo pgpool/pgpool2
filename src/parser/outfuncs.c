@@ -899,9 +899,9 @@ _outOnConflictExpr(StringInfo str, const OnConflictExpr *node)
  *****************************************************************************/
 
 static void
-_outExtensibleNode(StringInfo str, const ExtensibleNode *node)
+_outExtensibleNode(StringInfo str, const ExtensibleNode * node)
 {
-	const ExtensibleNodeMethods *methods;
+	const		ExtensibleNodeMethods *methods;
 
 	methods = GetExtensibleNodeMethods(node->extnodename, false);
 
@@ -1732,7 +1732,7 @@ static void
 _outMergeWhenClauses(StringInfo str, List *node)
 {
 	ListCell   *temp;
-	char comma;
+	char		comma;
 
 	foreach(temp, node)
 	{
@@ -1755,14 +1755,14 @@ _outMergeWhenClauses(StringInfo str, List *node)
 
 		switch (m->commandType)
 		{
-			ListCell *s;
+				ListCell   *s;
 
 			case CMD_UPDATE:
 				comma = 0;
 				appendStringInfo(str, "UPDATE SET ");
 				foreach(s, m->targetList)
 				{
-					ResTarget *r = (ResTarget *) lfirst(s);
+					ResTarget  *r = (ResTarget *) lfirst(s);
 
 					if (comma == 0)
 						comma = 1;
@@ -1781,7 +1781,7 @@ _outMergeWhenClauses(StringInfo str, List *node)
 					appendStringInfoString(str, "(");
 					foreach(s, m->targetList)
 					{
-						ResTarget *r = (ResTarget *) lfirst(s);
+						ResTarget  *r = (ResTarget *) lfirst(s);
 
 						if (comma == 0)
 							comma = 1;
@@ -2025,23 +2025,23 @@ _outA_Expr(StringInfo str, A_Expr *node)
 static void
 _outInteger(StringInfo str, const Integer *node)
 {
-    appendStringInfo(str, "%d", node->ival);
+	appendStringInfo(str, "%d", node->ival);
 }
 
 static void
 _outFloat(StringInfo str, const Float *node)
 {
-    /*
- *      * We assume the value is a valid numeric literal and so does not need
- *           * quoting.
- *                */
-    appendStringInfoString(str, node->fval);
+	/*
+	 * * We assume the value is a valid numeric literal and so does not need *
+	 * quoting.
+	 */
+	appendStringInfoString(str, node->fval);
 }
 
 static void
 _outBoolean(StringInfo str, const Boolean *node)
 {
-    appendStringInfoString(str, node->boolval ? "true" : "false");
+	appendStringInfoString(str, node->boolval ? "true" : "false");
 }
 
 static void
@@ -2051,10 +2051,10 @@ _outString(StringInfo str, const String *node)
 	 * We use outToken to provide escaping of the string's content, but we
 	 * don't want it to do anything with an empty string.
 	 */
-    appendStringInfoChar(str, '"');
-    if (node->sval[0] != '\0')
-        outToken(str, node->sval);
-    appendStringInfoChar(str, '"');
+	appendStringInfoChar(str, '"');
+	if (node->sval[0] != '\0')
+		outToken(str, node->sval);
+	appendStringInfoChar(str, '"');
 }
 
 static void
@@ -2131,7 +2131,7 @@ _outParamRef(StringInfo str, ParamRef *node)
 static void
 _outA_Const(StringInfo str, A_Const *node)
 {
-	char		*p;
+	char	   *p;
 
 	if (node->isnull)
 	{
@@ -2854,6 +2854,7 @@ _outVacuumStmt(StringInfo str, VacuumStmt *node)
 {
 
 	VacuumParams params;
+
 	params.options = node->is_vacuumcmd ? VACOPT_VACUUM : VACOPT_ANALYZE;
 
 	if (params.options & VACOPT_VACUUM)
@@ -2880,6 +2881,7 @@ _outVacuumStmt(StringInfo str, VacuumStmt *node)
 		appendStringInfoString(str, "SKIP_LOCKED ");
 
 	ListCell   *lc;
+
 	foreach(lc, node->rels)
 	{
 		VacuumRelation *vrel = lfirst_node(VacuumRelation, lc);
@@ -3118,19 +3120,20 @@ _outCopyStmt(StringInfo str, CopyStmt *node)
 					|| strcmp(e->defname, "log_verbosity") == 0)
 					_outNode(str, e->arg);
 				else if (strcmp(e->defname, "delimiter") == 0
-					|| strcmp(e->defname, "null") == 0
-					|| strcmp(e->defname, "default") == 0
-					|| strcmp(e->defname, "quote") == 0
-					|| strcmp(e->defname, "escape") == 0
-					|| strcmp(e->defname, "encoding") == 0)
+						 || strcmp(e->defname, "null") == 0
+						 || strcmp(e->defname, "default") == 0
+						 || strcmp(e->defname, "quote") == 0
+						 || strcmp(e->defname, "escape") == 0
+						 || strcmp(e->defname, "encoding") == 0)
 				{
-					String     *value = (String *) e->arg;
+					String	   *value = (String *) e->arg;
+
 					appendStringInfoString(str, "'");
 					_outSingleQuote(str, value->sval);
 					appendStringInfoString(str, "'");
 				}
 				else if (strcmp(e->defname, "force_not_null") == 0
-					|| strcmp(e->defname, "force_null") == 0)
+						 || strcmp(e->defname, "force_null") == 0)
 				{
 					if (IsA(e->arg, A_Star))
 						appendStringInfoString(str, "*");
@@ -3328,7 +3331,7 @@ _outOptRoleList(StringInfo str, List *options)
 	foreach(lc, options)
 	{
 		DefElem    *elem = lfirst(lc);
-		A_Const	   *value = (A_Const *) elem->arg;
+		A_Const    *value = (A_Const *) elem->arg;
 
 		if (strcmp(elem->defname, "password") == 0)
 		{
@@ -3860,7 +3863,7 @@ _outOptSeqList(StringInfo str, List *options)
 	foreach(lc, options)
 	{
 		DefElem    *e = lfirst(lc);
-		A_Const	   *v = (A_Const *) e->arg;
+		A_Const    *v = (A_Const *) e->arg;
 		char		buf[16];
 
 		if (strcmp(e->defname, "cycle") == 0)
@@ -4017,7 +4020,7 @@ _outFuncName(StringInfo str, List *func_name)
 
 	foreach(lc, func_name)
 	{
-		A_Const *v = (A_Const *) lfirst(lc);
+		A_Const    *v = (A_Const *) lfirst(lc);
 
 		if (dot == 0)
 			dot = 1;
@@ -4160,7 +4163,7 @@ _outDefineStmt(StringInfo str, DefineStmt *node)
 
 			foreach(lc, node->defnames)
 			{
-				A_Const	   *v = (A_Const *) lfirst(lc);
+				A_Const    *v = (A_Const *) lfirst(lc);
 
 				if (dot == 0)
 					dot = 1;
@@ -4218,7 +4221,7 @@ _outOperatorName(StringInfo str, List *list)
 
 	foreach(lc, list)
 	{
-		A_Const	   *v = (A_Const *) lfirst(lc);
+		A_Const    *v = (A_Const *) lfirst(lc);
 
 		if (dot == 0)
 			dot = 1;
@@ -4251,7 +4254,8 @@ _outCreateOpClassItem(StringInfo str, CreateOpClassItem *node)
 			}
 
 			/*
-			 * if (node->recheck == TRUE) appendStringInfoString(str, " RECHECK");
+			 * if (node->recheck == TRUE) appendStringInfoString(str, "
+			 * RECHECK");
 			 */
 			break;
 
@@ -4330,9 +4334,9 @@ static void
 _outDropStmt(StringInfo str, DropStmt *node)
 {
 	List	   *objname;
-	char		*p;
-	char		*p1;
-	List		*l;
+	char	   *p;
+	char	   *p1;
+	List	   *l;
 
 	appendStringInfoString(str, "DROP ");
 	switch (node->removeType)
@@ -4564,7 +4568,7 @@ _outPrivilegeList(StringInfo str, List *list)
 	{
 		foreach(lc, list)
 		{
-			A_Const	   *v = (A_Const *) lfirst(lc);
+			A_Const    *v = (A_Const *) lfirst(lc);
 
 			if (comma == 0)
 				comma = 1;
@@ -4769,7 +4773,7 @@ _outFuncOptList(StringInfo str, List *list)
 	foreach(lc, list)
 	{
 		DefElem    *e = lfirst(lc);
-		A_Const	   *v = (A_Const *) e->arg;
+		A_Const    *v = (A_Const *) e->arg;
 
 		if (strcmp(e->defname, "strict") == 0)
 		{
@@ -5231,7 +5235,7 @@ _outCreatedbOptList(StringInfo str, List *options)
 	foreach(lc, options)
 	{
 		DefElem    *e = lfirst(lc);
-		A_Const	   *v = (A_Const *) e->arg;
+		A_Const    *v = (A_Const *) e->arg;
 
 		/* keyword */
 		if (strcmp(e->defname, "template") == 0)
@@ -5491,7 +5495,7 @@ static void
 _outCommentStmt(StringInfo str, CommentStmt *node)
 {
 	TypeName   *t;
-	A_Const	   *v;
+	A_Const    *v;
 	char		buf[16];
 
 	appendStringInfoString(str, "COMMENT ON ");
@@ -5650,8 +5654,8 @@ static void
 _outRangeFunction(StringInfo str, RangeFunction *node)
 {
 	_outNode(str, node->functions);
-	//TODO
-		if (node->alias)
+	/* TODO */
+	if (node->alias)
 	{
 		_outNode(str, node->alias);
 	}
@@ -5983,7 +5987,7 @@ _outWithDefinition(StringInfo str, List *def_list)
 		elem = linitial(def_list);
 		if (strcmp(elem->defname, "oids") == 0)
 		{
-			Integer	   *v = (Integer *) elem->arg;
+			Integer    *v = (Integer *) elem->arg;
 
 			if (v->ival == 1)
 				appendStringInfoString(str, " WITH OIDS ");
@@ -6091,7 +6095,7 @@ _outNode(StringInfo str, void *obj)
 
 	if (obj == NULL)
 		return;
-	else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList) ||
+	else if (IsA(obj, List) || IsA(obj, IntList) || IsA(obj, OidList) ||
 			 IsA(obj, XidList))
 		_outList(str, obj);
 	/* nodeRead does not want to see { } around these! */

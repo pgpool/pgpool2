@@ -26,14 +26,14 @@ typedef struct
 	int			num;			/* number of entries */
 	char	  **names;			/* parameter names */
 	char	  **values;			/* values */
-}			ParamStatus;
+} ParamStatus;
 
-extern int	pool_init_params(ParamStatus * params);
-extern void pool_discard_params(ParamStatus * params);
-extern char *pool_find_name(ParamStatus * params, char *name, int *pos);
-extern int	pool_get_param(ParamStatus * params, int index, char **name, char **value);
-extern int	pool_add_param(ParamStatus * params, char *name, char *value);
-extern void pool_param_debug_print(ParamStatus * params);
+extern int	pool_init_params(ParamStatus *params);
+extern void pool_discard_params(ParamStatus *params);
+extern char *pool_find_name(ParamStatus *params, char *name, int *pos);
+extern int	pool_get_param(ParamStatus *params, int index, char **name, char **value);
+extern int	pool_add_param(ParamStatus *params, char *name, char *value);
+extern void pool_param_debug_print(ParamStatus *params);
 
 
-#endif /* pool_params_h */
+#endif							/* pool_params_h */

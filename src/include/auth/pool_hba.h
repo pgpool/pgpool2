@@ -101,10 +101,11 @@ struct HbaLine
 	char	   *ldapprefix;
 	char	   *ldapsuffix;
 	/* Additional LDAPl option with pgpool */
-	bool		backend_use_passwd; /* If true, pgpool use same password to auth backend */
+	bool		backend_use_passwd; /* If true, pgpool use same password to
+									 * auth backend */
 };
 
 extern bool load_hba(char *hbapath);
-extern void ClientAuthentication(POOL_CONNECTION * frontend);
+extern void ClientAuthentication(POOL_CONNECTION *frontend);
 
 #endif							/* POOL_HBA_H */

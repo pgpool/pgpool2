@@ -186,6 +186,6 @@ typedef int16 AttrNumber;
  * for portability.  Don't use "offsetof(struct s, f[0])", as this doesn't
  * work with MSVC and with C++ compilers.
  */
-#define FLEXIBLE_ARRAY_MEMBER   /* empty */
+#define FLEXIBLE_ARRAY_MEMBER	/* empty */
 
 #endif							/* POOL_PARSER_H */

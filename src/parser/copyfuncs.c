@@ -84,7 +84,7 @@
  * _copyPlannedStmt
  */
 static PlannedStmt *
-_copyPlannedStmt(const PlannedStmt *from)
+_copyPlannedStmt(const PlannedStmt * from)
 {
 	PlannedStmt *newnode = makeNode(PlannedStmt);
 
@@ -121,7 +121,7 @@ _copyPlannedStmt(const PlannedStmt *from)
  *		all the copy functions for classes which inherit from Plan.
  */
 static void
-CopyPlanFields(const Plan *from, Plan *newnode)
+CopyPlanFields(const Plan * from, Plan * newnode)
 {
 	COPY_SCALAR_FIELD(startup_cost);
 	COPY_SCALAR_FIELD(total_cost);
@@ -144,7 +144,7 @@ CopyPlanFields(const Plan *from, Plan *newnode)
  * _copyPlan
  */
 static Plan *
-_copyPlan(const Plan *from)
+_copyPlan(const Plan * from)
 {
 	Plan	   *newnode = makeNode(Plan);
 
@@ -161,7 +161,7 @@ _copyPlan(const Plan *from)
  * _copyResult
  */
 static Result *
-_copyResult(const Result *from)
+_copyResult(const Result * from)
 {
 	Result	   *newnode = makeNode(Result);
 
@@ -182,7 +182,7 @@ _copyResult(const Result *from)
  * _copyProjectSet
  */
 static ProjectSet *
-_copyProjectSet(const ProjectSet *from)
+_copyProjectSet(const ProjectSet * from)
 {
 	ProjectSet *newnode = makeNode(ProjectSet);
 
@@ -198,7 +198,7 @@ _copyProjectSet(const ProjectSet *from)
  * _copyModifyTable
  */
 static ModifyTable *
-_copyModifyTable(const ModifyTable *from)
+_copyModifyTable(const ModifyTable * from)
 {
 	ModifyTable *newnode = makeNode(ModifyTable);
 
@@ -240,7 +240,7 @@ _copyModifyTable(const ModifyTable *from)
  * _copyAppend
  */
 static Append *
-_copyAppend(const Append *from)
+_copyAppend(const Append * from)
 {
 	Append	   *newnode = makeNode(Append);
 
@@ -265,7 +265,7 @@ _copyAppend(const Append *from)
  * _copyMergeAppend
  */
 static MergeAppend *
-_copyMergeAppend(const MergeAppend *from)
+_copyMergeAppend(const MergeAppend * from)
 {
 	MergeAppend *newnode = makeNode(MergeAppend);
 
@@ -293,7 +293,7 @@ _copyMergeAppend(const MergeAppend *from)
  * _copyRecursiveUnion
  */
 static RecursiveUnion *
-_copyRecursiveUnion(const RecursiveUnion *from)
+_copyRecursiveUnion(const RecursiveUnion * from)
 {
 	RecursiveUnion *newnode = makeNode(RecursiveUnion);
 
@@ -319,7 +319,7 @@ _copyRecursiveUnion(const RecursiveUnion *from)
  * _copyBitmapAnd
  */
 static BitmapAnd *
-_copyBitmapAnd(const BitmapAnd *from)
+_copyBitmapAnd(const BitmapAnd * from)
 {
 	BitmapAnd  *newnode = makeNode(BitmapAnd);
 
@@ -340,7 +340,7 @@ _copyBitmapAnd(const BitmapAnd *from)
  * _copyBitmapOr
  */
 static BitmapOr *
-_copyBitmapOr(const BitmapOr *from)
+_copyBitmapOr(const BitmapOr * from)
 {
 	BitmapOr   *newnode = makeNode(BitmapOr);
 
@@ -362,7 +362,7 @@ _copyBitmapOr(const BitmapOr *from)
  * _copyGather
  */
 static Gather *
-_copyGather(const Gather *from)
+_copyGather(const Gather * from)
 {
 	Gather	   *newnode = makeNode(Gather);
 
@@ -390,7 +390,7 @@ _copyGather(const Gather *from)
  *		all the copy functions for classes which inherit from Scan.
  */
 static void
-CopyScanFields(const Scan *from, Scan *newnode)
+CopyScanFields(const Scan * from, Scan * newnode)
 {
 	CopyPlanFields((const Plan *) from, (Plan *) newnode);
 
@@ -401,7 +401,7 @@ CopyScanFields(const Scan *from, Scan *newnode)
  * _copyScan
  */
 static Scan *
-_copyScan(const Scan *from)
+_copyScan(const Scan * from)
 {
 	Scan	   *newnode = makeNode(Scan);
 
@@ -417,7 +417,7 @@ _copyScan(const Scan *from)
  * _copySeqScan
  */
 static SeqScan *
-_copySeqScan(const SeqScan *from)
+_copySeqScan(const SeqScan * from)
 {
 	SeqScan    *newnode = makeNode(SeqScan);
 
@@ -433,7 +433,7 @@ _copySeqScan(const SeqScan *from)
  * _copySampleScan
  */
 static SampleScan *
-_copySampleScan(const SampleScan *from)
+_copySampleScan(const SampleScan * from)
 {
 	SampleScan *newnode = makeNode(SampleScan);
 
@@ -454,7 +454,7 @@ _copySampleScan(const SampleScan *from)
  * _copyIndexScan
  */
 static IndexScan *
-_copyIndexScan(const IndexScan *from)
+_copyIndexScan(const IndexScan * from)
 {
 	IndexScan  *newnode = makeNode(IndexScan);
 
@@ -481,7 +481,7 @@ _copyIndexScan(const IndexScan *from)
  * _copyIndexOnlyScan
  */
 static IndexOnlyScan *
-_copyIndexOnlyScan(const IndexOnlyScan *from)
+_copyIndexOnlyScan(const IndexOnlyScan * from)
 {
 	IndexOnlyScan *newnode = makeNode(IndexOnlyScan);
 
@@ -507,7 +507,7 @@ _copyIndexOnlyScan(const IndexOnlyScan *from)
  * _copyBitmapIndexScan
  */
 static BitmapIndexScan *
-_copyBitmapIndexScan(const BitmapIndexScan *from)
+_copyBitmapIndexScan(const BitmapIndexScan * from)
 {
 	BitmapIndexScan *newnode = makeNode(BitmapIndexScan);
 
@@ -530,7 +530,7 @@ _copyBitmapIndexScan(const BitmapIndexScan *from)
  * _copyBitmapHeapScan
  */
 static BitmapHeapScan *
-_copyBitmapHeapScan(const BitmapHeapScan *from)
+_copyBitmapHeapScan(const BitmapHeapScan * from)
 {
 	BitmapHeapScan *newnode = makeNode(BitmapHeapScan);
 
@@ -551,7 +551,7 @@ _copyBitmapHeapScan(const BitmapHeapScan *from)
  * _copyTidScan
  */
 static TidScan *
-_copyTidScan(const TidScan *from)
+_copyTidScan(const TidScan * from)
 {
 	TidScan    *newnode = makeNode(TidScan);
 
@@ -572,7 +572,7 @@ _copyTidScan(const TidScan *from)
  * _copyTidRangeScan
  */
 static TidRangeScan *
-_copyTidRangeScan(const TidRangeScan *from)
+_copyTidRangeScan(const TidRangeScan * from)
 {
 	TidRangeScan *newnode = makeNode(TidRangeScan);
 
@@ -593,7 +593,7 @@ _copyTidRangeScan(const TidRangeScan *from)
  * _copySubqueryScan
  */
 static SubqueryScan *
-_copySubqueryScan(const SubqueryScan *from)
+_copySubqueryScan(const SubqueryScan * from)
 {
 	SubqueryScan *newnode = makeNode(SubqueryScan);
 
@@ -615,7 +615,7 @@ _copySubqueryScan(const SubqueryScan *from)
  * _copyFunctionScan
  */
 static FunctionScan *
-_copyFunctionScan(const FunctionScan *from)
+_copyFunctionScan(const FunctionScan * from)
 {
 	FunctionScan *newnode = makeNode(FunctionScan);
 
@@ -637,7 +637,7 @@ _copyFunctionScan(const FunctionScan *from)
  * _copyTableFuncScan
  */
 static TableFuncScan *
-_copyTableFuncScan(const TableFuncScan *from)
+_copyTableFuncScan(const TableFuncScan * from)
 {
 	TableFuncScan *newnode = makeNode(TableFuncScan);
 
@@ -658,7 +658,7 @@ _copyTableFuncScan(const TableFuncScan *from)
  * _copyValuesScan
  */
 static ValuesScan *
-_copyValuesScan(const ValuesScan *from)
+_copyValuesScan(const ValuesScan * from)
 {
 	ValuesScan *newnode = makeNode(ValuesScan);
 
@@ -679,7 +679,7 @@ _copyValuesScan(const ValuesScan *from)
  * _copyCteScan
  */
 static CteScan *
-_copyCteScan(const CteScan *from)
+_copyCteScan(const CteScan * from)
 {
 	CteScan    *newnode = makeNode(CteScan);
 
@@ -701,7 +701,7 @@ _copyCteScan(const CteScan *from)
  * _copyNamedTuplestoreScan
  */
 static NamedTuplestoreScan *
-_copyNamedTuplestoreScan(const NamedTuplestoreScan *from)
+_copyNamedTuplestoreScan(const NamedTuplestoreScan * from)
 {
 	NamedTuplestoreScan *newnode = makeNode(NamedTuplestoreScan);
 
@@ -722,7 +722,7 @@ _copyNamedTuplestoreScan(const NamedTuplestoreScan *from)
  * _copyWorkTableScan
  */
 static WorkTableScan *
-_copyWorkTableScan(const WorkTableScan *from)
+_copyWorkTableScan(const WorkTableScan * from)
 {
 	WorkTableScan *newnode = makeNode(WorkTableScan);
 
@@ -743,7 +743,7 @@ _copyWorkTableScan(const WorkTableScan *from)
  * _copyForeignScan
  */
 static ForeignScan *
-_copyForeignScan(const ForeignScan *from)
+_copyForeignScan(const ForeignScan * from)
 {
 	ForeignScan *newnode = makeNode(ForeignScan);
 
@@ -772,7 +772,7 @@ _copyForeignScan(const ForeignScan *from)
  * _copyCustomScan
  */
 static CustomScan *
-_copyCustomScan(const CustomScan *from)
+_copyCustomScan(const CustomScan * from)
 {
 	CustomScan *newnode = makeNode(CustomScan);
 
@@ -808,7 +808,7 @@ _copyCustomScan(const CustomScan *from)
  *		all the copy functions for classes which inherit from Join.
  */
 static void
-CopyJoinFields(const Join *from, Join *newnode)
+CopyJoinFields(const Join * from, Join * newnode)
 {
 	CopyPlanFields((const Plan *) from, (Plan *) newnode);
 
@@ -821,7 +821,7 @@ CopyJoinFields(const Join *from, Join *newnode)
  * _copyGatherMerge
  */
 static GatherMerge *
-_copyGatherMerge(const GatherMerge *from)
+_copyGatherMerge(const GatherMerge * from)
 {
 	GatherMerge *newnode = makeNode(GatherMerge);
 
@@ -840,7 +840,7 @@ _copyGatherMerge(const GatherMerge *from)
 	COPY_POINTER_FIELD(sortOperators, from->numCols * sizeof(Oid));
 	COPY_POINTER_FIELD(collations, from->numCols * sizeof(Oid));
 	COPY_POINTER_FIELD(nullsFirst, from->numCols * sizeof(bool));
-    COPY_BITMAPSET_FIELD(initParam);
+	COPY_BITMAPSET_FIELD(initParam);
 
 	return newnode;
 }
@@ -849,7 +849,7 @@ _copyGatherMerge(const GatherMerge *from)
  * _copyJoin
  */
 static Join *
-_copyJoin(const Join *from)
+_copyJoin(const Join * from)
 {
 	Join	   *newnode = makeNode(Join);
 
@@ -866,7 +866,7 @@ _copyJoin(const Join *from)
  * _copyNestLoop
  */
 static NestLoop *
-_copyNestLoop(const NestLoop *from)
+_copyNestLoop(const NestLoop * from)
 {
 	NestLoop   *newnode = makeNode(NestLoop);
 
@@ -888,7 +888,7 @@ _copyNestLoop(const NestLoop *from)
  * _copyMergeJoin
  */
 static MergeJoin *
-_copyMergeJoin(const MergeJoin *from)
+_copyMergeJoin(const MergeJoin * from)
 {
 	MergeJoin  *newnode = makeNode(MergeJoin);
 	int			numCols;
@@ -916,7 +916,7 @@ _copyMergeJoin(const MergeJoin *from)
  * _copyHashJoin
  */
 static HashJoin *
-_copyHashJoin(const HashJoin *from)
+_copyHashJoin(const HashJoin * from)
 {
 	HashJoin   *newnode = makeNode(HashJoin);
 
@@ -941,7 +941,7 @@ _copyHashJoin(const HashJoin *from)
  * _copyMaterial
  */
 static Material *
-_copyMaterial(const Material *from)
+_copyMaterial(const Material * from)
 {
 	Material   *newnode = makeNode(Material);
 
@@ -958,7 +958,7 @@ _copyMaterial(const Material *from)
  * _copyMemoize
  */
 static Memoize *
-_copyMemoize(const Memoize *from)
+_copyMemoize(const Memoize * from)
 {
 	Memoize    *newnode = makeNode(Memoize);
 
@@ -990,7 +990,7 @@ _copyMemoize(const Memoize *from)
  *		all the copy functions for classes which inherit from Sort.
  */
 static void
-CopySortFields(const Sort *from, Sort *newnode)
+CopySortFields(const Sort * from, Sort * newnode)
 {
 	CopyPlanFields((const Plan *) from, (Plan *) newnode);
 
@@ -1005,7 +1005,7 @@ CopySortFields(const Sort *from, Sort *newnode)
  * _copySort
  */
 static Sort *
-_copySort(const Sort *from)
+_copySort(const Sort * from)
 {
 	Sort	   *newnode = makeNode(Sort);
 
@@ -1022,7 +1022,7 @@ _copySort(const Sort *from)
  * _copyIncrementalSort
  */
 static IncrementalSort *
-_copyIncrementalSort(const IncrementalSort *from)
+_copyIncrementalSort(const IncrementalSort * from)
 {
 	IncrementalSort *newnode = makeNode(IncrementalSort);
 
@@ -1044,7 +1044,7 @@ _copyIncrementalSort(const IncrementalSort *from)
  * _copyGroup
  */
 static Group *
-_copyGroup(const Group *from)
+_copyGroup(const Group * from)
 {
 	Group	   *newnode = makeNode(Group);
 
@@ -1062,7 +1062,7 @@ _copyGroup(const Group *from)
  * _copyAgg
  */
 static Agg *
-_copyAgg(const Agg *from)
+_copyAgg(const Agg * from)
 {
 	Agg		   *newnode = makeNode(Agg);
 
@@ -1087,7 +1087,7 @@ _copyAgg(const Agg *from)
  * _copyWindowAgg
  */
 static WindowAgg *
-_copyWindowAgg(const WindowAgg *from)
+_copyWindowAgg(const WindowAgg * from)
 {
 	WindowAgg  *newnode = makeNode(WindowAgg);
 
@@ -1121,7 +1121,7 @@ _copyWindowAgg(const WindowAgg *from)
  * _copyUnique
  */
 static Unique *
-_copyUnique(const Unique *from)
+_copyUnique(const Unique * from)
 {
 	Unique	   *newnode = makeNode(Unique);
 
@@ -1145,7 +1145,7 @@ _copyUnique(const Unique *from)
  * _copyHash
  */
 static Hash *
-_copyHash(const Hash *from)
+_copyHash(const Hash * from)
 {
 	Hash	   *newnode = makeNode(Hash);
 
@@ -1170,7 +1170,7 @@ _copyHash(const Hash *from)
  * _copySetOp
  */
 static SetOp *
-_copySetOp(const SetOp *from)
+_copySetOp(const SetOp * from)
 {
 	SetOp	   *newnode = makeNode(SetOp);
 
@@ -1199,7 +1199,7 @@ _copySetOp(const SetOp *from)
  * _copyLockRows
  */
 static LockRows *
-_copyLockRows(const LockRows *from)
+_copyLockRows(const LockRows * from)
 {
 	LockRows   *newnode = makeNode(LockRows);
 
@@ -1221,7 +1221,7 @@ _copyLockRows(const LockRows *from)
  * _copyLimit
  */
 static Limit *
-_copyLimit(const Limit *from)
+_copyLimit(const Limit * from)
 {
 	Limit	   *newnode = makeNode(Limit);
 
@@ -1248,7 +1248,7 @@ _copyLimit(const Limit *from)
  * _copyNestLoopParam
  */
 static NestLoopParam *
-_copyNestLoopParam(const NestLoopParam *from)
+_copyNestLoopParam(const NestLoopParam * from)
 {
 	NestLoopParam *newnode = makeNode(NestLoopParam);
 
@@ -1262,7 +1262,7 @@ _copyNestLoopParam(const NestLoopParam *from)
  * _copyPlanRowMark
  */
 static PlanRowMark *
-_copyPlanRowMark(const PlanRowMark *from)
+_copyPlanRowMark(const PlanRowMark * from)
 {
 	PlanRowMark *newnode = makeNode(PlanRowMark);
 
@@ -1279,7 +1279,7 @@ _copyPlanRowMark(const PlanRowMark *from)
 }
 
 static PartitionPruneInfo *
-_copyPartitionPruneInfo(const PartitionPruneInfo *from)
+_copyPartitionPruneInfo(const PartitionPruneInfo * from)
 {
 	PartitionPruneInfo *newnode = makeNode(PartitionPruneInfo);
 
@@ -1290,7 +1290,7 @@ _copyPartitionPruneInfo(const PartitionPruneInfo *from)
 }
 
 static PartitionedRelPruneInfo *
-_copyPartitionedRelPruneInfo(const PartitionedRelPruneInfo *from)
+_copyPartitionedRelPruneInfo(const PartitionedRelPruneInfo * from)
 {
 	PartitionedRelPruneInfo *newnode = makeNode(PartitionedRelPruneInfo);
 
@@ -1311,7 +1311,7 @@ _copyPartitionedRelPruneInfo(const PartitionedRelPruneInfo *from)
  * _copyPartitionPruneStepOp
  */
 static PartitionPruneStepOp *
-_copyPartitionPruneStepOp(const PartitionPruneStepOp *from)
+_copyPartitionPruneStepOp(const PartitionPruneStepOp * from)
 {
 	PartitionPruneStepOp *newnode = makeNode(PartitionPruneStepOp);
 
@@ -1328,7 +1328,7 @@ _copyPartitionPruneStepOp(const PartitionPruneStepOp *from)
  * _copyPartitionPruneStepCombine
  */
 static PartitionPruneStepCombine *
-_copyPartitionPruneStepCombine(const PartitionPruneStepCombine *from)
+_copyPartitionPruneStepCombine(const PartitionPruneStepCombine * from)
 {
 	PartitionPruneStepCombine *newnode = makeNode(PartitionPruneStepCombine);
 
@@ -1343,7 +1343,7 @@ _copyPartitionPruneStepCombine(const PartitionPruneStepCombine *from)
  * _copyPlanInvalItem
  */
 static PlanInvalItem *
-_copyPlanInvalItem(const PlanInvalItem *from)
+_copyPlanInvalItem(const PlanInvalItem * from)
 {
 	PlanInvalItem *newnode = makeNode(PlanInvalItem);
 
@@ -2208,7 +2208,7 @@ _copyJsonBehavior(const JsonBehavior *from)
 static JsonExpr *
 _copyJsonExpr(const JsonExpr *from)
 {
-	JsonExpr *newnode = makeNode(JsonExpr);
+	JsonExpr   *newnode = makeNode(JsonExpr);
 
 	COPY_SCALAR_FIELD(op);
 	COPY_STRING_FIELD(column_name);
@@ -2506,7 +2506,7 @@ _copyOnConflictExpr(const OnConflictExpr *from)
  * _copyPathKey
  */
 static PathKey *
-_copyPathKey(const PathKey *from)
+_copyPathKey(const PathKey * from)
 {
 	PathKey    *newnode = makeNode(PathKey);
 
@@ -2520,7 +2520,7 @@ _copyPathKey(const PathKey *from)
 }
 
 static GroupByOrdering *
-_copyGroupByOrdering(const GroupByOrdering *from)
+_copyGroupByOrdering(const GroupByOrdering * from)
 {
 	GroupByOrdering *newnode = makeNode(GroupByOrdering);
 
@@ -2534,7 +2534,7 @@ _copyGroupByOrdering(const GroupByOrdering *from)
  * _copyRestrictInfo
  */
 static RestrictInfo *
-_copyRestrictInfo(const RestrictInfo *from)
+_copyRestrictInfo(const RestrictInfo * from)
 {
 	RestrictInfo *newnode = makeNode(RestrictInfo);
 
@@ -2582,7 +2582,7 @@ _copyRestrictInfo(const RestrictInfo *from)
  * _copyPlaceHolderVar
  */
 static PlaceHolderVar *
-_copyPlaceHolderVar(const PlaceHolderVar *from)
+_copyPlaceHolderVar(const PlaceHolderVar * from)
 {
 	PlaceHolderVar *newnode = makeNode(PlaceHolderVar);
 
@@ -2598,7 +2598,7 @@ _copyPlaceHolderVar(const PlaceHolderVar *from)
  * _copySpecialJoinInfo
  */
 static SpecialJoinInfo *
-_copySpecialJoinInfo(const SpecialJoinInfo *from)
+_copySpecialJoinInfo(const SpecialJoinInfo * from)
 {
 	SpecialJoinInfo *newnode = makeNode(SpecialJoinInfo);
 
@@ -2621,7 +2621,7 @@ _copySpecialJoinInfo(const SpecialJoinInfo *from)
  * _copyAppendRelInfo
  */
 static AppendRelInfo *
-_copyAppendRelInfo(const AppendRelInfo *from)
+_copyAppendRelInfo(const AppendRelInfo * from)
 {
 	AppendRelInfo *newnode = makeNode(AppendRelInfo);
 
@@ -2641,7 +2641,7 @@ _copyAppendRelInfo(const AppendRelInfo *from)
  * _copyPlaceHolderInfo
  */
 static PlaceHolderInfo *
-_copyPlaceHolderInfo(const PlaceHolderInfo *from)
+_copyPlaceHolderInfo(const PlaceHolderInfo * from)
 {
 	PlaceHolderInfo *newnode = makeNode(PlaceHolderInfo);
 
@@ -3436,7 +3436,7 @@ _copyJsonTablePathSpec(const JsonTablePathSpec *from)
 static JsonTable *
 _copyJsonTable(const JsonTable *from)
 {
-	JsonTable *newnode = makeNode(JsonTable);
+	JsonTable  *newnode = makeNode(JsonTable);
 
 	COPY_NODE_FIELD(context_item);
 	COPY_NODE_FIELD(pathspec);
@@ -5397,10 +5397,10 @@ _copyDropSubscriptionStmt(const DropSubscriptionStmt *from)
  * ****************************************************************
  */
 static ExtensibleNode *
-_copyExtensibleNode(const ExtensibleNode *from)
+_copyExtensibleNode(const ExtensibleNode * from)
 {
 	ExtensibleNode *newnode;
-	const ExtensibleNodeMethods *methods;
+	const		ExtensibleNodeMethods *methods;
 
 	methods = GetExtensibleNodeMethods(from->extnodename, false);
 	newnode = (ExtensibleNode *) newNode(methods->node_size,
@@ -5471,7 +5471,7 @@ _copyBitString(const BitString *from)
 
 #ifdef NOT_USED_IN_PGPOOL
 static ForeignKeyCacheInfo *
-_copyForeignKeyCacheInfo(const ForeignKeyCacheInfo *from)
+_copyForeignKeyCacheInfo(const ForeignKeyCacheInfo * from)
 {
 	ForeignKeyCacheInfo *newnode = makeNode(ForeignKeyCacheInfo);
 
@@ -6459,54 +6459,54 @@ copyObjectImpl(const void *from)
 		case T_TriggerTransition:
 			retval = _copyTriggerTransition(from);
 			break;
-        case T_JsonOutput:
-            retval = _copyJsonOutput(from);
-            break;
-        case T_JsonArgument:
-            retval = _copyJsonArgument(from);
-            break;
-        case T_JsonFuncExpr:
-            retval = _copyJsonFuncExpr(from);
-            break;
-        case T_JsonTablePathSpec:
-            retval = _copyJsonTablePathSpec(from);
-            break;
-        case T_JsonTable:
-            retval = _copyJsonTable(from);
-            break;
-        case T_JsonTableColumn:
-            retval = _copyJsonTableColumn(from);
-            break;
-        case T_JsonKeyValue:
-            retval = _copyJsonKeyValue(from);
-            break;
-        case T_JsonParseExpr:
-            retval = _copyJsonParseExpr(from);
-            break;
-        case T_JsonScalarExpr:
-            retval = _copyJsonScalarExpr(from);
-            break;
-        case T_JsonSerializeExpr:
-            retval = _copyJsonSerializeExpr(from);
-            break;
-        case T_JsonObjectConstructor:
-            retval = _copyJsonObjectConstructor(from);
-            break;
-        case T_JsonArrayConstructor:
-            retval = _copyJsonArrayConstructor(from);
-            break;
-        case T_JsonArrayQueryConstructor:
-            retval = _copyJsonArrayQueryConstructor(from);
-            break;
-        case T_JsonAggConstructor:
-            retval = _copyJsonAggConstructor(from);
-            break;
-        case T_JsonObjectAgg:
-            retval = _copyJsonObjectAgg(from);
-            break;
-        case T_JsonArrayAgg:
-            retval = _copyJsonArrayAgg(from);
-            break;
+		case T_JsonOutput:
+			retval = _copyJsonOutput(from);
+			break;
+		case T_JsonArgument:
+			retval = _copyJsonArgument(from);
+			break;
+		case T_JsonFuncExpr:
+			retval = _copyJsonFuncExpr(from);
+			break;
+		case T_JsonTablePathSpec:
+			retval = _copyJsonTablePathSpec(from);
+			break;
+		case T_JsonTable:
+			retval = _copyJsonTable(from);
+			break;
+		case T_JsonTableColumn:
+			retval = _copyJsonTableColumn(from);
+			break;
+		case T_JsonKeyValue:
+			retval = _copyJsonKeyValue(from);
+			break;
+		case T_JsonParseExpr:
+			retval = _copyJsonParseExpr(from);
+			break;
+		case T_JsonScalarExpr:
+			retval = _copyJsonScalarExpr(from);
+			break;
+		case T_JsonSerializeExpr:
+			retval = _copyJsonSerializeExpr(from);
+			break;
+		case T_JsonObjectConstructor:
+			retval = _copyJsonObjectConstructor(from);
+			break;
+		case T_JsonArrayConstructor:
+			retval = _copyJsonArrayConstructor(from);
+			break;
+		case T_JsonArrayQueryConstructor:
+			retval = _copyJsonArrayQueryConstructor(from);
+			break;
+		case T_JsonAggConstructor:
+			retval = _copyJsonAggConstructor(from);
+			break;
+		case T_JsonObjectAgg:
+			retval = _copyJsonObjectAgg(from);
+			break;
+		case T_JsonArrayAgg:
+			retval = _copyJsonArrayAgg(from);
+			break;
 		case T_PartitionElem:
 			retval = _copyPartitionElem(from);
 			break;

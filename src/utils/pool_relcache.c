@@ -40,7 +40,7 @@
 
 static void SearchRelCacheErrorCb(void *arg);
 static POOL_SELECT_RESULT *query_cache_to_relation_cache(char *data, size_t size);
-static char *relation_cache_to_query_cache(POOL_SELECT_RESULT *res,size_t *size);
+static char *relation_cache_to_query_cache(POOL_SELECT_RESULT *res, size_t *size);
 
 
 /*
@@ -88,7 +88,7 @@ pool_create_relcache(int cachesize, char *sql,
  * Discard relation cache.
  */
 void
-pool_discard_relcache(POOL_RELCACHE * relcache)
+pool_discard_relcache(POOL_RELCACHE *relcache)
 {
 	int			i;
 
@@ -105,7 +105,7 @@ pool_discard_relcache(POOL_RELCACHE * relcache)
  * If not found in cache, do the query and store the result into cache and return it.
  */
 void *
-pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, char *table)
+pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table)
 {
 	char	   *dbname;
 	int			i;
@@ -115,12 +115,12 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	int			index = 0;
 	int			local_session_id;
 	time_t		now;
-	void		*result;
+	void	   *result;
 	ErrorContextCallback callback;
-    pool_sigset_t oldmask;
-	bool locked;
+	pool_sigset_t oldmask;
+	bool		locked;
 	int			query_cache_not_found = 1;
-	char		*query_cache_data = NULL;
+	char	   *query_cache_data = NULL;
 	size_t		query_cache_len;
 	POOL_SESSION_CONTEXT *session_context;
 	int			node_id;
@@ -133,9 +133,9 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 
 	/*
 	 * Obtain database name and node id to be sent query.  If
-	 * relcache_query_target is RELQTARGET_LOAD_BALANCE_NODE, we consider
-	 * load balance node id to be used to send queries.
-	 * 
+	 * relcache_query_target is RELQTARGET_LOAD_BALANCE_NODE, we consider load
+	 * balance node id to be used to send queries.
+	 *
 	 * Note that we need to use VALID_BACKEND_RAW, rather than VALID_BACKEND
 	 * since pool_is_node_to_be_sent_in_current_query(being called by
 	 * VALID_BACKEND) assumes that if query context exists, where_to_send map
@@ -200,7 +200,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 
 			ereport(DEBUG1,
 					(errmsg("hit local relation cache"),
-					errdetail("query:%s", relcache->sql)));
+					 errdetail("query:%s", relcache->sql)));
 
 			return relcache->cache[i].data;
 		}
@@ -220,10 +220,11 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	error_context_stack = &callback;
 
 	locked = pool_is_shmem_lock();
+
 	/*
 	 * if enable_shared_relcache is true, search query cache.
 	 */
-    if (pool_config->enable_shared_relcache)
+	if (pool_config->enable_shared_relcache)
 	{
 		/* if shmem is not locked by this process, get the lock */
 		if (!locked)
@@ -231,16 +232,16 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 			POOL_SETMASK2(&BlockSig, &oldmask);
 			pool_shmem_lock(POOL_MEMQ_SHARED_LOCK);
 		}
-	    PG_TRY();
+		PG_TRY();
 		{
 			/* search catalog cache in query cache */
 			query_cache_not_found = pool_fetch_cache(backend, query, &query_cache_data, &query_cache_len);
 		}
-	    PG_CATCH();
+		PG_CATCH();
 		{
 			pool_shmem_unlock();
 			POOL_SETMASK(&oldmask);
-	        PG_RE_THROW();
+			PG_RE_THROW();
 		}
 		PG_END_TRY();
 	}
@@ -249,25 +250,26 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	{
 		ereport(DEBUG1,
 				(errmsg("not hit local relation cache and query cache"),
-				errdetail("query:%s", query)));
+				 errdetail("query:%s", query)));
 
 		do_query(CONNECTION(backend, node_id), query, &res, MAJOR(backend));
 		/* Register cache */
 		result = (*relcache->register_func) (res);
 		/* save local catalog cache in query cache */
-	    if (pool_config->enable_shared_relcache)
+		if (pool_config->enable_shared_relcache)
 		{
 			query_cache_data = relation_cache_to_query_cache(res, &query_cache_len);
+
 			/*
-			 * So far, we have already obtained a lock. But to register
-			 * a query cache entry, we need to acquire an exclusive lock.
-			 * Unfortunately:
-			 * (1) we don't know if we already acquired an exclusive or not.
-			 * (2) we cannot escalate a shared lock to an exclusive lock.
-			 * So we release the lock and obtain an exclusive lock.  This may
-			 * create a window and thus we might try to register duplicate
-			 * query cache entry if other process is trying to register the same entry
-			 * in the window. But it should be harmless.
+			 * So far, we have already obtained a lock. But to register a
+			 * query cache entry, we need to acquire an exclusive lock.
+			 * Unfortunately: (1) we don't know if we already acquired an
+			 * exclusive or not. (2) we cannot escalate a shared lock to an
+			 * exclusive lock. So we release the lock and obtain an exclusive
+			 * lock.  This may create a window and thus we might try to
+			 * register duplicate query cache entry if other process is trying
+			 * to register the same entry in the window. But it should be
+			 * harmless.
 			 */
 			pool_shmem_unlock();
 			pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
@@ -278,10 +280,10 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	{
 		ereport(DEBUG1,
 				(errmsg("hit query cache"),
-				errdetail("query:%s", query)));
+				 errdetail("query:%s", query)));
 
 		/* catalog cache found in query_cache, copy local relation cache */
-		res = query_cache_to_relation_cache(query_cache_data,query_cache_len);
+		res = query_cache_to_relation_cache(query_cache_data, query_cache_len);
 		result = (*relcache->register_func) (res);
 	}
 	/* if shmem is locked by this function, unlock it */
@@ -498,11 +500,11 @@ remove_quotes_and_schema_from_relname(char *table)
 	List	   *names;
 
 	rawstring = pstrdup(table);
-	if(SplitIdentifierString(rawstring, '.', (Node **) &names) && names != NIL)
+	if (SplitIdentifierString(rawstring, '.', (Node **) &names) && names != NIL)
 	{
 		/*
-		 * Since table name is always the last one in the list,
-		 * we use llast() to get table name.
+		 * Since table name is always the last one in the list, we use llast()
+		 * to get table name.
 		 */
 		strlcpy(rel, llast(names), sizeof(rel));
 	}
@@ -522,7 +524,7 @@ remove_quotes_and_schema_from_relname(char *table)
  * query. Returns row count.
  */
 void *
-int_register_func(POOL_SELECT_RESULT * res)
+int_register_func(POOL_SELECT_RESULT *res)
 {
 	if (res->numrows >= 1)
 		return (void *) atol(res->data[0]);
@@ -537,7 +539,7 @@ int_unregister_func(void *data)
 }
 
 void *
-string_register_func(POOL_SELECT_RESULT * res)
+string_register_func(POOL_SELECT_RESULT *res)
 {
 	return (res->numrows > 0) ? strdup(res->data[0]) : NULL;
 }
@@ -554,9 +556,9 @@ static POOL_SELECT_RESULT *
 query_cache_to_relation_cache(char *data, size_t size)
 {
 	POOL_SELECT_RESULT *res;
-	char *p;
-	int i;
-	int len;
+	char	   *p;
+	int			i;
+	int			len;
 
 	p = data;
 
@@ -564,11 +566,11 @@ query_cache_to_relation_cache(char *data, size_t size)
 	res->rowdesc = palloc0(sizeof(RowDesc));
 
 	/* rowdesc */
-	res->rowdesc->num_attrs = *((int *)p);
+	res->rowdesc->num_attrs = *((int *) p);
 	p += sizeof(int);
 
 	/* numrows */
-	res->numrows = *((int *)p);
+	res->numrows = *((int *) p);
 	p += sizeof(int);
 
 	len = res->rowdesc->num_attrs * res->numrows;
@@ -579,13 +581,13 @@ query_cache_to_relation_cache(char *data, size_t size)
 	/* nullflags */
 	for (i = 0; i < len; i++)
 	{
-		res->nullflags[i] = *((int *)p);
+		res->nullflags[i] = *((int *) p);
 		p += sizeof(int);
 	}
 	/* data */
 	for (i = 0; i < len; i++)
 	{
-		if ( res->nullflags[i] > 0)
+		if (res->nullflags[i] > 0)
 		{
 			res->data[i] = palloc(res->nullflags[i] + 1);
 			memcpy(res->data[i], p, res->nullflags[i]);
@@ -598,29 +600,29 @@ query_cache_to_relation_cache(char *data, size_t size)
 }
 
 static char *
-relation_cache_to_query_cache(POOL_SELECT_RESULT *res,size_t *size)
+relation_cache_to_query_cache(POOL_SELECT_RESULT *res, size_t *size)
 {
-	char * data;
-	char * p;
+	char	   *data;
+	char	   *p;
 
-	int i;
-	int array_size;
-	int mysize;
+	int			i;
+	int			array_size;
+	int			mysize;
 
 	mysize = 0;
 
 	/* RoeDesc *rowdesc */
-	/* int res->rowdesc->num_attrs;*/
-	mysize += sizeof(int); /* only rodesc->num_attrs */
+	/* int res->rowdesc->num_attrs; */
+	mysize += sizeof(int);		/* only rodesc->num_attrs */
 	/* int numrows */
 	mysize += sizeof(int);
 	/* int *nullflags  */
 	mysize += sizeof(int) * res->rowdesc->num_attrs * res->numrows;
-	/*  char **data */
+	/* char **data */
 	/* res->rowdesc->num_attrs * res->numrows */
 	for (i = 0; i < res->rowdesc->num_attrs * res->numrows; i++)
 	{
-		if(res->nullflags[i] > 0)
+		if (res->nullflags[i] > 0)
 		{
 			mysize += res->nullflags[i];
 		}
@@ -644,7 +646,7 @@ relation_cache_to_query_cache(POOL_SELECT_RESULT *res,size_t *size)
 
 	for (i = 0; i < array_size; i++)
 	{
-		if( res->nullflags[i] > 0) /* NOT NULL? */
+		if (res->nullflags[i] > 0)	/* NOT NULL? */
 		{
 			memcpy(p, res->data[i], res->nullflags[i]);
 			p += res->nullflags[i];

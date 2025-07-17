@@ -43,13 +43,13 @@ typedef struct
 	char	   *adsrc;			/* default value expression */
 	int			use_timestamp;	/* not zero if timestamp is used in default
 								 * value */
-}			TSAttr;
+} TSAttr;
 
 typedef struct
 {
 	int			relnatts;		/* num of attributes */
 	TSAttr		attr[1];
-}			TSRel;
+} TSRel;
 
 typedef struct
 {
@@ -61,26 +61,26 @@ typedef struct
 									 * instead of const */
 	bool		rewrite;		/* has rewritten? */
 	List	   *params;			/* list of additional params */
-}			TSRewriteContext;
+} TSRewriteContext;
 
-static void *ts_register_func(POOL_SELECT_RESULT * res);
+static void *ts_register_func(POOL_SELECT_RESULT *res);
 static void *ts_unregister_func(void *data);
-static TSRel * relcache_lookup(TSRewriteContext * ctx);
+static TSRel *relcache_lookup(TSRewriteContext *ctx);
 static bool isStringConst(Node *node, const char *str);
 static bool rewrite_timestamp_walker(Node *node, void *context);
-static bool rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext * ctx);
-static bool rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext * ctx);
-static char *get_current_timestamp(POOL_CONNECTION_POOL * backend);
-static Node *makeTsExpr(TSRewriteContext * ctx);
+static bool rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx);
+static bool rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx);
+static char *get_current_timestamp(POOL_CONNECTION_POOL *backend);
+static Node *makeTsExpr(TSRewriteContext *ctx);
 static TypeCast *makeTypeCastFromSvfOp(SQLValueFunctionOp op);
-static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL * backend, char *expression);
+static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *expression);
 bool		raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
 
 POOL_RELCACHE *ts_relcache;
 
 
 static void *
-ts_register_func(POOL_SELECT_RESULT * res)
+ts_register_func(POOL_SELECT_RESULT *res)
 {
 /* Number of result columns included in res */
 #define NUM_COLS		3
@@ -136,7 +136,7 @@ ts_unregister_func(void *data)
 
 
 static TSRel *
-relcache_lookup(TSRewriteContext * ctx)
+relcache_lookup(TSRewriteContext *ctx)
 {
 #define ATTRDEFQUERY (Pgversion(ctx->backend)->major >= 73 ? \
 	"SELECT attname, pg_catalog.pg_get_expr(d.adbin, d.adrelid), coalesce((pg_catalog.pg_get_expr(d.adbin, d.adrelid) LIKE '%%now()%%' OR pg_catalog.pg_get_expr(d.adbin, d.adrelid) LIKE '%%''now''::text%%' OR" \
@@ -261,7 +261,7 @@ relcache_lookup(TSRewriteContext * ctx)
  * and add it into params list in context.
  */
 static Node *
-makeTsExpr(TSRewriteContext * ctx)
+makeTsExpr(TSRewriteContext *ctx)
 {
 	ParamRef   *param;
 
@@ -483,7 +483,7 @@ rewrite_timestamp_walker(Node *node, void *context)
  * Get `now()' from MAIN node
  */
 static char *
-get_current_timestamp(POOL_CONNECTION_POOL * backend)
+get_current_timestamp(POOL_CONNECTION_POOL *backend)
 {
 	POOL_SELECT_RESULT *res;
 	static char timestamp[64];
@@ -507,7 +507,7 @@ get_current_timestamp(POOL_CONNECTION_POOL * backend)
  * rewrite InsertStmt
  */
 static bool
-rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext * ctx)
+rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 {
 	int			i;
 	bool		rewrite = false;
@@ -718,7 +718,7 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext * ctx)
  * rewrite UpdateStmt
  */
 static bool
-rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext * ctx)
+rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx)
 {
 	TSRel	   *relcache = NULL;
 	ListCell   *lc;
@@ -786,8 +786,8 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext * ctx)
  * returns query string as palloced string, or NULL if not to need rewrite.
  */
 char *
-rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
-				  bool rewrite_to_params, POOL_SENT_MESSAGE * message)
+rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
+				  bool rewrite_to_params, POOL_SENT_MESSAGE *message)
 {
 	TSRewriteContext ctx;
 	Node	   *stmt;
@@ -818,18 +818,20 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 		stmt = ((PrepareStmt *) node)->query;
 		ctx.rewrite_to_params = true;
 	}
+
 	/*
 	 * CopyStmt
 	 */
-	else if (IsA(node, CopyStmt) &&((CopyStmt *) node)->query != NULL)
+	else if (IsA(node, CopyStmt) && ((CopyStmt *) node)->query != NULL)
 		stmt = ((CopyStmt *) node)->query;
+
 	/*
 	 * ExplainStmt
 	 */
 	else if (IsA(node, ExplainStmt))
 	{
 		ListCell   *lc;
-		bool        analyze = false;
+		bool		analyze = false;
 
 		/* Check to see if this is EXPLAIN ANALYZE */
 		foreach(lc, ((ExplainStmt *) node)->options)
@@ -889,7 +891,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 	}
 	else if (IsA(stmt, CopyStmt))
 	{
-		CopyStmt *c_stmt = (CopyStmt *) stmt;
+		CopyStmt   *c_stmt = (CopyStmt *) stmt;
 
 		raw_expression_tree_walker(
 								   (Node *) c_stmt->attlist,
@@ -908,7 +910,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 	}
 	else if (IsA(stmt, MergeStmt))
 	{
-		MergeStmt *m_stmt = (MergeStmt *) stmt;
+		MergeStmt  *m_stmt = (MergeStmt *) stmt;
 		ListCell   *temp;
 
 		/* USING data_source */
@@ -924,8 +926,8 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
 		foreach(temp, m_stmt->mergeWhenClauses)
 		{
 			raw_expression_tree_walker(
-				lfirst(temp),
-				rewrite_timestamp_walker, (void *) &ctx);
+									   lfirst(temp),
+									   rewrite_timestamp_walker, (void *) &ctx);
 		}
 
 		raw_expression_tree_walker(
@@ -1068,8 +1070,8 @@ rewrite_timestamp(POOL_CONNECTION_POOL * backend, Node *node,
  * rewrite Bind message to add parameter values
  */
 char *
-bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
-					   POOL_SENT_MESSAGE * message,
+bind_rewrite_timestamp(POOL_CONNECTION_POOL *backend,
+					   POOL_SENT_MESSAGE *message,
 					   const char *orig_msg, int *len)
 {
 	int16		tmp2,
@@ -1134,15 +1136,19 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 	if (num_formats == 0)
 	{
 		/*
-		 * If num_formats is 0, the original message has no parameters or the parameter formats are all text,
-		 * so we don't need additional format codes since timestamp parameters use text as its format.
+		 * If num_formats is 0, the original message has no parameters or the
+		 * parameter formats are all text, so we don't need additional format
+		 * codes since timestamp parameters use text as its format.
 		 */
 		num_formats_new = 0;
 	}
 	else
 	{
-		/* If num formats is 1, this means the specified format code is applied for all original parameters,
-		 * so enlarge message length to specify format codes for each of original parameters. */
+		/*
+		 * If num formats is 1, this means the specified format code is
+		 * applied for all original parameters, so enlarge message length to
+		 * specify format codes for each of original parameters.
+		 */
 		if (num_formats == 1)
 			*len += (num_org_params - 1) * sizeof(int16);
 
@@ -1161,10 +1167,14 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 	/* 3.2. the format codes */
 	if (num_formats >= 1)
 	{
-		/* If num_formats is 1, copy the specified format code as numbers of original parameters */
+		/*
+		 * If num_formats is 1, copy the specified format code as numbers of
+		 * original parameters
+		 */
 		if (num_formats == 1)
 		{
-			int16	org_format_code;
+			int16		org_format_code;
+
 			memcpy(&org_format_code, copy_from, sizeof(int16));
 			copy_from += copy_len;
 
@@ -1174,7 +1184,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 				copy_to += sizeof(int16);
 			}
 		}
-		/* otherwise, copy the original format codes as they are*/
+		/* otherwise, copy the original format codes as they are */
 		else
 		{
 			copy_len = num_formats * sizeof(int16);
@@ -1238,7 +1248,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 
 #ifdef TIMESTAMPDEBUG
 	fprintf(stderr, "message length:%d\n", *len);
-	for(i = 0; i < *len; i++)
+	for (i = 0; i < *len; i++)
 	{
 		fprintf(stderr, "%02x ", new_msg[i]);
 	}
@@ -1250,7 +1260,7 @@ bind_rewrite_timestamp(POOL_CONNECTION_POOL * backend,
 
 /* make A_Const of T_String from "SELECT <expression>"*/
 static A_Const *
-makeStringConstFromQuery(POOL_CONNECTION_POOL * backend, char *expression)
+makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *expression)
 {
 	A_Const    *con;
 	POOL_SELECT_RESULT *res;
@@ -1374,6 +1384,7 @@ raw_expression_tree_walker(Node *node,
 
 
 	/* Guard against stack overflow due to overly complex expressions */
+
 	/*
 	 * check_stack_depth();
 	 */

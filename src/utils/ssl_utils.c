@@ -41,11 +41,11 @@
 
 #ifdef USE_SSL
 static int	aes_get_key(const char *password, unsigned char *key, unsigned char *iv);
-static int aes_encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
-			unsigned char *iv, unsigned char *ciphertext);
+static int	aes_encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
+						unsigned char *iv, unsigned char *ciphertext);
 
-static int aes_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
-			unsigned char *iv, unsigned char *plaintext);
+static int	aes_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
+						unsigned char *iv, unsigned char *plaintext);
 #endif
 
 #ifdef USE_SSL

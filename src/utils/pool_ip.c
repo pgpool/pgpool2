@@ -52,22 +52,22 @@
 #include "utils/pool_ip.h"
 #include "pool_config.h"
 #include "utils/elog.h"
-static int rangeSockAddrAF_INET(const struct sockaddr_in *addr,
-					 const struct sockaddr_in *netaddr,
-					 const struct sockaddr_in *netmask);
+static int	rangeSockAddrAF_INET(const struct sockaddr_in *addr,
+								 const struct sockaddr_in *netaddr,
+								 const struct sockaddr_in *netmask);
 
-static int rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
-					  const struct sockaddr_in6 *netaddr,
-					  const struct sockaddr_in6 *netmask);
+static int	rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
+								  const struct sockaddr_in6 *netaddr,
+								  const struct sockaddr_in6 *netmask);
 
-static int getaddrinfo_unix(const char *path,
-				 const struct addrinfo *hintsp,
-				 struct addrinfo **result);
+static int	getaddrinfo_unix(const char *path,
+							 const struct addrinfo *hintsp,
+							 struct addrinfo **result);
 
-static int getnameinfo_unix(const struct sockaddr_un *sa, int salen,
-				 char *node, int nodelen,
-				 char *service, int servicelen,
-				 int flags);
+static int	getnameinfo_unix(const struct sockaddr_un *sa, int salen,
+							 char *node, int nodelen,
+							 char *service, int servicelen,
+							 int flags);
 
 /*
  * pool_getnameinfo_all - get name info for Unix, IPv4 and IPv6 sockets
@@ -424,12 +424,12 @@ SockAddr_cidr_mask(struct sockaddr_storage *mask, char *numbits, int family)
 			return -1;
 	}
 
-    switch (family)
+	switch (family)
 	{
 		case AF_INET:
 			{
 				struct sockaddr_in mask4;
-				long            maskl;
+				long		maskl;
 
 				if (bits < 0 || bits > 32)
 					return -1;

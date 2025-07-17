@@ -97,7 +97,7 @@ typedef struct ForBothCellState
 	const List *l2;
 	int			i1;				/* current element indexes */
 	int			i2;
-} ForBothCellState;
+}			ForBothCellState;
 
 typedef struct ForThreeState
 {
@@ -105,7 +105,7 @@ typedef struct ForThreeState
 	const List *l2;
 	const List *l3;
 	int			i;				/* common element index */
-} ForThreeState;
+}			ForThreeState;
 
 typedef struct ForFourState
 {
@@ -114,7 +114,7 @@ typedef struct ForFourState
 	const List *l3;
 	const List *l4;
 	int			i;				/* common element index */
-} ForFourState;
+}			ForFourState;
 
 typedef struct ForFiveState
 {
@@ -124,7 +124,7 @@ typedef struct ForFiveState
 	const List *l4;
 	const List *l5;
 	int			i;				/* common element index */
-} ForFiveState;
+}			ForFiveState;
 
 /*
  * These routines are small enough, and used often enough, to justify being

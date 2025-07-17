@@ -42,7 +42,8 @@
  * sends the signal to pgpool-II main process to terminate Pgpool-II
  * process.
  */
-bool terminate_pgpool(char mode, bool error)
+bool
+terminate_pgpool(char mode, bool error)
 {
 
 	pid_t		ppid = getppid();
@@ -71,7 +72,7 @@ bool terminate_pgpool(char mode, bool error)
 	}
 	else
 	{
-		ereport(error?ERROR:WARNING,
+		ereport(error ? ERROR : WARNING,
 				(errmsg("error while processing shutdown request"),
 				 errdetail("invalid shutdown mode \"%c\"", mode)));
 		return false;

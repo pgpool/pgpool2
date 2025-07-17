@@ -136,12 +136,12 @@ extern PGDLLIMPORT const uint16 ScanKeywordTokens[];
 
 /* Entry points in parser/scan.l */
 extern core_yyscan_t scanner_init(const char *str,
-                                  int slen,
+								  int slen,
 								  core_yy_extra_type *yyext,
 								  const ScanKeywordList *keywordlist,
 								  const uint16 *keyword_tokens);
 extern void scanner_finish(core_yyscan_t yyscanner);
-extern int	core_yylex(core_YYSTYPE *yylval_param, YYLTYPE *yylloc_param,
+extern int	core_yylex(core_YYSTYPE *yylval_param, YYLTYPE * yylloc_param,
 					   core_yyscan_t yyscanner);
 extern int	scanner_errposition(int location, core_yyscan_t yyscanner);
 extern void setup_scanner_errposition_callback(ScannerCallbackState *scbstate,

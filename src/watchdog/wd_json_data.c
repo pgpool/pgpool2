@@ -66,9 +66,9 @@ get_pool_config_from_json(char *json_data, int data_len)
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "max_spare_children", &config->max_spare_children))
 		goto ERROR_EXIT;
-	if (json_get_int_value_for_key(root, "process_management_mode", (int*)&config->process_management))
+	if (json_get_int_value_for_key(root, "process_management_mode", (int *) &config->process_management))
 		goto ERROR_EXIT;
-	if (json_get_int_value_for_key(root, "process_management_strategy", (int*)&config->process_management_strategy))
+	if (json_get_int_value_for_key(root, "process_management_strategy", (int *) &config->process_management_strategy))
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "replication_mode", &config->replication_mode))
 		goto ERROR_EXIT;
@@ -142,17 +142,20 @@ get_pool_config_from_json(char *json_data, int data_len)
 	}
 
 	value = json_get_value_for_key(root, "health_check_params");
-	/* We don't get separate health check params from older version
-	 * so be kind if the JSON does not contain one
+
+	/*
+	 * We don't get separate health check params from older version so be kind
+	 * if the JSON does not contain one
 	 */
 	if (value != NULL && value->type == json_array)
 	{
-		int health_check_params_count = value->u.array.length;
+		int			health_check_params_count = value->u.array.length;
+
 		if (health_check_params_count != config->backend_desc->num_backends)
 		{
 			ereport(LOG,
-				(errmsg("unexpected number of health check parameters received"),
-				errdetail("expected:%d got %d",config->backend_desc->num_backends,health_check_params_count)));
+					(errmsg("unexpected number of health check parameters received"),
+					 errdetail("expected:%d got %d", config->backend_desc->num_backends, health_check_params_count)));
 		}
 		config->health_check_params = palloc0(sizeof(HealthCheckParams) * config->backend_desc->num_backends);
 
@@ -176,7 +179,7 @@ get_pool_config_from_json(char *json_data, int data_len)
 		}
 	}
 	else
-			config->health_check_params = NULL;
+		config->health_check_params = NULL;
 
 	/* wd_nodes array */
 	value = json_get_value_for_key(root, "wd_nodes");
@@ -257,8 +260,8 @@ get_pool_config_json(void)
 	jw_put_bool(jNode, "failover_require_consensus", pool_config->failover_require_consensus);
 	jw_put_bool(jNode, "allow_multiple_failover_requests_from_node", pool_config->allow_multiple_failover_requests_from_node);
 
-	/* Array of health_check params
-	 * We transport num_backend at max
+	/*
+	 * Array of health_check params We transport num_backend at max
 	 */
 	jw_start_array(jNode, "health_check_params");
 	for (i = 0; i < pool_config->backend_desc->num_backends; i++)
@@ -369,7 +372,7 @@ parse_data_request_json(char *json_data, int data_len, char **request_type)
  * and creates a json packet from it
  */
 char *
-get_backend_node_status_json(WatchdogNode * wdNode)
+get_backend_node_status_json(WatchdogNode *wdNode)
 {
 	int			i;
 	char	   *json_str;
@@ -453,7 +456,7 @@ get_pg_backend_node_status_from_json(char *json_data, int data_len)
 }
 
 char *
-get_beacon_message_json(WatchdogNode * wdNode)
+get_beacon_message_json(WatchdogNode *wdNode)
 {
 	char	   *json_str;
 	struct timeval current_time;
@@ -481,7 +484,7 @@ get_beacon_message_json(WatchdogNode * wdNode)
 }
 
 char *
-get_watchdog_node_info_json(WatchdogNode * wdNode, char *authkey)
+get_watchdog_node_info_json(WatchdogNode *wdNode, char *authkey)
 {
 	char	   *json_str;
 	long		seconds_since_current_state;
@@ -805,7 +808,7 @@ parse_wd_node_function_json(char *json_data, int data_len, char **func_name, int
 	}
 	else
 	{
-		*flags = (unsigned char)tmpflags;
+		*flags = (unsigned char) tmpflags;
 	}
 
 	if (json_get_int_value_for_key(root, "NodeCount", &node_count))
@@ -873,8 +876,8 @@ char *
 get_wd_exec_cluster_command_json(char *clusterCommand, List *args_list,
 								 unsigned int sharedKey, char *authKey)
 {
-	char	*json_str;
-	int 	nArgs = args_list? list_length(args_list):0;
+	char	   *json_str;
+	int			nArgs = args_list ? list_length(args_list) : 0;
 
 	JsonNode   *jNode = jw_create_with_object(true);
 
@@ -888,20 +891,22 @@ get_wd_exec_cluster_command_json(char *clusterCommand, List *args_list,
 	jw_put_int(jNode, "nArgs", nArgs);
 
 	/* Array of arguments */
-	if(nArgs > 0)
+	if (nArgs > 0)
 	{
 		ListCell   *lc;
+
 		jw_start_array(jNode, "argument_list");
 
 		foreach(lc, args_list)
 		{
 			WDExecCommandArg *wdExecCommandArg = lfirst(lc);
+
 			jw_start_object(jNode, "Arg");
 			jw_put_string(jNode, "arg_name", wdExecCommandArg->arg_name);
 			jw_put_string(jNode, "arg_value", wdExecCommandArg->arg_value);
 			jw_end_element(jNode);
 		}
-		jw_end_element(jNode);		/* argument_list array End */
+		jw_end_element(jNode);	/* argument_list array End */
 	}
 
 
@@ -916,9 +921,9 @@ parse_wd_exec_cluster_command_json(char *json_data, int data_len,
 								   char **clusterCommand, List **args_list)
 {
 	json_value *root;
-	char	*ptr = NULL;
-	int		i;
-	int 	nArgs = 0;
+	char	   *ptr = NULL;
+	int			i;
+	int			nArgs = 0;
 
 	*args_list = NULL;
 
@@ -953,12 +958,13 @@ parse_wd_exec_cluster_command_json(char *json_data, int data_len,
 	if (nArgs > 0)
 	{
 		json_value *value;
+
 		/* backend_desc array */
 		value = json_get_value_for_key(root, "argument_list");
 		if (value == NULL || value->type != json_array)
 			goto ERROR_EXIT;
 
-		if (nArgs!= value->u.array.length)
+		if (nArgs != value->u.array.length)
 		{
 			ereport(LOG,
 					(errmsg("watchdog is unable to parse exec cluster command json"),
@@ -968,11 +974,12 @@ parse_wd_exec_cluster_command_json(char *json_data, int data_len,
 		for (i = 0; i < nArgs; i++)
 		{
 			WDExecCommandArg *command_arg = palloc0(sizeof(WDExecCommandArg));
+
 			/*
 			 * Append to list right away, so that deep freeing the list also
 			 * get rid of half cooked arguments in case of an error
 			 */
-			*args_list = lappend(*args_list,command_arg);
+			*args_list = lappend(*args_list, command_arg);
 
 			json_value *arr_value = value->u.array.values[i];
 			char	   *ptr;
@@ -994,7 +1001,7 @@ parse_wd_exec_cluster_command_json(char *json_data, int data_len,
 	json_value_free(root);
 	return true;
 
-	ERROR_EXIT:
+ERROR_EXIT:
 	if (root)
 		json_value_free(root);
 	if (*args_list)

@@ -55,20 +55,20 @@ typedef struct
 	int			type;
 	int			flag;
 	regex_t		regexv;
-}			RegPattern;
+} RegPattern;
 
 typedef enum ProcessManagementModes
 {
 	PM_STATIC = 1,
 	PM_DYNAMIC
-}			ProcessManagementModes;
+} ProcessManagementModes;
 
 typedef enum ProcessManagementSstrategies
 {
 	PM_STRATEGY_AGGRESSIVE = 1,
 	PM_STRATEGY_GENTLE,
 	PM_STRATEGY_LAZY
-}			ProcessManagementSstrategies;
+} ProcessManagementSstrategies;
 
 typedef enum NativeReplicationSubModes
 {
@@ -85,28 +85,28 @@ typedef enum ClusteringModes
 	CM_SLONY,
 	CM_RAW,
 	CM_SNAPSHOT_ISOLATION
-}			ClusteringModes;
+} ClusteringModes;
 
 typedef enum LogStandbyDelayModes
 {
 	LSD_ALWAYS = 1,
 	LSD_OVER_THRESHOLD,
 	LSD_NONE
-}			LogStandbyDelayModes;
+} LogStandbyDelayModes;
 
 
 typedef enum MemCacheMethod
 {
 	SHMEM_CACHE = 1,
 	MEMCACHED_CACHE
-}			MemCacheMethod;
+} MemCacheMethod;
 
 typedef enum WdLifeCheckMethod
 {
 	LIFECHECK_BY_QUERY = 1,
 	LIFECHECK_BY_HB,
 	LIFECHECK_BY_EXTERNAL
-}			WdLifeCheckMethod;
+} WdLifeCheckMethod;
 
 typedef enum DLBOW_OPTION
 {
@@ -115,13 +115,13 @@ typedef enum DLBOW_OPTION
 	DLBOW_TRANS_TRANSACTION,
 	DLBOW_ALWAYS,
 	DLBOW_DML_ADAPTIVE
-}			DLBOW_OPTION;
+} DLBOW_OPTION;
 
 typedef enum RELQTARGET_OPTION
 {
 	RELQTARGET_PRIMARY = 1,
 	RELQTARGET_LOAD_BALANCE_NODE
-}			RELQTARGET_OPTION;
+} RELQTARGET_OPTION;
 
 typedef enum CHECK_TEMP_TABLE_OPTION
 {
@@ -130,7 +130,7 @@ typedef enum CHECK_TEMP_TABLE_OPTION
 	CHECK_TEMP_NONE,
 	CHECK_TEMP_ON,
 	CHECK_TEMP_OFF,
-}			CHECK_TEMP_TABLE_OPTION;
+} CHECK_TEMP_TABLE_OPTION;
 
 /* log_backend_messages */
 typedef enum BGMSG_OPTION
@@ -156,13 +156,13 @@ typedef struct WdNodeInfo
 	char		hostname[WD_MAX_HOST_NAMELEN];	/* host name */
 	int			pgpool_port;	/* pgpool port */
 	int			wd_port;		/* watchdog port */
-}			WdNodeInfo;
+} WdNodeInfo;
 
 typedef struct WdNodesConfig
 {
 	int			num_wd;			/* number of watchdogs */
-	WdNodeInfo wd_node_info[MAX_WATCHDOG_NUM];
-}			WdNodesConfig;
+	WdNodeInfo	wd_node_info[MAX_WATCHDOG_NUM];
+} WdNodesConfig;
 
 
 typedef struct
@@ -170,7 +170,7 @@ typedef struct
 	char		addr[WD_MAX_HOST_NAMELEN];
 	char		if_name[WD_MAX_IF_NAME_LEN];
 	int			dest_port;
-}			WdHbIf;
+} WdHbIf;
 
 #define WD_INFO(wd_id) (pool_config->wd_nodes.wd_node_info[(wd_id)])
 #define WD_HB_IF(if_id) (pool_config->hb_dest_if[(if_id)])
@@ -190,7 +190,7 @@ typedef struct
 											 * retries */
 	int			connect_timeout;	/* timeout value before giving up
 									 * connecting to backend */
-}			HealthCheckParams;
+} HealthCheckParams;
 
 /*
  * For dml adaptive object relations
@@ -203,41 +203,41 @@ typedef enum
 	OBJECT_TYPE_FUNCTION,
 	OBJECT_TYPE_RELATION,
 	OBJECT_TYPE_UNKNOWN
-}		DBObjectTypes;
+} DBObjectTypes;
 
 typedef struct
 {
-	char	*name;
+	char	   *name;
 	DBObjectTypes object_type;
-}		DBObject;
+} DBObject;
 
 typedef struct
 {
 	DBObject	left_token;
 	DBObject	right_token;
-}		DBObjectRelation;
+} DBObjectRelation;
 
 /*
  * configuration parameters
  */
 typedef struct
 {
-	ClusteringModes	backend_clustering_mode;	/* Backend clustering mode */
-	ProcessManagementModes	process_management;
+	ClusteringModes backend_clustering_mode;	/* Backend clustering mode */
+	ProcessManagementModes process_management;
 	ProcessManagementSstrategies process_management_strategy;
-	char	   **listen_addresses;	/* hostnames/IP addresses to listen on */
+	char	  **listen_addresses;	/* hostnames/IP addresses to listen on */
 	int			port;			/* port # to bind */
-	char	   **pcp_listen_addresses;	/* PCP listen address to listen on */
+	char	  **pcp_listen_addresses;	/* PCP listen address to listen on */
 	int			pcp_port;		/* PCP port # to bind */
-	char	   **unix_socket_directories;		/* pgpool socket directories */
-	char		*unix_socket_group;			/* owner group of pgpool sockets */
+	char	  **unix_socket_directories;	/* pgpool socket directories */
+	char	   *unix_socket_group;	/* owner group of pgpool sockets */
 	int			unix_socket_permissions;	/* pgpool sockets permissions */
 	char	   *wd_ipc_socket_dir;	/* watchdog command IPC socket directory */
-	char	   **pcp_socket_dir; /* PCP socket directory */
-	int			num_init_children;	/* Maximum number of child to
-										 * accept connections */
-	int			min_spare_children;		/* Minimum number of idle children */
-	int			max_spare_children;		/* Minimum number of idle children */
+	char	  **pcp_socket_dir; /* PCP socket directory */
+	int			num_init_children;	/* Maximum number of child to accept
+									 * connections */
+	int			min_spare_children; /* Minimum number of idle children */
+	int			max_spare_children; /* Minimum number of idle children */
 	int			listen_backlog_multiplier;	/* determines the size of the
 											 * connection queue */
 	int			reserved_connections;	/* # of reserved connections */
@@ -270,7 +270,7 @@ typedef struct
 	char	   *pid_file_name;	/* pid file name */
 	bool		replication_mode;	/* replication mode */
 	bool		log_connections;	/* logs incoming connections */
-	bool		log_disconnections;	/* logs closing connections */
+	bool		log_disconnections; /* logs closing connections */
 	bool		log_pcp_processes;	/* logs pcp processes */
 	bool		log_hostname;	/* resolve hostname */
 	bool		enable_pool_hba;	/* enables pool_hba.conf file
@@ -295,19 +295,21 @@ typedef struct
 														 * false, just abort the
 														 * transaction to keep
 														 * the consistency. */
-	bool		auto_failback;	/* If true, backend node reattach,
-								 * when backend node detached and
+	bool		auto_failback;	/* If true, backend node reattach, when
+								 * backend node detached and
 								 * replication_status is 'stream' */
-	int			auto_failback_interval;	/* min interval of executing auto_failback */
+	int			auto_failback_interval; /* min interval of executing
+										 * auto_failback */
 	bool		replicate_select;	/* replicate SELECT statement when load
 									 * balancing is disabled. */
 	char	  **reset_query_list;	/* comma separated list of queries to be
 									 * issued at the end of session */
 	char	  **read_only_function_list;	/* list of functions with no side
-										 * effects */
+											 * effects */
 	char	  **write_function_list;	/* list of functions with side effects */
-	char	  **primary_routing_query_pattern_list;	/* list of query patterns that
-											 * should be sent to primary node */
+	char	  **primary_routing_query_pattern_list; /* list of query patterns
+													 * that should be sent to
+													 * primary node */
 	char	   *log_line_prefix;	/* printf-style string to output at
 									 * beginning of each log line */
 	int			log_error_verbosity;	/* controls how much detail about
@@ -320,8 +322,8 @@ typedef struct
 	bool		logging_collector;
 	int			log_rotation_age;
 	int			log_rotation_size;
-	char		*log_directory;
-	char		*log_filename;
+	char	   *log_directory;
+	char	   *log_filename;
 	bool		log_truncate_on_rotation;
 	int			log_file_mode;
 
@@ -333,15 +335,19 @@ typedef struct
 									 * greater than 0 to enable the
 									 * functionality. */
 
-	int		delay_threshold_by_time;	/* If the standby server delays more than
-										* delay_threshold_in_time, any query goes to the
-										* primary only. The unit is in seconds. 0
-										* disables the check. Default is 0.
-										* If delay_threshold_in_time is greater than 0,
-										* delay_threshold will be ignored.
-										* Note that health_check_period required to be
-										* greater than 0 to enable the
-										* functionality. */
+	int			delay_threshold_by_time;	/* If the standby server delays
+											 * more than
+											 * delay_threshold_in_time, any
+											 * query goes to the primary only.
+											 * The unit is in seconds. 0
+											 * disables the check. Default is
+											 * 0. If delay_threshold_in_time
+											 * is greater than 0,
+											 * delay_threshold will be
+											 * ignored. Note that
+											 * health_check_period required to
+											 * be greater than 0 to enable the
+											 * functionality. */
 
 	bool		prefer_lower_delay_standby;
 
@@ -366,11 +372,11 @@ typedef struct
 	char	   *sr_check_database;	/* PostgreSQL database name for streaming
 									 * replication check */
 	char	   *failover_command;	/* execute command when failover happens */
-	char	   *follow_primary_command;	/* execute command when failover is
+	char	   *follow_primary_command; /* execute command when failover is
 										 * ended */
 	char	   *failback_command;	/* execute command when failback happens */
 
-	bool		failover_on_backend_error; /* If true, trigger fail over when
+	bool		failover_on_backend_error;	/* If true, trigger fail over when
 											 * writing to the backend
 											 * communication socket fails.
 											 * This is the same behavior of
@@ -378,8 +384,8 @@ typedef struct
 											 * set to false, pgpool will
 											 * report an error and disconnect
 											 * the session. */
-	bool		failover_on_backend_shutdown; /* If true, trigger fail over
-												 when backend is going down */
+	bool		failover_on_backend_shutdown;	/* If true, trigger fail over
+												 * when backend is going down */
 	bool		detach_false_primary;	/* If true, detach false primary */
 	char	   *recovery_user;	/* PostgreSQL user name for online recovery */
 	char	   *recovery_password;	/* PostgreSQL user password for online
@@ -406,8 +412,8 @@ typedef struct
 	bool		log_statement;	/* logs all SQL statements */
 	bool		log_per_node_statement; /* logs per node detailed SQL
 										 * statements */
-	bool		notice_per_node_statement; /* logs notice message for per node detailed SQL
-										 * statements */
+	bool		notice_per_node_statement;	/* logs notice message for per
+											 * node detailed SQL statements */
 	bool		log_client_messages;	/* If true, logs any client messages */
 	int			log_backend_messages;	/* logs any backend messages */
 	char	   *lobj_lock_table;	/* table name to lock for rewriting
@@ -422,20 +428,27 @@ typedef struct
 
 	/* followings till syslog, does not exist in the configuration file */
 	int			num_reset_queries;	/* number of queries in reset_query_list */
-	int			num_listen_addresses;	/* number of entries in listen_addresses */
-	int			num_pcp_listen_addresses;	/* number of entries in pcp_listen_addresses */
-	int			num_unix_socket_directories;	/* number of entries in unix_socket_directories */
-	int			num_pcp_socket_directories;	/* number of entries in pcp_socket_dir */
+	int			num_listen_addresses;	/* number of entries in
+										 * listen_addresses */
+	int			num_pcp_listen_addresses;	/* number of entries in
+											 * pcp_listen_addresses */
+	int			num_unix_socket_directories;	/* number of entries in
+												 * unix_socket_directories */
+	int			num_pcp_socket_directories; /* number of entries in
+											 * pcp_socket_dir */
 	int			num_read_only_function_list;	/* number of functions in
-											 * read_only_function_list */
+												 * read_only_function_list */
 	int			num_write_function_list;	/* number of functions in
 											 * write_function_list */
-	int			num_cache_safe_memqcache_table_list; /* number of functions in
-												 * cache_safe_memqcache_table_list */
-	int			num_cache_unsafe_memqcache_table_list; /* number of functions in
-												 * cache_unsafe_memqcache_table_list */
-	int			num_primary_routing_query_pattern_list;	/* number of query patterns in
-												 * primary_routing_query_pattern_list */
+	int			num_cache_safe_memqcache_table_list;	/* number of functions
+														 * in
+														 * cache_safe_memqcache_table_list */
+	int			num_cache_unsafe_memqcache_table_list;	/* number of functions
+														 * in
+														 * cache_unsafe_memqcache_table_list */
+	int			num_primary_routing_query_pattern_list; /* number of query
+														 * patterns in
+														 * primary_routing_query_pattern_list */
 	int			num_wd_monitoring_interfaces_list;	/* number of items in
 													 * wd_monitoring_interfaces_list */
 	/* ssl configuration */
@@ -446,25 +459,32 @@ typedef struct
 	char	   *ssl_ca_cert;	/* path to root (CA) certificate */
 	char	   *ssl_ca_cert_dir;	/* path to directory containing CA
 									 * certificates */
-	char	   *ssl_crl_file;	/* path to the SSL certificate revocation list file */
+	char	   *ssl_crl_file;	/* path to the SSL certificate revocation list
+								 * file */
 	char	   *ssl_ciphers;	/* allowed ssl ciphers */
-	bool		ssl_prefer_server_ciphers; /*Use SSL cipher preferences, rather than the client's*/
+	bool		ssl_prefer_server_ciphers;	/* Use SSL cipher preferences,
+											 * rather than the client's */
 	char	   *ssl_ecdh_curve; /* the curve to use in ECDH key exchange */
-	char	   *ssl_dh_params_file; /* path to the Diffie-Hellman parameters contained file */
-	char	   *ssl_passphrase_command; /* path to the Diffie-Hellman parameters contained file */
+	char	   *ssl_dh_params_file; /* path to the Diffie-Hellman parameters
+									 * contained file */
+	char	   *ssl_passphrase_command; /* path to the Diffie-Hellman
+										 * parameters contained file */
 	int64		relcache_expire;	/* relation cache life time in seconds */
 	int			relcache_size;	/* number of relation cache life entry */
-	CHECK_TEMP_TABLE_OPTION		check_temp_table;	/* how to check temporary table */
+	CHECK_TEMP_TABLE_OPTION check_temp_table;	/* how to check temporary
+												 * table */
 	bool		check_unlogged_table;	/* enable unlogged table check */
-	bool		enable_shared_relcache;	/* If true, relation cache stored in memory cache */
-	RELQTARGET_OPTION	relcache_query_target;	/* target node to send relcache queries */
+	bool		enable_shared_relcache; /* If true, relation cache stored in
+										 * memory cache */
+	RELQTARGET_OPTION relcache_query_target;	/* target node to send
+												 * relcache queries */
 
 	/*
 	 * followings are for regex support and do not exist in the configuration
 	 * file
 	 */
-	RegPattern *lists_patterns; /* Precompiled regex patterns for write/readonly
-								 * lists */
+	RegPattern *lists_patterns; /* Precompiled regex patterns for
+								 * write/readonly lists */
 	int			pattc;			/* number of regexp pattern */
 	int			current_pattern_size;	/* size of the regex pattern array */
 
@@ -502,8 +522,10 @@ typedef struct
 											 * by default */
 	char	   *memqcache_oiddir;	/* Temporary work directory to record
 									 * table oids */
-	char	  **cache_safe_memqcache_table_list; /* list of tables to memqcache */
-	char	  **cache_unsafe_memqcache_table_list; /* list of tables not to memqcache */
+	char	  **cache_safe_memqcache_table_list;	/* list of tables to
+													 * memqcache */
+	char	  **cache_unsafe_memqcache_table_list;	/* list of tables not to
+													 * memqcache */
 
 	RegPattern *lists_memqcache_table_patterns; /* Precompiled regex patterns
 												 * for cache safe/unsafe lists */
@@ -515,12 +537,11 @@ typedef struct
 	 * user_redirect_preference_list =
 	 * 'postgres:primary,user[0-4]:1,user[5-9]:2'
 	 */
-	char	   *user_redirect_preference_list;	/* raw string in
-													 * pgpool.conf */
-	RegArray   *redirect_usernames;	/* Precompiled regex patterns for db
+	char	   *user_redirect_preference_list;	/* raw string in pgpool.conf */
+	RegArray   *redirect_usernames; /* Precompiled regex patterns for db
 									 * preference list */
-	Left_right_tokens *user_redirect_tokens;	/* db redirect for dbname and node
-											 * string */
+	Left_right_tokens *user_redirect_tokens;	/* db redirect for dbname and
+												 * node string */
 
 	/*
 	 * database_redirect_preference_list =
@@ -571,10 +592,13 @@ typedef struct
 												 * will not be load balanced
 												 * until the session ends. */
 
-	char	   *dml_adaptive_object_relationship_list;	/* objects relationship list*/
+	char	   *dml_adaptive_object_relationship_list;	/* objects relationship
+														 * list */
 	DBObjectRelation *parsed_dml_adaptive_object_relationship_list;
 
-	bool		statement_level_load_balance; /* if on, select load balancing node per statement */
+	bool		statement_level_load_balance;	/* if on, select load
+												 * balancing node per
+												 * statement */
 
 	/*
 	 * add for watchdog
@@ -589,23 +613,26 @@ typedef struct
 															 * failover requests to
 															 * build consensus */
 	bool		enable_consensus_with_half_votes;
-											/* apply majority rule for consensus
-											 * and quorum computation at 50% of
-											 * votes in a cluster with an even
-											 * number of nodes.
-											 */
+
+	/*
+	 * apply majority rule for consensus and quorum computation at 50% of
+	 * votes in a cluster with an even number of nodes.
+	 */
 	bool		wd_remove_shutdown_nodes;
-											/* revoke membership of properly shutdown watchdog
-											 * nodes.
-											 */
-	int 		wd_lost_node_removal_timeout;
-											/* timeout in seconds to revoke membership of
-											 * LOST watchdog nodes
-											 */
-	int 		wd_no_show_node_removal_timeout;
-											/* time in seconds to revoke membership of
-											 * NO-SHOW watchdog node
-											 */
+
+	/*
+	 * revoke membership of properly shutdown watchdog nodes.
+	 */
+	int			wd_lost_node_removal_timeout;
+
+	/*
+	 * timeout in seconds to revoke membership of LOST watchdog nodes
+	 */
+	int			wd_no_show_node_removal_timeout;
+
+	/*
+	 * time in seconds to revoke membership of NO-SHOW watchdog node
+	 */
 
 	WdLifeCheckMethod wd_lifecheck_method;	/* method of lifecheck.
 											 * 'heartbeat' or 'query' */
@@ -617,10 +644,11 @@ typedef struct
 											 * leader pgpool goes down. */
 	int			wd_priority;	/* watchdog node priority, during leader
 								 * election */
-	int			pgpool_node_id;	/* pgpool (watchdog) node id */
+	int			pgpool_node_id; /* pgpool (watchdog) node id */
 	WdNodesConfig wd_nodes;		/* watchdog lists */
 	char	   *trusted_servers;	/* icmp reachable server list (A,B,C) */
-	char	   *trusted_server_command;	/* Executes this command when upper servers are observed */
+	char	   *trusted_server_command; /* Executes this command when upper
+										 * servers are observed */
 	char	   *delegate_ip;	/* delegate IP address */
 	int			wd_interval;	/* lifecheck interval (sec) */
 	char	   *wd_authkey;		/* Authentication key for watchdog
@@ -642,17 +670,19 @@ typedef struct
 										 * signal (sec) */
 	int			wd_heartbeat_deadtime;	/* Deadtime interval for heartbeat
 										 * signal (sec) */
-	WdHbIf		hb_ifs[WD_MAX_IF_NUM];		/* heartbeat interfaces of all watchdog nodes */
-	WdHbIf		hb_dest_if[WD_MAX_IF_NUM];	/* heartbeat destination interfaces */
-	int			num_hb_dest_if;				/* number of interface devices */
+	WdHbIf		hb_ifs[WD_MAX_IF_NUM];	/* heartbeat interfaces of all
+										 * watchdog nodes */
+	WdHbIf		hb_dest_if[WD_MAX_IF_NUM];	/* heartbeat destination
+											 * interfaces */
+	int			num_hb_dest_if; /* number of interface devices */
 	char	  **wd_monitoring_interfaces_list;	/* network interface name list
 												 * to be monitored by watchdog */
-	bool		health_check_test;			/* if on, enable health check testing */
+	bool		health_check_test;	/* if on, enable health check testing */
 
-}			POOL_CONFIG;
+} POOL_CONFIG;
 
-extern POOL_CONFIG * pool_config;
-extern char config_file_dir[]; /* directory path of config file pgpool.conf */
+extern POOL_CONFIG *pool_config;
+extern char config_file_dir[];	/* directory path of config file pgpool.conf */
 
 typedef enum
 {
@@ -661,7 +691,7 @@ typedef enum
 	CFGCXT_RELOAD,
 	CFGCXT_PCP,
 	CFGCXT_SESSION
-}			ConfigContext;
+} ConfigContext;
 
 typedef struct ConfigVariable
 {
@@ -675,7 +705,7 @@ extern int	pool_init_config(void);
 extern bool pool_get_config(const char *config_file, ConfigContext context);
 extern int	eval_logical(const char *str);
 extern char *pool_flag_to_str(unsigned short flag);
-extern char *backend_status_to_str(BackendInfo * bi);
+extern char *backend_status_to_str(BackendInfo *bi);
 
 /* methods used for regexp support */
 extern int	add_regex_pattern(const char *type, char *s);

@@ -65,7 +65,7 @@ typedef enum
 	CON_CONNECT_WAIT,			/* waiting for connection starting */
 	CON_UP,						/* up and running */
 	CON_DOWN					/* down, disconnected */
-}			BACKEND_STATUS;
+} BACKEND_STATUS;
 
 /* backend status name strings */
 #define BACKEND_STATUS_CON_UNUSED		"unused"
@@ -80,7 +80,7 @@ typedef enum
 typedef struct
 {
 	BACKEND_STATUS status[MAX_NUM_BACKENDS];
-}			BackendStatusRecord;
+} BackendStatusRecord;
 
 typedef enum
 {
@@ -88,7 +88,7 @@ typedef enum
 	ROLE_REPLICA,
 	ROLE_PRIMARY,
 	ROLE_STANDBY
-}			SERVER_ROLE;
+} SERVER_ROLE;
 
 /*
  * PostgreSQL backend descriptor. Placed on shared memory area.
@@ -98,24 +98,31 @@ typedef struct
 	char		backend_hostname[MAX_DB_HOST_NAMELEN];	/* backend host name */
 	int			backend_port;	/* backend port numbers */
 	BACKEND_STATUS backend_status;	/* backend status */
-	char		pg_backend_status[NAMEDATALEN];	/* backend status examined by show pool_nodes and pcp_node_info*/
+	char		pg_backend_status[NAMEDATALEN]; /* backend status examined by
+												 * show pool_nodes and
+												 * pcp_node_info */
 	time_t		status_changed_time;	/* backend status changed time */
 	double		backend_weight; /* normalized backend load balance ratio */
 	double		unnormalized_weight;	/* described parameter */
 	char		backend_data_directory[MAX_PATH_LENGTH];
-	char		backend_application_name[NAMEDATALEN];	/* application_name for walreceiver */
+	char		backend_application_name[NAMEDATALEN];	/* application_name for
+														 * walreceiver */
 	unsigned short flag;		/* various flags */
 	bool		quarantine;		/* true if node is CON_DOWN because of
 								 * quarantine */
 	uint64		standby_delay;	/* The replication delay against the primary */
-	bool		standby_delay_by_time;	/* true if standby_delay is measured in microseconds, not bytes */
+	bool		standby_delay_by_time;	/* true if standby_delay is measured
+										 * in microseconds, not bytes */
 	SERVER_ROLE role;			/* Role of server. used by pcp_node_info and
 								 * failover() to keep track of quarantined
 								 * primary node */
-	char		pg_role[NAMEDATALEN];	/* backend role examined by show pool_nodes and pcp_node_info*/
-	char		replication_state [NAMEDATALEN];	/* "state" from pg_stat_replication */
-	char		replication_sync_state [NAMEDATALEN];	/* "sync_state" from pg_stat_replication */
-}			BackendInfo;
+	char		pg_role[NAMEDATALEN];	/* backend role examined by show
+										 * pool_nodes and pcp_node_info */
+	char		replication_state[NAMEDATALEN]; /* "state" from
+												 * pg_stat_replication */
+	char		replication_sync_state[NAMEDATALEN];	/* "sync_state" from
+														 * pg_stat_replication */
+} BackendInfo;
 
 typedef struct
 {
@@ -125,7 +132,7 @@ typedef struct
 								 * reloading pgpool.conf. */
 
 	BackendInfo backend_info[MAX_NUM_BACKENDS];
-}			BackendDesc;
+} BackendDesc;
 
 typedef enum
 {
@@ -134,7 +141,7 @@ typedef enum
 	IDLE,
 	IDLE_IN_TRANS,
 	CONNECTING
-}			ProcessStatus;
+} ProcessStatus;
 
 /*
  * mamimum cancel key length
@@ -152,11 +159,11 @@ typedef struct
 	int			major;			/* protocol major version */
 	int			minor;			/* protocol minor version */
 	int			pid;			/* backend process id */
-	char		key[MAX_CANCELKEY_LENGTH];			/* cancel key */
+	char		key[MAX_CANCELKEY_LENGTH];	/* cancel key */
 	int32		keylen;			/* cancel key length */
 	int			counter;		/* used counter */
 	time_t		create_time;	/* connection creation time */
-	time_t		client_connection_time;	/* client connection time */
+	time_t		client_connection_time; /* client connection time */
 	time_t		client_disconnection_time;	/* client last disconnection time */
 	int			client_idle_duration;	/* client idle duration time (s) */
 	int			load_balancing_node;	/* load balancing node */
@@ -175,7 +182,7 @@ typedef struct
 	 * it should not be treated as a backend node failure. This flag is used
 	 * to handle pg_terminate_backend()
 	 */
-}			ConnectionInfo;
+} ConnectionInfo;
 
 /*
  * process information
@@ -188,24 +195,27 @@ typedef struct
 {
 	pid_t		pid;			/* OS's process id */
 	time_t		start_time;		/* fork() time */
-	char		connected;		/* if not 0 this process is already used*/
+	char		connected;		/* if not 0 this process is already used */
 	int			wait_for_connect;	/* waiting time for client connection (s) */
 	ConnectionInfo *connection_info;	/* head of the connection info for
 										 * this process */
-	int			client_connection_count;	/* how many times clients used this process */
-	ProcessStatus	status;
-	char	client_host[NI_MAXHOST];	/* client host. Only valid if status != WAIT_FOR_CONNECT */
-	char	client_port[NI_MAXSERV];	/* client port. Only valid if status != WAIT_FOR_CONNECT */
-	char	statement[MAXSTMTLEN];	/* the last statement sent to backend */
-	uint64	node_ids[2];			/* "statement" is sent to the node id (bitmap) */
+	int			client_connection_count;	/* how many times clients used
+											 * this process */
+	ProcessStatus status;
+	char		client_host[NI_MAXHOST];	/* client host. Only valid if
+											 * status != WAIT_FOR_CONNECT */
+	char		client_port[NI_MAXSERV];	/* client port. Only valid if
+											 * status != WAIT_FOR_CONNECT */
+	char		statement[MAXSTMTLEN];	/* the last statement sent to backend */
+	uint64		node_ids[2];	/* "statement" is sent to the node id (bitmap) */
 	bool		need_to_restart;	/* If non 0, exit this child process as
 									 * soon as current session ends. Typical
 									 * case this flag being set is failback a
 									 * node in streaming replication mode. */
 	bool		exit_if_idle;
-	int		pooled_connections; /* Total number of pooled connections
-									  * by this child */
-}			ProcessInfo;
+	int			pooled_connections; /* Total number of pooled connections by
+									 * this child */
+} ProcessInfo;
 
 /*
  * reporting types
@@ -229,7 +239,7 @@ typedef struct
 	char		name[POOLCONFIG_MAXNAMELEN + 1];
 	char		value[POOLCONFIG_MAXVALLEN + 1];
 	char		desc[POOLCONFIG_MAXDESCLEN + 1];
-}			POOL_REPORT_CONFIG;
+} POOL_REPORT_CONFIG;
 
 /* nodes report struct */
 typedef struct
@@ -248,7 +258,7 @@ typedef struct
 	char		rep_state[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		rep_sync_state[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		last_status_change[POOLCONFIG_MAXDATELEN];
-}			POOL_REPORT_NODES;
+} POOL_REPORT_NODES;
 
 /* processes report struct */
 typedef struct
@@ -261,7 +271,7 @@ typedef struct
 	char		backend_connection_time[POOLCONFIG_MAXDATELEN + 1];
 	char		pool_counter[POOLCONFIG_MAXCOUNTLEN + 1];
 	char		status[POOLCONFIG_MAXPROCESSSTATUSLEN + 1];
-}			POOL_REPORT_PROCESSES;
+} POOL_REPORT_PROCESSES;
 
 /* pools reporting struct */
 typedef struct
@@ -287,13 +297,13 @@ typedef struct
 	char		client_host[NI_MAXHOST];
 	char		client_port[NI_MAXSERV];
 	char		statement[MAXSTMTLEN];
-}			POOL_REPORT_POOLS;
+} POOL_REPORT_POOLS;
 
 /* version struct */
 typedef struct
 {
 	char		version[POOLCONFIG_MAXVALLEN + 1];
-}			POOL_REPORT_VERSION;
+} POOL_REPORT_VERSION;
 
 /* health check statistics report struct */
 typedef struct
@@ -304,21 +314,21 @@ typedef struct
 	char		status[POOLCONFIG_MAXSTATLEN + 1];
 	char		role[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		last_status_change[POOLCONFIG_MAXDATELEN];
-	char		total_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
-	char		success_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
-	char		fail_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
-	char		skip_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
-	char		retry_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
-	char		average_retry_count[POOLCONFIG_MAXLONGCOUNTLEN+1];
-	char		max_retry_count[POOLCONFIG_MAXCOUNTLEN+1];
-	char		max_health_check_duration[POOLCONFIG_MAXCOUNTLEN+1];
-	char		min_health_check_duration[POOLCONFIG_MAXCOUNTLEN+1];
-	char		average_health_check_duration[POOLCONFIG_MAXLONGCOUNTLEN+1];
+	char		total_count[POOLCONFIG_MAXLONGCOUNTLEN + 1];
+	char		success_count[POOLCONFIG_MAXLONGCOUNTLEN + 1];
+	char		fail_count[POOLCONFIG_MAXLONGCOUNTLEN + 1];
+	char		skip_count[POOLCONFIG_MAXLONGCOUNTLEN + 1];
+	char		retry_count[POOLCONFIG_MAXLONGCOUNTLEN + 1];
+	char		average_retry_count[POOLCONFIG_MAXLONGCOUNTLEN + 1];
+	char		max_retry_count[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		max_health_check_duration[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		min_health_check_duration[POOLCONFIG_MAXCOUNTLEN + 1];
+	char		average_health_check_duration[POOLCONFIG_MAXLONGCOUNTLEN + 1];
 	char		last_health_check[POOLCONFIG_MAXDATELEN];
 	char		last_successful_health_check[POOLCONFIG_MAXDATELEN];
 	char		last_skip_health_check[POOLCONFIG_MAXDATELEN];
 	char		last_failed_health_check[POOLCONFIG_MAXDATELEN];
-}			POOL_HEALTH_CHECK_STATS;
+} POOL_HEALTH_CHECK_STATS;
 
 /* show backend statistics report struct */
 typedef struct
@@ -333,11 +343,11 @@ typedef struct
 	char		update_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		delete_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
 	char		ddl_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
-	char		other_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
-	char		panic_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
-	char		fatal_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
-	char		error_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];	
-}			POOL_BACKEND_STATS;
+	char		other_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		panic_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		fatal_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+	char		error_cnt[POOLCONFIG_MAXWEIGHTLEN + 1];
+} POOL_BACKEND_STATS;
 
 typedef enum
 {
@@ -401,8 +411,8 @@ extern PCPResultInfo * pcp_node_info(PCPConnInfo * pcpCon, int nid);
 extern PCPResultInfo * pcp_health_check_stats(PCPConnInfo * pcpCon, int nid);
 extern PCPResultInfo * pcp_process_count(PCPConnInfo * pcpConn);
 extern PCPResultInfo * pcp_process_info(PCPConnInfo * pcpConn, int pid);
-extern PCPResultInfo * pcp_reload_config(PCPConnInfo * pcpConn,char command_scope);
-extern PCPResultInfo * pcp_log_rotate(PCPConnInfo * pcpConn,char command_scope);
+extern PCPResultInfo * pcp_reload_config(PCPConnInfo * pcpConn, char command_scope);
+extern PCPResultInfo * pcp_log_rotate(PCPConnInfo * pcpConn, char command_scope);
 extern PCPResultInfo * pcp_invalidate_query_cache(PCPConnInfo * pcpConn);
 
 extern PCPResultInfo * pcp_detach_node(PCPConnInfo * pcpConn, int nid);
@@ -430,8 +440,8 @@ extern int	pcp_result_is_empty(PCPResultInfo * res);
 
 extern char *role_to_str(SERVER_ROLE role);
 
-extern	int * pool_health_check_stats_offsets(int *n);
-extern	int * pool_report_pools_offsets(int *n);
+extern int *pool_health_check_stats_offsets(int *n);
+extern int *pool_report_pools_offsets(int *n);
 
 /* ------------------------------
  * pcp_error.c

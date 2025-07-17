@@ -39,9 +39,9 @@
 #include "utils/fe_ports.h"
 #endif
 
-static int	consume_pending_data(PCP_CONNECTION * pc, void *data, int len);
-static int	save_pending_data(PCP_CONNECTION * pc, void *data, int len);
-static int	pcp_check_fd(PCP_CONNECTION * pc);
+static int	consume_pending_data(PCP_CONNECTION *pc, void *data, int len);
+static int	save_pending_data(PCP_CONNECTION *pc, void *data, int len);
+static int	pcp_check_fd(PCP_CONNECTION *pc);
 
 /* --------------------------------
  * pcp_open - allocate read & write buffers for PCP_CONNECTION
@@ -83,7 +83,7 @@ pcp_open(int fd)
  * --------------------------------
  */
 void
-pcp_close(PCP_CONNECTION * pc)
+pcp_close(PCP_CONNECTION *pc)
 {
 	close(pc->fd);
 	pfree(pc->wbuf);
@@ -98,7 +98,7 @@ pcp_close(PCP_CONNECTION * pc)
  * --------------------------------
  */
 int
-pcp_read(PCP_CONNECTION * pc, void *buf, int len)
+pcp_read(PCP_CONNECTION *pc, void *buf, int len)
 {
 	static char readbuf[READBUFSZ];
 
@@ -151,7 +151,7 @@ pcp_read(PCP_CONNECTION * pc, void *buf, int len)
  * --------------------------------
  */
 int
-pcp_write(PCP_CONNECTION * pc, void *buf, int len)
+pcp_write(PCP_CONNECTION *pc, void *buf, int len)
 {
 	int			reqlen;
 
@@ -195,7 +195,7 @@ pcp_write(PCP_CONNECTION * pc, void *buf, int len)
  * --------------------------------
  */
 int
-pcp_flush(PCP_CONNECTION * pc)
+pcp_flush(PCP_CONNECTION *pc)
 {
 	int			sts;
 	int			wlen;
@@ -256,7 +256,7 @@ pcp_flush(PCP_CONNECTION * pc)
  * --------------------------------
  */
 static int
-consume_pending_data(PCP_CONNECTION * pc, void *data, int len)
+consume_pending_data(PCP_CONNECTION *pc, void *data, int len)
 {
 	int			consume_size;
 
@@ -282,7 +282,7 @@ consume_pending_data(PCP_CONNECTION * pc, void *data, int len)
  * --------------------------------
  */
 static int
-save_pending_data(PCP_CONNECTION * pc, void *data, int len)
+save_pending_data(PCP_CONNECTION *pc, void *data, int len)
 {
 	int			reqlen;
 	size_t		realloc_size;
@@ -326,7 +326,7 @@ save_pending_data(PCP_CONNECTION * pc, void *data, int len)
  * --------------------------------
  */
 static int
-pcp_check_fd(PCP_CONNECTION * pc)
+pcp_check_fd(PCP_CONNECTION *pc)
 {
 	fd_set		readmask;
 	fd_set		exceptmask;

@@ -32,9 +32,9 @@ typedef enum NodeTag
 	T_Invalid = 0,
 
 	/* pgpool Extension */
-				T_PgpoolVariableSetStmt,
-				T_PgpoolVariableShowStmt,
-				T_PgpoolQueryCacheStmt,
+	T_PgpoolVariableSetStmt,
+	T_PgpoolVariableShowStmt,
+	T_PgpoolQueryCacheStmt,
 #include "nodetags.h"
 } NodeTag;
 
@@ -201,7 +201,7 @@ extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
 						 const struct Bitmapset *bms);
 extern void outDatum(struct StringInfoData *str, uintptr_t value,
-                     int typlen, bool typbyval);
+					 int typlen, bool typbyval);
 extern char *nodeToString(const void *obj);
 extern char *nodeToStringWithLocations(const void *obj);
 extern char *bmsToString(const struct Bitmapset *bms);
@@ -362,7 +362,7 @@ typedef enum AggStrategy
 	AGG_SORTED,					/* grouped agg, input must be sorted */
 	AGG_HASHED,					/* grouped agg, use internal hashtable */
 	AGG_MIXED,					/* grouped agg, hash and sort both used */
-} AggStrategy;
+}			AggStrategy;
 
 /*
  * AggSplit -
@@ -406,13 +406,13 @@ typedef enum SetOpCmd
 	SETOPCMD_INTERSECT_ALL,
 	SETOPCMD_EXCEPT,
 	SETOPCMD_EXCEPT_ALL,
-} SetOpCmd;
+}			SetOpCmd;
 
 typedef enum SetOpStrategy
 {
 	SETOP_SORTED,				/* input must be sorted */
 	SETOP_HASHED,				/* use internal hashtable */
-} SetOpStrategy;
+}			SetOpStrategy;
 
 /*
  * OnConflictAction -

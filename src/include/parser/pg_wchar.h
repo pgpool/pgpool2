@@ -486,7 +486,7 @@ typedef struct
 	uint8		b4_4_lower;		/* min/max allowed value for 4th input byte */
 	uint8		b4_4_upper;
 
-} pg_mb_radix_tree;
+}			pg_mb_radix_tree;
 
 /*
  * UTF-8 to local code conversion map (for combined characters)
@@ -496,7 +496,7 @@ typedef struct
 	uint32		utf1;			/* UTF-8 code 1 */
 	uint32		utf2;			/* UTF-8 code 2 */
 	uint32		code;			/* local code */
-} pg_utf_to_local_combined;
+}			pg_utf_to_local_combined;
 
 /*
  * local code to UTF-8 conversion map (for combined characters)
@@ -506,7 +506,7 @@ typedef struct
 	uint32		code;			/* local code */
 	uint32		utf1;			/* UTF-8 code 1 */
 	uint32		utf2;			/* UTF-8 code 2 */
-} pg_local_to_utf_combined;
+}			pg_local_to_utf_combined;
 
 /*
  * callback function for algorithmic encoding conversions (in either direction)
@@ -745,14 +745,14 @@ extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern int	UtfToLocal(const unsigned char *utf, int len,
 					   unsigned char *iso,
-					   const pg_mb_radix_tree *map,
-					   const pg_utf_to_local_combined *cmap, int cmapsize,
+					   const pg_mb_radix_tree * map,
+					   const pg_utf_to_local_combined * cmap, int cmapsize,
 					   utf_local_conversion_func conv_func,
 					   int encoding, bool noError);
 extern int	LocalToUtf(const unsigned char *iso, int len,
 					   unsigned char *utf,
-					   const pg_mb_radix_tree *map,
-					   const pg_local_to_utf_combined *cmap, int cmapsize,
+					   const pg_mb_radix_tree * map,
+					   const pg_local_to_utf_combined * cmap, int cmapsize,
 					   utf_local_conversion_func conv_func,
 					   int encoding, bool noError);
 
@@ -787,7 +787,7 @@ extern int	mic2latin_with_table(const unsigned char *mic, unsigned char *p,
 								 const unsigned char *tab, bool noError);
 
 #ifdef WIN32
-extern WCHAR *pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);
+extern WCHAR * pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);
 #endif
 
 #endif							/* PG_WCHAR_H */

@@ -54,16 +54,16 @@ void	   *repalloc(void *pointer, Size size);
 
 #ifdef __GNUC__
 extern int
-errhint(const char *fmt,...)
-__attribute__((format(printf, 1, 2)));
+			errhint(const char *fmt,...)
+			__attribute__((format(printf, 1, 2)));
 
 extern int
-errdetail(const char *fmt,...)
-__attribute__((format(printf, 1, 2)));
+			errdetail(const char *fmt,...)
+			__attribute__((format(printf, 1, 2)));
 
 extern void
-errmsg(const char *fmt,...)
-__attribute__((format(printf, 1, 2)));
+			errmsg(const char *fmt,...)
+			__attribute__((format(printf, 1, 2)));
 #else
 extern int	errhint(const char *fmt,...);
 extern int	errdetail(const char *fmt,...);
@@ -71,7 +71,7 @@ extern void errmsg(const char *fmt,...);
 #endif
 
 extern bool errstart(int elevel, const char *filename, int lineno,
-					const char *funcname, const char *domain);
+					 const char *funcname, const char *domain);
 extern void errfinish(int dummy,...);
 
 /*

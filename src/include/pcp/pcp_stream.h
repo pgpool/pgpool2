@@ -41,13 +41,13 @@ typedef struct
 	int			po;				/* pending data offset */
 	int			bufsz;			/* pending data buffer size */
 	int			len;			/* pending data length */
-}			PCP_CONNECTION;
+} PCP_CONNECTION;
 
-extern PCP_CONNECTION * pcp_open(int fd);
-extern void pcp_close(PCP_CONNECTION * pc);
-extern int	pcp_read(PCP_CONNECTION * pc, void *buf, int len);
-extern int	pcp_write(PCP_CONNECTION * pc, void *buf, int len);
-extern int	pcp_flush(PCP_CONNECTION * pc);
+extern PCP_CONNECTION *pcp_open(int fd);
+extern void pcp_close(PCP_CONNECTION *pc);
+extern int	pcp_read(PCP_CONNECTION *pc, void *buf, int len);
+extern int	pcp_write(PCP_CONNECTION *pc, void *buf, int len);
+extern int	pcp_flush(PCP_CONNECTION *pc);
 
 #define UNIX_DOMAIN_PATH "/tmp"
 

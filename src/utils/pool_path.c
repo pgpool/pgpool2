@@ -38,8 +38,8 @@
 
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
-static int pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
-		   size_t buflen, struct passwd **result);
+static int	pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
+					   size_t buflen, struct passwd **result);
 
 /*
  * get_parent_directory

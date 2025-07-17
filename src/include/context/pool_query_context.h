@@ -44,7 +44,7 @@ typedef enum
 	POOL_PARSE_COMPLETE,
 	POOL_BIND_COMPLETE,
 	POOL_EXECUTE_COMPLETE
-}			POOL_QUERY_STATE;
+} POOL_QUERY_STATE;
 
 /*
  * Query context:
@@ -62,8 +62,8 @@ typedef struct
 	Node	   *rewritten_parse_tree;	/* rewritten raw parser output if any */
 	bool		where_to_send[MAX_NUM_BACKENDS];	/* DB node map to send
 													 * query */
-	int         load_balance_node_id;	/* load balance node id per statement */
-	int			virtual_main_node_id; /* the 1st DB node to send query */
+	int			load_balance_node_id;	/* load balance node id per statement */
+	int			virtual_main_node_id;	/* the 1st DB node to send query */
 	POOL_QUERY_STATE query_state[MAX_NUM_BACKENDS]; /* for extended query
 													 * protocol */
 	bool		is_cache_safe;	/* true if SELECT is safe to cache */
@@ -90,39 +90,39 @@ typedef struct
 									 * extended query, do not commit cache if
 									 * this flag is true. */
 
-	bool		atEnd;				/* if true all rows have been already
-									 * fetched from the portal */
+	bool		atEnd;			/* if true all rows have been already fetched
+								 * from the portal */
 
-	bool		partial_fetch;		/* if true some rows have been fetched by
-									 * an execute with non 0 row option */
+	bool		partial_fetch;	/* if true some rows have been fetched by an
+								 * execute with non 0 row option */
 
 	MemoryContext memory_context;	/* memory context for query context */
-}			POOL_QUERY_CONTEXT;
+} POOL_QUERY_CONTEXT;
 
-extern POOL_QUERY_CONTEXT * pool_init_query_context(void);
-extern void pool_query_context_destroy(POOL_QUERY_CONTEXT * query_context);
-extern POOL_QUERY_CONTEXT * pool_query_context_shallow_copy(POOL_QUERY_CONTEXT * query_context);
-extern void pool_start_query(POOL_QUERY_CONTEXT * query_context, char *query, int len, Node *node);
-extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
-extern bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
-extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
-extern void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
-extern void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT * query_context);
-extern void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT * query_context);
-extern bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT * query_context);
-extern void pool_where_to_send(POOL_QUERY_CONTEXT * query_context, char *query, Node *node);
-extern POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT * query_context, int send_type, int node_id);
-extern POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT * query_context, char *kind, int len, char *contents, int send_type, int node_id, bool nowait);
+extern POOL_QUERY_CONTEXT *pool_init_query_context(void);
+extern void pool_query_context_destroy(POOL_QUERY_CONTEXT *query_context);
+extern POOL_QUERY_CONTEXT *pool_query_context_shallow_copy(POOL_QUERY_CONTEXT *query_context);
+extern void pool_start_query(POOL_QUERY_CONTEXT *query_context, char *query, int len, Node *node);
+extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id);
+extern bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id);
+extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id);
+extern void pool_unset_node_to_be_sent(POOL_QUERY_CONTEXT *query_context, int node_id);
+extern void pool_clear_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
+extern void pool_setall_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
+extern bool pool_multi_node_to_be_sent(POOL_QUERY_CONTEXT *query_context);
+extern void pool_where_to_send(POOL_QUERY_CONTEXT *query_context, char *query, Node *node);
+extern POOL_STATUS pool_send_and_wait(POOL_QUERY_CONTEXT *query_context, int send_type, int node_id);
+extern POOL_STATUS pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context, char *kind, int len, char *contents, int send_type, int node_id, bool nowait);
 extern Node *pool_get_parse_tree(void);
 extern char *pool_get_query_string(void);
 extern bool is_set_transaction_serializable(Node *node);
 extern bool is_start_transaction_query(Node *node);
 extern bool is_read_write(TransactionStmt *node);
 extern bool is_serializable(TransactionStmt *node);
-extern bool pool_need_to_treat_as_if_default_transaction(POOL_QUERY_CONTEXT * query_context);
+extern bool pool_need_to_treat_as_if_default_transaction(POOL_QUERY_CONTEXT *query_context);
 extern bool is_savepoint_query(Node *node);
 extern bool is_2pc_transaction_query(Node *node);
-extern void pool_set_query_state(POOL_QUERY_CONTEXT * query_context, POOL_QUERY_STATE state);
+extern void pool_set_query_state(POOL_QUERY_CONTEXT *query_context, POOL_QUERY_STATE state);
 extern int	statecmp(POOL_QUERY_STATE s1, POOL_QUERY_STATE s2);
 extern bool pool_is_cache_safe(void);
 extern void pool_set_cache_safe(void);
@@ -131,8 +131,8 @@ extern bool pool_is_cache_exceeded(void);
 extern void pool_set_cache_exceeded(void);
 extern void pool_unset_cache_exceeded(void);
 extern bool pool_is_transaction_read_only(Node *node);
-extern void pool_force_query_node_to_backend(POOL_QUERY_CONTEXT * query_context, int backend_id);
+extern void pool_force_query_node_to_backend(POOL_QUERY_CONTEXT *query_context, int backend_id);
 extern void check_object_relationship_list(char *name, bool is_func_name);
-extern int wait_for_failover_to_finish(void);
+extern int	wait_for_failover_to_finish(void);
 
 #endif							/* POOL_QUERY_CONTEXT_H */

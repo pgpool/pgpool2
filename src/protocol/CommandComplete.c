@@ -40,15 +40,15 @@
 #include "utils/pool_stream.h"
 
 static int	extract_ntuples(char *message);
-static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *packet, int packetlen, bool command_complete);
-static int	forward_command_complete(POOL_CONNECTION * frontend, char *packet, int packetlen);
-static int	forward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen);
-static int	forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen);
-static void process_clear_cache(POOL_CONNECTION_POOL * backend);
+static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen, bool command_complete);
+static int	forward_command_complete(POOL_CONNECTION *frontend, char *packet, int packetlen);
+static int	forward_empty_query(POOL_CONNECTION *frontend, char *packet, int packetlen);
+static int	forward_packet_to_frontend(POOL_CONNECTION *frontend, char kind, char *packet, int packetlen);
+static void process_clear_cache(POOL_CONNECTION_POOL *backend);
 static bool check_alter_role_statement(AlterRoleStmt *stmt);
 
 POOL_STATUS
-CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool command_complete)
+CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool command_complete)
 {
 	int			len,
 				len1;
@@ -230,9 +230,9 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 			state = TSTATE(backend, MAIN_NODE_ID);
 
 			/*
-			 * If some rows have been fetched by an execute with non 0 row option,
-			 * we do not create cache.
-			 */ 
+			 * If some rows have been fetched by an execute with non 0 row
+			 * option, we do not create cache.
+			 */
 			pool_handle_query_cache(backend, query, node, state,
 									session_context->query_context->partial_fetch);
 
@@ -276,7 +276,7 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 			if (can_query_context_destroy(session_context->query_context))
 
 			{
-				POOL_SENT_MESSAGE * msg = pool_get_sent_message_by_query_context(session_context->query_context);
+				POOL_SENT_MESSAGE *msg = pool_get_sent_message_by_query_context(session_context->query_context);
 
 				if (!msg || (msg && *msg->name == '\0'))
 				{
@@ -294,7 +294,7 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
  * Handle misc process which is necessary when query context exists.
  */
 void
-handle_query_context(POOL_CONNECTION_POOL * backend)
+handle_query_context(POOL_CONNECTION_POOL *backend)
 {
 	POOL_SESSION_CONTEXT *session_context;
 	Node	   *node;
@@ -344,13 +344,13 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 	}
 
 	/*
-	 * JDBC driver sends "BEGIN" query internally if setAutoCommit(false).
-	 * But it does not send Sync message after "BEGIN" query.  In extended
-	 * query protocol, PostgreSQL returns ReadyForQuery when a client sends
-	 * Sync message.  Problem is, pgpool can't know the transaction state
-	 * without receiving ReadyForQuery. So we remember that we need to send
-	 * Sync message internally afterward, whenever we receive BEGIN in
-	 * extended protocol.
+	 * JDBC driver sends "BEGIN" query internally if setAutoCommit(false). But
+	 * it does not send Sync message after "BEGIN" query.  In extended query
+	 * protocol, PostgreSQL returns ReadyForQuery when a client sends Sync
+	 * message.  Problem is, pgpool can't know the transaction state without
+	 * receiving ReadyForQuery. So we remember that we need to send Sync
+	 * message internally afterward, whenever we receive BEGIN in extended
+	 * protocol.
 	 */
 	else if (IsA(node, TransactionStmt))
 	{
@@ -374,10 +374,10 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 			pool_unset_failed_transaction();
 			pool_unset_transaction_isolation();
 		}
-		else if (stmt->kind == 	TRANS_STMT_COMMIT)
+		else if (stmt->kind == TRANS_STMT_COMMIT)
 		{
 			/* Commit ongoing CREATE/DROP temp table status */
-			pool_temp_tables_commit_pending();			
+			pool_temp_tables_commit_pending();
 
 			/* Forget a transaction was started by multi statement query */
 			unset_tx_started_by_multi_statement_query();
@@ -412,12 +412,13 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 	else if (IsA(node, CreateStmt))
 	{
 		CreateStmt *stmt = (CreateStmt *) node;
-		POOL_TEMP_TABLE_STATE	state;
+		POOL_TEMP_TABLE_STATE state;
 
 		/* Is this a temporary table? */
 		if (stmt->relation->relpersistence == 't')
 		{
-			if (TSTATE(backend, MAIN_NODE_ID ) == 'T')	/* Are we inside a transaction? */
+			if (TSTATE(backend, MAIN_NODE_ID) == 'T')	/* Are we inside a
+														 * transaction? */
 			{
 				state = TEMP_TABLE_CREATING;
 			}
@@ -433,8 +434,8 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 	}
 	else if (IsA(node, DropStmt))
 	{
-		DropStmt *stmt = (DropStmt *) node;
-		POOL_TEMP_TABLE_STATE	state;
+		DropStmt   *stmt = (DropStmt *) node;
+		POOL_TEMP_TABLE_STATE state;
 
 		if (stmt->removeType == OBJECT_TABLE)
 		{
@@ -442,7 +443,8 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 			ListCell   *cell;
 			ListCell   *next;
 
-			if (TSTATE(backend, MAIN_NODE_ID ) == 'T')	/* Are we inside a transaction? */
+			if (TSTATE(backend, MAIN_NODE_ID) == 'T')	/* Are we inside a
+														 * transaction? */
 			{
 				state = TEMP_TABLE_DROPPING;
 			}
@@ -453,7 +455,8 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 
 			for (cell = list_head(session_context->temp_tables); cell; cell = next)
 			{
-				char *tablename = (char *)lfirst(cell);
+				char	   *tablename = (char *) lfirst(cell);
+
 				ereport(DEBUG1,
 						(errmsg("Dropping temp table: %s", tablename)));
 				pool_temp_tables_delete(tablename, state);
@@ -478,7 +481,7 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 	}
 	else if (IsA(node, GrantStmt))
 	{
-		GrantStmt *stmt = (GrantStmt *) node;
+		GrantStmt  *stmt = (GrantStmt *) node;
 
 		/* REVOKE? */
 		if (stmt->is_grant)
@@ -510,15 +513,15 @@ handle_query_context(POOL_CONNECTION_POOL * backend)
 static bool
 check_alter_role_statement(AlterRoleStmt *stmt)
 {
-	ListCell	*l;
+	ListCell   *l;
 
 	foreach(l, stmt->options)
 	{
-		DefElem	*elm = (DefElem *) lfirst(l);
+		DefElem    *elm = (DefElem *) lfirst(l);
 
 		/*
-		 * We want to detect other than ALTER ROLE foo WITH PASSWORD or
-		 * WITH CONNECTION LIMIT case.  It does not change any privilege of the
+		 * We want to detect other than ALTER ROLE foo WITH PASSWORD or WITH
+		 * CONNECTION LIMIT case.  It does not change any privilege of the
 		 * role.
 		 */
 		if (strcmp(elm->defname, "password") &&
@@ -553,7 +556,8 @@ extract_ntuples(char *message)
 /*
  * Handle mismatch tuples
  */
-static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *packet, int packetlen, bool command_complete)
+static POOL_STATUS
+handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen, bool command_complete)
 {
 	POOL_SESSION_CONTEXT *session_context;
 
@@ -620,7 +624,7 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNE
 
 	if (session_context->mismatch_ntuples)
 	{
-		StringInfoData	msg;
+		StringInfoData msg;
 
 		initStringInfo(&msg);
 		appendStringInfoString(&msg, "pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
@@ -667,7 +671,7 @@ static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION * frontend, POOL_CONNE
  * Forward Command complete packet to frontend
  */
 static int
-forward_command_complete(POOL_CONNECTION * frontend, char *packet, int packetlen)
+forward_command_complete(POOL_CONNECTION *frontend, char *packet, int packetlen)
 {
 	return forward_packet_to_frontend(frontend, 'C', packet, packetlen);
 }
@@ -676,7 +680,7 @@ forward_command_complete(POOL_CONNECTION * frontend, char *packet, int packetlen
  * Forward Empty query response to frontend
  */
 static int
-forward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen)
+forward_empty_query(POOL_CONNECTION *frontend, char *packet, int packetlen)
 {
 	return forward_packet_to_frontend(frontend, 'I', packet, packetlen);
 }
@@ -685,7 +689,7 @@ forward_empty_query(POOL_CONNECTION * frontend, char *packet, int packetlen)
  * Forward packet to frontend
  */
 static int
-forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, int packetlen)
+forward_packet_to_frontend(POOL_CONNECTION *frontend, char kind, char *packet, int packetlen)
 {
 	int			sendlen;
 
@@ -705,7 +709,7 @@ forward_packet_to_frontend(POOL_CONNECTION * frontend, char kind, char *packet, 
  * Process statements that need clearing query cache
  */
 static void
-process_clear_cache(POOL_CONNECTION_POOL * backend)
+process_clear_cache(POOL_CONNECTION_POOL *backend)
 {
 	/* Query cache enabled? */
 	if (!pool_config->memory_cache_enabled)
@@ -717,15 +721,15 @@ process_clear_cache(POOL_CONNECTION_POOL * backend)
 		/*
 		 * Are we inside a transaction?
 		 */
-		if (TSTATE(backend, MAIN_NODE_ID ) == 'T')
+		if (TSTATE(backend, MAIN_NODE_ID) == 'T')
 		{
 			/*
-			 * Disable query cache in this transaction.
-			 * All query cache will be cleared at commit.
+			 * Disable query cache in this transaction. All query cache will
+			 * be cleared at commit.
 			 */
 			set_query_cache_disabled_tx();
 		}
-		else if (TSTATE(backend, MAIN_NODE_ID ) == 'I')	/* outside transaction */
+		else if (TSTATE(backend, MAIN_NODE_ID) == 'I')	/* outside transaction */
 		{
 			/*
 			 * Clear all the query cache.
@@ -738,14 +742,14 @@ process_clear_cache(POOL_CONNECTION_POOL * backend)
 		/*
 		 * Are we inside a transaction?
 		 */
-		if (TSTATE(backend, MAIN_NODE_ID ) == 'T')
+		if (TSTATE(backend, MAIN_NODE_ID) == 'T')
 		{
 			/* Inside user started transaction? */
 			if (!INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID))
 			{
 				/*
-				 * Disable query cache in this transaction.
-				 * All query cache will be cleared at commit.
+				 * Disable query cache in this transaction. All query cache
+				 * will be cleared at commit.
 				 */
 				set_query_cache_disabled_tx();
 			}
@@ -757,7 +761,7 @@ process_clear_cache(POOL_CONNECTION_POOL * backend)
 				clear_query_cache();
 			}
 		}
-		else if (TSTATE(backend, MAIN_NODE_ID ) == 'I')	/* outside transaction */
+		else if (TSTATE(backend, MAIN_NODE_ID) == 'I')	/* outside transaction */
 		{
 			/*
 			 * Clear all the query cache.

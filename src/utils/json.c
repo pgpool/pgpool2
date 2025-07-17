@@ -120,7 +120,7 @@ typedef struct
 	unsigned int cur_line,
 				cur_col;
 
-}			json_state;
+} json_state;
 
 static void *
 default_alloc(size_t size, int zero, void *user_data)
@@ -135,7 +135,7 @@ default_free(void *ptr, void *user_data)
 }
 
 static void *
-json_alloc(json_state * state, unsigned long size, int zero)
+json_alloc(json_state *state, unsigned long size, int zero)
 {
 	if ((state->ulong_max - state->used_memory) < size)
 		return 0;
@@ -150,8 +150,8 @@ json_alloc(json_state * state, unsigned long size, int zero)
 }
 
 static int
-new_value(json_state * state,
-		  json_value * *top, json_value * *root, json_value * *alloc,
+new_value(json_state *state,
+		  json_value **top, json_value **root, json_value **alloc,
 		  json_type type)
 {
 	json_value *value;
@@ -172,7 +172,7 @@ new_value(json_state * state,
 				if (value->u.array.length == 0)
 					break;
 
-				if (!(value->u.array.values = (json_value * *) json_alloc
+				if (!(value->u.array.values = (json_value **) json_alloc
 					  (state, value->u.array.length * sizeof(json_value *), 0)))
 				{
 					return 0;
@@ -270,7 +270,7 @@ static const long
 			flag_block_comment = 1 << 14;
 
 json_value *
-json_parse_ex(json_settings * settings,
+json_parse_ex(json_settings *settings,
 			  const json_char * json,
 			  size_t length,
 			  char *error_buf)
@@ -1065,7 +1065,7 @@ json_parse(const json_char * json, size_t length)
 }
 
 void
-json_value_free_ex(json_settings * settings, json_value * value)
+json_value_free_ex(json_settings *settings, json_value *value)
 {
 	json_value *cur_value;
 
@@ -1116,7 +1116,7 @@ json_value_free_ex(json_settings * settings, json_value * value)
 }
 
 void
-json_value_free(json_value * value)
+json_value_free(json_value *value)
 {
 	json_settings settings = {0};
 
@@ -1131,7 +1131,7 @@ json_value_free(json_value * value)
  * search node with key from json object
  */
 json_value *
-json_get_value_for_key(json_value * source, const char *key)
+json_get_value_for_key(json_value *source, const char *key)
 {
 	if (source->type == json_object)
 	{
@@ -1157,7 +1157,7 @@ json_get_value_for_key(json_value * source, const char *key)
  */
 
 int
-json_get_bool_value_for_key(json_value * source, const char *key, bool *value)
+json_get_bool_value_for_key(json_value *source, const char *key, bool *value)
 {
 	json_value *jNode;
 
@@ -1177,7 +1177,7 @@ json_get_bool_value_for_key(json_value * source, const char *key, bool *value)
 
 
 int
-json_get_int_value_for_key(json_value * source, const char *key, int *value)
+json_get_int_value_for_key(json_value *source, const char *key, int *value)
 {
 	json_value *jNode;
 
@@ -1191,7 +1191,7 @@ json_get_int_value_for_key(json_value * source, const char *key, int *value)
 }
 
 int
-json_get_long_value_for_key(json_value * source, const char *key, long *value)
+json_get_long_value_for_key(json_value *source, const char *key, long *value)
 {
 	json_value *jNode;
 
@@ -1212,7 +1212,7 @@ json_get_long_value_for_key(json_value * source, const char *key, long *value)
  */
 
 char *
-json_get_string_value_for_key(json_value * source, const char *key)
+json_get_string_value_for_key(json_value *source, const char *key)
 {
 	json_value *jNode;
 

@@ -51,7 +51,7 @@ typedef struct
 {
 	void	   *(*start_routine) (void *);
 	void	   *arg;
-}			WdThreadInfo;
+} WdThreadInfo;
 
 
 void
@@ -253,7 +253,8 @@ string_replace(const char *string, const char *pattern, const char *replacement)
 /*
  * The function is wrapper over pthread_create.
  */
-int			watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg)
+int
+watchdog_thread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg)
 {
 	WdThreadInfo *thread_arg = palloc(sizeof(WdThreadInfo));
 

@@ -54,10 +54,10 @@
 #define WD_DEFAULT_IPC_COMMAND_TIMEOUT	8	/* default number of seconds to
 											 * wait for IPC command results */
 
-int wd_command_timeout_sec = WD_DEFAULT_IPC_COMMAND_TIMEOUT;
+int			wd_command_timeout_sec = WD_DEFAULT_IPC_COMMAND_TIMEOUT;
 
 WD_STATES
-get_watchdog_local_node_state(char* wd_authkey)
+get_watchdog_local_node_state(char *wd_authkey)
 {
 	WD_STATES	ret = WD_DEAD;
 	WDGenericData *state = get_wd_runtime_variable_value(wd_authkey, WD_RUNTIME_VAR_WD_STATE);
@@ -83,7 +83,7 @@ get_watchdog_local_node_state(char* wd_authkey)
 }
 
 int
-get_watchdog_quorum_state(char* wd_authkey)
+get_watchdog_quorum_state(char *wd_authkey)
 {
 	WD_STATES	ret = WD_DEAD;
 	WDGenericData *state = get_wd_runtime_variable_value(wd_authkey, WD_RUNTIME_VAR_QUORUM_STATE);
@@ -114,10 +114,10 @@ get_watchdog_quorum_state(char* wd_authkey)
  * watchdog IPC
  */
 WDGenericData *
-get_wd_runtime_variable_value(char* wd_authkey, char *varName)
+get_wd_runtime_variable_value(char *wd_authkey, char *varName)
 {
 	char	   *data = get_request_json(WD_JSON_KEY_VARIABLE_NAME, varName,
-											   wd_authkey);
+										wd_authkey);
 
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_GET_RUNTIME_VARIABLE_VALUE,
 													   wd_command_timeout_sec,
@@ -281,7 +281,7 @@ wd_get_watchdog_nodes_json(char *wd_authkey, int nodeID)
 	jw_put_int(jNode, "NodeID", nodeID);
 
 	if (wd_authkey != NULL && strlen(wd_authkey) > 0)
-		jw_put_string(jNode, WD_IPC_AUTH_KEY, wd_authkey); /* put the auth key */
+		jw_put_string(jNode, WD_IPC_AUTH_KEY, wd_authkey);	/* put the auth key */
 
 	jw_finish_document(jNode);
 
@@ -330,16 +330,16 @@ wd_get_watchdog_nodes_json(char *wd_authkey, int nodeID)
 }
 
 WDNodeInfo *
-parse_watchdog_node_info_from_wd_node_json(json_value * source)
+parse_watchdog_node_info_from_wd_node_json(json_value *source)
 {
 	char	   *ptr;
 	WDNodeInfo *wdNodeInfo = palloc0(sizeof(WDNodeInfo));
-	
+
 	if (source->type != json_object)
 		ereport(ERROR,
 				(errmsg("invalid json data"),
 				 errdetail("node is not of object type")));
-	
+
 	if (json_get_int_value_for_key(source, "ID", &wdNodeInfo->id))
 	{
 		ereport(ERROR,
@@ -360,7 +360,7 @@ parse_watchdog_node_info_from_wd_node_json(json_value * source)
 	else
 		strncpy(wdNodeInfo->membership_status_string, ptr, sizeof(wdNodeInfo->membership_status_string) - 1);
 
-	
+
 	ptr = json_get_string_value_for_key(source, "NodeName");
 	if (ptr == NULL)
 	{
@@ -369,7 +369,7 @@ parse_watchdog_node_info_from_wd_node_json(json_value * source)
 				 errdetail("unable to find Watchdog Node Name")));
 	}
 	strncpy(wdNodeInfo->nodeName, ptr, sizeof(wdNodeInfo->nodeName) - 1);
-	
+
 	ptr = json_get_string_value_for_key(source, "HostName");
 	if (ptr == NULL)
 	{
@@ -378,7 +378,7 @@ parse_watchdog_node_info_from_wd_node_json(json_value * source)
 				 errdetail("unable to find Watchdog Host Name")));
 	}
 	strncpy(wdNodeInfo->hostName, ptr, sizeof(wdNodeInfo->hostName) - 1);
-	
+
 	ptr = json_get_string_value_for_key(source, "DelegateIP");
 	if (ptr == NULL)
 	{
@@ -387,28 +387,28 @@ parse_watchdog_node_info_from_wd_node_json(json_value * source)
 				 errdetail("unable to find Watchdog delegate IP")));
 	}
 	strncpy(wdNodeInfo->delegate_ip, ptr, sizeof(wdNodeInfo->delegate_ip) - 1);
-	
+
 	if (json_get_int_value_for_key(source, "WdPort", &wdNodeInfo->wd_port))
 	{
 		ereport(ERROR,
 				(errmsg("invalid json data"),
 				 errdetail("unable to find WdPort")));
 	}
-	
+
 	if (json_get_int_value_for_key(source, "PgpoolPort", &wdNodeInfo->pgpool_port))
 	{
 		ereport(ERROR,
 				(errmsg("invalid json data"),
 				 errdetail("unable to find PgpoolPort")));
 	}
-	
+
 	if (json_get_int_value_for_key(source, "State", &wdNodeInfo->state))
 	{
 		ereport(ERROR,
 				(errmsg("invalid json data"),
 				 errdetail("unable to find state")));
 	}
-	
+
 	ptr = json_get_string_value_for_key(source, "StateName");
 	if (ptr == NULL)
 	{
@@ -417,19 +417,20 @@ parse_watchdog_node_info_from_wd_node_json(json_value * source)
 				 errdetail("unable to find Watchdog State Name")));
 	}
 	strncpy(wdNodeInfo->stateName, ptr, sizeof(wdNodeInfo->stateName) - 1);
-	
+
 	if (json_get_int_value_for_key(source, "Priority", &wdNodeInfo->wd_priority))
 	{
 		ereport(ERROR,
 				(errmsg("invalid json data"),
 				 errdetail("unable to find state")));
 	}
-	
+
 	return wdNodeInfo;
-	
+
 }
 
-extern void set_wd_command_timeout(int sec)
+extern void
+set_wd_command_timeout(int sec)
 {
 	wd_command_timeout_sec = sec;
 }
@@ -453,4 +454,3 @@ get_request_json(char *key, char *value, char *authKey)
 	jw_destroy(jNode);
 	return json_str;
 }
-

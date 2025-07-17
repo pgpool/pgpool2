@@ -45,13 +45,13 @@
 
 static int	mystrlen(char *str, int upper, int *flag);
 static int	mystrlinelen(char *str, int upper, int *flag);
-static int	save_pending_data(POOL_CONNECTION * cp, void *data, int len);
-static int	consume_pending_data(POOL_CONNECTION * cp, void *data, int len);
+static int	save_pending_data(POOL_CONNECTION *cp, void *data, int len);
+static int	consume_pending_data(POOL_CONNECTION *cp, void *data, int len);
 static MemoryContext SwitchToConnectionContext(bool backend_connection);
 #ifdef DEBUG
 static void dump_buffer(char *buf, int len);
 #endif
-static int	pool_write_flush(POOL_CONNECTION * cp, void *buf, int len);
+static int	pool_write_flush(POOL_CONNECTION *cp, void *buf, int len);
 
 /* timeout sec for pool_check_fd */
 static int	timeoutsec = -1;
@@ -112,7 +112,7 @@ pool_open(int fd, bool backend_connection)
 * close read/write file descriptors.
 */
 void
-pool_close(POOL_CONNECTION * cp)
+pool_close(POOL_CONNECTION *cp)
 {
 	/*
 	 * shutdown connection to the client so that pgpool is not blocked
@@ -137,7 +137,7 @@ pool_close(POOL_CONNECTION * cp)
 }
 
 void
-pool_read_with_error(POOL_CONNECTION * cp, void *buf, int len,
+pool_read_with_error(POOL_CONNECTION *cp, void *buf, int len,
 					 const char *err_context)
 {
 	if (pool_read(cp, buf, len) < 0)
@@ -153,7 +153,7 @@ pool_read_with_error(POOL_CONNECTION * cp, void *buf, int len,
 * returns 0 on success otherwise throws an ereport.
 */
 int
-pool_read(POOL_CONNECTION * cp, void *buf, int len)
+pool_read(POOL_CONNECTION *cp, void *buf, int len)
 {
 	static char readbuf[READBUFSZ];
 
@@ -234,8 +234,7 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 				}
 
 				/*
-				 * if failover_on_backend_error is true, then trigger
-				 * failover
+				 * if failover_on_backend_error is true, then trigger failover
 				 */
 				if (pool_config->failover_on_backend_error)
 				{
@@ -308,7 +307,7 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 * returns buffer address on success otherwise NULL.
 */
 char *
-pool_read2(POOL_CONNECTION * cp, int len)
+pool_read2(POOL_CONNECTION *cp, int len)
 {
 	char	   *buf;
 	int			req_size;
@@ -390,8 +389,7 @@ pool_read2(POOL_CONNECTION * cp, int len)
 				}
 
 				/*
-				 * if failover_on_backend_error is true, then trigger
-				 * failover
+				 * if failover_on_backend_error is true, then trigger failover
 				 */
 				if (pool_config->failover_on_backend_error)
 				{
@@ -450,7 +448,7 @@ pool_read2(POOL_CONNECTION * cp, int len)
  * returns 0 on success otherwise -1.
  */
 int
-pool_write_noerror(POOL_CONNECTION * cp, void *buf, int len)
+pool_write_noerror(POOL_CONNECTION *cp, void *buf, int len)
 {
 	if (len < 0)
 		return -1;
@@ -528,7 +526,7 @@ pool_write_noerror(POOL_CONNECTION * cp, void *buf, int len)
  * returns 0 on success otherwise ereport.
  */
 int
-pool_write(POOL_CONNECTION * cp, void *buf, int len)
+pool_write(POOL_CONNECTION *cp, void *buf, int len)
 {
 	if (len < 0)
 		ereport(ERROR,
@@ -549,7 +547,7 @@ pool_write(POOL_CONNECTION * cp, void *buf, int len)
  * This function does not throws an ereport in case of an error
  */
 static int
-pool_write_flush(POOL_CONNECTION * cp, void *buf, int len)
+pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 {
 	int			sts;
 	int			wlen;
@@ -639,7 +637,7 @@ pool_write_flush(POOL_CONNECTION * cp, void *buf, int len)
  * This function does not throws an ereport in case of an error
  */
 int
-pool_flush_it(POOL_CONNECTION * cp)
+pool_flush_it(POOL_CONNECTION *cp)
 {
 	int			sts;
 	int			wlen;
@@ -732,7 +730,7 @@ pool_flush_it(POOL_CONNECTION * cp)
  * flush write buffer and degenerate/failover if error occurs
  */
 int
-pool_flush(POOL_CONNECTION * cp)
+pool_flush(POOL_CONNECTION *cp)
 {
 	if (pool_flush_it(cp) == -1)
 	{
@@ -788,7 +786,7 @@ pool_flush(POOL_CONNECTION * cp)
  * same as pool_flush() but returns -ve value instead of ereport in case of failure
  */
 int
-pool_flush_noerror(POOL_CONNECTION * cp)
+pool_flush_noerror(POOL_CONNECTION *cp)
 {
 	if (pool_flush_it(cp) == -1)
 	{
@@ -840,7 +838,7 @@ pool_flush_noerror(POOL_CONNECTION * cp)
  * combo of pool_write and pool_flush
  */
 void
-pool_write_and_flush(POOL_CONNECTION * cp, void *buf, int len)
+pool_write_and_flush(POOL_CONNECTION *cp, void *buf, int len)
 {
 	pool_write(cp, buf, len);
 	pool_flush(cp);
@@ -850,7 +848,7 @@ pool_write_and_flush(POOL_CONNECTION * cp, void *buf, int len)
  * same as pool_write_and_flush() but does not throws ereport when error occurs
  */
 int
-pool_write_and_flush_noerror(POOL_CONNECTION * cp, void *buf, int len)
+pool_write_and_flush_noerror(POOL_CONNECTION *cp, void *buf, int len)
 {
 	int			ret;
 
@@ -865,7 +863,7 @@ pool_write_and_flush_noerror(POOL_CONNECTION * cp, void *buf, int len)
  * if line is not 0, read until new line is encountered.
 */
 char *
-pool_read_string(POOL_CONNECTION * cp, int *len, int line)
+pool_read_string(POOL_CONNECTION *cp, int *len, int line)
 {
 	int			readp;
 	int			readsize;
@@ -1054,7 +1052,7 @@ pool_read_string(POOL_CONNECTION * cp, int *len, int line)
  * Set db node id to connection.
  */
 void
-pool_set_db_node_id(POOL_CONNECTION * con, int db_node_id)
+pool_set_db_node_id(POOL_CONNECTION *con, int db_node_id)
 {
 	if (!con)
 		return;
@@ -1124,7 +1122,7 @@ mystrlinelen(char *str, int upper, int *flag)
  * save pending data
  */
 static int
-save_pending_data(POOL_CONNECTION * cp, void *data, int len)
+save_pending_data(POOL_CONNECTION *cp, void *data, int len)
 {
 	int			reqlen;
 	size_t		realloc_size;
@@ -1161,7 +1159,7 @@ save_pending_data(POOL_CONNECTION * cp, void *data, int len)
  * consume pending data. returns actually consumed data length.
  */
 static int
-consume_pending_data(POOL_CONNECTION * cp, void *data, int len)
+consume_pending_data(POOL_CONNECTION *cp, void *data, int len)
 {
 	int			consume_size;
 
@@ -1184,7 +1182,7 @@ consume_pending_data(POOL_CONNECTION * cp, void *data, int len)
  * pool_unread: Put back data to input buffer
  */
 int
-pool_unread(POOL_CONNECTION * cp, void *data, int len)
+pool_unread(POOL_CONNECTION *cp, void *data, int len)
 {
 	void	   *p = cp->hp;
 	int			n = cp->len + len;
@@ -1226,7 +1224,7 @@ pool_unread(POOL_CONNECTION * cp, void *data, int len)
  * pool_push: Push data into buffer stack.
  */
 int
-pool_push(POOL_CONNECTION * cp, void *data, int len)
+pool_push(POOL_CONNECTION *cp, void *data, int len)
 {
 	char	   *p;
 
@@ -1258,7 +1256,7 @@ pool_push(POOL_CONNECTION * cp, void *data, int len)
  * pool_unread.
  */
 void
-pool_pop(POOL_CONNECTION * cp, int *len)
+pool_pop(POOL_CONNECTION *cp, int *len)
 {
 	if (cp->bufsz3 == 0)
 	{
@@ -1282,7 +1280,7 @@ pool_pop(POOL_CONNECTION * cp, int *len)
  * pool_unread.
  */
 int
-pool_stacklen(POOL_CONNECTION * cp)
+pool_stacklen(POOL_CONNECTION *cp)
 {
 	return cp->bufsz3;
 }
@@ -1332,7 +1330,7 @@ pool_get_timeout(void)
  * return values: 0: normal 1: data is not ready -1: error
  */
 int
-pool_check_fd(POOL_CONNECTION * cp)
+pool_check_fd(POOL_CONNECTION *cp)
 {
 	fd_set		readmask;
 	fd_set		exceptmask;

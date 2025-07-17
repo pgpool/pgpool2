@@ -66,22 +66,22 @@ typedef struct
 	int			from_pgpool_port;
 	struct timeval send_time;
 	char		hash[WD_AUTH_HASH_LEN + 1];
-}			WdHbPacket;
+} WdHbPacket;
 
 
 static RETSIGTYPE hb_sender_exit(int sig);
 static RETSIGTYPE hb_receiver_exit(int sig);
-static int	hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
-static int	ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from);
-static int	packet_to_string_hb(WdHbPacket * pkt, char *str, int maxlen);
+static int	hton_wd_hb_packet(WdHbPacket *to, WdHbPacket *from);
+static int	ntoh_wd_hb_packet(WdHbPacket *to, WdHbPacket *from);
+static int	packet_to_string_hb(WdHbPacket *pkt, char *str, int maxlen);
 static void wd_set_reuseport(int sock);
 static int	select_socket_from_list(List *socks);
 
-static int	wd_create_hb_send_socket(WdHbIf * hb_if);
-static List *wd_create_hb_recv_socket(WdHbIf * hb_if);
+static int	wd_create_hb_send_socket(WdHbIf *hb_if);
+static List *wd_create_hb_recv_socket(WdHbIf *hb_if);
 
-static void wd_hb_send(int sock, WdHbPacket * pkt, int len, const char *destination, const int dest_port);
-static void wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr);
+static void wd_hb_send(int sock, WdHbPacket *pkt, int len, const char *destination, const int dest_port);
+static void wd_hb_recv(int sock, WdHbPacket *pkt, char *from_addr);
 
  /*
   * Readable socket will be returned among the listening socket list.
@@ -151,7 +151,7 @@ select_socket_from_list(List *socks)
 
 /* create socket for sending heartbeat */
 static int
-wd_create_hb_send_socket(WdHbIf * hb_if)
+wd_create_hb_send_socket(WdHbIf *hb_if)
 {
 	int			sock = -1;
 	int			tos;
@@ -246,7 +246,7 @@ wd_create_hb_send_socket(WdHbIf * hb_if)
 
 /* create socket for receiving heartbeat */
 static List *
-wd_create_hb_recv_socket(WdHbIf * hb_if)
+wd_create_hb_recv_socket(WdHbIf *hb_if)
 {
 	int			sock = -1,
 				gai_ret,
@@ -431,7 +431,7 @@ wd_create_hb_recv_socket(WdHbIf * hb_if)
 
 /* send heartbeat signal */
 static void
-wd_hb_send(int sock, WdHbPacket * pkt, int len, const char *host, const int port)
+wd_hb_send(int sock, WdHbPacket *pkt, int len, const char *host, const int port)
 {
 	int			rtn;
 	WdHbPacket	buf;
@@ -482,7 +482,7 @@ wd_hb_send(int sock, WdHbPacket * pkt, int len, const char *host, const int port
  */
 void
 static
-wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr)
+wd_hb_recv(int sock, WdHbPacket *pkt, char *from_addr)
 {
 	int			rtn;
 	WdHbPacket	buf;
@@ -523,7 +523,7 @@ wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr)
 
 /* fork heartbeat receiver child */
 pid_t
-wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
+wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if)
 {
 	int			sock;
 	pid_t		pid = 0;
@@ -668,7 +668,7 @@ wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if)
 
 /* fork heartbeat sender child */
 pid_t
-wd_hb_sender(int fork_wait_time, WdHbIf * hb_if)
+wd_hb_sender(int fork_wait_time, WdHbIf *hb_if)
 {
 	int			sock;
 	pid_t		pid = 0;
@@ -811,7 +811,7 @@ hb_receiver_exit(int sig)
 }
 
 static int
-hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
+hton_wd_hb_packet(WdHbPacket *to, WdHbPacket *from)
 {
 	if ((to == NULL) || (from == NULL))
 	{
@@ -828,7 +828,7 @@ hton_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 }
 
 static int
-ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
+ntoh_wd_hb_packet(WdHbPacket *to, WdHbPacket *from)
 {
 	if ((to == NULL) || (from == NULL))
 	{
@@ -846,7 +846,7 @@ ntoh_wd_hb_packet(WdHbPacket * to, WdHbPacket * from)
 
 /* convert packet to string and return length of the string */
 static int
-packet_to_string_hb(WdHbPacket * pkt, char *str, int maxlen)
+packet_to_string_hb(WdHbPacket *pkt, char *str, int maxlen)
 {
 	int			len;
 

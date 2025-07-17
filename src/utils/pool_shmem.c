@@ -36,8 +36,8 @@
 #define PG_SHMAT_FLAGS			0
 #endif
 
-static void* shared_mem_chunk = NULL;
-static char* shared_mem_free_pos = NULL;
+static void *shared_mem_chunk = NULL;
+static char *shared_mem_free_pos = NULL;
 static size_t chunk_size = 0;
 
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -58,10 +58,10 @@ initialize_shared_memory_main_segment(size_t size)
 		return;
 
 	ereport(LOG,
-			(errmsg("allocating shared memory segment of size: %zu ",size)));
+			(errmsg("allocating shared memory segment of size: %zu ", size)));
 
 	shared_mem_chunk = pool_shared_memory_create(size);
-	shared_mem_free_pos = (char*)shared_mem_chunk;
+	shared_mem_free_pos = (char *) shared_mem_chunk;
 	chunk_size = size;
 	memset(shared_mem_chunk, 0, size);
 }
@@ -69,7 +69,8 @@ initialize_shared_memory_main_segment(size_t size)
 void *
 pool_shared_memory_segment_get_chunk(size_t size)
 {
-	void *ptr = NULL;
+	void	   *ptr = NULL;
+
 	if (mypid != getpid())
 	{
 		/* should never happen */
@@ -78,18 +79,18 @@ pool_shared_memory_segment_get_chunk(size_t size)
 		return NULL;
 	}
 	/* check if we have enough space left in chunk */
-	if ((shared_mem_free_pos - (char*)shared_mem_chunk) + MAXALIGN(size) > chunk_size)
+	if ((shared_mem_free_pos - (char *) shared_mem_chunk) + MAXALIGN(size) > chunk_size)
 	{
 		ereport(ERROR,
 				(errmsg("no space left in shared memory segment")));
 		return NULL;
 
 	}
+
 	/*
-	 * return the current shared_mem_free_pos pointer
-	 * and advance it by size
+	 * return the current shared_mem_free_pos pointer and advance it by size
 	 */
-	ptr = (void*)shared_mem_free_pos;
+	ptr = (void *) shared_mem_free_pos;
 	shared_mem_free_pos += MAXALIGN(size);
 	return ptr;
 }

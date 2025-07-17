@@ -58,7 +58,8 @@ pool_init_pool_passwd(char *pool_passwd_filename, POOL_PASSWD_MODE mode)
 
 	if (pool_passwd_filename == NULL)
 	{
-		saved_passwd_filename[0] = '\0'; /* indicate pool_passwd is disabled */
+		saved_passwd_filename[0] = '\0';	/* indicate pool_passwd is
+											 * disabled */
 		return;
 	}
 
@@ -102,10 +103,10 @@ pool_create_passwdent(char *username, char *passwd)
 {
 #define LINE_LEN \
 		MAX_USER_NAME_LEN + 1 + MAX_POOL_PASSWD_LEN + 2
-	char 	linebuf[LINE_LEN];
-	char 	*writebuf = NULL;
-	int		len;
-	bool 	updated = false;
+	char		linebuf[LINE_LEN];
+	char	   *writebuf = NULL;
+	int			len;
+	bool		updated = false;
 
 	if (!passwd_fd)
 		ereport(ERROR,
@@ -124,8 +125,8 @@ pool_create_passwdent(char *username, char *passwd)
 
 	while (!feof(passwd_fd) && !ferror(passwd_fd))
 	{
-		char       *t = linebuf;
-		int         len;
+		char	   *t = linebuf;
+		int			len;
 
 		if (fgets(linebuf, sizeof(linebuf), passwd_fd) == NULL)
 			break;
@@ -162,7 +163,7 @@ pool_create_passwdent(char *username, char *passwd)
 		strcat(writebuf, linebuf);
 	}
 
-	if(!writebuf)
+	if (!writebuf)
 		return 0;
 
 	fclose(passwd_fd);
@@ -203,7 +204,7 @@ pool_get_passwd(char *username)
 	{
 		if (strlen(saved_passwd_filename))
 			ereport(ERROR,
-				(errmsg("unable to get password, password file descriptor is NULL")));
+					(errmsg("unable to get password, password file descriptor is NULL")));
 		else
 			return NULL;
 	}
@@ -355,7 +356,7 @@ pool_get_user_credentials(char *username)
 	{
 		if (strlen(saved_passwd_filename))
 			ereport(WARNING,
-				(errmsg("unable to get password, password file descriptor is NULL")));
+					(errmsg("unable to get password, password file descriptor is NULL")));
 		return NULL;
 	}
 
@@ -416,7 +417,7 @@ pool_get_user_credentials(char *username)
 }
 
 void
-delete_passwordMapping(PasswordMapping * pwdMapping)
+delete_passwordMapping(PasswordMapping *pwdMapping)
 {
 	if (!pwdMapping)
 		return;
@@ -476,8 +477,8 @@ get_pgpool_config_user_password(char *username, char *password_in_config)
 	PasswordMapping *password_mapping = NULL;
 
 	/*
-	 * if the password specified in config is empty string or NULL look for the
-	 * password in pool_passwd file
+	 * if the password specified in config is empty string or NULL look for
+	 * the password in pool_passwd file
 	 */
 	if (password_in_config == NULL || strlen(password_in_config) == 0)
 	{
@@ -525,7 +526,7 @@ get_pgpool_config_user_password(char *username, char *password_in_config)
 		/* convert the TEXT prefixed password to plain text password */
 		passwordType = PASSWORD_TYPE_PLAINTEXT;
 		if (password)
-			password = (char*)(password + strlen(PASSWORD_TEXT_PREFIX));
+			password = (char *) (password + strlen(PASSWORD_TEXT_PREFIX));
 	}
 
 	if (password && strlen(password) && (passwordType != PASSWORD_TYPE_PLAINTEXT &&
@@ -634,11 +635,11 @@ read_pool_key(char *key_file_path)
 		return NULL;
 
 	/*
-	 * To prevent file-swapping due to file race conditions,
-	 * we open the key file before checking it by stat().
+	 * To prevent file-swapping due to file race conditions, we open the key
+	 * file before checking it by stat().
 	 */
 	/* If password file cannot be opened, ignore it. */
-	if ( (fp = fopen(key_file_path, "r")) == NULL)
+	if ((fp = fopen(key_file_path, "r")) == NULL)
 		return NULL;
 
 	if (fstat(fileno(fp), &stat_buf) != 0)
@@ -707,12 +708,13 @@ check_password_type_is_not_md5(char *username, char *password_in_config)
 	PasswordType passwordType = PASSWORD_TYPE_UNKNOWN;
 
 	/*
-	 * if the password specified in config is empty string or NULL look for the
-	 * password in pool_passwd file
+	 * if the password specified in config is empty string or NULL look for
+	 * the password in pool_passwd file
 	 */
 	if (password_in_config == NULL || strlen(password_in_config) == 0)
 	{
 		PasswordMapping *password_mapping = NULL;
+
 		password_mapping = pool_get_user_credentials(username);
 		if (password_mapping == NULL)
 		{
@@ -726,7 +728,7 @@ check_password_type_is_not_md5(char *username, char *password_in_config)
 		passwordType = get_password_type(password_in_config);
 	}
 
-	/* if the password type is MD5 hash return -1*/
+	/* if the password type is MD5 hash return -1 */
 	if (passwordType == PASSWORD_TYPE_MD5)
 	{
 		return -1;

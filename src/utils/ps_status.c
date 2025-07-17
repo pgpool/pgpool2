@@ -45,7 +45,8 @@
 
 extern char **environ;
 bool		update_process_title = true;
-char		remote_ps_data[NI_MAXHOST + NI_MAXSERV + 2]; /* used for set_ps_display */
+char		remote_ps_data[NI_MAXHOST + NI_MAXSERV + 2];	/* used for
+															 * set_ps_display */
 
 
 /*
@@ -392,7 +393,7 @@ get_ps_display(int *displen)
  * Show ps idle status
  */
 void
-pool_ps_idle_display(POOL_CONNECTION_POOL * backend)
+pool_ps_idle_display(POOL_CONNECTION_POOL *backend)
 {
 	StartupPacket *sp;
 	char		psbuf[1024];

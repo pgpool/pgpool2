@@ -71,34 +71,34 @@ static RETSIGTYPE wakeup_handler_child(int sig);
 
 static void unset_nonblock(int fd);
 static int	user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len);
-static void process_authentication(PCP_CONNECTION * frontend, char *buf, char *salt, int *random_salt);
-static void send_md5salt(PCP_CONNECTION * frontend, char *salt);
+static void process_authentication(PCP_CONNECTION *frontend, char *buf, char *salt, int *random_salt);
+static void send_md5salt(PCP_CONNECTION *frontend, char *salt);
 
 static void pcp_process_command(char tos, char *buf, int buf_len);
 
 static int	pool_detach_node(int node_id, bool gracefully, bool switchover);
 static int	pool_promote_node(int node_id, bool gracefully);
-static void inform_process_count(PCP_CONNECTION * frontend);
-static void inform_process_info(PCP_CONNECTION * frontend, char *buf);
-static void inform_watchdog_info(PCP_CONNECTION * frontend, char *buf);
-static void inform_node_info(PCP_CONNECTION * frontend, char *buf);
-static void inform_node_count(PCP_CONNECTION * frontend);
-static void process_reload_config(PCP_CONNECTION * frontend,char scope);
-static void process_log_rotate(PCP_CONNECTION * frontend,char scope);
+static void inform_process_count(PCP_CONNECTION *frontend);
+static void inform_process_info(PCP_CONNECTION *frontend, char *buf);
+static void inform_watchdog_info(PCP_CONNECTION *frontend, char *buf);
+static void inform_node_info(PCP_CONNECTION *frontend, char *buf);
+static void inform_node_count(PCP_CONNECTION *frontend);
+static void process_reload_config(PCP_CONNECTION *frontend, char scope);
+static void process_log_rotate(PCP_CONNECTION *frontend, char scope);
 static void inform_health_check_stats(PCP_CONNECTION *frontend, char *buf);
-static void process_detach_node(PCP_CONNECTION * frontend, char *buf, char tos);
-static void process_attach_node(PCP_CONNECTION * frontend, char *buf);
-static void process_recovery_request(PCP_CONNECTION * frontend, char *buf);
-static void process_status_request(PCP_CONNECTION * frontend);
-static void process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos);
-static void process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos);
-static void process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int len);
-static void process_invalidate_query_cache(PCP_CONNECTION * frontend);
+static void process_detach_node(PCP_CONNECTION *frontend, char *buf, char tos);
+static void process_attach_node(PCP_CONNECTION *frontend, char *buf);
+static void process_recovery_request(PCP_CONNECTION *frontend, char *buf);
+static void process_status_request(PCP_CONNECTION *frontend);
+static void process_promote_node(PCP_CONNECTION *frontend, char *buf, char tos);
+static void process_shutdown_request(PCP_CONNECTION *frontend, char mode, char tos);
+static void process_set_configuration_parameter(PCP_CONNECTION *frontend, char *buf, int len);
+static void process_invalidate_query_cache(PCP_CONNECTION *frontend);
 
 static void pcp_worker_will_go_down(int code, Datum arg);
 
-static void do_pcp_flush(PCP_CONNECTION * frontend);
-static void do_pcp_read(PCP_CONNECTION * pc, void *buf, int len);
+static void do_pcp_flush(PCP_CONNECTION *frontend);
+static void do_pcp_read(PCP_CONNECTION *pc, void *buf, int len);
 
 /*
  * main entry pont of pcp worker child process
@@ -167,7 +167,7 @@ pcp_worker_main(int port)
 
 	for (;;)
 	{
-		char	*buf = NULL;
+		char	   *buf = NULL;
 
 		MemoryContextSwitchTo(PCPMemoryContext);
 		MemoryContextResetAndDeleteChildren(PCPMemoryContext);
@@ -229,7 +229,10 @@ pcp_process_command(char tos, char *buf, int buf_len)
 	/* The request is recovery or pcp shutdown request? */
 	if (tos == 'O' || tos == 'T')
 	{
-		/* Prevent those pcp requests while processing failover/failback request */
+		/*
+		 * Prevent those pcp requests while processing failover/failback
+		 * request
+		 */
 		if (Req_info->switching)
 		{
 			if (Req_info->request_queue_tail != Req_info->request_queue_head)
@@ -343,7 +346,7 @@ pcp_process_command(char tos, char *buf, int buf_len)
 			inform_watchdog_info(pcp_frontend, buf);
 			break;
 
-		case 'Z':				/*reload config file */
+		case 'Z':				/* reload config file */
 			set_ps_display("PCP: processing reload config request", false);
 			process_reload_config(pcp_frontend, buf[0]);
 			break;
@@ -534,7 +537,7 @@ user_authenticate(char *buf, char *passwd_file, char *salt, int salt_len)
 static int
 pool_detach_node(int node_id, bool gracefully, bool switchover)
 {
-	int		flag = 0;
+	int			flag = 0;
 
 	if (switchover)
 		flag = REQ_DETAIL_PROMOTE;
@@ -641,7 +644,7 @@ pool_promote_node(int node_id, bool gracefully)
 }
 
 static void
-inform_process_count(PCP_CONNECTION * frontend)
+inform_process_count(PCP_CONNECTION *frontend)
 {
 	int			wsize;
 	int			process_count;
@@ -654,7 +657,8 @@ inform_process_count(PCP_CONNECTION * frontend)
 
 	process_list = pool_get_process_list(&process_count);
 
-	mesg = (char *) palloc(8 * process_count);	/* PID is at most 7 characters long */
+	mesg = (char *) palloc(8 * process_count);	/* PID is at most 7 characters
+												 * long */
 
 	snprintf(process_count_str, sizeof(process_count_str), "%d", process_count);
 
@@ -690,13 +694,13 @@ inform_process_count(PCP_CONNECTION * frontend)
  * pcp_process_info
  */
 static void
-inform_process_info(PCP_CONNECTION * frontend, char *buf)
+inform_process_info(PCP_CONNECTION *frontend, char *buf)
 {
 	int			proc_id;
 	int			wsize;
 	int			num_proc = pool_config->num_init_children;
 	int			i;
-	int			*offsets;
+	int		   *offsets;
 	int			n;
 	POOL_REPORT_POOLS *pools;
 
@@ -756,7 +760,7 @@ inform_process_info(PCP_CONNECTION * frontend, char *buf)
 			wsize = 0;
 			for (j = 0; j < n; j++)
 			{
-				wsize += strlen((char *)&pools[i] + offsets[j]) + 1;
+				wsize += strlen((char *) &pools[i] + offsets[j]) + 1;
 			}
 			wsize += sizeof(code) + sizeof(int);
 			wsize = htonl(wsize);
@@ -769,7 +773,7 @@ inform_process_info(PCP_CONNECTION * frontend, char *buf)
 			/* send each process info data to frontend */
 			for (j = 0; j < n; j++)
 			{
-				pcp_write(frontend, (char *)&pools[i] + offsets[j], strlen((char *)&pools[i] + offsets[j]) + 1);
+				pcp_write(frontend, (char *) &pools[i] + offsets[j], strlen((char *) &pools[i] + offsets[j]) + 1);
 			}
 
 			do_pcp_flush(frontend);
@@ -790,7 +794,7 @@ inform_process_info(PCP_CONNECTION * frontend, char *buf)
 }
 
 static void
-inform_watchdog_info(PCP_CONNECTION * frontend, char *buf)
+inform_watchdog_info(PCP_CONNECTION *frontend, char *buf)
 {
 	int			wd_index;
 	int			json_data_len;
@@ -835,7 +839,7 @@ inform_watchdog_info(PCP_CONNECTION * frontend, char *buf)
 }
 
 static void
-inform_node_info(PCP_CONNECTION * frontend, char *buf)
+inform_node_info(PCP_CONNECTION *frontend, char *buf)
 {
 	POOL_REPORT_NODES *nodes;
 	int			nrows;
@@ -882,7 +886,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 		do_pcp_flush(frontend);
 
 		/* Second, send process information for all connection_info */
-		for (i = 0; i < NUM_BACKENDS ; i++)
+		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			char		port_str[6];
 			char		status[2];
@@ -904,7 +908,7 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 			if (bi == NULL)
 				ereport(ERROR,
 						(errmsg("informing node info failed"),
-						errdetail("invalid node ID")));
+						 errdetail("invalid node ID")));
 
 			snprintf(port_str, sizeof(port_str), "%d", bi->backend_port);
 			snprintf(status, sizeof(status), "%d", bi->backend_status);
@@ -995,14 +999,14 @@ inform_health_check_stats(PCP_CONNECTION *frontend, char *buf)
 {
 	POOL_HEALTH_CHECK_STATS *stats;
 	POOL_HEALTH_CHECK_STATS *s;
-	int		*offsets;
-	int		n;
-	int		nrows;
-	int		i;
-	int		node_id;
-	bool	node_id_ok = false;
-	int		wsize;
-	char	code[] = "CommandComplete";
+	int		   *offsets;
+	int			n;
+	int			nrows;
+	int			i;
+	int			node_id;
+	bool		node_id_ok = false;
+	int			wsize;
+	char		code[] = "CommandComplete";
 
 	node_id = atoi(buf);
 
@@ -1012,7 +1016,7 @@ inform_health_check_stats(PCP_CONNECTION *frontend, char *buf)
 				(errmsg("informing health check stats info failed"),
 				 errdetail("invalid node ID %d", node_id)));
 	}
-	
+
 	stats = get_health_check_stats(&nrows);
 
 	for (i = 0; i < nrows; i++)
@@ -1032,7 +1036,8 @@ inform_health_check_stats(PCP_CONNECTION *frontend, char *buf)
 				 errdetail("stats data for node ID %d does not exist", node_id)));
 	}
 
-	pcp_write(frontend, "h", 1);	/* indicate that this is a reply to health check stats request */
+	pcp_write(frontend, "h", 1);	/* indicate that this is a reply to health
+									 * check stats request */
 
 	wsize = sizeof(code) + sizeof(int);
 
@@ -1041,9 +1046,9 @@ inform_health_check_stats(PCP_CONNECTION *frontend, char *buf)
 
 	for (i = 0; i < n; i++)
 	{
-		wsize += strlen((char *)s + offsets[i]) + 1;
+		wsize += strlen((char *) s + offsets[i]) + 1;
 	}
-	wsize = htonl(wsize);	/* convert to network byte order */
+	wsize = htonl(wsize);		/* convert to network byte order */
 
 	/* send packet length to frontend */
 	pcp_write(frontend, &wsize, sizeof(int));
@@ -1053,14 +1058,14 @@ inform_health_check_stats(PCP_CONNECTION *frontend, char *buf)
 	/* send each health check stats data to frontend */
 	for (i = 0; i < n; i++)
 	{
-		pcp_write(frontend, (char *)s + offsets[i], strlen((char *)s + offsets[i]) + 1);
+		pcp_write(frontend, (char *) s + offsets[i], strlen((char *) s + offsets[i]) + 1);
 	}
 	pfree(stats);
 	do_pcp_flush(frontend);
 }
 
 static void
-inform_node_count(PCP_CONNECTION * frontend)
+inform_node_count(PCP_CONNECTION *frontend)
 {
 	int			wsize;
 	char		mesg[16];
@@ -1084,10 +1089,10 @@ inform_node_count(PCP_CONNECTION * frontend)
 }
 
 static void
-process_reload_config(PCP_CONNECTION * frontend, char scope)
+process_reload_config(PCP_CONNECTION *frontend, char scope)
 {
-	char            code[] = "CommandComplete";
-	int wsize;
+	char		code[] = "CommandComplete";
+	int			wsize;
 
 	if (scope == 'c' && pool_config->use_watchdog)
 	{
@@ -1100,11 +1105,11 @@ process_reload_config(PCP_CONNECTION * frontend, char scope)
 					 errdetail("failed to propagate reload config command through watchdog")));
 	}
 
-	if(pool_signal_parent(SIGHUP) == -1)
+	if (pool_signal_parent(SIGHUP) == -1)
 	{
-	   ereport(ERROR,
-			   (errmsg("process reload config request failed"),
-				errdetail("failed to signal pgpool parent process")));
+		ereport(ERROR,
+				(errmsg("process reload config request failed"),
+				 errdetail("failed to signal pgpool parent process")));
 	}
 
 	pcp_write(frontend, "z", 1);
@@ -1115,10 +1120,10 @@ process_reload_config(PCP_CONNECTION * frontend, char scope)
 }
 
 static void
-process_log_rotate(PCP_CONNECTION * frontend, char scope)
+process_log_rotate(PCP_CONNECTION *frontend, char scope)
 {
-	char            code[] = "CommandComplete";
-	int wsize;
+	char		code[] = "CommandComplete";
+	int			wsize;
 
 	if (scope == 'c' && pool_config->use_watchdog)
 	{
@@ -1141,7 +1146,7 @@ process_log_rotate(PCP_CONNECTION * frontend, char scope)
 }
 
 static void
-process_detach_node(PCP_CONNECTION * frontend, char *buf, char tos)
+process_detach_node(PCP_CONNECTION *frontend, char *buf, char tos)
 {
 	int			node_id;
 	int			wsize;
@@ -1168,7 +1173,7 @@ process_detach_node(PCP_CONNECTION * frontend, char *buf, char tos)
 }
 
 static void
-process_attach_node(PCP_CONNECTION * frontend, char *buf)
+process_attach_node(PCP_CONNECTION *frontend, char *buf)
 {
 	int			node_id;
 	int			wsize;
@@ -1190,7 +1195,7 @@ process_attach_node(PCP_CONNECTION * frontend, char *buf)
 
 
 static void
-process_recovery_request(PCP_CONNECTION * frontend, char *buf)
+process_recovery_request(PCP_CONNECTION *frontend, char *buf)
 {
 	int			wsize;
 	char		code[] = "CommandComplete";
@@ -1249,7 +1254,7 @@ process_recovery_request(PCP_CONNECTION * frontend, char *buf)
 }
 
 static void
-process_status_request(PCP_CONNECTION * frontend)
+process_status_request(PCP_CONNECTION *frontend)
 {
 	int			nrows = 0;
 	int			i;
@@ -1307,14 +1312,14 @@ process_status_request(PCP_CONNECTION * frontend)
  * actually promote the specified node and detach current primary.
  */
 static void
-process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos)
+process_promote_node(PCP_CONNECTION *frontend, char *buf, char tos)
 {
 	int			node_id;
 	int			wsize;
 	char		code[] = "CommandComplete";
 	bool		gracefully;
 	char		node_id_buf[64];
-	char		*p;
+	char	   *p;
 	char		promote_option;
 
 	if (tos == 'J')
@@ -1358,8 +1363,8 @@ process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos)
 	if (promote_option == 's')
 	{
 		ereport(DEBUG1,
-			(errmsg("PCP: processing promote node"),
-			 errdetail("promoting Node ID %d and shutdown primary node %d", node_id, REAL_PRIMARY_NODE_ID)));
+				(errmsg("PCP: processing promote node"),
+				 errdetail("promoting Node ID %d and shutdown primary node %d", node_id, REAL_PRIMARY_NODE_ID)));
 		pool_detach_node(node_id, gracefully, true);
 	}
 	else
@@ -1381,7 +1386,7 @@ process_promote_node(PCP_CONNECTION * frontend, char *buf, char tos)
  * Process pcp_invalidate_query_cache
  */
 static void
-process_invalidate_query_cache(PCP_CONNECTION * frontend)
+process_invalidate_query_cache(PCP_CONNECTION *frontend)
 {
 	int			wsize;
 	char		code[] = "CommandComplete";
@@ -1404,7 +1409,7 @@ process_invalidate_query_cache(PCP_CONNECTION * frontend)
 }
 
 static void
-process_authentication(PCP_CONNECTION * frontend, char *buf, char *salt, int *random_salt)
+process_authentication(PCP_CONNECTION *frontend, char *buf, char *salt, int *random_salt)
 {
 	int			wsize;
 	int			authenticated;
@@ -1439,7 +1444,7 @@ process_authentication(PCP_CONNECTION * frontend, char *buf, char *salt, int *ra
 }
 
 static void
-send_md5salt(PCP_CONNECTION * frontend, char *salt)
+send_md5salt(PCP_CONNECTION *frontend, char *salt)
 {
 	int			wsize;
 
@@ -1456,7 +1461,7 @@ send_md5salt(PCP_CONNECTION * frontend, char *salt)
 }
 
 static void
-process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos)
+process_shutdown_request(PCP_CONNECTION *frontend, char mode, char tos)
 {
 	char		code[] = "CommandComplete";
 	int			len;
@@ -1465,10 +1470,11 @@ process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos)
 			(errmsg("PCP: processing shutdown request"),
 			 errdetail("shutdown mode \"%c\"", mode)));
 
-	/* quickly bail out if invalid mode is specified
-	 * because we do not want to propagate the command
-	 * with invalid mode over the watchdog network */
-	if (mode != 's' && mode != 'i' && mode != 'f' )
+	/*
+	 * quickly bail out if invalid mode is specified because we do not want to
+	 * propagate the command with invalid mode over the watchdog network
+	 */
+	if (mode != 's' && mode != 'i' && mode != 'f')
 	{
 		ereport(ERROR,
 				(errmsg("PCP: error while processing shutdown request"),
@@ -1478,11 +1484,11 @@ process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos)
 	if (tos == 't' && pool_config->use_watchdog)
 	{
 		WDExecCommandArg wdExecCommandArg;
-		List *args_list = NULL;
+		List	   *args_list = NULL;
 
 		strncpy(wdExecCommandArg.arg_name, "mode", sizeof(wdExecCommandArg.arg_name) - 1);
-		snprintf(wdExecCommandArg.arg_value, sizeof(wdExecCommandArg.arg_value) - 1, "%c",mode);
-		args_list = lappend(args_list,&wdExecCommandArg);
+		snprintf(wdExecCommandArg.arg_value, sizeof(wdExecCommandArg.arg_value) - 1, "%c", mode);
+		args_list = lappend(args_list, &wdExecCommandArg);
 
 		ereport(LOG,
 				(errmsg("PCP: sending command to watchdog to shutdown cluster")));
@@ -1504,7 +1510,7 @@ process_shutdown_request(PCP_CONNECTION * frontend, char mode, char tos)
 }
 
 static void
-process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int len)
+process_set_configuration_parameter(PCP_CONNECTION *frontend, char *buf, int len)
 {
 	char	   *param_name;
 	char	   *param_value;
@@ -1570,7 +1576,7 @@ process_set_configuration_parameter(PCP_CONNECTION * frontend, char *buf, int le
  * Wrapper around pcp_flush which throws FATAL error when pcp_flush fails
  */
 static void
-do_pcp_flush(PCP_CONNECTION * frontend)
+do_pcp_flush(PCP_CONNECTION *frontend)
 {
 	if (pcp_flush(frontend) < 0)
 		ereport(FATAL,
@@ -1582,7 +1588,7 @@ do_pcp_flush(PCP_CONNECTION * frontend)
  * Wrapper around pcp_read which throws FATAL error when read fails
  */
 static void
-do_pcp_read(PCP_CONNECTION * pc, void *buf, int len)
+do_pcp_read(PCP_CONNECTION *pc, void *buf, int len)
 {
 	if (pcp_read(pc, buf, len))
 		ereport(FATAL,

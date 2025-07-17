@@ -16,19 +16,19 @@ POOL_REQUEST_INFO *Req_info = &_req_info;
 
 POOL_CONFIG _pool_config;
 POOL_CONFIG *pool_config = &_pool_config;
-bool redirection_done = false;
+bool		redirection_done = false;
 typedef struct
 {
 	char	   *attrname;		/* attribute name */
 	char	   *adsrc;			/* default value expression */
 	int			use_timestamp;
-}			TSAttr;
+} TSAttr;
 
 typedef struct
 {
 	int			relnatts;
 	TSAttr		attr[4];
-}			TSRel;
+} TSRel;
 
 
 TSRel		rc[2] = {
@@ -78,10 +78,10 @@ pool_get_major_version(void)
 
 
 PGVersion *
-Pgversion(POOL_CONNECTION_POOL * backend)
+Pgversion(POOL_CONNECTION_POOL *backend)
 {
 #define VERSION_BUF_SIZE	10
-	static	PGVersion	pgversion;
+	static PGVersion pgversion;
 
 	pgversion.major = 12;
 	pgversion.minor = 0;
@@ -97,7 +97,7 @@ pool_create_relcache(int cachesize, char *sql, func_ptr register_func, func_ptr 
 
 /* dummy result of relcache (attrname, adsrc, usetimestamp)*/
 void *
-pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, char *table)
+pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, char *table)
 {
 	if (strcmp(table, "\"rel1\"") == 0)
 		return (void *) &(rc[0]);
@@ -107,7 +107,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 
 /* dummy result of "SELECT now()" */
 void
-do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, int major)
+do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major)
 {
 	static POOL_SELECT_RESULT res;
 	static char *data[1] = {
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-    tree = raw_parser(argv[1], RAW_PARSE_DEFAULT, strlen(argv[1]), &error, false);
+	tree = raw_parser(argv[1], RAW_PARSE_DEFAULT, strlen(argv[1]), &error, false);
 	if (tree == NULL)
 	{
 		printf("syntax error: %s\n", argv[1]);
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 }
 
 void
-free_select_result(POOL_SELECT_RESULT * result)
+free_select_result(POOL_SELECT_RESULT *result)
 {
 }
 POOL_SESSION_CONTEXT *

@@ -210,7 +210,7 @@ static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static bool AllocSetIsEmpty(MemoryContext context);
 static void AllocSetStats(MemoryContext context, int level, bool print,
-			  MemoryContextCounters *totals);
+						  MemoryContextCounters *totals);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);

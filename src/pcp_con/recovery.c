@@ -45,10 +45,10 @@
 #define SECOND_STAGE 1
 
 static void exec_checkpoint(PGconn *conn);
-static void exec_recovery(PGconn *conn, BackendInfo * main_backend, BackendInfo * recovery_backend, char stage, int recovery_node);
-static void exec_remote_start(PGconn *conn, BackendInfo * backend);
-static PGconn *connect_backend_libpq(BackendInfo * backend);
-static void check_postmaster_started(BackendInfo * backend);
+static void exec_recovery(PGconn *conn, BackendInfo *main_backend, BackendInfo *recovery_backend, char stage, int recovery_node);
+static void exec_remote_start(PGconn *conn, BackendInfo *backend);
+static PGconn *connect_backend_libpq(BackendInfo *backend);
+static void check_postmaster_started(BackendInfo *backend);
 
 static char recovery_command[1024];
 
@@ -95,12 +95,12 @@ start_recovery(int recovery_node)
 	conn = connect_backend_libpq(backend);
 	if (conn == NULL)
 	{
-		if(check_password_type_is_not_md5(pool_config->recovery_user, pool_config->recovery_password) == -1)
+		if (check_password_type_is_not_md5(pool_config->recovery_user, pool_config->recovery_password) == -1)
 		{
 			ereport(ERROR,
 					(errmsg("the password of recovery_user %s is invalid format",
 							pool_config->recovery_user),
-					errdetail("recovery_password is not allowed to be md5 hashed format")));
+					 errdetail("recovery_password is not allowed to be md5 hashed format")));
 		}
 		ereport(ERROR,
 				(errmsg("node recovery failed, unable to connect to main node: %d ", node_id)));
@@ -247,7 +247,7 @@ exec_checkpoint(PGconn *conn)
  * mode) or main backend node (in other mode).
  */
 static void
-exec_recovery(PGconn *conn, BackendInfo * main_backend, BackendInfo * recovery_backend, char stage, int recovery_node)
+exec_recovery(PGconn *conn, BackendInfo *main_backend, BackendInfo *recovery_backend, char stage, int recovery_node)
 {
 	PGresult   *result;
 	char	   *hostname;
@@ -324,7 +324,7 @@ exec_recovery(PGconn *conn, BackendInfo * main_backend, BackendInfo * recovery_b
  * Call pgpool_remote_start() function.
  */
 static void
-exec_remote_start(PGconn *conn, BackendInfo * backend)
+exec_remote_start(PGconn *conn, BackendInfo *backend)
 {
 	PGresult   *result;
 	char	   *hostname;
@@ -359,7 +359,7 @@ exec_remote_start(PGconn *conn, BackendInfo * backend)
  * Check postmaster is started.
  */
 static void
-check_postmaster_started(BackendInfo * backend)
+check_postmaster_started(BackendInfo *backend)
 {
 	int			i = 0;
 	char		port_str[16];
@@ -459,16 +459,17 @@ check_postmaster_started(BackendInfo * backend)
 }
 
 static PGconn *
-connect_backend_libpq(BackendInfo * backend)
+connect_backend_libpq(BackendInfo *backend)
 {
 	char		port_str[16];
 	PGconn	   *conn;
-	char       *dbname;
+	char	   *dbname;
 	char	   *password = get_pgpool_config_user_password(pool_config->recovery_user,
 														   pool_config->recovery_password);
 
 	snprintf(port_str, sizeof(port_str),
 			 "%d", backend->backend_port);
+
 	/*
 	 * If database is not specified, "postgres" database is assumed.
 	 */
@@ -519,7 +520,8 @@ wait_connection_closed(void)
 	return ensure_conn_counter_validity();
 }
 
-int ensure_conn_counter_validity(void)
+int
+ensure_conn_counter_validity(void)
 {
 	/*
 	 * recovery_timeout was expired. Before returning with failure status,

@@ -56,24 +56,24 @@
 #define WD_INTERLOCK_WAIT_COUNT ((int) ((WD_INTERLOCK_TIMEOUT_SEC * 1000)/WD_INTERLOCK_WAIT_MSEC))
 
 /* shared memory variables */
-bool	   		*watchdog_require_cleanup = NULL;	/* shared memory variable set
-													 * to true when watchdog
-													 * process terminates
-													 * abnormally */
-bool	   		*watchdog_node_escalated = NULL; /* shared memory variable set to
-												  * true when watchdog process has
-												  * performed escalation */
-unsigned int 	*ipc_shared_key = NULL;		/* key lives in shared memory used to
-											 * identify the ipc internal clients */
+bool	   *watchdog_require_cleanup = NULL;	/* shared memory variable set
+												 * to true when watchdog
+												 * process terminates
+												 * abnormally */
+bool	   *watchdog_node_escalated = NULL; /* shared memory variable set to
+											 * true when watchdog process has
+											 * performed escalation */
+unsigned int *ipc_shared_key = NULL;	/* key lives in shared memory used to
+										 * identify the ipc internal clients */
 
 static char *get_wd_failover_state_json(bool start);
-static WDFailoverCMDResults wd_get_failover_result_from_data(WDIPCCmdResult * result,
+static WDFailoverCMDResults wd_get_failover_result_from_data(WDIPCCmdResult *result,
 															 unsigned int *wd_failover_id);
 static WDFailoverCMDResults wd_issue_failover_command(char *func_name, int *node_id_set,
-													  		int count, unsigned char flags);
+													  int count, unsigned char flags);
 
 static WdCommandResult wd_send_locking_command(WD_LOCK_STANDBY_TYPE lock_type,
-															bool acquire);
+											   bool acquire);
 
 void
 wd_ipc_initialize_data(void)
@@ -103,9 +103,11 @@ wd_ipc_initialize_data(void)
 	}
 }
 
-size_t wd_ipc_get_shared_mem_size(void)
+size_t
+wd_ipc_get_shared_mem_size(void)
 {
-	size_t size = 0;
+	size_t		size = 0;
+
 	size += MAXALIGN(sizeof(unsigned int)); /* ipc_shared_key */
 	size += MAXALIGN(sizeof(bool)); /* watchdog_require_cleanup */
 	size += MAXALIGN(sizeof(bool)); /* watchdog_node_escalated */
@@ -278,13 +280,13 @@ wd_end_recovery(void)
 }
 
 WdCommandResult
-wd_execute_cluster_command(char* clusterCommand, List *argsList)
+wd_execute_cluster_command(char *clusterCommand, List *argsList)
 {
 	char		type;
 	unsigned int *shared_key = get_ipc_shared_key();
 
 	char	   *func = get_wd_exec_cluster_command_json(clusterCommand, argsList,
-												 shared_key ? *shared_key : 0, pool_config->wd_authkey);
+														shared_key ? *shared_key : 0, pool_config->wd_authkey);
 
 	WDIPCCmdResult *result = issue_command_to_watchdog(WD_EXECUTE_CLUSTER_COMMAND,
 													   WD_DEFAULT_IPC_COMMAND_TIMEOUT,
@@ -364,7 +366,8 @@ wd_send_failover_func_status_command(bool start)
 	return res;
 }
 
-static WDFailoverCMDResults wd_get_failover_result_from_data(WDIPCCmdResult * result, unsigned int *wd_failover_id)
+static WDFailoverCMDResults
+wd_get_failover_result_from_data(WDIPCCmdResult *result, unsigned int *wd_failover_id)
 {
 	if (result == NULL)
 	{
@@ -558,18 +561,18 @@ static WdCommandResult
 wd_send_locking_command(WD_LOCK_STANDBY_TYPE lock_type, bool acquire)
 {
 	WdCommandResult res;
-	List *args_list = NULL;
+	List	   *args_list = NULL;
 	WDExecCommandArg wdExecCommandArg[2];
 
 	strncpy(wdExecCommandArg[0].arg_name, "StandbyLockType", sizeof(wdExecCommandArg[0].arg_name) - 1);
-	snprintf(wdExecCommandArg[0].arg_value, sizeof(wdExecCommandArg[0].arg_value) - 1, "%d",lock_type);
+	snprintf(wdExecCommandArg[0].arg_value, sizeof(wdExecCommandArg[0].arg_value) - 1, "%d", lock_type);
 
 	strncpy(wdExecCommandArg[1].arg_name, "LockingOperation", sizeof(wdExecCommandArg[1].arg_name) - 1);
 	snprintf(wdExecCommandArg[1].arg_value, sizeof(wdExecCommandArg[1].arg_value) - 1,
-			 "%s",acquire?"acquire":"release");
+			 "%s", acquire ? "acquire" : "release");
 
-	args_list = lappend(args_list,&wdExecCommandArg[0]);
-	args_list = lappend(args_list,&wdExecCommandArg[1]);
+	args_list = lappend(args_list, &wdExecCommandArg[0]);
+	args_list = lappend(args_list, &wdExecCommandArg[1]);
 	ereport(DEBUG1,
 			(errmsg("sending standby locking request to watchdog")));
 

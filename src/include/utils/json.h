@@ -95,7 +95,7 @@ extern "C"
 		size_t		value_extra;	/* how much extra space to allocate for
 									 * values? */
 
-	}			json_settings;
+	} json_settings;
 
 #define json_enable_comments  0x01
 
@@ -110,7 +110,7 @@ extern "C"
 		json_boolean,
 		json_null
 
-	}			json_type;
+	} json_type;
 
 	extern const struct _json_value json_value_none;
 
@@ -121,7 +121,7 @@ extern "C"
 
 		struct _json_value *value;
 
-	}			json_object_entry;
+	} json_object_entry;
 
 	typedef struct _json_value
 	{
@@ -285,13 +285,13 @@ extern "C"
 
 #endif
 
-	}			json_value;
+	} json_value;
 
 	json_value *json_parse(const json_char * json,
 						   size_t length);
 
 #define json_error_max 128
-	json_value *json_parse_ex(json_settings * settings,
+	json_value *json_parse_ex(json_settings *settings,
 							  const json_char * json,
 							  size_t length,
 							  char *error);
@@ -302,7 +302,7 @@ extern "C"
 /* Not usually necessary, unless you used a custom mem_alloc and now want to
  * use a custom mem_free.
  */
-	void		json_value_free_ex(json_settings * settings,
+	void		json_value_free_ex(json_settings *settings,
 								   json_value *);
 
 
@@ -311,10 +311,10 @@ extern "C"
 #endif
 
 /* pgpool-II extensions */
-json_value *json_get_value_for_key(json_value * source, const char *key);
-int			json_get_int_value_for_key(json_value * source, const char *key, int *value);
-int			json_get_long_value_for_key(json_value * source, const char *key, long *value);
-char	   *json_get_string_value_for_key(json_value * source, const char *key);
-int			json_get_bool_value_for_key(json_value * source, const char *key, bool *value);
+json_value *json_get_value_for_key(json_value *source, const char *key);
+int			json_get_int_value_for_key(json_value *source, const char *key, int *value);
+int			json_get_long_value_for_key(json_value *source, const char *key, long *value);
+char	   *json_get_string_value_for_key(json_value *source, const char *key);
+int			json_get_bool_value_for_key(json_value *source, const char *key, bool *value);
 
 #endif

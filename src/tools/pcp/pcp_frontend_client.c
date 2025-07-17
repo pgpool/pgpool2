@@ -48,10 +48,10 @@ static void output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose
 static void output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose);
 static void output_proccount_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_poolstatus_result(PCPResultInfo * pcpResInfo, bool verbose);
-static void output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all,  bool verbose);
+static void output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose);
 static void output_health_check_stats_result(PCPResultInfo * pcpResInfo, bool verbose);
 static void output_nodecount_result(PCPResultInfo * pcpResInfo, bool verbose);
-static char *backend_status_to_string(BackendInfo * bi);
+static char *backend_status_to_string(BackendInfo *bi);
 static char *format_titles(const char **titles, const char **types, int ntitles);
 
 typedef enum
@@ -96,9 +96,9 @@ struct AppTypes AllAppTypes[] =
 	{"pcp_recovery_node", PCP_RECOVERY_NODE, "n:h:p:U:wWvd", "recover a node"},
 	{"pcp_stop_pgpool", PCP_STOP_PGPOOL, "m:h:p:U:s:wWvda", "terminate pgpool-II"},
 	{"pcp_watchdog_info", PCP_WATCHDOG_INFO, "n:h:p:U:wWvd", "display a pgpool-II watchdog's information"},
-	{"pcp_reload_config",PCP_RELOAD_CONFIG,"h:p:U:s:wWvd", "reload a pgpool-II config file"},
-	{"pcp_log_rotate",PCP_LOG_ROTATE,"h:p:U:s:wWvd", "rotate the Pgpool-II's log file"},
-	{"pcp_invalidate_query_cache",PCP_INVALIDATE_QUERY_CACHE,"h:p:U:s:wWvd", "invalidate query cache"},
+	{"pcp_reload_config", PCP_RELOAD_CONFIG, "h:p:U:s:wWvd", "reload a pgpool-II config file"},
+	{"pcp_log_rotate", PCP_LOG_ROTATE, "h:p:U:s:wWvd", "rotate the Pgpool-II's log file"},
+	{"pcp_invalidate_query_cache", PCP_INVALIDATE_QUERY_CACHE, "h:p:U:s:wWvd", "invalidate query cache"},
 	{NULL, UNKNOWN, NULL, NULL},
 };
 struct AppTypes *current_app_type;
@@ -399,7 +399,7 @@ main(int argc, char **argv)
 
 	else if (current_app_type->app_type == PCP_LOG_ROTATE)
 	{
-		pcpResInfo = pcp_log_rotate(pcpConn,command_scope);
+		pcpResInfo = pcp_log_rotate(pcpConn, command_scope);
 	}
 
 	else if (current_app_type->app_type == PCP_NODE_COUNT)
@@ -452,7 +452,7 @@ main(int argc, char **argv)
 
 	else if (current_app_type->app_type == PCP_RELOAD_CONFIG)
 	{
-		pcpResInfo = pcp_reload_config(pcpConn,command_scope);
+		pcpResInfo = pcp_reload_config(pcpConn, command_scope);
 	}
 
 	else if (current_app_type->app_type == PCP_STOP_PGPOOL)
@@ -535,7 +535,7 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 	char		last_status_change[20];
 	struct tm	tm;
 	char	   *frmt;
-	int         array_size = pcp_result_slot_count(pcpResInfo);
+	int			array_size = pcp_result_slot_count(pcpResInfo);
 	char		standby_delay_str[64];
 
 	if (verbose)
@@ -543,7 +543,7 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		const char *titles[] = {"Hostname", "Port", "Status", "Weight", "Status Name", "Backend Status Name", "Role", "Backend Role", "Replication Delay", "Replication State", "Replication Sync State", "Last Status Change"};
 		const char *types[] = {"s", "d", "d", "f", "s", "s", "s", "s", "s", "s", "s", "s"};
 
-		frmt = format_titles(titles, types, sizeof(titles)/sizeof(char *));
+		frmt = format_titles(titles, types, sizeof(titles) / sizeof(char *));
 	}
 	else
 	{
@@ -566,10 +566,10 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 
 		if (backend_info->standby_delay_by_time)
 		{
-			snprintf(standby_delay_str, sizeof(standby_delay_str), "%.6f", ((float)backend_info->standby_delay)/1000000);
+			snprintf(standby_delay_str, sizeof(standby_delay_str), "%.6f", ((float) backend_info->standby_delay) / 1000000);
 			if (verbose)
 			{
-				if (backend_info->standby_delay >= 2*1000*1000)
+				if (backend_info->standby_delay >= 2 * 1000 * 1000)
 					strcat(standby_delay_str, " seconds");
 				else
 					strcat(standby_delay_str, " second");
@@ -605,21 +605,21 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 static void
 output_health_check_stats_result(PCPResultInfo * pcpResInfo, bool verbose)
 {
-	POOL_HEALTH_CHECK_STATS *stats = (POOL_HEALTH_CHECK_STATS *)pcp_get_binary_data(pcpResInfo, 0);
+	POOL_HEALTH_CHECK_STATS *stats = (POOL_HEALTH_CHECK_STATS *) pcp_get_binary_data(pcpResInfo, 0);
 
 	if (verbose)
 	{
 		const char *titles[] = {"Node Id", "Host Name", "Port", "Status", "Role", "Last Status Change",
-								"Total Count", "Success Count", "Fail Count", "Skip Count", "Retry Count",
-								"Average Retry Count", "Max Retry Count", "Max Health Check Duration",
-								"Minimum Health Check Duration", "Average Health Check Duration",
-								"Last Health Check", "Last Successful Health Check",
-								"Last Skip Health Check", "Last Failed Health Check"};
+			"Total Count", "Success Count", "Fail Count", "Skip Count", "Retry Count",
+			"Average Retry Count", "Max Retry Count", "Max Health Check Duration",
+			"Minimum Health Check Duration", "Average Health Check Duration",
+			"Last Health Check", "Last Successful Health Check",
+		"Last Skip Health Check", "Last Failed Health Check"};
 		const char *types[] = {"s", "s", "s", "s", "s", "s", "s", "s", "s", "s",
-							   "s", "s", "s", "s", "s", "s", "s", "s", "s", "s"};
-		char *format_string;
+		"s", "s", "s", "s", "s", "s", "s", "s", "s", "s"};
+		char	   *format_string;
 
-		format_string = format_titles(titles, types, sizeof(titles)/sizeof(char *));
+		format_string = format_titles(titles, types, sizeof(titles) / sizeof(char *));
 		printf(format_string,
 			   stats->node_id,
 			   stats->hostname,
@@ -735,7 +735,7 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		"Database", "Username", "Start time", "Client connection count",
 		"Major", "Minor", "Backend connection time", "Client connection time",
 		"Client idle duration", "Client disconnection time", "Pool Counter", "Backend PID",
-		"Connected", "PID",	"Backend ID", "Status", "Load balance node",
+		"Connected", "PID", "Backend ID", "Status", "Load balance node",
 		"client_host", "client_port", "statement"
 	};
 	const char *types[] = {
@@ -748,7 +748,7 @@ output_procinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 
 
 	if (verbose)
-		format = format_titles(titles, types, sizeof(titles)/sizeof(char *));
+		format = format_titles(titles, types, sizeof(titles) / sizeof(char *));
 	else
 	{
 		format = "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n";
@@ -993,7 +993,7 @@ get_progname(const char *argv0)
  * the function returns the constant string so should not be freed
  */
 static char *
-backend_status_to_string(BackendInfo * bi)
+backend_status_to_string(BackendInfo *bi)
 {
 	char	   *statusName;
 
@@ -1049,22 +1049,23 @@ role_to_str(SERVER_ROLE role)
 static char *
 format_titles(const char **titles, const char **types, int ntitles)
 {
-	int	i;
-	int	maxlen = 0;
-	static char	formatbuf[8192];
+	int			i;
+	int			maxlen = 0;
+	static char formatbuf[8192];
 
-	for(i = 0; i < ntitles; i++)
+	for (i = 0; i < ntitles; i++)
 	{
-		int l = strlen(titles[i]);
-		maxlen = (l > maxlen)? l : maxlen;
+		int			l = strlen(titles[i]);
+
+		maxlen = (l > maxlen) ? l : maxlen;
 	}
 
 	*formatbuf = '\0';
 
-	for(i = 0; i < ntitles; i++)
+	for (i = 0; i < ntitles; i++)
 	{
-		char buf[64];
-		char buf2[64];
+		char		buf[64];
+		char		buf2[64];
 
 		snprintf(buf, sizeof(buf), "%%-%ds : %%%%%s", maxlen, types[i]);
 		snprintf(buf2, sizeof(buf2), buf, titles[i], types[i]);

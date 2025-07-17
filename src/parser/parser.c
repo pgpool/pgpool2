@@ -90,25 +90,25 @@ raw_parser(const char *str, RawParseMode mode, int len, bool *error, bool use_mi
 	}
 
 	/* initialize the bison parser */
-    if (use_minimal)
-    {
-        ereport(DEBUG2,
-                (errmsg("invoking the minimal parser")));
-       minimal_parser_init(&yyextra);
-    }
-    else
-    {
-        ereport(DEBUG2,
-                (errmsg("invoking the standard parser")));
-       parser_init(&yyextra);
-    }
+	if (use_minimal)
+	{
+		ereport(DEBUG2,
+				(errmsg("invoking the minimal parser")));
+		minimal_parser_init(&yyextra);
+	}
+	else
+	{
+		ereport(DEBUG2,
+				(errmsg("invoking the standard parser")));
+		parser_init(&yyextra);
+	}
 	PG_TRY();
 	{
 		/* Parse! */
-        if (use_minimal)
-           yyresult = minimal_base_yyparse(yyscanner);
-        else
-           yyresult = base_yyparse(yyscanner);
+		if (use_minimal)
+			yyresult = minimal_base_yyparse(yyscanner);
+		else
+			yyresult = base_yyparse(yyscanner);
 		/* Clean up (release memory) */
 		scanner_finish(yyscanner);
 	}
@@ -145,16 +145,17 @@ raw_parser2(List *parse_tree_list)
 	return node;
 }
 
-//"INSERT INTO foo VALUES(1)"
+/* "INSERT INTO foo VALUES(1)" */
 Node *
 get_dummy_insert_query_node(void)
 {
 	InsertStmt *insert = makeNode(InsertStmt);
 	SelectStmt *select = makeNode(SelectStmt);
+
 	select->valuesLists = list_make1(makeInteger(1));
 	insert->relation = makeRangeVar("pgpool", "foo", 0);
-	insert->selectStmt = (Node*)select;
-	return (Node *)insert;
+	insert->selectStmt = (Node *) select;
+	return (Node *) insert;
 }
 
 List *
@@ -162,20 +163,23 @@ get_dummy_read_query_tree(void)
 {
 	RawStmt    *rs;
 	SelectStmt *n = makeNode(SelectStmt);
+
 	n->targetList = list_make1(makeString("pgpool: unable to parse the query"));
 	rs = makeNode(RawStmt);
-	rs->stmt = (Node *)n;
+	rs->stmt = (Node *) n;
 	rs->stmt_location = 0;
 	rs->stmt_len = 0;			/* might get changed later */
-	return list_make1((Node *)rs);
+	return list_make1((Node *) rs);
 }
 
 List *
 get_dummy_write_query_tree(void)
 {
-	ColumnRef  *c1,*c2;
+	ColumnRef  *c1,
+			   *c2;
 	RawStmt    *rs;
 	DeleteStmt *n = makeNode(DeleteStmt);
+
 	n->relation = makeRangeVar("pgpool", "foo", 0);
 
 	c1 = makeNode(ColumnRef);
@@ -184,18 +188,20 @@ get_dummy_write_query_tree(void)
 	c2 = makeNode(ColumnRef);
 	c2->fields = list_make1(makeString("pgpool: unable to parse the query"));
 
-	n->whereClause = (Node*)makeSimpleA_Expr(AEXPR_OP, "=", (Node*)c1, (Node*)c2, 0);
+	n->whereClause = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (Node *) c1, (Node *) c2, 0);
+
 	/*
-	 * Assign the node directly to the parsetree and exit the scanner
-	 * we don't want to keep parsing for information we don't need
+	 * Assign the node directly to the parsetree and exit the scanner we don't
+	 * want to keep parsing for information we don't need
 	 */
 	rs = makeNode(RawStmt);
-	rs->stmt = (Node *)n;
+	rs->stmt = (Node *) n;
 	rs->stmt_location = 0;
 	rs->stmt_len = 0;			/* might get changed later */
 
-	return list_make1((Node *)rs);
+	return list_make1((Node *) rs);
 }
+
 /*
  * from src/backend/commands/define.c
  * Extract an int32 value from a DefElem.
@@ -243,7 +249,7 @@ defGetInt32(DefElem *def)
  * same thing anyway, but notationally they're different).
  */
 int
-base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
+base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp, core_yyscan_t yyscanner)
 {
 	base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
 	int			cur_token;
@@ -661,9 +667,9 @@ invalid_pair:
 }
 
 int
-minimal_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
+minimal_base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp, core_yyscan_t yyscanner)
 {
-    return base_yylex(lvalp, llocp, yyscanner);
+	return base_yylex(lvalp, llocp, yyscanner);
 }
 
 static int

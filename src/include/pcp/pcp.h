@@ -42,7 +42,8 @@ typedef struct PCPWDNodeInfo
 	char		nodeName[WD_MAX_HOST_NAMELEN];
 	char		hostName[WD_MAX_HOST_NAMELEN];	/* host name */
 	char		stateName[WD_MAX_HOST_NAMELEN]; /* state name */
-	char		membership_status_string[WD_MAX_HOST_NAMELEN]; /* membership status of this node */
+	char		membership_status_string[WD_MAX_HOST_NAMELEN];	/* membership status of
+																 * this node */
 	int			wd_port;		/* watchdog port */
 	int			wd_priority;	/* node priority in leader election */
 	int			pgpool_port;	/* pgpool port */

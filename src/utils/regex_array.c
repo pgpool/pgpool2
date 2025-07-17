@@ -55,7 +55,7 @@ create_regex_array(void)
  * Add an regular expression pattern
  */
 int
-add_regex_array(RegArray * ar, char *pattern)
+add_regex_array(RegArray *ar, char *pattern)
 {
 	int			regex_flags;
 	regex_t    *regex;
@@ -129,7 +129,7 @@ add_regex_array(RegArray * ar, char *pattern)
  * Execute regex matching. Returns matched array index.
  */
 int
-regex_array_match(RegArray * ar, char *pattern)
+regex_array_match(RegArray *ar, char *pattern)
 {
 	int			i;
 
@@ -159,7 +159,7 @@ regex_array_match(RegArray * ar, char *pattern)
  * Destroy RegArray object
  */
 void
-destroy_regex_array(RegArray * ar)
+destroy_regex_array(RegArray *ar)
 {
 	pfree(ar->regex);
 	pfree(ar);
@@ -187,7 +187,7 @@ create_lrtoken_array(void)
  * Nnumber of tokens is set to *n.
  */
 void
-extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_tokens * lrtokens)
+extract_string_tokens2(char *str, char *delimi, char delimi2, Left_right_tokens *lrtokens)
 {
 	char	   *token;
 	char	   *mystr;

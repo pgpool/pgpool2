@@ -218,7 +218,7 @@ process_bind(char *buf, PGconn *conn)
 	fprintf(stderr, "\n");
 
 	send_char('B', conn);
-	send_int(len, conn);	/* message length */
+	send_int(len, conn);		/* message length */
 	send_string(portal, conn);	/* portal name */
 	free(portal);
 	send_string(stmt, conn);	/* statement name */
@@ -226,17 +226,17 @@ process_bind(char *buf, PGconn *conn)
 	send_int16(ncodes, conn);	/* number of format codes */
 	for (i = 0; i < ncodes; i++)
 	{
-		send_int16(codes[i], conn);	/* format code */
+		send_int16(codes[i], conn); /* format code */
 	}
 
 	send_int16(nparams, conn);	/* number of params */
 	for (i = 0; i < nparams; i++)
 	{
-		int	paramlen = paramlens[i];
+		int			paramlen = paramlens[i];
 
 		send_int(paramlen, conn);
 
-		if (paramlen != -1)	/* NULL? */
+		if (paramlen != -1)		/* NULL? */
 		{
 			if (ncodes == 0 || codes[i] == 0)
 			{

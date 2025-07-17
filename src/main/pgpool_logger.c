@@ -51,6 +51,7 @@
 
 #define DEVNULL "/dev/null"
 typedef int64 pg_time_t;
+
 /*
  * We read() into a temp buffer twice as big as a chunk, so that any fragment
  * left after processing can be moved down to the front and we'll still have
@@ -68,7 +69,7 @@ typedef int64 pg_time_t;
  */
 
 
-bool redirection_done = false;
+bool		redirection_done = false;
 
 /*
  * Private state
@@ -262,8 +263,8 @@ SysLoggerMain(int argc, char *argv[])
 
 			/*
 			 * Check if the log directory or filename pattern changed in
-			 * pgpool.conf. If so, force rotation to make sure we're
-			 * writing the logfiles in the right place.
+			 * pgpool.conf. If so, force rotation to make sure we're writing
+			 * the logfiles in the right place.
 			 */
 			if (strcmp(pool_config->log_directory, currentLogDir) != 0)
 			{
@@ -360,9 +361,9 @@ SysLoggerMain(int argc, char *argv[])
 		 * next_rotation_time.
 		 *
 		 * Also note that we need to beware of overflow in calculation of the
-		 * timeout: with large settings of pool_config->log_rotation_age, next_rotation_time
-		 * could be more than INT_MAX msec in the future.  In that case we'll
-		 * wait no more than INT_MAX msec, and try again.
+		 * timeout: with large settings of pool_config->log_rotation_age,
+		 * next_rotation_time could be more than INT_MAX msec in the future.
+		 * In that case we'll wait no more than INT_MAX msec, and try again.
 		 */
 		timeout.tv_sec = 0;
 		/* Reset usec everytime before calling sellect */
@@ -384,10 +385,10 @@ SysLoggerMain(int argc, char *argv[])
 		/*
 		 * Sleep until there's something to do
 		 */
-		
+
 		FD_ZERO(&rfds);
 		FD_SET(syslogPipe[0], &rfds);
-		rc = select(syslogPipe[0] + 1, &rfds, NULL, NULL, timeout.tv_sec?&timeout:NULL);
+		rc = select(syslogPipe[0] + 1, &rfds, NULL, NULL, timeout.tv_sec ? &timeout : NULL);
 		if (rc == 1)
 		{
 			int			bytesRead;
@@ -487,8 +488,8 @@ SysLogger_Start(void)
 
 	/*
 	 * The initial logfile is created right in the postmaster, to verify that
-	 * the pool_config->log_directory is writable.  We save the reference time so that the
-	 * syslogger child process can recompute this file name.
+	 * the pool_config->log_directory is writable.  We save the reference time
+	 * so that the syslogger child process can recompute this file name.
 	 *
 	 * It might look a bit strange to re-do this during a syslogger restart,
 	 * but we must do so since the postmaster closed syslogFile after the
@@ -883,8 +884,8 @@ logfile_open(const char *filename, const char *mode, bool allow_errors)
 	mode_t		oumask;
 
 	/*
-	 * Note we do not let pool_config->log_file_mode disable IWUSR, since we certainly want
-	 * to be able to write the files ourselves.
+	 * Note we do not let pool_config->log_file_mode disable IWUSR, since we
+	 * certainly want to be able to write the files ourselves.
 	 */
 	oumask = umask((mode_t) ((~(pool_config->log_file_mode | S_IWUSR)) & (S_IRWXU | S_IRWXG | S_IRWXO)));
 	fh = fopen(filename, mode);
@@ -940,9 +941,9 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 
 	/*
 	 * Decide whether to overwrite or append.  We can overwrite if (a)
-	 * pool_config->log_truncate_on_rotation is set, (b) the rotation was triggered by
-	 * elapsed time and not something else, and (c) the computed file name is
-	 * different from what we were previously logging into.
+	 * pool_config->log_truncate_on_rotation is set, (b) the rotation was
+	 * triggered by elapsed time and not something else, and (c) the computed
+	 * file name is different from what we were previously logging into.
 	 *
 	 * Note: last_file_name should never be NULL here, but if it is, append.
 	 */
@@ -960,8 +961,8 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 			/*
 			 * ENFILE/EMFILE are not too surprising on a busy system; just
 			 * keep using the old file till we manage to get a new one.
-			 * Otherwise, assume something's wrong with pool_config->log_directory and stop
-			 * trying to create files.
+			 * Otherwise, assume something's wrong with
+			 * pool_config->log_directory and stop trying to create files.
 			 */
 			if (errno != ENFILE && errno != EMFILE)
 			{
@@ -1010,8 +1011,8 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 			/*
 			 * ENFILE/EMFILE are not too surprising on a busy system; just
 			 * keep using the old file till we manage to get a new one.
-			 * Otherwise, assume something's wrong with pool_config->log_directory and stop
-			 * trying to create files.
+			 * Otherwise, assume something's wrong with
+			 * pool_config->log_directory and stop trying to create files.
 			 */
 			if (errno != ENFILE && errno != EMFILE)
 			{
@@ -1079,7 +1080,7 @@ logfile_getname(pg_time_t timestamp, const char *suffix)
 
 	/* treat pool_config->log_filename as a strftime pattern */
 	strftime(filename + len, MAXPGPATH - len, pool_config->log_filename,
-				localtime(&timestamp));
+			 localtime(&timestamp));
 
 	if (suffix != NULL)
 	{
@@ -1099,7 +1100,7 @@ static void
 set_next_rotation_time(void)
 {
 	pg_time_t	now;
-	struct tm *tm;
+	struct tm  *tm;
 	int			rotinterval;
 
 	/* nothing to do if time-based rotation is disabled */

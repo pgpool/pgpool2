@@ -83,7 +83,7 @@ typedef enum
 	WD_SHUTDOWN,
 	WD_ADD_MESSAGE_SENT,
 	WD_NETWORK_ISOLATION
-}			WD_STATES;
+} WD_STATES;
 
 typedef enum
 {
@@ -93,7 +93,7 @@ typedef enum
 	WD_SOCK_CONNECTED,
 	WD_SOCK_ERROR,
 	WD_SOCK_CLOSED
-}			WD_SOCK_STATE;
+} WD_SOCK_STATE;
 
 typedef enum
 {
@@ -120,13 +120,14 @@ typedef enum
 	WD_EVENT_WD_STATE_REQUIRE_RELOAD,
 	WD_EVENT_I_AM_APPEARING_LOST,
 	WD_EVENT_I_AM_APPEARING_FOUND
-}			WD_EVENTS;
+} WD_EVENTS;
 
 /*
  * If you add a new lost reason. Remember to add entry in
  * wd_node_lost_reasons (watchdog.c)
  */
-typedef enum {
+typedef enum
+{
 	NODE_LOST_UNKNOWN_REASON = 0,
 	NODE_LOST_BY_LIFECHECK,
 	NODE_LOST_BY_SEND_FAILURE,
@@ -141,12 +142,13 @@ typedef enum {
  * wd_cluster_membership_status (watchdog.c)
  */
 
-typedef enum {
+typedef enum
+{
 	WD_NODE_MEMBERSHIP_ACTIVE,
 	WD_NODE_REVOKED_SHUTDOWN,
 	WD_NODE_REVOKED_NO_SHOW,
 	WD_NODE_REVOKED_LOST
-}WD_NODE_MEMBERSHIP_STATUS;
+} WD_NODE_MEMBERSHIP_STATUS;
 
 typedef struct SocketConnection
 {
@@ -154,7 +156,7 @@ typedef struct SocketConnection
 	struct timeval tv;			/* connect time of socket */
 	char		addr[48];		/* ip address of socket connection */
 	WD_SOCK_STATE sock_state;	/* current state of socket */
-}			SocketConnection;
+} SocketConnection;
 
 typedef struct WatchdogNode
 {
@@ -166,28 +168,24 @@ typedef struct WatchdogNode
 									 * from the node */
 	struct timeval last_sent_time;	/* timestamp when last packet was sent on
 									 * the node */
-	struct timeval lost_time;	/* timestamp when the remote node was lost on coordinator
-								 */
-	WD_NODE_MEMBERSHIP_STATUS	membership_status; /* status of node membership
-											*in watchdog cluster
-											Only valid for remote nodes */
-	bool   has_lost_us;             /*
-									 * True when this remote node thinks
-									 * we are lost
-									 */
-	int    sending_failures_count;  /* number of times we have failed
-									 * to send message to the node.
-									 * Gets reset after successful sent
-									 */
-	int    missed_beacon_count;     /* number of times the node has
-									 * failed to reply for beacon.
-									 * message
-									 */
+	struct timeval lost_time;	/* timestamp when the remote node was lost on
+								 * coordinator */
+	WD_NODE_MEMBERSHIP_STATUS membership_status;	/* status of node
+													 * membership in watchdog
+													 * cluster Only valid for
+													 * remote nodes */
+	bool		has_lost_us;	/* True when this remote node thinks we are
+								 * lost */
+	int			sending_failures_count; /* number of times we have failed to
+										 * send message to the node. Gets
+										 * reset after successful sent */
+	int			missed_beacon_count;	/* number of times the node has failed
+										 * to reply for beacon. message */
 	WD_NODE_LOST_REASONS node_lost_reason;
 
-	char		pgp_version[MAX_VERSION_STR_LEN];		/* Pgpool-II version */
-	int			wd_data_major_version;	/* watchdog messaging version major*/
-	int			wd_data_minor_version;  /* watchdog messaging version minor*/
+	char		pgp_version[MAX_VERSION_STR_LEN];	/* Pgpool-II version */
+	int			wd_data_major_version;	/* watchdog messaging version major */
+	int			wd_data_minor_version;	/* watchdog messaging version minor */
 
 	char		nodeName[WD_MAX_NODE_NAMELEN];	/* name of this node */
 	char		hostname[WD_MAX_HOST_NAMELEN];	/* host name */
@@ -195,7 +193,8 @@ typedef struct WatchdogNode
 	int			pgpool_port;	/* pgpool port */
 	int			wd_priority;	/* watchdog priority */
 	char		delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
-	int			pgpool_node_id;		/* pgpool node id specified in pgpool_node_id file */
+	int			pgpool_node_id; /* pgpool node id specified in pgpool_node_id
+								 * file */
 	int			standby_nodes_count;	/* number of standby nodes joined the
 										 * cluster only applicable when this
 										 * WatchdogNode is the
@@ -207,7 +206,7 @@ typedef struct WatchdogNode
 									 * initiated by remote */
 	SocketConnection client_socket; /* socket connections for this node
 									 * initiated by local */
-}			WatchdogNode;
+} WatchdogNode;
 
 /*
  * Argument for WD Exec cluster command
@@ -217,9 +216,9 @@ typedef struct WatchdogNode
 
 typedef struct WDExecCommandArg
 {
-	char arg_name[WD_MAX_ARG_NAME_LEN];
-	char arg_value[WD_MAX_ARG_VALUE_LEN];
-}			WDExecCommandArg;
+	char		arg_name[WD_MAX_ARG_NAME_LEN];
+	char		arg_value[WD_MAX_ARG_VALUE_LEN];
+} WDExecCommandArg;
 
 extern pid_t initialize_watchdog(void);
 

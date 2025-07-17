@@ -97,8 +97,9 @@ read_until_ready_for_query(PGconn *conn, int timeout, int wait_for_ready_for_que
 		kind = read_char(conn);
 		switch (kind)
 		{
-			char	*channel, *payload;
-			int		pid;
+				char	   *channel,
+						   *payload;
+				int			pid;
 
 			case '1':			/* Parse complete */
 				fprintf(stderr, "<= BE ParseComplete\n");
@@ -225,7 +226,7 @@ read_until_ready_for_query(PGconn *conn, int timeout, int wait_for_ready_for_que
 
 			case 'A':			/* Notification response */
 				len = read_int32(conn);
-				(void)len;
+				(void) len;
 				pid = read_int32(conn);
 
 				channel = read_string(conn);
@@ -248,7 +249,7 @@ read_until_ready_for_query(PGconn *conn, int timeout, int wait_for_ready_for_que
 				else
 				{
 					fprintf(stderr, "<= BE Notification response. pid: %d\n",
-						pid);
+							pid);
 				}
 				break;
 
@@ -375,8 +376,8 @@ read_string(PGconn *conn)
 #define	PROTO_ALLOC_SIZE	512
 
 	int			sts;
-	char		*buf;
-	char		*p;
+	char	   *buf;
+	char	   *p;
 	int			alloc_factor = 1;
 	int			len;
 

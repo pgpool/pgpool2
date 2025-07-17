@@ -224,6 +224,7 @@ is_log_level_output(int elevel, int log_min_level)
 
 	return false;
 }
+
 /*
  * should_output_to_server --- should message of given elevel go to the log?
  */
@@ -249,7 +250,7 @@ should_output_to_client(int elevel)
 		 * during authentication.
 		 */
 		return (elevel >= pool_config->client_min_messages ||
-							elevel == INFO || elevel == FRONTEND_ONLY_ERROR);
+				elevel == INFO || elevel == FRONTEND_ONLY_ERROR);
 	}
 	return false;
 }
@@ -274,6 +275,7 @@ message_level_is_interesting(int elevel)
 		return true;
 	return false;
 }
+
 /*
  * in_error_recursion_trouble --- are we at risk of infinite error recursion?
  *
@@ -1739,7 +1741,7 @@ write_eventlog(int level, const char *line, int len)
 						 NULL,
 						 1,
 						 0,
-						 (LPCWSTR *) &utf16,
+						 (LPCWSTR *) & utf16,
 						 NULL);
 			/* XXX Try ReportEventA() when ReportEventW() fails? */
 
@@ -2143,7 +2145,8 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 		{
 			case 'a':			/* application name */
 				{
-					char *appname;
+					char	   *appname;
+
 					appname = get_application_name();
 
 					if (appname == NULL || *appname == '\0')
@@ -2215,8 +2218,8 @@ log_line_prefix(StringInfo buf, const char *line_prefix, ErrorData *edata)
 			case 'm':
 				{
 					struct timeval timeval;
-					time_t seconds;
-					struct tm *now;
+					time_t		seconds;
+					struct tm  *now;
 					char		msbuf[13];
 
 					gettimeofday(&timeval, NULL);

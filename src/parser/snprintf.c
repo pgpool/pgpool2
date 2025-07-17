@@ -188,7 +188,7 @@ typedef struct
 	FILE	   *stream;			/* eventual output destination, or NULL */
 	int			nchars;			/* # chars sent to stream, or dropped */
 	bool		failed;			/* call is a failure; errno is set */
-} PrintfTarget;
+}			PrintfTarget;
 
 /*
  * Info about the type and value of a formatting parameter.  Note that we
@@ -204,7 +204,7 @@ typedef enum
 	ATYPE_LONGLONG,
 	ATYPE_DOUBLE,
 	ATYPE_CHARPTR
-} PrintfArgType;
+}			PrintfArgType;
 
 typedef union
 {
@@ -213,11 +213,11 @@ typedef union
 	long long	ll;
 	double		d;
 	char	   *cptr;
-} PrintfArgValue;
+}			PrintfArgValue;
 
 
-static void flushbuffer(PrintfTarget *target);
-static void dopr(PrintfTarget *target, const char *format, va_list args);
+static void flushbuffer(PrintfTarget * target);
+static void dopr(PrintfTarget * target, const char *format, va_list args);
 
 
 /*
@@ -354,7 +354,7 @@ pg_printf(const char *fmt,...)
  * buffer in any case.  Call this only when target->stream is defined.
  */
 static void
-flushbuffer(PrintfTarget *target)
+flushbuffer(PrintfTarget * target)
 {
 	size_t		nc = target->bufptr - target->bufstart;
 
@@ -376,25 +376,25 @@ flushbuffer(PrintfTarget *target)
 
 
 static bool find_arguments(const char *format, va_list args,
-						   PrintfArgValue *argvalues);
+						   PrintfArgValue * argvalues);
 static void fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
-				   int pointflag, PrintfTarget *target);
-static void fmtptr(const void *value, PrintfTarget *target);
+				   int pointflag, PrintfTarget * target);
+static void fmtptr(const void *value, PrintfTarget * target);
 static void fmtint(long long value, char type, int forcesign,
 				   int leftjust, int minlen, int zpad, int precision, int pointflag,
-				   PrintfTarget *target);
-static void fmtchar(int value, int leftjust, int minlen, PrintfTarget *target);
+				   PrintfTarget * target);
+static void fmtchar(int value, int leftjust, int minlen, PrintfTarget * target);
 static void fmtfloat(double value, char type, int forcesign,
 					 int leftjust, int minlen, int zpad, int precision, int pointflag,
-					 PrintfTarget *target);
-static void dostr(const char *str, int slen, PrintfTarget *target);
-static void dopr_outch(int c, PrintfTarget *target);
-static void dopr_outchmulti(int c, int slen, PrintfTarget *target);
+					 PrintfTarget * target);
+static void dostr(const char *str, int slen, PrintfTarget * target);
+static void dopr_outch(int c, PrintfTarget * target);
+static void dopr_outchmulti(int c, int slen, PrintfTarget * target);
 static int	adjust_sign(int is_negative, int forcesign, int *signvalue);
 static int	compute_padlen(int minlen, int vallen, int leftjust);
 static void leading_pad(int zpad, int signvalue, int *padlen,
-						PrintfTarget *target);
-static void trailing_pad(int padlen, PrintfTarget *target);
+						PrintfTarget * target);
+static void trailing_pad(int padlen, PrintfTarget * target);
 
 /*
  * If strchrnul exists (it's a glibc-ism), it's a good bit faster than the
@@ -432,7 +432,7 @@ extern char *strchrnul(const char *s, int c);
  * dopr(): the guts of *printf for all cases.
  */
 static void
-dopr(PrintfTarget *target, const char *format, va_list args)
+dopr(PrintfTarget * target, const char *format, va_list args)
 {
 	int			save_errno = errno;
 	const char *first_pct = NULL;
@@ -806,7 +806,7 @@ bad_format:
  */
 static bool
 find_arguments(const char *format, va_list args,
-			   PrintfArgValue *argvalues)
+			   PrintfArgValue * argvalues)
 {
 	int			ch;
 	bool		afterstar;
@@ -1024,7 +1024,7 @@ nextch1:
 
 static void
 fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
-	   int pointflag, PrintfTarget *target)
+	   int pointflag, PrintfTarget * target)
 {
 	int			padlen,
 				vallen;			/* amount to pad */
@@ -1052,7 +1052,7 @@ fmtstr(const char *value, int leftjust, int minlen, int maxwidth,
 }
 
 static void
-fmtptr(const void *value, PrintfTarget *target)
+fmtptr(const void *value, PrintfTarget * target)
 {
 	int			vallen;
 	char		convert[64];
@@ -1068,7 +1068,7 @@ fmtptr(const void *value, PrintfTarget *target)
 static void
 fmtint(long long value, char type, int forcesign, int leftjust,
 	   int minlen, int zpad, int precision, int pointflag,
-	   PrintfTarget *target)
+	   PrintfTarget * target)
 {
 	unsigned long long uvalue;
 	int			base;
@@ -1177,7 +1177,7 @@ fmtint(long long value, char type, int forcesign, int leftjust,
 }
 
 static void
-fmtchar(int value, int leftjust, int minlen, PrintfTarget *target)
+fmtchar(int value, int leftjust, int minlen, PrintfTarget * target)
 {
 	int			padlen;			/* amount to pad */
 
@@ -1197,7 +1197,7 @@ fmtchar(int value, int leftjust, int minlen, PrintfTarget *target)
 static void
 fmtfloat(double value, char type, int forcesign, int leftjust,
 		 int minlen, int zpad, int precision, int pointflag,
-		 PrintfTarget *target)
+		 PrintfTarget * target)
 {
 	int			signvalue = 0;
 	int			prec;
@@ -1433,7 +1433,7 @@ fail:
 
 
 static void
-dostr(const char *str, int slen, PrintfTarget *target)
+dostr(const char *str, int slen, PrintfTarget * target)
 {
 	/* fast path for common case of slen == 1 */
 	if (slen == 1)
@@ -1470,7 +1470,7 @@ dostr(const char *str, int slen, PrintfTarget *target)
 }
 
 static void
-dopr_outch(int c, PrintfTarget *target)
+dopr_outch(int c, PrintfTarget * target)
 {
 	if (target->bufend != NULL && target->bufptr >= target->bufend)
 	{
@@ -1486,7 +1486,7 @@ dopr_outch(int c, PrintfTarget *target)
 }
 
 static void
-dopr_outchmulti(int c, int slen, PrintfTarget *target)
+dopr_outchmulti(int c, int slen, PrintfTarget * target)
 {
 	/* fast path for common case of slen == 1 */
 	if (slen == 1)
@@ -1551,7 +1551,7 @@ compute_padlen(int minlen, int vallen, int leftjust)
 
 
 static void
-leading_pad(int zpad, int signvalue, int *padlen, PrintfTarget *target)
+leading_pad(int zpad, int signvalue, int *padlen, PrintfTarget * target)
 {
 	int			maxpad;
 
@@ -1587,7 +1587,7 @@ leading_pad(int zpad, int signvalue, int *padlen, PrintfTarget *target)
 
 
 static void
-trailing_pad(int padlen, PrintfTarget *target)
+trailing_pad(int padlen, PrintfTarget * target)
 {
 	if (padlen < 0)
 		dopr_outchmulti(' ', -padlen, target);

@@ -26,7 +26,7 @@
 #ifndef POOL_PROCESS_CONTEXT_H
 #define POOL_PROCESS_CONTEXT_H
 
-//#include "pool.h"
+/* #include "pool.h" */
 #include "pcp/libpcp_ext.h"
 #include "utils/pool_signal.h"
 
@@ -57,22 +57,22 @@ typedef struct
 	unsigned int last_alarm_second;
 	unsigned int undo_alarm_second;
 
-}			POOL_PROCESS_CONTEXT;
+} POOL_PROCESS_CONTEXT;
 
 extern void pool_init_process_context(void);
-extern POOL_PROCESS_CONTEXT * pool_get_process_context(void);
-extern ProcessInfo * pool_get_my_process_info(void);
+extern POOL_PROCESS_CONTEXT *pool_get_process_context(void);
+extern ProcessInfo *pool_get_my_process_info(void);
 extern void pool_increment_local_session_id(void);
-extern size_t	pool_coninfo_size(void);
+extern size_t pool_coninfo_size(void);
 extern int	pool_coninfo_num(void);
-extern ConnectionInfo * pool_coninfo(int child, int connection_pool, int backend);
-extern ConnectionInfo * pool_coninfo_pid(int pid, int connection_pool, int backend);
+extern ConnectionInfo *pool_coninfo(int child, int connection_pool, int backend);
+extern ConnectionInfo *pool_coninfo_pid(int pid, int connection_pool, int backend);
 extern void pool_coninfo_set_frontend_connected(int proc_id, int pool_index);
 extern void pool_coninfo_unset_frontend_connected(int proc_id, int pool_index);
 
-extern ConnectionInfo * pool_coninfo_backend_pid(int backend_pid, int *backend_node_id);
-extern void pool_set_connection_will_be_terminated(ConnectionInfo * connInfo);
-extern void pool_unset_connection_will_be_terminated(ConnectionInfo * connInfo);
+extern ConnectionInfo *pool_coninfo_backend_pid(int backend_pid, int *backend_node_id);
+extern void pool_set_connection_will_be_terminated(ConnectionInfo *connInfo);
+extern void pool_unset_connection_will_be_terminated(ConnectionInfo *connInfo);
 
 extern void pool_alarm(pool_sighandler_t handler, unsigned int second);
 extern void pool_undo_alarm(void);

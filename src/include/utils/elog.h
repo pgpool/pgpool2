@@ -209,7 +209,7 @@ typedef enum
 
 extern bool message_level_is_interesting(int elevel);
 extern bool errstart(int elevel, const char *filename, int lineno,
-		 const char *funcname, const char *domain);
+					 const char *funcname, const char *domain);
 extern void errfinish(int dummy,...);
 
 #define errcode(sqlerrcode) \
@@ -222,56 +222,56 @@ extern int	return_code(int retcode);
 extern int	get_return_code(void);
 
 extern int
-errmsg(const char *fmt,...)
+			errmsg(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern int
-errmsg_internal(const char *fmt,...)
+			errmsg_internal(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern int
-errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-			  unsigned long n,...)
+			errmsg_plural(const char *fmt_singular, const char *fmt_plural,
+						  unsigned long n,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 4)))
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 4)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 4)))
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 4)));
 
 extern int
-errdetail(const char *fmt,...)
+			errdetail(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern int
-errdetail_internal(const char *fmt,...)
+			errdetail_internal(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern int
-errdetail_log(const char *fmt,...)
+			errdetail_log(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern int
-errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-				 unsigned long n,...)
+			errdetail_plural(const char *fmt_singular, const char *fmt_plural,
+							 unsigned long n,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 4)))
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 4)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 4)))
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 4)));
 
 extern int
-errhint(const char *fmt,...)
+			errhint(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 /*
  * errcontext() is typically called in error context callback functions, not
@@ -285,10 +285,10 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern int	set_errcontext_domain(const char *domain);
 extern int
-errcontext_msg(const char *fmt,...)
+			errcontext_msg(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 extern int	errhidestmt(bool hide_stmt);
 
@@ -342,10 +342,10 @@ extern int	getinternalerrposition(void);
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
 extern void
-elog_finish(int elevel, const char *fmt,...)
+			elog_finish(int elevel, const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 
 /* Support for attaching context information to error reports */
@@ -516,10 +516,10 @@ extern void set_syslog_parameters(const char *ident, int facility);
  * safely (memory context, GUC load etc)
  */
 extern void
-write_stderr(const char *fmt,...)
+			write_stderr(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
 void		shmem_exit(int code);
 void		on_exit_reset(void);

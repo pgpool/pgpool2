@@ -165,9 +165,9 @@ wd_trusted_server_command(char *hostname)
 {
 	int			status;
 	int			pid;
-	StringInfoData		exec_cmd_data;
-	StringInfo				exec_cmd = &exec_cmd_data;
-	char *command_line = pstrdup(pool_config->trusted_server_command);
+	StringInfoData exec_cmd_data;
+	StringInfo	exec_cmd = &exec_cmd_data;
+	char	   *command_line = pstrdup(pool_config->trusted_server_command);
 
 	initStringInfo(exec_cmd);
 
@@ -212,7 +212,7 @@ wd_trusted_server_command(char *hostname)
 	if (pid == 0)
 	{
 		/* CHILD */
-		int	fd;
+		int			fd;
 
 		on_exit_reset();
 		SetProcessGlobalVariables(PT_WATCHDOG_UTILITY);
@@ -272,9 +272,9 @@ wd_get_ping_result(char *hostname, int exit_status, int outfd)
 	}
 	else
 	{
-		StringInfoData  result;
+		StringInfoData result;
 		char		buf[WD_MAX_PING_RESULT];
-		int		r_size = 0;
+		int			r_size = 0;
 
 		ereport(DEBUG1,
 				(errmsg("watchdog ping process for host \"%s\" exited successfully", hostname)));

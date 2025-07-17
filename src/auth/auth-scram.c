@@ -212,8 +212,8 @@ static char *build_client_first_message(fe_scram_state *state);
 static char *build_client_final_message(fe_scram_state *state);
 static bool verify_server_signature(fe_scram_state *state);
 static void calculate_client_proof(fe_scram_state *state,
-					   const char *client_final_message_without_proof,
-					   uint8 *result);
+								   const char *client_final_message_without_proof,
+								   uint8 *result);
 
 static void read_client_first_message(scram_state *state, char *input);
 static void read_client_final_message(scram_state *state, char *input);
@@ -222,9 +222,9 @@ static char *build_server_final_message(scram_state *state);
 static bool verify_client_proof(scram_state *state);
 static bool verify_final_nonce(scram_state *state);
 static bool parse_scram_verifier(const char *verifier, int *iterations,
-					 char **salt, uint8 *stored_key, uint8 *server_key);
+								 char **salt, uint8 *stored_key, uint8 *server_key);
 static void mock_scram_verifier(const char *username, int *iterations,
-					char **salt, uint8 *stored_key, uint8 *server_key);
+								char **salt, uint8 *stored_key, uint8 *server_key);
 static bool is_scram_printable(char *p);
 static char *sanitize_char(char c);
 static char *GetMockAuthenticationNonce(void);
@@ -1138,7 +1138,7 @@ build_server_final_message(scram_state *state)
 	char	   *server_signature_base64;
 	int			siglen;
 	scram_HMAC_ctx ctx;
-	char *res;
+	char	   *res;
 
 	/* calculate ServerSignature */
 	scram_HMAC_init(&ctx, state->ServerKey, SCRAM_KEY_LEN);

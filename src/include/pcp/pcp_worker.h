@@ -29,4 +29,4 @@ extern void pcp_mark_recovery_finished(void);
 extern bool pcp_mark_recovery_in_progress(void);
 
 
-#endif /* pcp_worker_h */
+#endif							/* pcp_worker_h */

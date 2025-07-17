@@ -86,7 +86,7 @@ static void start_pcp_command_processor_process(int port, int *fds);
 static void pcp_child_will_die(int code, Datum arg);
 static void pcp_kill_all_children(int sig);
 static void reaper(void);
-static bool pcp_unix_fds_not_isset(int *fds, int num_pcp_fds, fd_set* opt);
+static bool pcp_unix_fds_not_isset(int *fds, int num_pcp_fds, fd_set *opt);
 
 
 #define CHECK_RESTART_REQUEST \
@@ -191,7 +191,7 @@ pcp_do_accept(int *fds)
 	int			rfds;
 	int			fd = 0;
 	int			afd;
-	int			*walk;
+	int		   *walk;
 	int			nsocks = 0;
 	SockAddr	saddr;
 
@@ -256,9 +256,11 @@ pcp_do_accept(int *fds)
 	 * Set no delay if AF_INET socket. Not sure if this is really necessary
 	 * but PostgreSQL does this.
 	 */
-	if (pcp_unix_fds_not_isset(fds, pool_config->num_pcp_socket_directories, &rmask))	/* fds are UNIX domain socket for pcp process */
+	if (pcp_unix_fds_not_isset(fds, pool_config->num_pcp_socket_directories, &rmask))	/* fds are UNIX domain
+																						 * socket for pcp
+																						 * process */
 	{
-		int	on;
+		int			on;
 
 		on = 1;
 		if (setsockopt(afd, IPPROTO_TCP, TCP_NODELAY,
@@ -276,17 +278,18 @@ pcp_do_accept(int *fds)
 }
 
 static bool
-pcp_unix_fds_not_isset(int* fds, int num_pcp_fds, fd_set* opt)
+pcp_unix_fds_not_isset(int *fds, int num_pcp_fds, fd_set *opt)
 {
-        int             i;
-        for (i = 0; i < num_pcp_fds; i++)
-        {
-                if (!FD_ISSET(fds[i], opt))
-                        continue;
+	int			i;
 
-                return false;
-        }
-        return true;
+	for (i = 0; i < num_pcp_fds; i++)
+	{
+		if (!FD_ISSET(fds[i], opt))
+			continue;
+
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -296,7 +299,7 @@ static void
 start_pcp_command_processor_process(int port, int *fds)
 {
 	pid_t		pid = fork();
-	int			*walk;
+	int		   *walk;
 
 	if (pid == 0)				/* child */
 	{
@@ -428,7 +431,7 @@ pcp_exit_handler(int sig)
 
 	foreach(lc, pcp_worker_children)
 	{
-		int		pid;
+		int			pid;
 
 		do
 		{

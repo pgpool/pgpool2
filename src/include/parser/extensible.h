@@ -27,7 +27,7 @@ typedef struct ExtensibleNode
 {
 	NodeTag		type;
 	const char *extnodename;	/* identifier of ExtensibleNodeMethods */
-} ExtensibleNode;
+}			ExtensibleNode;
 
 /*
  * node_size is the size of an extensible node of this type in bytes.
@@ -62,11 +62,11 @@ typedef struct ExtensibleNodeMethods
 	void		(*nodeOut) (struct StringInfoData *str,
 							const struct ExtensibleNode *node);
 	void		(*nodeRead) (struct ExtensibleNode *node);
-} ExtensibleNodeMethods;
+}			ExtensibleNodeMethods;
 
-extern void RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *method);
+extern void RegisterExtensibleNodeMethods(const ExtensibleNodeMethods * method);
 extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *name,
-						 bool missing_ok);
+															 bool missing_ok);
 
 /*
  * Flags for custom paths, indicating what capabilities the resulting scan

@@ -55,8 +55,8 @@ MemoryContext QueryContext = NULL;
 
 static void MemoryContextCallResetCallbacks(MemoryContext context);
 static void MemoryContextStatsInternal(MemoryContext context, int level,
-						   bool print, int max_children,
-						   MemoryContextCounters *totals);
+									   bool print, int max_children,
+									   MemoryContextCounters *totals);
 
 /*
  * You should not do memory allocations within a critical section, because

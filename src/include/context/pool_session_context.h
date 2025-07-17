@@ -43,7 +43,7 @@ typedef enum
 	POOL_READ_COMMITTED,		/* Read committed */
 	POOL_REPEATABLE_READ,		/* Repeatable read */
 	POOL_SERIALIZABLE			/* Serializable */
-}			POOL_TRANSACTION_ISOLATION;
+} POOL_TRANSACTION_ISOLATION;
 
 /*
  * Return values for pool_use_sync_map
@@ -63,7 +63,7 @@ typedef enum
 	POOL_SENT_MESSAGE_CREATED,	/* initial state of sent message */
 	POOL_SENT_MESSAGE_CLOSED	/* sent message closed but close complete
 								 * message has not arrived yet */
-}			POOL_SENT_MESSAGE_STATE;
+} POOL_SENT_MESSAGE_STATE;
 
 /*
  * Message content of extended query
@@ -90,7 +90,7 @@ typedef struct
 	int			param_offset;	/* Offset from contents where actual bind
 								 * parameters are stored. This is meaningful
 								 * only when is_cache_safe is true. */
-}			POOL_SENT_MESSAGE;
+} POOL_SENT_MESSAGE;
 
 /*
  * List of POOL_SENT_MESSAGE (XXX this should have been implemented using a
@@ -101,7 +101,7 @@ typedef struct
 	int			capacity;		/* capacity of list */
 	int			size;			/* number of elements */
 	POOL_SENT_MESSAGE **sent_messages;
-}			POOL_SENT_MESSAGE_LIST;
+} POOL_SENT_MESSAGE_LIST;
 
 /*
  * Received message queue used in extended query/streaming replication mode.
@@ -123,7 +123,7 @@ typedef enum
 	POOL_DESCRIBE,
 	POOL_CLOSE,
 	POOL_SYNC
-}			POOL_MESSAGE_TYPE;
+} POOL_MESSAGE_TYPE;
 
 typedef struct
 {
@@ -140,29 +140,35 @@ typedef struct
 	bool		not_forward_to_frontend;	/* Do not forward response from
 											 * backend to frontend. This is
 											 * used by parse_before_bind() */
-	bool		node_ids[MAX_NUM_BACKENDS];	/* backend node map which this message was sent to */
+	bool		node_ids[MAX_NUM_BACKENDS]; /* backend node map which this
+											 * message was sent to */
 	POOL_QUERY_CONTEXT *query_context;	/* query context */
+
 	/*
 	 * If "flush" message arrives, this flag is set to true until all buffered
 	 * message for frontend are sent out.
 	 */
 	bool		flush_pending;
 
-	bool		is_tx_started_by_multi_statement; /* true if an explicit transaction has been started by
-													 multi statement query */
-}			POOL_PENDING_MESSAGE;
+	bool		is_tx_started_by_multi_statement;	/* true if an explicit
+													 * transaction has been
+													 * started by multi
+													 * statement query */
+} POOL_PENDING_MESSAGE;
 
-typedef enum {
-	TEMP_TABLE_CREATING = 1,		/* temp table creating, not committed yet. */
-	TEMP_TABLE_DROPPING,			/* temp table dropping, not committed yet. */
-	TEMP_TABLE_CREATE_COMMITTED,		/* temp table created and committed. */
-	TEMP_TABLE_DROP_COMMITTED,		/* temp table dropped and committed. */
-}		POOL_TEMP_TABLE_STATE;
+typedef enum
+{
+	TEMP_TABLE_CREATING = 1,	/* temp table creating, not committed yet. */
+	TEMP_TABLE_DROPPING,		/* temp table dropping, not committed yet. */
+	TEMP_TABLE_CREATE_COMMITTED,	/* temp table created and committed. */
+	TEMP_TABLE_DROP_COMMITTED,	/* temp table dropped and committed. */
+} POOL_TEMP_TABLE_STATE;
 
-typedef struct {
+typedef struct
+{
 	char		tablename[MAX_IDENTIFIER_LEN];	/* temporary table name */
-	POOL_TEMP_TABLE_STATE	state;	/* see above */
-}			POOL_TEMP_TABLE;
+	POOL_TEMP_TABLE_STATE state;	/* see above */
+} POOL_TEMP_TABLE;
 
 
 typedef enum
@@ -306,7 +312,10 @@ typedef struct
 	int			preferred_main_node_id;
 #endif
 
-	/* Whether snapshot is acquired in this transaction. Only used by Snapshot Isolation mode. */
+	/*
+	 * Whether snapshot is acquired in this transaction. Only used by Snapshot
+	 * Isolation mode.
+	 */
 	SI_STATE	si_state;
 	/* Whether transaction is read only. Only used by Snapshot Isolation mode. */
 	SI_STATE	transaction_read_only;
@@ -321,22 +330,24 @@ typedef struct
 													 * transaction has been
 													 * started by a
 													 * multi-statement-query */
+
 	/*
-	 * True if query cache feature disabled until session ends.
-	 * This is set when SET ROLE/SET SESSION AUTHORIZATION executed.
+	 * True if query cache feature disabled until session ends. This is set
+	 * when SET ROLE/SET SESSION AUTHORIZATION executed.
 	 */
-	bool	query_cache_disabled;
+	bool		query_cache_disabled;
+
 	/*
 	 * True if query cache feature disabled until current transaction ends.
 	 * This is set when REVOKE executed in a transaction.
 	 */
-	bool	query_cache_disabled_tx;
+	bool		query_cache_disabled_tx;
 
-}			POOL_SESSION_CONTEXT;
+} POOL_SESSION_CONTEXT;
 
-extern void pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
+extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
 extern void pool_session_context_destroy(void);
-extern POOL_SESSION_CONTEXT * pool_get_session_context(bool noerror);
+extern POOL_SESSION_CONTEXT *pool_get_session_context(bool noerror);
 extern int	pool_get_local_session_id(void);
 extern bool pool_is_query_in_progress(void);
 extern void pool_set_query_in_progress(void);
@@ -350,18 +361,18 @@ extern void pool_unset_doing_extended_query_message(void);
 extern bool pool_is_ignore_till_sync(void);
 extern void pool_set_ignore_till_sync(void);
 extern void pool_unset_ignore_till_sync(void);
-extern POOL_SENT_MESSAGE * pool_create_sent_message(char kind, int len, char *contents,
-													int num_tsparams, const char *name,
-													POOL_QUERY_CONTEXT * query_context);
-extern void pool_add_sent_message(POOL_SENT_MESSAGE * message);
+extern POOL_SENT_MESSAGE *pool_create_sent_message(char kind, int len, char *contents,
+												   int num_tsparams, const char *name,
+												   POOL_QUERY_CONTEXT *query_context);
+extern void pool_add_sent_message(POOL_SENT_MESSAGE *message);
 extern bool pool_remove_sent_message(char kind, const char *name);
 extern void pool_remove_sent_messages(char kind);
 extern void pool_clear_sent_message_list(void);
-extern void pool_sent_message_destroy(POOL_SENT_MESSAGE * message);
-extern POOL_SENT_MESSAGE * pool_get_sent_message(char kind, const char *name, POOL_SENT_MESSAGE_STATE state);
-extern void pool_set_sent_message_state(POOL_SENT_MESSAGE * message);
+extern void pool_sent_message_destroy(POOL_SENT_MESSAGE *message);
+extern POOL_SENT_MESSAGE *pool_get_sent_message(char kind, const char *name, POOL_SENT_MESSAGE_STATE state);
+extern void pool_set_sent_message_state(POOL_SENT_MESSAGE *message);
 extern void pool_zap_query_context_in_sent_messages(POOL_QUERY_CONTEXT *query_context);
-extern POOL_SENT_MESSAGE * pool_get_sent_message_by_query_context(POOL_QUERY_CONTEXT * query_context);
+extern POOL_SENT_MESSAGE *pool_get_sent_message_by_query_context(POOL_QUERY_CONTEXT *query_context);
 extern void pool_unset_writing_transaction(void);
 extern void pool_set_writing_transaction(void);
 extern bool pool_is_writing_transaction(void);
@@ -375,28 +386,28 @@ extern void pool_unset_command_success(void);
 extern void pool_set_command_success(void);
 extern bool pool_is_command_success(void);
 extern void pool_copy_prep_where(bool *src, bool *dest);
-extern bool can_query_context_destroy(POOL_QUERY_CONTEXT * qc);
+extern bool can_query_context_destroy(POOL_QUERY_CONTEXT *qc);
 extern void pool_pending_messages_init(void);
 extern void pool_pending_messages_destroy(void);
-extern POOL_PENDING_MESSAGE * pool_pending_message_create(char kind, int len, char *contents);
-extern void pool_pending_message_free_pending_message(POOL_PENDING_MESSAGE * message);
-extern void pool_pending_message_dest_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT * query_context);
-extern void pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT * query_context);
-extern void pool_pending_message_query_set(POOL_PENDING_MESSAGE * message, POOL_QUERY_CONTEXT * query_context);
-extern void pool_pending_message_add(POOL_PENDING_MESSAGE * message);
-extern POOL_PENDING_MESSAGE * pool_pending_message_head_message(void);
-extern POOL_PENDING_MESSAGE * pool_pending_message_pull_out(void);
-extern POOL_PENDING_MESSAGE * pool_pending_message_get(POOL_MESSAGE_TYPE type);
-extern char pool_get_close_message_spec(POOL_PENDING_MESSAGE * msg);
-extern char *pool_get_close_message_name(POOL_PENDING_MESSAGE * msg);
+extern POOL_PENDING_MESSAGE *pool_pending_message_create(char kind, int len, char *contents);
+extern void pool_pending_message_free_pending_message(POOL_PENDING_MESSAGE *message);
+extern void pool_pending_message_dest_set(POOL_PENDING_MESSAGE *message, POOL_QUERY_CONTEXT *query_context);
+extern void pool_pending_message_query_context_dest_set(POOL_PENDING_MESSAGE *message, POOL_QUERY_CONTEXT *query_context);
+extern void pool_pending_message_query_set(POOL_PENDING_MESSAGE *message, POOL_QUERY_CONTEXT *query_context);
+extern void pool_pending_message_add(POOL_PENDING_MESSAGE *message);
+extern POOL_PENDING_MESSAGE *pool_pending_message_head_message(void);
+extern POOL_PENDING_MESSAGE *pool_pending_message_pull_out(void);
+extern POOL_PENDING_MESSAGE *pool_pending_message_get(POOL_MESSAGE_TYPE type);
+extern char pool_get_close_message_spec(POOL_PENDING_MESSAGE *msg);
+extern char *pool_get_close_message_name(POOL_PENDING_MESSAGE *msg);
 extern void pool_pending_message_reset_previous_message(void);
-extern void pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE * message);
-extern POOL_PENDING_MESSAGE * pool_pending_message_get_previous_message(void);
+extern void pool_pending_message_set_previous_message(POOL_PENDING_MESSAGE *message);
+extern POOL_PENDING_MESSAGE *pool_pending_message_get_previous_message(void);
 extern bool pool_pending_message_exists(void);
 extern const char *pool_pending_message_type_to_string(POOL_MESSAGE_TYPE type);
 extern void pool_check_pending_message_and_reply(POOL_MESSAGE_TYPE type, char kind);
-extern POOL_PENDING_MESSAGE * pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT * qc);
-extern int	pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE * msg);
+extern POOL_PENDING_MESSAGE *pool_pending_message_find_lastest_by_query_context(POOL_QUERY_CONTEXT *qc);
+extern int	pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE *msg);
 extern int	pool_pending_message_get_message_num_by_backend_id(int backend_id);
 extern void pool_pending_message_set_flush_request(void);
 extern void dump_pending_message(void);
@@ -409,12 +420,12 @@ extern void pool_unset_suspend_reading_from_frontend(void);
 
 extern void pool_temp_tables_init(void);
 extern void pool_temp_tables_destroy(void);
-extern void	pool_temp_tables_add(char * tablename, POOL_TEMP_TABLE_STATE state);
-extern POOL_TEMP_TABLE * pool_temp_tables_find(char * tablename);
-extern void pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE state);
-extern void	pool_temp_tables_commit_pending(void);
-extern void	pool_temp_tables_remove_pending(void);
-extern void	pool_temp_tables_dump(void);
+extern void pool_temp_tables_add(char *tablename, POOL_TEMP_TABLE_STATE state);
+extern POOL_TEMP_TABLE *pool_temp_tables_find(char *tablename);
+extern void pool_temp_tables_delete(char *tablename, POOL_TEMP_TABLE_STATE state);
+extern void pool_temp_tables_commit_pending(void);
+extern void pool_temp_tables_remove_pending(void);
+extern void pool_temp_tables_dump(void);
 
 extern bool is_tx_started_by_multi_statement_query(void);
 extern void set_tx_started_by_multi_statement_query(void);

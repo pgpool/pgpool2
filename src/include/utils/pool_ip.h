@@ -32,24 +32,24 @@
 
 #include "pool_type.h"
 
-extern int SockAddr_cidr_mask(struct sockaddr_storage *mask,
-				   char *numbits, int family);
+extern int	SockAddr_cidr_mask(struct sockaddr_storage *mask,
+							   char *numbits, int family);
 
 typedef void (*PgIfAddrCallback) (struct sockaddr *addr, struct sockaddr *netmask, void *cb_data);
 
-extern int getaddrinfo_all(const char *hostname, const char *servname,
-				const struct addrinfo *hintp,
-				struct addrinfo **result);
+extern int	getaddrinfo_all(const char *hostname, const char *servname,
+							const struct addrinfo *hintp,
+							struct addrinfo **result);
 extern void freeaddrinfo_all(int hint_ai_family, struct addrinfo *ai);
 
-extern int getnameinfo_all(const struct sockaddr_storage *addr, int salen,
-				char *node, int nodelen,
-				char *service, int servicelen,
-				int flags);
+extern int	getnameinfo_all(const struct sockaddr_storage *addr, int salen,
+							char *node, int nodelen,
+							char *service, int servicelen,
+							int flags);
 
-extern int rangeSockAddr(const struct sockaddr_storage *addr,
-			  const struct sockaddr_storage *netaddr,
-			  const struct sockaddr_storage *netmask);
+extern int	rangeSockAddr(const struct sockaddr_storage *addr,
+						  const struct sockaddr_storage *netaddr,
+						  const struct sockaddr_storage *netmask);
 
 
 /* imported from PostgreSQL getaddrinfo.c */

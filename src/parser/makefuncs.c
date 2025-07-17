@@ -656,13 +656,13 @@ makeVacuumRelation(RangeVar *relation, Oid oid, List *va_cols)
 JsonFormat *
 makeJsonFormat(JsonFormatType type, JsonEncoding encoding, int location)
 {
-    JsonFormat *jf = makeNode(JsonFormat);
+	JsonFormat *jf = makeNode(JsonFormat);
 
-    jf->format_type = type;
-    jf->encoding = encoding;
-    jf->location = location;
+	jf->format_type = type;
+	jf->encoding = encoding;
+	jf->location = location;
 
-    return jf;
+	return jf;
 }
 
 /*
@@ -673,13 +673,13 @@ JsonValueExpr *
 makeJsonValueExpr(Expr *raw_expr, Expr *formatted_expr,
 				  JsonFormat *format)
 {
-    JsonValueExpr *jve = makeNode(JsonValueExpr);
+	JsonValueExpr *jve = makeNode(JsonValueExpr);
 
-    jve->raw_expr = raw_expr;
-    jve->formatted_expr = formatted_expr;
-    jve->format = format;
+	jve->raw_expr = raw_expr;
+	jve->formatted_expr = formatted_expr;
+	jve->format = format;
 
-    return jve;
+	return jve;
 }
 
 /*
@@ -705,12 +705,12 @@ makeJsonBehavior(JsonBehaviorType btype, Node *expr, int location)
 Node *
 makeJsonKeyValue(Node *key, Node *value)
 {
-    JsonKeyValue *n = makeNode(JsonKeyValue);
+	JsonKeyValue *n = makeNode(JsonKeyValue);
 
-    n->key = (Expr *) key;
-    n->value = castNode(JsonValueExpr, value);
+	n->key = (Expr *) key;
+	n->value = castNode(JsonValueExpr, value);
 
-    return (Node *) n;
+	return (Node *) n;
 }
 
 /*
@@ -719,17 +719,17 @@ makeJsonKeyValue(Node *key, Node *value)
  *    */
 Node *
 makeJsonIsPredicate(Node *expr, JsonFormat *format, JsonValueType item_type,
-                    bool unique_keys, int location)
+					bool unique_keys, int location)
 {
-    JsonIsPredicate *n = makeNode(JsonIsPredicate);
+	JsonIsPredicate *n = makeNode(JsonIsPredicate);
 
-    n->expr = expr;
-    n->format = format;
-    n->item_type = item_type;
-    n->unique_keys = unique_keys;
-    n->location = location;
+	n->expr = expr;
+	n->format = format;
+	n->item_type = item_type;
+	n->unique_keys = unique_keys;
+	n->location = location;
 
-    return (Node *) n;
+	return (Node *) n;
 }
 
 /*
@@ -738,7 +738,7 @@ makeJsonIsPredicate(Node *expr, JsonFormat *format, JsonValueType item_type,
  */
 JsonTablePathSpec *
 makeJsonTablePathSpec(char *string, char *name, int string_location,
-                      int name_location)
+					  int name_location)
 {
 	JsonTablePathSpec *pathspec = makeNode(JsonTablePathSpec);
 

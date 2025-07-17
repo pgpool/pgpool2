@@ -77,5 +77,5 @@ extern Node *makeIntConst(int val, int location);
 
 extern List *get_dummy_write_query_tree(void);
 extern List *get_dummy_read_query_tree(void);
-extern Node * get_dummy_insert_query_node(void);
+extern Node *get_dummy_insert_query_node(void);
 #endif							/* PARSER_H */

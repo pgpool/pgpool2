@@ -34,12 +34,12 @@ typedef enum NodeState
 	NODE_EMPTY,
 	NODE_DEAD,
 	NODE_ALIVE
-}			NodeStates;
+} NodeStates;
 
 typedef struct LifeCheckNode
 {
 	NodeStates	nodeState;
-	int 		ID;
+	int			ID;
 	WD_STATES	wdState;
 	char		stateName[128];
 	char		hostName[WD_MAX_HOST_NAMELEN];
@@ -49,15 +49,15 @@ typedef struct LifeCheckNode
 	int			retry_lives;
 	struct timeval hb_send_time;	/* send time */
 	struct timeval hb_last_recv_time;	/* recv time */
-}			LifeCheckNode;
+} LifeCheckNode;
 
 typedef struct lifeCheckCluster
 {
 	int			nodeCount;
 	struct LifeCheckNode *lifeCheckNodes;
-}			LifeCheckCluster;
+} LifeCheckCluster;
 
-extern LifeCheckCluster * gslifeCheckCluster;	/* lives in shared memory */
+extern LifeCheckCluster *gslifeCheckCluster;	/* lives in shared memory */
 
 
 /* wd_lifecheck.c */
@@ -65,8 +65,8 @@ extern pid_t initialize_watchdog_lifecheck(void);
 
 
 /* wd_heartbeat.c */
-extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf * hb_if);
-extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf * hb_if);
+extern pid_t wd_hb_receiver(int fork_wait_time, WdHbIf *hb_if);
+extern pid_t wd_hb_sender(int fork_wait_time, WdHbIf *hb_if);
 
 
 #endif

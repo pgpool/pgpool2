@@ -79,7 +79,7 @@ CATALOG(pg_trigger,2620,TriggerRelationId)
  *		the format of pg_trigger relation.
  * ----------------
  */
-typedef FormData_pg_trigger *Form_pg_trigger;
+typedef FormData_pg_trigger * Form_pg_trigger;
 
 DECLARE_TOAST(pg_trigger, 2336, 2337);
 

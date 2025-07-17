@@ -295,42 +295,42 @@ main(int argc, char *argv[])
 static void
 print_encrypted_password(char *pg_pass, char *pool_key)
 {
-		unsigned char ciphertext[MAX_ENCODED_PASSWD_LEN];
-		unsigned char b64_enc[MAX_ENCODED_PASSWD_LEN];
-		int			len;
-		int			cypher_len;
+	unsigned char ciphertext[MAX_ENCODED_PASSWD_LEN];
+	unsigned char b64_enc[MAX_ENCODED_PASSWD_LEN];
+	int			len;
+	int			cypher_len;
 
-		cypher_len = aes_encrypt_with_password((unsigned char *) pg_pass,
-											   strlen(pg_pass), pool_key, ciphertext);
+	cypher_len = aes_encrypt_with_password((unsigned char *) pg_pass,
+										   strlen(pg_pass), pool_key, ciphertext);
 
-		/* generate the hash for the given username */
-		len = pg_b64_encode((const char *) ciphertext, cypher_len, (char *) b64_enc);
-		b64_enc[len] = 0;
-		fprintf(stdout, "\n%s\n", b64_enc);
-		fprintf(stdout, "pool_passwd string: AES%s\n", b64_enc);
+	/* generate the hash for the given username */
+	len = pg_b64_encode((const char *) ciphertext, cypher_len, (char *) b64_enc);
+	b64_enc[len] = 0;
+	fprintf(stdout, "\n%s\n", b64_enc);
+	fprintf(stdout, "pool_passwd string: AES%s\n", b64_enc);
 
 #ifdef DEBUG_ENCODING
-		unsigned char b64_dec[MAX_ENCODED_PASSWD_LEN];
-		unsigned char plaintext[MAX_PGPASS_LEN];
+	unsigned char b64_dec[MAX_ENCODED_PASSWD_LEN];
+	unsigned char plaintext[MAX_PGPASS_LEN];
 
-		len = pg_b64_decode(b64_enc, len, b64_dec);
-		len = aes_decrypt_with_password(b64_dec, len,
-										pool_key, plaintext);
-		plaintext[len] = 0;
+	len = pg_b64_decode(b64_enc, len, b64_dec);
+	len = aes_decrypt_with_password(b64_dec, len,
+									pool_key, plaintext);
+	plaintext[len] = 0;
 #endif
 }
 
 static void
 process_input_file(char *conf_file, char *input_file, char *key, bool updatepasswd)
 {
-	FILE	*input_file_fd;
-	char	*buf = NULL;
-	char	username[MAX_USER_NAME_LEN + 1];
-	char	password[MAX_PGPASS_LEN + 1];
-	char	*pch;
-	size_t	len=0;
-	int 	nread = 0;
-	int		line_count;
+	FILE	   *input_file_fd;
+	char	   *buf = NULL;
+	char		username[MAX_USER_NAME_LEN + 1];
+	char		password[MAX_PGPASS_LEN + 1];
+	char	   *pch;
+	size_t		len = 0;
+	int			nread = 0;
+	int			line_count;
 
 	fprintf(stdout, "trying to read username:password pairs from file %s\n", input_file);
 	input_file_fd = fopen(input_file, "r");
@@ -357,7 +357,7 @@ process_input_file(char *conf_file, char *input_file, char *key, bool updatepass
 
 		/* Split username and passwords */
 		pch = buf;
-		while( pch && pch != buf + nread && *pch != ':')
+		while (pch && pch != buf + nread && *pch != ':')
 			pch++;
 		if (*pch == ':')
 			pch++;
@@ -367,19 +367,19 @@ process_input_file(char *conf_file, char *input_file, char *key, bool updatepass
 			goto clear_buffer;
 		}
 
-		if( (pch-buf) > sizeof(username))
+		if ((pch - buf) > sizeof(username))
 		{
-			fprintf(stderr, "LINE#%02d: input exceeds maximum username length %d\n",line_count,  MAX_USER_NAME_LEN);
+			fprintf(stderr, "LINE#%02d: input exceeds maximum username length %d\n", line_count, MAX_USER_NAME_LEN);
 			goto clear_buffer;
 		}
 		strncpy(username, buf, pch - buf - 1);
 
 		if (strlen(pch) >= sizeof(password))
 		{
-			fprintf(stderr, "LINE#%02d: input exceeds maximum password length %d\n",line_count, MAX_PGPASS_LEN);
+			fprintf(stderr, "LINE#%02d: input exceeds maximum password length %d\n", line_count, MAX_PGPASS_LEN);
 			goto clear_buffer;
 		}
-		strncpy(password, pch, sizeof(password) -1);
+		strncpy(password, pch, sizeof(password) - 1);
 
 		if (updatepasswd)
 			update_pool_passwd(conf_file, username, password, key);

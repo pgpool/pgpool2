@@ -1709,23 +1709,23 @@ list_oid_cmp(const ListCell *p1, const ListCell *p2)
 static inline MemoryContext
 GetMemoryChunkContext(void *pointer)
 {
-    MemoryContext context;
+	MemoryContext context;
 
-    /*
-     * Try to detect bogus pointers handed to us, poorly though we can.
-     * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
-     * allocated chunk.
-     */
-    Assert(pointer != NULL);
-    Assert(pointer == (void *) MAXALIGN(pointer));
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
+	 */
+	Assert(pointer != NULL);
+	Assert(pointer == (void *) MAXALIGN(pointer));
 
-    /*
-     * OK, it's probably safe to look at the context.
-     */
-    context = *(MemoryContext *) (((char *) pointer) - sizeof(void *));
+	/*
+	 * OK, it's probably safe to look at the context.
+	 */
+	context = *(MemoryContext *) (((char *) pointer) - sizeof(void *));
 
-    AssertArg(MemoryContextIsValid(context));
+	AssertArg(MemoryContextIsValid(context));
 
-    return context;
+	return context;
 }
 #endif

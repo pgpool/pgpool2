@@ -29,7 +29,7 @@
 #include "pgproto/read.h"
 #include "pgproto/send.h"
 
-static	void write_it(int fd, void *buf, int len);
+static void write_it(int fd, void *buf, int len);
 
 /*
  * Send a character to the connection.
@@ -84,9 +84,11 @@ send_byte(char *buf, int len, PGconn *conn)
  * Wrapper for write(2).
  */
 static
-void write_it(int fd, void *buf, int len)
+void
+write_it(int fd, void *buf, int len)
 {
-	int errsave = errno;
+	int			errsave = errno;
+
 	errno = 0;
 	if (write(fd, buf, len) < 0)
 	{
@@ -94,4 +96,3 @@ void write_it(int fd, void *buf, int len)
 	}
 	errno = errsave;
 }
-

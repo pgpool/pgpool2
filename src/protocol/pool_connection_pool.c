@@ -63,8 +63,8 @@ volatile sig_atomic_t backend_timer_expired = 0;	/* flag for connection
 													 * closed timer is expired */
 volatile sig_atomic_t health_check_timer_expired;	/* non 0 if health check
 													 * timer expired */
-static POOL_CONNECTION_POOL_SLOT * create_cp(POOL_CONNECTION_POOL_SLOT * cp, int slot);
-static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p);
+static POOL_CONNECTION_POOL_SLOT *create_cp(POOL_CONNECTION_POOL_SLOT *cp, int slot);
+static POOL_CONNECTION_POOL *new_connection(POOL_CONNECTION_POOL *p);
 static int	check_socket_status(int fd);
 static bool connect_with_timeout(int fd, struct addrinfo *walk, char *host, int port, bool retry);
 
@@ -161,6 +161,7 @@ pool_get_cp(char *user, char *database, int protoMajor, int check_socket)
 					ereport(LOG,
 							(errmsg("connection closed."),
 							 errdetail("retry to create new connection pool")));
+
 					/*
 					 * It is possible that one of backend just broke.  sleep 1
 					 * second to wait for failover occurres, then wait for the
@@ -259,7 +260,7 @@ pool_create_cp(void)
 	POOL_CONNECTION_POOL *oldestp;
 	POOL_CONNECTION_POOL *ret;
 	ConnectionInfo *info;
-	int		main_node_id;
+	int			main_node_id;
 
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 
@@ -297,7 +298,7 @@ pool_create_cp(void)
 	{
 		main_node_id = in_use_backend_id(p);
 		if (main_node_id < 0)
-			elog(ERROR, "no in use backend found");	/* this should not happen */
+			elog(ERROR, "no in use backend found"); /* this should not happen */
 
 		ereport(DEBUG1,
 				(errmsg("creating connection pool"),
@@ -318,7 +319,7 @@ pool_create_cp(void)
 	p = oldestp;
 	main_node_id = in_use_backend_id(p);
 	if (main_node_id < 0)
-		elog(ERROR, "no in use backend found");	/* this should not happen */
+		elog(ERROR, "no in use backend found"); /* this should not happen */
 	pool_send_frontend_exits(p);
 
 	ereport(DEBUG1,
@@ -358,7 +359,7 @@ pool_create_cp(void)
  * set backend connection close timer
  */
 void
-pool_connection_pool_timer(POOL_CONNECTION_POOL * backend)
+pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 {
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
 	int			i;
@@ -782,7 +783,7 @@ connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 	struct addrinfo *res;
 	struct addrinfo *walk;
 	struct addrinfo hints;
-	int	retry_cnt = 5;	/* getaddrinfo() retry count in case EAI_AGAIN */
+	int			retry_cnt = 5;	/* getaddrinfo() retry count in case EAI_AGAIN */
 
 	/*
 	 * getaddrinfo() requires a string because it also accepts service names,
@@ -875,7 +876,8 @@ connect_inet_domain_socket_by_port(char *host, int port, bool retry)
 /*
  * create connection pool
  */
-static POOL_CONNECTION_POOL_SLOT * create_cp(POOL_CONNECTION_POOL_SLOT * cp, int slot)
+static POOL_CONNECTION_POOL_SLOT *
+create_cp(POOL_CONNECTION_POOL_SLOT *cp, int slot)
 {
 	BackendInfo *b = &pool_config->backend_desc->backend_info[slot];
 	int			fd;
@@ -902,13 +904,14 @@ static POOL_CONNECTION_POOL_SLOT * create_cp(POOL_CONNECTION_POOL_SLOT * cp, int
  * Create actual connections to backends.
  * New connection resides in TopMemoryContext.
  */
-static POOL_CONNECTION_POOL * new_connection(POOL_CONNECTION_POOL * p)
+static POOL_CONNECTION_POOL *
+new_connection(POOL_CONNECTION_POOL *p)
 {
 	POOL_CONNECTION_POOL_SLOT *s;
 	int			active_backend_count = 0;
 	int			i;
 	bool		status_changed = false;
-	volatile BACKEND_STATUS	status;
+	volatile BACKEND_STATUS status;
 
 	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
@@ -1097,7 +1100,7 @@ close_all_backend_connections(void)
 
 	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
-		int	backend_id = in_use_backend_id(p);
+		int			backend_id = in_use_backend_id(p);
 
 		if (backend_id < 0)
 			continue;
@@ -1120,9 +1123,10 @@ close_all_backend_connections(void)
 void
 update_pooled_connection_count(void)
 {
-	int i;
-	int count = 0;
+	int			i;
+	int			count = 0;
 	POOL_CONNECTION_POOL *p = pool_connection_pool;
+
 	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
 		if (MAIN_CONNECTION(p))
@@ -1138,7 +1142,7 @@ update_pooled_connection_count(void)
 int
 in_use_backend_id(POOL_CONNECTION_POOL *pool)
 {
-	int	i;
+	int			i;
 
 	for (i = 0; i < NUM_BACKENDS; i++)
 	{

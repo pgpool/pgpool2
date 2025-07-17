@@ -83,23 +83,23 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 	if (PG_NARGS() >= 7)		/* Pgpool-II 4.3 or later */
 	{
 		char	   *primary_port = DatumGetCString(DirectFunctionCall1(textout,
-																	  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+																	   PointerGetDatum(PG_GETARG_TEXT_P(3))));
 		int			remote_node = PG_GETARG_INT32(4);
 
 		char	   *remote_port = DatumGetCString(DirectFunctionCall1(textout,
 																	  PointerGetDatum(PG_GETARG_TEXT_P(5))));
 
 		char	   *primary_host = DatumGetCString(DirectFunctionCall1(textout,
-																	  PointerGetDatum(PG_GETARG_TEXT_P(6))));
+																	   PointerGetDatum(PG_GETARG_TEXT_P(6))));
 
 		snprintf(recovery_script, sizeof(recovery_script), "\"%s/%s\" \"%s\" \"%s\" \"%s\" \"%s\" %d \"%s\" \"%s\"",
 				 DataDir, script, DataDir, remote_host,
 				 remote_data_directory, primary_port, remote_node, remote_port, primary_host);
 	}
-	else if (PG_NARGS() >= 6)		/* Pgpool-II 4.1 or 4.2 */
+	else if (PG_NARGS() >= 6)	/* Pgpool-II 4.1 or 4.2 */
 	{
 		char	   *primary_port = DatumGetCString(DirectFunctionCall1(textout,
-																	  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+																	   PointerGetDatum(PG_GETARG_TEXT_P(3))));
 		int			remote_node = PG_GETARG_INT32(4);
 
 		char	   *remote_port = DatumGetCString(DirectFunctionCall1(textout,
@@ -109,10 +109,10 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 				 DataDir, script, DataDir, remote_host,
 				 remote_data_directory, primary_port, remote_node, remote_port);
 	}
-	else if (PG_NARGS() >= 5)		/* Pgpool-II 4.0 */
+	else if (PG_NARGS() >= 5)	/* Pgpool-II 4.0 */
 	{
 		char	   *primary_port = DatumGetCString(DirectFunctionCall1(textout,
-																	  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+																	   PointerGetDatum(PG_GETARG_TEXT_P(3))));
 		int			remote_node = PG_GETARG_INT32(4);
 
 		snprintf(recovery_script, sizeof(recovery_script), "\"%s/%s\" \"%s\" \"%s\" \"%s\" \"%s\" %d",
@@ -122,7 +122,7 @@ pgpool_recovery(PG_FUNCTION_ARGS)
 	else if (PG_NARGS() >= 4)	/* Pgpool-II 3.4 - 3.7 */
 	{
 		char	   *primary_port = DatumGetCString(DirectFunctionCall1(textout,
-																	  PointerGetDatum(PG_GETARG_TEXT_P(3))));
+																	   PointerGetDatum(PG_GETARG_TEXT_P(3))));
 
 		snprintf(recovery_script, sizeof(recovery_script), "\"%s/%s\" \"%s\" \"%s\" \"%s\" \"%s\"",
 				 DataDir, script, DataDir, remote_host,
@@ -356,6 +356,7 @@ get_function_oid(const char *funcname, const char *argtype, const char *nspname)
 	{
 #if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 120000)
 		Form_pg_proc proctup = (Form_pg_proc) GETSTRUCT(tup);
+
 		funcid = proctup->oid;
 #else
 		funcid = HeapTupleGetOid(tup);

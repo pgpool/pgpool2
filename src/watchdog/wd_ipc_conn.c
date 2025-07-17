@@ -53,10 +53,12 @@
 #include "watchdog/wd_ipc_defines.h"
 
 static int	open_wd_command_sock(bool throw_error);
+
 /* shared memory variables */
 char	   *watchdog_ipc_address = NULL;
 
-void wd_set_ipc_address(char *socket_dir, int port)
+void
+wd_set_ipc_address(char *socket_dir, int port)
 {
 	if (watchdog_ipc_address == NULL)
 	{
@@ -84,9 +86,11 @@ wd_ipc_conn_initialize(void)
 	}
 }
 
-size_t estimate_ipc_socket_addr_len(void)
+size_t
+estimate_ipc_socket_addr_len(void)
 {
-	return strlen(pool_config->wd_ipc_socket_dir) + 25; /* wd_ipc_socket_dir/.s.PGPOOLWD_CMD.port*/
+	return strlen(pool_config->wd_ipc_socket_dir) + 25; /* wd_ipc_socket_dir/.s.PGPOOLWD_CMD.port
+														 * */
 }
 
 char *
@@ -276,11 +280,11 @@ open_wd_command_sock(bool throw_error)
 }
 
 void
-FreeCmdResult(WDIPCCmdResult * res)
+FreeCmdResult(WDIPCCmdResult *res)
 {
 	if (res == NULL)
 		return;
-	
+
 	if (res->data)
 		pfree(res->data);
 	pfree(res);

@@ -42,7 +42,7 @@ typedef struct WDNodeInfo
 	int			wd_priority;	/* node priority */
 	char		delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
 	int			id;
-}			WDNodeInfo;
+} WDNodeInfo;
 
 typedef struct WDGenericData
 {
@@ -54,15 +54,15 @@ typedef struct WDGenericData
 		bool		boolVal;
 		long		longVal;
 	}			data;
-}			WDGenericData;
+} WDGenericData;
 
 
 
-extern WDGenericData * get_wd_runtime_variable_value(char *wd_authkey, char *varName);
+extern WDGenericData *get_wd_runtime_variable_value(char *wd_authkey, char *varName);
 extern WD_STATES get_watchdog_local_node_state(char *wd_authkey);
 extern int	get_watchdog_quorum_state(char *wd_authkey);
 extern char *wd_get_watchdog_nodes_json(char *wd_authkey, int nodeID);
 extern void set_wd_command_timeout(int sec);
-extern char* get_request_json(char *key, char *value, char *authKey);
-extern WDNodeInfo *parse_watchdog_node_info_from_wd_node_json(json_value * source);
+extern char *get_request_json(char *key, char *value, char *authKey);
+extern WDNodeInfo *parse_watchdog_node_info_from_wd_node_json(json_value *source);
 #endif							/* WD_COMMANDS_H */

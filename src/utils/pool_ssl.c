@@ -45,16 +45,16 @@
 static SSL_CTX *SSL_frontend_context = NULL;
 static bool SSL_initialized = false;
 static bool dummy_ssl_passwd_cb_called = false;
-static int  dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
-static int  ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata);
+static int	dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
+static int	ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static const char *SSLerrmessage(unsigned long ecode);
-static void fetch_pool_ssl_cert(POOL_CONNECTION * cp);
-static DH *load_dh_file(char *filename);
-static DH *load_dh_buffer(const char *, size_t);
+static void fetch_pool_ssl_cert(POOL_CONNECTION *cp);
+static DH  *load_dh_file(char *filename);
+static DH  *load_dh_buffer(const char *, size_t);
 static bool initialize_dh(SSL_CTX *context);
 static bool initialize_ecdh(SSL_CTX *context);
-static int run_ssl_passphrase_command(const char *prompt, char *buf, int size);
+static int	run_ssl_passphrase_command(const char *prompt, char *buf, int size);
 static void pool_ssl_make_absolute_path(char *artifact_path, char *config_dir, char *absolute_path);
 
 #define SSL_RETURN_VOID_IF(cond, msg) \
@@ -85,7 +85,7 @@ enum ssl_conn_type
 };
 
 /* perform per-connection ssl initialization.  returns nonzero on error */
-static int	init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype);
+static int	init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype);
 
 /* OpenSSL error message */
 static void perror_ssl(const char *context);
@@ -94,7 +94,7 @@ static void perror_ssl(const char *context);
  * between pgpool-II and PostgreSQL backends
  */
 void
-pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
+pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp)
 {
 	int			ssl_packet[2] = {htonl(sizeof(int) * 2), htonl(NEGOTIATE_SSL_CODE)};
 	char		server_response;
@@ -125,9 +125,9 @@ pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
 		case 'S':
 
 			/*
-			 * At this point the server read buffer must be empty. Otherwise it
-			 * is possible that a man-in-the-middle attack is ongoing.
-			 * So we immediately close the communication channel.
+			 * At this point the server read buffer must be empty. Otherwise
+			 * it is possible that a man-in-the-middle attack is ongoing. So
+			 * we immediately close the communication channel.
 			 */
 			if (!pool_read_buffer_is_empty(cp))
 			{
@@ -153,6 +153,7 @@ pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
 					 errdetail("server doesn't want to talk SSL")));
 			break;
 		case 'E':
+
 			/*
 			 * Server failure of some sort, such as failure to fork a backend
 			 * process.  Don't bother retrieving the error message; we should
@@ -174,7 +175,7 @@ pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
  * between frontend and Pgpool-II
  */
 void
-pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
+pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp)
 {
 
 	cp->ssl_active = -1;
@@ -191,8 +192,8 @@ pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
 
 		/*
 		 * At this point the frontend read buffer must be empty. Otherwise it
-		 * is possible that a man-in-the-middle attack is ongoing.
-		 * So we immediately close the communication channel.
+		 * is possible that a man-in-the-middle attack is ongoing. So we
+		 * immediately close the communication channel.
 		 */
 		if (!pool_read_buffer_is_empty(cp))
 		{
@@ -210,7 +211,7 @@ pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
 }
 
 void
-pool_ssl_close(POOL_CONNECTION * cp)
+pool_ssl_close(POOL_CONNECTION *cp)
 {
 	if (cp->ssl)
 	{
@@ -223,7 +224,7 @@ pool_ssl_close(POOL_CONNECTION * cp)
 }
 
 int
-pool_ssl_read(POOL_CONNECTION * cp, void *buf, int size)
+pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size)
 {
 	int			n;
 	int			err;
@@ -267,12 +268,14 @@ retry:
 			n = -1;
 			break;
 		case SSL_ERROR_ZERO_RETURN:
-			/* SSL manual says:
+
+			/*
+			 * SSL manual says:
 			 * -------------------------------------------------------------
-			 * The TLS/SSL peer has closed the connection for
-			 * writing by sending the close_notify alert. No more data can be
-			 * read. Note that SSL_ERROR_ZERO_RETURN does not necessarily
-			 * indicate that the underlying transport has been closed.
+			 * The TLS/SSL peer has closed the connection for writing by
+			 * sending the close_notify alert. No more data can be read. Note
+			 * that SSL_ERROR_ZERO_RETURN does not necessarily indicate that
+			 * the underlying transport has been closed.
 			 * -------------------------------------------------------------
 			 * We don't want to trigger failover but it is also possible that
 			 * the connection has been closed. So returns 0 to ask pool_read()
@@ -300,7 +303,7 @@ retry:
 }
 
 int
-pool_ssl_write(POOL_CONNECTION * cp, const void *buf, int size)
+pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size)
 {
 	int			n;
 	int			err;
@@ -352,18 +355,18 @@ retry:
 }
 
 static int
-init_ssl_ctx(POOL_CONNECTION * cp, enum ssl_conn_type conntype)
+init_ssl_ctx(POOL_CONNECTION *cp, enum ssl_conn_type conntype)
 {
 	int			error = 0;
 	char	   *cacert = NULL,
 			   *cacert_dir = NULL;
 
-	char ssl_cert_path[POOLMAXPATHLEN + 1] = "";
-	char ssl_key_path[POOLMAXPATHLEN + 1] = "";
-	char ssl_ca_cert_path[POOLMAXPATHLEN + 1] = "";
+	char		ssl_cert_path[POOLMAXPATHLEN + 1] = "";
+	char		ssl_key_path[POOLMAXPATHLEN + 1] = "";
+	char		ssl_ca_cert_path[POOLMAXPATHLEN + 1] = "";
 
-	char *conf_file_copy = pstrdup(get_config_file_name());
-	char *conf_dir = dirname(conf_file_copy);
+	char	   *conf_file_copy = pstrdup(get_config_file_name());
+	char	   *conf_dir = dirname(conf_file_copy);
 
 	pool_ssl_make_absolute_path(pool_config->ssl_cert, conf_dir, ssl_cert_path);
 	pool_ssl_make_absolute_path(pool_config->ssl_key, conf_dir, ssl_key_path);
@@ -481,7 +484,7 @@ SSLerrmessage(unsigned long ecode)
  * Return true if SSL layer has any pending data in buffer
  */
 bool
-pool_ssl_pending(POOL_CONNECTION * cp)
+pool_ssl_pending(POOL_CONNECTION *cp)
 {
 	if (cp->ssl_active > 0 && SSL_pending(cp->ssl) > 0)
 		return true;
@@ -489,7 +492,7 @@ pool_ssl_pending(POOL_CONNECTION * cp)
 }
 
 static void
-fetch_pool_ssl_cert(POOL_CONNECTION * cp)
+fetch_pool_ssl_cert(POOL_CONNECTION *cp)
 {
 	int			len;
 	X509	   *peer = SSL_get_peer_certificate(cp->ssl);
@@ -587,15 +590,15 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 int
 SSL_ServerSide_init(void)
 {
-	STACK_OF(X509_NAME) *root_cert_list = NULL;
+	STACK_OF(X509_NAME) * root_cert_list = NULL;
 	SSL_CTX    *context;
 	struct stat buf;
-	char ssl_cert_path[POOLMAXPATHLEN + 1] = "";
-	char ssl_key_path[POOLMAXPATHLEN + 1] = "";
-	char ssl_ca_cert_path[POOLMAXPATHLEN + 1] = "";
+	char		ssl_cert_path[POOLMAXPATHLEN + 1] = "";
+	char		ssl_key_path[POOLMAXPATHLEN + 1] = "";
+	char		ssl_ca_cert_path[POOLMAXPATHLEN + 1] = "";
 
-	char *conf_file_copy = pstrdup(get_config_file_name());
-	char *conf_dir = dirname(conf_file_copy);
+	char	   *conf_file_copy = pstrdup(get_config_file_name());
+	char	   *conf_dir = dirname(conf_file_copy);
 
 	pool_ssl_make_absolute_path(pool_config->ssl_cert, conf_dir, ssl_cert_path);
 	pool_ssl_make_absolute_path(pool_config->ssl_key, conf_dir, ssl_key_path);
@@ -645,7 +648,7 @@ SSL_ServerSide_init(void)
 	/*
 	 * prompt for password for passphrase-protected files
 	 */
-	if(pool_config->ssl_passphrase_command && strlen(pool_config->ssl_passphrase_command))
+	if (pool_config->ssl_passphrase_command && strlen(pool_config->ssl_passphrase_command))
 		SSL_CTX_set_default_passwd_cb(context, ssl_external_passwd_cb);
 	else
 		SSL_CTX_set_default_passwd_cb(context, dummy_ssl_passwd_cb);
@@ -781,7 +784,8 @@ SSL_ServerSide_init(void)
 	 */
 	if (pool_config->ssl_crl_file && strlen(pool_config->ssl_crl_file))
 	{
-		char ssl_crl_path[POOLMAXPATHLEN + 1] = "";
+		char		ssl_crl_path[POOLMAXPATHLEN + 1] = "";
+
 		pool_ssl_make_absolute_path(pool_config->ssl_crl_file, conf_dir, ssl_crl_path);
 
 		X509_STORE *cvstore = SSL_CTX_get_cert_store(context);
@@ -866,7 +870,7 @@ error:
 static bool
 initialize_dh(SSL_CTX *context)
 {
-	DH *dh = NULL;
+	DH		   *dh = NULL;
 
 	SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
 
@@ -928,10 +932,10 @@ initialize_ecdh(SSL_CTX *context)
  *	to verify that the DBA-generated DH parameters file contains
  *	what we expect it to contain.
  */
-static DH *
+static DH  *
 load_dh_file(char *filename)
 {
-	FILE *fp;
+	FILE	   *fp;
 	DH		   *dh = NULL;
 	int			codes;
 
@@ -1017,7 +1021,7 @@ run_ssl_passphrase_command(const char *prompt, char *buf, int size)
 	int			loglevel = ERROR;
 	StringInfoData command;
 	char	   *p;
-	FILE		*fh;
+	FILE	   *fh;
 	int			pclose_rc;
 	size_t		len = 0;
 
@@ -1099,7 +1103,7 @@ pool_ssl_make_absolute_path(char *artifact_path, char *config_dir, char *absolut
 {
 	if (artifact_path && strlen(artifact_path))
 	{
-		if(is_absolute_path(artifact_path))
+		if (is_absolute_path(artifact_path))
 			strncpy(absolute_path, artifact_path, POOLMAXPATHLEN);
 		else
 			snprintf(absolute_path, POOLMAXPATHLEN, "%s/%s", config_dir, artifact_path);
@@ -1110,7 +1114,7 @@ pool_ssl_make_absolute_path(char *artifact_path, char *config_dir, char *absolut
 								 * it's not available */
 
 void
-pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
+pool_ssl_negotiate_serverclient(POOL_CONNECTION *cp)
 {
 	ereport(DEBUG1,
 			(errmsg("SSL is requested but SSL support is not available")));
@@ -1119,7 +1123,7 @@ pool_ssl_negotiate_serverclient(POOL_CONNECTION * cp)
 }
 
 void
-pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
+pool_ssl_negotiate_clientserver(POOL_CONNECTION *cp)
 {
 
 	ereport(DEBUG1,
@@ -1129,13 +1133,13 @@ pool_ssl_negotiate_clientserver(POOL_CONNECTION * cp)
 }
 
 void
-pool_ssl_close(POOL_CONNECTION * cp)
+pool_ssl_close(POOL_CONNECTION *cp)
 {
 	return;
 }
 
 int
-pool_ssl_read(POOL_CONNECTION * cp, void *buf, int size)
+pool_ssl_read(POOL_CONNECTION *cp, void *buf, int size)
 {
 	ereport(WARNING,
 			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
@@ -1145,7 +1149,7 @@ pool_ssl_read(POOL_CONNECTION * cp, void *buf, int size)
 }
 
 int
-pool_ssl_write(POOL_CONNECTION * cp, const void *buf, int size)
+pool_ssl_write(POOL_CONNECTION *cp, const void *buf, int size)
 {
 	ereport(WARNING,
 			(errmsg("pool_ssl: SSL i/o called but SSL support is not available")));
@@ -1161,7 +1165,7 @@ SSL_ServerSide_init(void)
 }
 
 bool
-pool_ssl_pending(POOL_CONNECTION * cp)
+pool_ssl_pending(POOL_CONNECTION *cp)
 {
 	return false;
 }

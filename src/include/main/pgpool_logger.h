@@ -67,7 +67,7 @@ typedef struct
 	int32		pid;			/* writer's pid */
 	char		is_last;		/* last chunk of message? 't' or 'f' ('T' or
 								 * 'F' for CSV case) */
-	char		data[];	/* data payload starts here */
+	char		data[];			/* data payload starts here */
 } PipeProtoHeader;
 
 typedef union
