@@ -567,13 +567,12 @@ PGHOME=/usr/pgsql-15
    </programlisting>
 
    <para>
-    また、オンラインリカバリ機能を使用するには、<function>pgpool_recovery</function>、
-    <function>pgpool_remote_start</function>、<function>pgpool_switch_xlog</function>という関数が必要になるので、
-    <literal>server1</literal>のtemplate1に<function>pgpool_recovery</function>をインストールしておきます。
+    また、オンラインリカバリ機能を使用するには、<function>pgpool_recovery</function>、<function>pgpool_remote_start</function>、<function>pgpool_switch_xlog</function>の各関数をあらかじめ<xref linkend="guc-recovery-database">で指定されたデータベース（デフォルトは<literal>'postgres'</literal>です）に作成しておく必要があります。
+    <literal>server1</literal>上で以下のコマンドを実行し、これらの関数を<literal>postgres</literal>に作成します。
+    <xref linkend="guc-recovery-database">にデフォルト以外の値が設定されている場合は、<literal>postgres</literal>をその設定値に置き換えてください。
    </para>
    <programlisting>
-[server1]# su - postgres
-[server1]$ psql template1 -c "CREATE EXTENSION pgpool_recovery"
+[server1]# psql -U postgres postgres -c "CREATE EXTENSION pgpool_recovery"
    </programlisting>
    <note>
     <para>

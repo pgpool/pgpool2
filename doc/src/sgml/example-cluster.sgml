@@ -866,7 +866,8 @@ PCP_USER=pgpool
   <sect3 id="example-cluster-pgpool-config-online-recovery">
    <title>Pgpool-II Online Recovery Configurations</title>
    <para>
-    Next, configure the required parameters to perform online recovery.
+    Next, configure the required parameters to perform online recovery
+    (<xref linkend="runtime-online-recovery">).
     Because <emphasis>Superuser</emphasis> privilege in <productname>PostgreSQL</productname>
     is required for performing online recovery, we specify <literal>postgres</literal>
     user in <xref linkend="GUC-RECOVERY-USER">. In this example, we leave
@@ -909,14 +910,19 @@ PGHOME=/usr/pgsql-17
    </programlisting>
 
    <para>
-    In order to use the online recovery functionality, the functions of
-    <function>pgpool_recovery</function>, <function>pgpool_remote_start</function>,
-    <function>pgpool_switch_xlog</function> are required, so we need to install
-    <function>pgpool_recovery</function> on template1 of <productname>PostgreSQL</productname> server
-    <literal>server1</literal>.
+    In addition, to perform online recovery, the functions
+    <function>pgpool_recovery</function>, <function>pgpool_remote_start</function>
+    and <function>pgpool_switch_xlog</function> must be created in advance
+    in the database specified by <xref linkend="guc-recovery-database">
+    (the default is <literal>'postgres'</literal>).
+    Execute the following command to create these functions in
+    <literal>postgres</literal> on <literal>server1</literal>.
+    If a value other than the default is configured for
+    <xref linkend="guc-recovery-database">, replace <literal>postgres</literal>
+    with the configured value.
    </para>
    <programlisting>
-[root@server1 ~]# psql -U postgres template1 -c "CREATE EXTENSION pgpool_recovery"
+[root@server1 ~]# psql -U postgres postgres -c "CREATE EXTENSION pgpool_recovery"
    </programlisting>
    <note>
     <para>

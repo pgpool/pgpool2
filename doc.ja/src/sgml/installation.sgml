@@ -523,12 +523,9 @@ make install
    when you use the online recovery that describes latter.
    Also pgpoolAdmin of management tool, stop, restart or reload a
    <productname>PostgreSQL </productname> on the screen by use <function>pgpool_pgctl<function>.
-   It is enough, if these function installed in template1 first. These
-   function do not needed that install in all databases.
    -->
-   後述の オンラインリカバリ の機能を使う場合には、 pgpool_recovery, pgpool_remote_start, pgpool_switch_xlog という関数が必要です。
+   後述のオンラインリカバリの機能を使う場合には、 <function>pgpool_recovery</function>、<function>pgpool_remote_start</function>、および<function>pgpool_switch_xlog</function>という関数が必要です。
    また管理ツールである pgpoolAdmin の画面上から、バックエンドノードの PostgreSQL を停止・再起動・設定再読み込みを行なうことができますが、これには pgpool_pgctl という関数が使われます。
-   これらの関数は、すべてのデータベースにインストールされている必要はなく、template1 にだけで 構いません。
   </para>
 
   <para>
@@ -543,11 +540,19 @@ $ make
 $ make install
    </programlisting>
    <!--
-   After this:
+   After this, execute the following command to create the functions
+   <function>pgpool_recovery</function>, <function>pgpool_remote_start</function>
+   and <function>pgpool_switch_xlog</function> in the database specified in
+   <xref linkend="guc-recovery-database">
+   (The default is <literal>'postgres'</literal>).
+   If a value other than the default is configured for
+   <xref linkend="guc-recovery-database">, replace <literal>"postgres"</literal>
+   with the setting of <xref linkend="guc-recovery-database">.
    -->
-   この後に以下か、
+   この後、以下のコマンドを実行して、<xref linkend="guc-recovery-database">で指定されたデータベースに（デフォルトは<literal>'postgres'</literal>です）<function>pgpool_recovery</function>、<function>pgpool_remote_start</function>および<function>pgpool_switch_xlog</function>関数を作成します。
+   <xref linkend="guc-recovery-database">にデフォルト以外の値が設定されている場合は、<literal>"postgres"</literal>をその設定値に置き換えてください。
    <programlisting>
-$ psql template1
+$ psql postgres
 =# CREATE EXTENSION pgpool_recovery;
    </programlisting>
 
@@ -556,7 +561,7 @@ $ psql template1
    -->
    または
    <programlisting>
-$ psql -f pgpool-recovery.sql template1
+$ psql -f pgpool-recovery.sql postgres
    </programlisting>
    を実行します。
 

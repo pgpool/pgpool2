@@ -107,6 +107,7 @@ function set_pgpool_conf {
     echo "sr_check_user = '$WHOAMI'" >> $CONF
     echo "recovery_user = '$WHOAMI'" >> $CONF
     echo "recovery_password = ''"  >> $CONF
+    echo "recovery_database = 'template1'"  >> $CONF
     echo "recovery_1st_stage_command = 'basebackup.sh'" >> $CONF
 
     if [ $MODE = "r" || $MODE = "i" ];then

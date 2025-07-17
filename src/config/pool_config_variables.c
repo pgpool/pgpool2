@@ -1028,6 +1028,16 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"recovery_database", CFGCXT_RELOAD, RECOVERY_CONFIG,
+			"The database name for online recovery.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.recovery_database,
+		"postgres",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
 		{"recovery_1st_stage_command", CFGCXT_RELOAD, RECOVERY_CONFIG,
 			"Command to execute in first stage recovery.",
 			CONFIG_VAR_TYPE_STRING, false, 0

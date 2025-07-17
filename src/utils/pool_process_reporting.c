@@ -774,6 +774,11 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "online recovery user", POOLCONFIG_MAXDESCLEN);
 	i++;
 
+	StrNCpy(status[i].name, "recovery_database", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_database);
+	StrNCpy(status[i].desc, "database name for online recovery", POOLCONFIG_MAXDESCLEN);
+	i++;
+
 	StrNCpy(status[i].name, "recovery_1st_stage_command", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->recovery_1st_stage_command);
 	StrNCpy(status[i].desc, "execute a command in first stage.", POOLCONFIG_MAXDESCLEN);

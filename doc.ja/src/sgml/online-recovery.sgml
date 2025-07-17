@@ -346,6 +346,58 @@
    </listitem>
   </varlistentry>
 
+  <varlistentry id="guc-recovery-database" xreflabel="recovery_database">
+   <term><varname>recovery_database</varname> (<type>string</type>)
+    <indexterm>
+     <!--
+     <primary><varname>recovery_database</varname> configuration parameter</primary>
+     -->
+     <primary><varname>recovery_database</varname> 設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
+    <para>
+     <!--
+     Specifies the PostgreSQL database name to be used for online recovery.
+     The default is <literal>'postgres'</literal>. If not specified,
+     <productname>Pgpool-II</productname> will attempt to use the
+     <literal>"postgres"</literal> database.
+     -->
+     オンラインリカバリを行うための<productname>PostgreSQL</>データベースです。
+     デフォルトは<literal>'postgres'</literal>です。
+     空文字（''）が指定された場合、<productname>Pgpool-II</>は
+     <literal>「postgres」</literal>データベースの使用を試みます。
+    </para>
+    <para>
+     <!--
+     This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+     -->
+     このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+    </para>
+    <note>
+     <para>
+      <!--
+      To perform online recovery, the functions <varname>pgpool_recovery</varname>,
+      <varname>pgpool_remote_start</varname> and
+      <varname>pgpool_switch_xlog</varname> must be created in the database
+      specified by the <xref linkend="guc-recovery-database"> parameter.
+      To install these functions in the default database
+      <literal>"postgres"</literal>, execute the following command
+      (<emphasis>if a value other than the default is configured, replace
+      <literal>"postgres"</literal> with the setting of
+      <varname>recovery_database</varname></emphasis>):
+      -->
+      オンラインリカバリを実行するには、<xref linkend="guc-recovery-database">パラメータで指定されたデータベースに、pgpool_recovery、pgpool_remote_start、および pgpool_switch_xlog 関数を作成しておく必要があります。
+      これらの関数をデフォルトのデータベース<literal>postgres</literal>に作成するには、以下のコマンドを実行してください。
+      （デフォルト値以外が設定されている場合は、<literal>postgres</literal>を<xref linkend="guc-recovery-database">に設定された値に置き換えてください）
+      <programlisting>
+$ psql postgres -c "CREATE EXTENSION pgpool_recovery"
+      </programlisting>
+     </para>
+    </note>
+   </listitem>
+  </varlistentry>
+
   <varlistentry id="guc-recovery-1st-stage-command" xreflabel="recovery_1st_stage_command">
    <term><varname>recovery_1st_stage_command</varname> (<type>string</type>)
     <indexterm>

@@ -667,6 +667,9 @@ backend_clustering_mode = streaming_replication
                                    # Leaving it empty will make Pgpool-II to first look for the
                                    # Password in pool_passwd file before using the empty password
 
+#recovery_database = 'postgres'
+                                   # Database name for online recovery
+
 #recovery_1st_stage_command = ''
                                    # Executes a command in first stage
 #recovery_2nd_stage_command = ''

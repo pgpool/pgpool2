@@ -184,8 +184,7 @@ typedef struct
 	int			health_check_period;	/* health check period */
 	char	   *health_check_user;	/* PostgreSQL user name for health check */
 	char	   *health_check_password;	/* password for health check username */
-	char	   *health_check_database;	/* database name for health check
-										 * username */
+	char	   *health_check_database;	/* database name for health check */
 	int			health_check_max_retries;	/* health check max retries */
 	int			health_check_retry_delay;	/* amount of time to wait between
 											 * retries */
@@ -352,8 +351,7 @@ typedef struct
 	int			health_check_period;	/* health check period */
 	char	   *health_check_user;	/* PostgreSQL user name for health check */
 	char	   *health_check_password;	/* password for health check username */
-	char	   *health_check_database;	/* database name for health check
-										 * username */
+	char	   *health_check_database;	/* database name for health check */
 	int			health_check_max_retries;	/* health check max retries */
 	int			health_check_retry_delay;	/* amount of time to wait between
 											 * retries */
@@ -386,6 +384,7 @@ typedef struct
 	char	   *recovery_user;	/* PostgreSQL user name for online recovery */
 	char	   *recovery_password;	/* PostgreSQL user password for online
 									 * recovery */
+	char	   *recovery_database;	/* Database name for recovery */
 	char	   *recovery_1st_stage_command; /* Online recovery command in 1st
 											 * stage */
 	char	   *recovery_2nd_stage_command; /* Online recovery command in 2nd

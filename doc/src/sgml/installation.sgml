@@ -443,8 +443,6 @@ make install
    when you use the online recovery that describes latter.
    Also pgpoolAdmin of management tool, stop, restart or reload a
    <productname>PostgreSQL</productname> on the screen by use <function>pgpool_pgctl</function>.
-   It is enough, if these function installed in template1 first. These
-   function do not needed that install in all databases.
   </para>
 
   <para>
@@ -455,15 +453,22 @@ $ cd pgpool-II-&version/src/sql/pgpool-recovery
 $ make
 $ make install
    </programlisting>
-   After this:
+   After this, execute the following command to create the functions
+   <function>pgpool_recovery</function>, <function>pgpool_remote_start</function>
+   and <function>pgpool_switch_xlog</function> in the database specified in
+   <xref linkend="guc-recovery-database">
+   (The default is <literal>'postgres'</literal>).
+   If a value other than the default is configured for
+   <xref linkend="guc-recovery-database">, replace <literal>"postgres"</literal>
+   with the setting of <xref linkend="guc-recovery-database">.
    <programlisting>
-$ psql template1
+$ psql postgres
 =# CREATE EXTENSION pgpool_recovery;
    </programlisting>
 
    or
    <programlisting>
-$ psql -f pgpool-recovery.sql template1
+$ psql -f pgpool-recovery.sql postgres
    </programlisting>
 
   </para>

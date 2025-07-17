@@ -248,6 +248,41 @@
    </listitem>
   </varlistentry>
 
+  <varlistentry id="guc-recovery-database" xreflabel="recovery_database">
+   <term><varname>recovery_database</varname> (<type>string</type>)
+    <indexterm>
+     <primary><varname>recovery_database</varname> configuration parameter</primary>
+    </indexterm>
+   </term>
+   <listitem>
+    <para>
+     Specifies the PostgreSQL database name to be used for online recovery.
+     The default is <literal>'postgres'</literal>. If an empty string ('')
+     is specified, <productname>Pgpool-II</productname> will attempt to use
+     the <literal>"postgres"</literal> database.
+    </para>
+    <para>
+     This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
+    </para>
+    <note>
+     <para>
+      To perform online recovery, the functions <varname>pgpool_recovery</varname>,
+      <varname>pgpool_remote_start</varname> and
+      <varname>pgpool_switch_xlog</varname> must be created in the database
+      specified by the <xref linkend="guc-recovery-database"> parameter.
+      To install these functions in the default database
+      <literal>"postgres"</literal>, execute the following command
+      (<emphasis>if a value other than the default is configured, replace
+      <literal>"postgres"</literal> with the setting of
+      <varname>recovery_database</varname></emphasis>):
+      <programlisting>
+$ psql postgres -c "CREATE EXTENSION pgpool_recovery"
+      </programlisting>
+     </para>
+    </note>
+   </listitem>
+  </varlistentry>
+
   <varlistentry id="guc-recovery-1st-stage-command" xreflabel="recovery_1st_stage_command">
    <term><varname>recovery_1st_stage_command</varname> (<type>string</type>)
     <indexterm>

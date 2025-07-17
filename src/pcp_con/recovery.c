@@ -463,16 +463,25 @@ connect_backend_libpq(BackendInfo * backend)
 {
 	char		port_str[16];
 	PGconn	   *conn;
+	char       *dbname;
 	char	   *password = get_pgpool_config_user_password(pool_config->recovery_user,
 														   pool_config->recovery_password);
 
 	snprintf(port_str, sizeof(port_str),
 			 "%d", backend->backend_port);
+	/*
+	 * If database is not specified, "postgres" database is assumed.
+	 */
+	if (*pool_config->recovery_database == '\0')
+		dbname = "postgres";
+	else
+		dbname = pool_config->recovery_database;
+
 	conn = PQsetdbLogin(backend->backend_hostname,
 						port_str,
 						NULL,
 						NULL,
-						"template1",
+						pool_config->recovery_database,
 						pool_config->recovery_user,
 						password ? password : "");
 
