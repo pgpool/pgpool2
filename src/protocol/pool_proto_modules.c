@@ -3829,9 +3829,9 @@ pi_set(int node_id)
 	ProcessInfo *pi = pool_get_my_process_info();
 
 	if (node_id < BITS_PER_TYPE(uint64))
-		pi->node_ids[0] |= (1 << node_id);
+		pi->node_ids[0] |= ((uint64)1 << node_id);
 	else
-		pi->node_ids[1] |= (1 << (node_id - BITS_PER_TYPE(uint64)));
+		pi->node_ids[1] |= ((uint64)1 << (node_id - BITS_PER_TYPE(uint64)));
 }
 
 /*
@@ -3843,9 +3843,9 @@ is_pi_set(uint64 *node_ids, int node_id)
 	int			set;
 
 	if (node_id < BITS_PER_TYPE(uint64))
-		set = node_ids[0] & (1 << node_id);
+		set = node_ids[0] & ((uint64)1 << node_id);
 	else
-		set = node_ids[1] & (1 << (node_id - BITS_PER_TYPE(uint64)));
+		set = node_ids[1] & ((uint64)1 << (node_id - BITS_PER_TYPE(uint64)));
 	return set != 0;
 }
 
