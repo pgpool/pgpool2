@@ -5304,6 +5304,8 @@ pool_push_pending_data(POOL_CONNECTION *backend)
 			ereport(DEBUG1,
 					(errmsg("pool_push_pending_data: ERROR response found")));
 			pool_set_ignore_till_sync();
+			if (buf)
+				pfree(buf);
 			break;
 		}
 		num_pushed_messages++;
