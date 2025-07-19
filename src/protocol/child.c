@@ -751,8 +751,11 @@ read_startup_packet(POOL_CONNECTION * cp)
 	}
 
 	/* The database defaults to their user name. */
-	if (sp->database == NULL || sp->database[0] == '\0')
+	if (sp->database == NULL)
+		sp->database = pstrdup(sp->user);
+	else if (sp->database[0] == '\0')
 	{
+		pfree(sp->database);
 		sp->database = pstrdup(sp->user);
 	}
 
