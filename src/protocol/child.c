@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -753,9 +753,12 @@ read_startup_packet(POOL_CONNECTION * cp)
 				 errdetail("no PostgreSQL user name specified in startup packet")));
 	}
 
-	/* The database defaults to ther user name. */
-	if (sp->database == NULL || sp->database[0] == '\0')
+	/* The database defaults to their user name. */
+	if (sp->database == NULL)
+		sp->database = pstrdup(sp->user);
+	else if (sp->database[0] == '\0')
 	{
+		pfree(sp->database);
 		sp->database = pstrdup(sp->user);
 	}
 
