@@ -5296,6 +5296,7 @@ pool_push_pending_data(POOL_CONNECTION *backend)
 		{
 			pool_push(backend, buf, len);
 			pfree(buf);
+			buf = NULL;
 		}
 		data_pushed = true;
 		if (kind == 'E')
