@@ -642,7 +642,14 @@ load_watchdog_nodes_from_json(char *json_data, int len)
 	json_value_free(root);
 }
 
-
+/*----------
+ * is_wd_lifecheck_ready
+ *
+ * Check all registered watchdog nodes and returns WD_OK if:
+ * query mode: wd_ping_pgpool returns WD_OK
+ * hearbeat mode: has received from and
+ *				  sent to all node the heartbeat message
+ */
 static int
 is_wd_lifecheck_ready(void)
 {
@@ -680,7 +687,7 @@ is_wd_lifecheck_ready(void)
 			{
 				ereport(DEBUG1,
 						(errmsg("watchdog checking life check is ready"),
-						 errdetail("pgpool:%d at \"%s:%d\" has not send the heartbeat signal yet",
+						 errdetail("pgpool:%d at \"%s:%d\" has not received from or sent to the heartbeat signal yet",
 								   i, node->hostName, node->pgpoolPort)));
 				rtn = WD_NG;
 			}
