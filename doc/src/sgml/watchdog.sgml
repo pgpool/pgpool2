@@ -283,7 +283,7 @@ pgpool_port2 = 9999
       <productname>Pgpool-II</productname> that is connected from
       client servers (application servers etc.).  When a
       <productname>Pgpool-II</productname> is switched from standby to
-      active, the <productname>Pgpool-II</productname> takes over this
+      leader, the <productname>Pgpool-II</productname> takes over this
       VIP. <emphasis>VIP will not be brought up in case the quorum
       does not exist</emphasis>. Default is <literal>''</literal>(empty): which
       means virtual IP will never be brought up.
@@ -449,7 +449,7 @@ pgpool_port2 = 9999
 
   <para>
    Configuration about behavior when <productname>Pgpool-II</productname>
-   escalates to active (virtual IP holder)
+   escalates to leader (virtual IP holder)
   </para>
 
   <variablelist>
@@ -463,8 +463,8 @@ pgpool_port2 = 9999
     <listitem>
      <para>
       When set to on, watchdog clears all the query cache in the shared memory
-      when pgpool-II escalates to active. This prevents the new active <productname>Pgpool-II</productname>
-      from using old query caches inconsistent to the old active.
+      when pgpool-II escalates to leader. This prevents the new leader <productname>Pgpool-II</productname>
+      from using old query caches inconsistent to the old leader.
      </para>
      <para>
       Default is on.
@@ -626,7 +626,7 @@ pgpool_port2 = 9999
      <para>
       From <productname>Pgpool-II </productname><emphasis>V4.1</emphasis> onward, if the watchdog-leader node
       fails to build the consensus for primary backend node failover and the primary backend node gets into a
-      quarantine state, then it resigns from its leader/coordinator responsibilities and lowers its wd_priority
+      quarantine state, then it resigns from its leader responsibilities and lowers its wd_priority
       for next leader election and let the cluster elect some different new leader.
       <note>
        <para>
