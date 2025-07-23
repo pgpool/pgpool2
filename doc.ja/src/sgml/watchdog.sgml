@@ -407,8 +407,8 @@
       Default is <literal>''</literal>(empty): which means virtual
       IP will never be brought up.
       -->
-      （アプリケーションサーバなど）クライアントサーバから接続される<productname>Pgpool-II</productname>の仮想IP（VIP） アドレスを指定します。
-      <productname>Pgpool-II</productname>がスタンバイからアクティブに切り替わった時、<productname>Pgpool-II</productname>はこのVIPを引き継ぎます。
+      （アプリケーションサーバなど）クライアントサーバから接続される<productname>Pgpool-II</productname>の仮想IP（VIP）アドレスを指定します。
+      <productname>Pgpool-II</productname>がスタンバイからリーダーに切り替わった時、<productname>Pgpool-II</productname>はこのVIPを引き継ぎます。
       <emphasis>クォーラムが存在しなければVIPは立ち上がりません</emphasis>。
       デフォルトは<literal>''</literal>（空文字）で、この場合仮想IPは決して立ち上がりません。
      </para>
@@ -640,7 +640,7 @@
    Configuration about behavior when <productname>Pgpool-II</productname>
    escalates to active (virtual IP holder)
    -->
-   <productname>Pgpool-II</productname>がアクティブ（仮想IPを保持しているステータス）に昇格した時の振る舞いを指定します。
+   <productname>Pgpool-II</productname>がリーダー（仮想IPを保持しているステータス）に昇格した時の振る舞いを指定します。
   </para>
 
   <variablelist>
@@ -661,8 +661,8 @@
       when pgpool-II escalates to active. This prevents the new active <productname>Pgpool-II</productname>
       from using old query caches inconsistences to the old active.
       -->
-      このオプションがonの場合、pgpool-II がアクティブに昇格した時に、共有メモリ上のクエリキャッシュを全て削除します。
-      これにより、新しいアクティブの<productname>Pgpool-II</productname>が旧アクティブと非整合な古いクエリキャッシュを使うことを防止します。
+      このオプションがonの場合、pgpool-II がリーダーに昇格した時に、共有メモリ上のクエリキャッシュを全て削除します。
+      これにより、新しいリーダーの<productname>Pgpool-II</productname>が旧リーダーと非整合な古いクエリキャッシュを使うことを防止します。
      </para>
      <para>
       <!--
@@ -852,11 +852,11 @@
      </para>
 
      <para>
-      <productname>Pgpool-II </productname><emphasis>V4.1</emphasis>以後では、プライマリノードのフェイルオーバに関してwatchdogのリーダノードが合意形成に失敗し、その結果プライマリバックエンドが隔離状態になった場合、そのリーダノードはリーダ/コーディネータの役割を辞退し、次のリーダの選挙の際にwd_priorityを引き下げることにより、クラスタが新しいリーダを選ぶように仕向けます。
+      <productname>Pgpool-II </productname><emphasis>V4.1</emphasis>以後では、プライマリノードのフェイルオーバに関してwatchdogのリーダーノードが合意形成に失敗し、その結果プライマリバックエンドが隔離状態になった場合、そのリーダーノードはリーダーの役割を辞退し、次のリーダーの選挙の際にwd_priorityを引き下げることにより、クラスタが新しいリーダーを選ぶように仕向けます。
       <note>
        <para>
-	スタンバイバックエンドの障害時にリーダノードが合意形成に失敗した場合は、特にアクションは起こしません。
-	watchdogリーダが管理する隔離されたスタンバイバックエンドは新しいリーダの選挙を引き起こしません。
+	スタンバイバックエンドの障害時にリーダーノードが合意形成に失敗した場合は、特にアクションは起こしません。
+	watchdogリーダが管理する隔離されたスタンバイバックエンドは新しいリーダーの選挙を引き起こしません。
        </para>
       </note>
      </para>
@@ -1076,7 +1076,7 @@
       このパラメータがオンのときは、split-brainが発生するリスクがあることに注意してください。
       たとえば、ノードA, B, C, Dからなる4ノードのクラスタでは、(A, B)と(C, D)の分断された2つのネットワークになる可能性があります。
       (A, B)と(C, D)にとっては、それぞれ生きた2つのノードが存在するので、クォーラムは依然として存在します。
-      各々のグループはそれぞれのリーダwatchdogを選び、これはすなわちsplit-brainです。
+      各々のグループはそれぞれのリーダーwatchdogを選び、これはすなわちsplit-brainです。
      </para>
      <para>
       デフォルト値はオフです。
