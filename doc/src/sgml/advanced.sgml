@@ -129,7 +129,7 @@
   </sect2>
 
   <sect2 id="tutorial-watchdog-changing-active">
-   <title>Changing active/standby state when certain fault is detected</title>
+   <title>Changing leader/standby state when certain fault is detected</title>
 
    <indexterm zone="tutorial-watchdog-changing-active">
     <primary>WATCHDOG</primary>
@@ -137,9 +137,9 @@
    <para>
     When a fault of <productname>Pgpool-II</productname> is detected,
     watchdog notifies the other watchdogs of it.
-    If this is the active <productname>Pgpool-II</productname>,
-    watchdogs decide the new active <productname>Pgpool-II</productname>
-    by voting and change active/standby state.
+    If this is the leader <productname>Pgpool-II</productname>,
+    watchdogs decide the new leader <productname>Pgpool-II</productname>
+    by voting and change leader/standby state.
    </para>
   </sect2>
 
@@ -150,9 +150,9 @@
     <primary>WATCHDOG</primary>
    </indexterm>
    <para>
-    When a standby <productname>Pgpool-II</productname> server promotes to active,
-    the new active server brings up virtual IP interface. Meanwhile, the previous
-    active server brings down the virtual IP interface. This enables the active
+    When a standby <productname>Pgpool-II</productname> server promotes to leader,
+    the new leader server brings up virtual IP interface. Meanwhile, the previous
+    leader server brings down the virtual IP interface. This enables the leader
     <productname>Pgpool-II</productname> to work using the same
     IP address even when servers are switched.
    </para>
@@ -167,7 +167,7 @@
    <para>
     When the broken server recovers or new server is attached, the watchdog process
     notifies this to the other watchdogs in the cluster along with the information of the new server,
-    and the watchdog process receives information on the active server and
+    and the watchdog process receives information on the leader server and
     other servers. Then, the attached server is registered as a standby.
    </para>
   </sect2>
@@ -524,7 +524,7 @@
     Thus clients of <productname>Pgpool-II</productname> cannot
     connect to <productname>Pgpool-II</productname> using the
     virtual IP any more. This is necessary to avoid split-brain,
-    that is, situations where there are multiple active
+    that is, situations where there are multiple leader
     <productname>Pgpool-II</productname>.
    </para>
   </sect2>
@@ -561,9 +561,9 @@
     <primary>WATCHDOG</primary>
    </indexterm>
    <para>
-    After the active <productname>Pgpool-II</productname> stops,
+    After the leader <productname>Pgpool-II</productname> stops,
     it will take a few seconds until the standby <productname>Pgpool-II</productname>
-    promote to new active, to make sure that the former virtual IP is
+    promote to new leader, to make sure that the former virtual IP is
     brought down before a down notification packet is sent to other
     <productname>Pgpool-II</productname>.
    </para>
@@ -640,7 +640,7 @@
 
     <listitem>
      <para>
-      Manages the Virtual-IP on the active/coordinator node and
+      Manages the Virtual-IP on the leader/coordinator node and
       allow the users to provide custom scripts for
       escalation and de-escalation.
      </para>
