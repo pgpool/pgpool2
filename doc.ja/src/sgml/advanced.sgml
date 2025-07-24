@@ -190,7 +190,7 @@
    <!--
    <title>Changing active/standby state when certain fault is detected</title>
    -->
-   <title>障害が検出された際のアクティブ/スタンバイ状態の切換</title>
+   <title>障害が検出された際のリーダー/スタンバイ状態の切換</title>
 
    <indexterm zone="tutorial-watchdog-changing-active">
     <primary>WATCHDOG</primary>
@@ -204,7 +204,7 @@
     by voting and change active/standby state.
     -->
     <productname>Pgpool-II</productname>の障害が検出されると、watchdogは他のwatchdogにそのことを通知します。
-    障害が起きたのがアクティブな<productname>Pgpool-II</productname>であれば、watchdogは投票によって新しいアクティブ<productname>Pgpool-II</productname>を決定し、active/standby状態を変更します
+    障害が起きたのがリーダー<productname>Pgpool-II</productname>であれば、watchdogは投票によって新しいリーダー<productname>Pgpool-II</productname>を決定し、active/standby状態を変更します
    </para>
   </sect2>
 
@@ -225,8 +225,8 @@
     <productname>Pgpool-II</productname> to work using the same
     IP address even when servers are switched.
     -->
-    スタンバイ<productname>Pgpool-II</productname>サーバが昇格すると、新しいアクティブサーバは仮想IPインターフェイスを立ち上げます。
-    一方、以前のアクティブサーバは、仮想IPインターフェイスを停止します。
+    スタンバイ<productname>Pgpool-II</productname>サーバが昇格すると、新しいリーダーサーバは仮想IPインターフェイスを立ち上げます。
+    一方、以前のリーダーサーバは、仮想IPインターフェイスを停止します。
     これにより、サーバが切り替わっても<productname>Pgpool-II</productname>は同じIPアドレスを使うことができます。
    </para>
   </sect2>
@@ -784,7 +784,7 @@
     -->
     クエリモードでは、PostgreSQLサーバの障害やpcp_detach_nodeによってすべてのDBノードが<productname>Pgpool-II</productname>から切り離されると、watchdogは<productname>Pgpool-II</productname>サービスが停止状態にあるとみなし、watchdogに割り当てられた仮想IPを停止します。
     ですので、<productname>Pgpool-II</productname>のクライアントは仮想IPを使って<productname>Pgpool-II</productname>に接続できなくなります。
-    これは、複数のアクティブ<productname>Pgpool-II</productname>が存在するスプリットブレインを回避するために必要です。
+    これは、複数のリーダー<productname>Pgpool-II</productname>が存在するスプリットブレインを回避するために必要です。
    </para>
   </sect2>
 
@@ -844,7 +844,7 @@
     brought down before a down notification packet is sent to other
     <productname>Pgpool-II</productname>.
     -->
-    停止通知パケットが他の<productname>Pgpool-II</productname>に送られる前に、以前の仮想IPが停止したことを確認するので、アクティブ<productname>Pgpool-II</productname>が停止してからスタンバイ<productname>Pgpool-II</productname>が新しいアクティブに昇格するまでには数秒を要します。
+    停止通知パケットが他の<productname>Pgpool-II</productname>に送られる前に、以前の仮想IPが停止したことを確認するので、リーダー<productname>Pgpool-II</productname>が停止してからスタンバイ<productname>Pgpool-II</productname>が新しいリーダーに昇格するまでには数秒を要します。
    </para>
   </sect2>
  </sect1>
