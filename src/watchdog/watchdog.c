@@ -1939,6 +1939,10 @@ read_sockets(fd_set *rmask, int pending_fds_count)
 	return count;
 }
 
+/*
+ * write watchdog IP command along with result data
+ * returns true on success
+ */
 static bool
 write_ipc_command_with_result_data(WDCommandData * ipcCommand, char type, char *data, int len)
 {
@@ -2088,7 +2092,7 @@ read_ipc_socket_and_process(int sock, bool *remove_socket)
 			data_len = strlen(data) + 1;
 		}
 
-		if (write_ipc_command_with_result_data(ipcCommand, res_type, data, data_len))
+		if (!write_ipc_command_with_result_data(ipcCommand, res_type, data, data_len))
 		{
 			ereport(NOTICE,
 					(errmsg("error writing to IPC socket")));
@@ -3623,6 +3627,10 @@ update_successful_outgoing_cons(fd_set *wmask, int pending_fds_count)
 	return count;
 }
 
+/*
+ * write packet to watchdog communication socket
+ * returns true on success.
+ */
 static bool
 write_packet_to_socket(int sock, WDPacketData * pkt, bool ipcPacket)
 {
