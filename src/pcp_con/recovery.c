@@ -482,7 +482,7 @@ connect_backend_libpq(BackendInfo *backend)
 						port_str,
 						NULL,
 						NULL,
-						pool_config->recovery_database,
+						dbname,
 						pool_config->recovery_user,
 						password ? password : "");
 
