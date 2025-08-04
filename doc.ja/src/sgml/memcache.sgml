@@ -593,7 +593,7 @@
       <!--
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
       -->
-      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      このパラメータはサーバ起動時にのみ設定可能です。
      </para>
     </listitem>
    </varlistentry>
