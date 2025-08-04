@@ -420,7 +420,7 @@
       </para>
      </note>
      <para>
-      This parameter can be changed by reloading the <productname>Pgpool-II</productname> configurations.
+      This parameter can only be set at server start.
      </para>
     </listitem>
    </varlistentry>
