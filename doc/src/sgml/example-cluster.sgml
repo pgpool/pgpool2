@@ -819,8 +819,8 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
     </para>
    </note>
    <para>
-    Sample scripts <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_6_STABLE">failover.sh</ulink>
-    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_6_STABLE">follow_primary.sh</ulink>
+    Sample scripts <ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/failover.sh.sample">failover.sh</ulink>
+    and <ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/follow_primary.sh.sample">follow_primary.sh</ulink>
     are installed in <filename>/etc/pgpool-II/</filename>. Create failover scripts using these sample files.
    </para>
    <programlisting>
@@ -886,8 +886,8 @@ recovery_1st_stage_command = 'recovery_1st_stage'
     primary server (server1).
    </para>
    <para>
-    The sample scripts of online recovery <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_6_STABLE">recovery_1st_stage</ulink>
-    and <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_6_STABLE">pgpool_remote_start</ulink>
+    The sample scripts of online recovery <ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/pgpool_remote_start.sample">recovery_1st_stage</ulink>
+    and <ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/pgpool_remote_start.sample">pgpool_remote_start</ulink>
     are installed in <filename>/etc/pgpool-II/</filename>. Copy these files to the data directory of the primary server (server1).
    </para>
    <programlisting>
@@ -1126,7 +1126,7 @@ wd_heartbeat_deadtime = 30
 wd_escalation_command = '/etc/pgpool-II/escalation.sh'
     </programlisting>
    <para>
-    The sample script <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_6_STABLE">escalation.sh</ulink> is installed in <filename>/etc/pgpool-II/</filename>.
+    The sample script <ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/escalation.sh.sample">escalation.sh</ulink> is installed in <filename>/etc/pgpool-II/</filename>.
    </para>
     <programlisting>
 [root@server1 ~]# cp -p /etc/pgpool-II/sample_scripts/escalation.sh.sample /etc/pgpool-II/escalation.sh

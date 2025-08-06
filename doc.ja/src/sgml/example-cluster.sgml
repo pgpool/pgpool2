@@ -769,8 +769,8 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
     </para>
    </note>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_6_STABLE">failover.sh</ulink>及び
-    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_6_STABLE">follow_primary.sh</ulink>は
+    サンプルスクリプト<ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/failover.sh.sample">failover.sh</ulink>及び
+    <ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/follow_primary.sh.sample">follow_primary.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、これらのファイルをコピーして作成します。
    </para>
    <programlisting>
@@ -827,8 +827,8 @@ recovery_password = ''
 recovery_1st_stage_command = 'recovery_1st_stage'
    </programlisting>
    <para>
-    オンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/recovery_1st_stage.sample;hb=refs/heads/V4_6_STABLE">recovery_1st_stage</ulink>
-    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_6_STABLE">pgpool_remote_start</ulink>は
+    オンラインリカバリ用のサンプルスクリプト<ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/recovery_1st_stage.sample">recovery_1st_stage</ulink>
+    及び<ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/pgpool_remote_start.sample">pgpool_remote_start</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、
     これらのファイルをプライマリサーバ(<literal>server1</literal>)のデータベースクラスタ配下に配置します。
    </para>
@@ -1057,7 +1057,7 @@ wd_heartbeat_deadtime = 30
 wd_escalation_command = '/etc/pgpool-II/escalation.sh'
    　</programlisting>
    <para>
-    サンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/escalation.sh.sample;hb=refs/heads/V4_6_STABLE">escalation.sh</ulink>は
+    サンプルスクリプト<ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/escalation.sh.sample">escalation.sh</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされています。
    </para>
     <programlisting>
