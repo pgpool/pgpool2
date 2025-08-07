@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -137,6 +137,7 @@ typedef struct
 	bool		sync_required;	/* true if watchdog synchronization is
 								 * necessary */
 
+	/* followings are copy of Req_info */
 	POOL_REQUEST_KIND reqkind;
 	int			node_id_set[MAX_NUM_BACKENDS];
 	int			node_count;
@@ -1636,9 +1637,9 @@ failover(void)
 		wd_failover_start();
 
 		/*
-		 * if not in replication mode/native replication mode, we treat this a
-		 * restart request. otherwise we need to check if we have already
-		 * failovered.
+		 * If not in streaming replication mode/native replication mode, we
+		 * treat this as a restart request. Otherwise we need to check if we
+		 * have already performed the failover.
 		 */
 		ereport(DEBUG1,
 				(errmsg("failover handler"),
@@ -1651,14 +1652,14 @@ failover(void)
 		 */
 		if (failover_context.request_details & REQ_DETAIL_PROMOTE)
 		{
-			promote_node = failover_context.node_id_set[0];
+			promote_node = failover_context.node_id_set[0];	/* requested node */
 			for (i = 0; i < failover_context.node_count; i++)
 			{
 				failover_context.node_id_set[i] = REAL_PRIMARY_NODE_ID;
 			}
 		}
 
-		node_id = failover_context.node_id_set[0];
+		node_id = failover_context.node_id_set[0];		/* set target node id */
 
 		/* failback request? */
 		if (failover_context.reqkind == NODE_UP_REQUEST)
@@ -1686,6 +1687,7 @@ failover(void)
 								 * NODE_QUARANTINE_REQUEST */
 		{
 
+			/* process single failover request */
 			if (handle_failover_request(&failover_context, node_id) < 0)
 				continue;
 		}
