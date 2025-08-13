@@ -378,6 +378,7 @@ lifecheck_main(void)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	int			i;
+	bool		need_life_check_warning = false;
 
 	ereport(DEBUG1,
 			(errmsg("I am watchdog lifecheck child with pid:%d", getpid())));
@@ -424,6 +425,14 @@ lifecheck_main(void)
 	/* wait until ready to go */
 	while (WD_OK != is_wd_lifecheck_ready())
 	{
+		/*
+		 * For the first time we do not emit warning since it is likely the
+		 * life check is not ready.
+		 */
+		if (need_life_check_warning)
+			ereport(WARNING,
+					(errmsg("watchdog: lifecheck has not started yet")));
+		need_life_check_warning = true;
 		sleep(pool_config->wd_interval * 10);
 	}
 
