@@ -1,5 +1,5 @@
-*** src/sample/pgpool.conf.sample	2023-11-07 20:38:38.890984731 +0900
---- pgpool.conf.sample	2023-11-09 13:22:19.179462724 +0900
+*** src/sample/pgpool.conf.sample-stream	2025-08-15 11:18:51.825595514 +0900
+--- pgpool.conf.sample-stream	2025-08-15 17:04:49.381908570 +0900
 ***************
 *** 40,46 ****
   #port = 9999
@@ -35,7 +35,7 @@
                                      # The Debian package defaults to
                                      # /var/run/postgresql
 ***************
-*** 736,742 ****
+*** 744,750 ****
                                       # Authentication key for watchdog communication
                                       # (change requires restart)
   
@@ -43,7 +43,7 @@
                                       # Unix domain socket path for watchdog IPC socket
                                       # The Debian package defaults to
                                       # /var/run/postgresql
---- 736,742 ----
+--- 744,750 ----
                                       # Authentication key for watchdog communication
                                       # (change requires restart)
   
