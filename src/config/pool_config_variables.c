@@ -480,7 +480,7 @@ static struct config_bool ConfigureNamesBool[] =
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
 		&g_pool_config.log_pcp_processes,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 

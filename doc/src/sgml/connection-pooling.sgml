@@ -881,7 +881,7 @@
     <listitem>
      <para>
       Setting to on, enable logging about normal PCP Process
-      fork and exit status. Default is on.
+      fork and exit status. Default is off.
      </para>
      <para>
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.

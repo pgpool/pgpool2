@@ -244,7 +244,7 @@ backend_clustering_mode = streaming_replication
                                    # Log connections
 #log_disconnections = off
                                    # Log disconnections
-#log_pcp_processes = on
+#log_pcp_processes = off
                                    # Log PCP Processes
 #log_hostname = off
                                    # Hostname will be shown in ps status

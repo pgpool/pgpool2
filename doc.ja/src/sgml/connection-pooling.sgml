@@ -1356,7 +1356,7 @@ local0.*    /var/log/pgpool.log
       fork and exit status. Default is on.
       -->
       onに設定されている場合、PCPプロセスの正常なforkあるいはexitした状態をログに出力します。
-      デフォルトはonです。
+      デフォルトはoffです。
      </para>
      <para>
       <!--
