@@ -1,5 +1,5 @@
-*** src/sample/pgpool.conf.sample-stream	2025-08-15 17:12:42.964631588 +0900
---- pgpool.conf.sample-stream	2025-08-15 17:17:21.762879829 +0900
+*** src/sample/pgpool.conf.sample	2025-08-15 17:12:42.964631588 +0900
+--- pgpool.conf.sample	2025-08-15 17:17:21.762879829 +0900
 ***************
 *** 231,237 ****
   
