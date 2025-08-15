@@ -7300,7 +7300,7 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode *wdNode, WDPacketDa
 
 		if (last_rcv_sec >= (3 * BEACON_MESSAGE_INTERVAL_SECONDS))
 		{
-			/* we have missed atleast two beacons from leader node */
+			/* we have missed at least three beacons from leader node */
 			ereport(WARNING,
 					(errmsg("we have not received a beacon message from leader node \"%s\" and it has not replied to our info request",
 							WD_LEADER_NODE->nodeName),
