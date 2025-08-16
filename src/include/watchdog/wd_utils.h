@@ -49,10 +49,7 @@ extern pid_t fork_escalation_process(void);
 extern pid_t fork_plunging_process(void);
 
 /* wd_ping.c */
-extern int	wd_is_upper_ok(char *server_list);
 extern bool wd_is_ip_exists(char *ip);
-extern bool wd_get_ping_result(char *hostname, int exit_status, int outfd);
-extern pid_t wd_issue_ping_command(char *hostname, int *outfd);
 extern pid_t wd_trusted_server_command(char *hostname);
 
 /* wd_if.c */

@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -41,6 +41,8 @@
 #define WD_MAX_PING_RESULT 256
 
 static double get_result(char *ping_data);
+static bool wd_get_ping_result(char *hostname, int exit_status, int outfd);
+static pid_t wd_issue_ping_command(char *hostname, int *outfd);
 
 /**
  * check if IP address can be pinged.
@@ -95,7 +97,7 @@ wd_is_ip_exists(char *ip)
  * function issues the ping command using the execv system call
  * and return the pid of the process.
  */
-pid_t
+static pid_t
 wd_issue_ping_command(char *hostname, int *outfd)
 {
 	int			status;
@@ -254,7 +256,7 @@ wd_trusted_server_command(char *hostname)
  * The function is helper function and can be used with the
  * wd_issue_ping_command() function to identify if the ping command
  * was successful */
-bool
+static bool
 wd_get_ping_result(char *hostname, int exit_status, int outfd)
 {
 	/* First check the exit status of ping process */
