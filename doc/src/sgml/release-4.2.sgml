@@ -1,6 +1,220 @@
 <!-- doc/src/sgml/release-4.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-2-23">
+ <title>Release 4.2.23</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2025-08-21</simpara>
+ </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-07-25 [75d905ff9]
+    -->
+    <para>
+     Fix watchdog to print inappropriate NOTICE message. (Tatsuo Ishii)
+    </para>
+    <para>
+     <function>read_ipc_socket_and_process()</function> printed a notice message every time when
+     it wrote commands to IPC socket even if it was successful. Fix this to
+     print the notice message only when the write failed.
+
+     The reason why this bug was not recognized is, the message appears
+     only when <varname>log_min_messages</varname> is set to notice or higher.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/121">pgpool IPC socket connection issue</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-07-19 [d05de5c73]
+    -->
+    <!--
+    2025-07-19 [ed57af34e]
+    -->
+    <para>
+     Fix resource leak while reading startup packet. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix resource leak in pool_push_pending_data.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-30 [bac455b2f]
+    -->
+    <para>
+     Fix broken scram-sha-256 authentication on big-endian machines. (Tatsuo Ishii)
+    </para>
+    <para>
+     When <literal>scram-sha-256</literal> authentication is performed, a hash function
+     <function>pg_sha_256_final</function> is used. It was imported from <productname>PostgreSQL</productname> and it uses
+     preprocessor define WORDS_BIGENDIAN to judge host machine's
+     endianness. Although WORDS_BIGENDIAN should be defined while
+     configure, this part was missed when <function>pg_sha_256_final</function> (and others) was
+     imported from <productname>PostgreSQL</productname>. As a result, <literal>scram-sha-256</literal> worked only in
+     little endian machines. Fixed the issue by adding
+     AC_C_BIGENDIAN macro to configure.ac.
+    </para>
+    <para>
+     Problem reported by Christoph Berg and analyzed by pranavkaruvally.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/106">4.6.1 fails on big-endian s390x: backend response with kind 'E' when expecting 'R'</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-23 [2721c7b76]
+    -->
+    <para>
+     Fix source code typos. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-09 [4305c42d6]
+    -->
+    <para>
+     Fix heartbeat device treatment. (Tatsuo Ishii)
+    </para>
+    <para>
+     While processing <filename>pgpool.conf</filename>, <varname>heartbeat_device</varname> was mistakenly treated
+     and the first device was ignored.
+    </para>
+    <para>
+     Problem analyzed by Bo Peng.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-08-04 [e2f24fec8]
+    -->
+    <para>
+     Fix documentation for parameters that are not reflected by reload. (Taiki Koshino)
+    </para>
+    <para>
+     "authentication_timeout" and "memqcache_oiddir" is not reflected by reload.
+     The documentation is changed to "This parameter can only be set at server start.".
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-07-24 [bc5fa5e7e]
+    -->
+    <!--
+    2025-07-23 [1e8963554]
+    -->
+    <para>
+     Unify watchdog leader terms (followup). (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-06 [31eee18d7]
+    -->
+    <!--
+    2025-07-16 [34b07c2d5]
+    -->
+    <para>
+     Fix example script link. (Taiki Koshino)
+    </para>
+    <para>
+     Modified the sample script in the section "<ulink url="https://www.pgpool.net/docs/46/en/html/example-cluster.html">8.2. Pgpool-II + Watchdog Setup Example</ulink>"
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-18 [f4ae9f39e]
+    2025-06-18 [7a20dc419]
+    -->
+    <para>
+     Fix load balance explanation missed logical replication mode and Slony mode. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-08 [59f9df005]
+    -->
+    <para>
+     Add section of kernel resources. (Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname> uses System V shared memory and semaphores. It's better to
+     describe the requirements in the docs.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-07 [40617fd90]
+    -->
+    <para>
+     Add description for <option>--with-ldap</option> option of configure. (Tatsuo Ishii)
+    </para>
+    <para>
+     It was missed when LDAP support was introduced in v4.2
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-04 [ff60bf930]
+    -->
+    <para>
+     Clarify supported platforms for <productname>Pgpool-II</productname>. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-03 [cc4da5979]
+    -->
+    <para>
+     Enhance <xref linkend="guc-child-life-time"> document. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-06-08 [78e45decf]
+    -->
+    <para>
+     Stabilize 029.cert_passphrase regression test. (Tatsuo Ishii)
+    </para>
+    <para>
+     When <varname>ssl_passphrase_command</varname> is not valid, the error message is
+     typically "bad decrypt" but it seems sometimes "wrong tag".
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-2-22">
  <title>Release 4.2.22</title>
  <note>
