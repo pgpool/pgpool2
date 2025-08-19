@@ -1,6 +1,248 @@
 <!-- doc/src/sgml/release-4.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-4-13">
+ <title>リリース 4.4.13</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2025-08-21</simpara>
+ </note>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-07-25 [75d905ff9]
+    -->
+    <para>
+     watchdog が不適切な NOTICE メッセージを出力する問題を修正しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     <function>read_ipc_socket_and_process()</function> は、IPCソケットへのコマンド書き込みのたびに、書き込みが成功した場合でも通知メッセージを出力していました。これを修正し、書き込みが失敗した場合にのみ通知メッセージを出力するようにしました。
+     <varname>log_min_messages</varname> が notice 以上に設定されている場合にのみメッセージが表示されるため、このバグが発見されていませんでした。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/121">pgpool IPC socket connection issue</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-07-19 [d05de5c73]
+    -->
+    <!--
+    2025-07-19 [ed57af34e]
+    -->
+    <para>
+     スタートアップパケットを読んでいるときのメモリーリークを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     pool_push_pending_data でのリソースリークを修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-30 [bac455b2f]
+    -->
+    <para>
+     ビッグエンディアンマシン上の scram-sha-256 認証の不具合を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>scram-sha-256</literal> 認証を実行する際、ハッシュ関数 <function>pg_sha_256_final</function> が使用されます。
+     これは <productname>PostgreSQL</productname> からインポートされたもので、プリプロセッサ定義 WORDS_BIGENDIAN を使用してホストマシンのエンディアンを判断します。
+     WORDS_BIGENDIAN は configure 時に定義する必要がありますが、<function>pg_sha_256_final</function>（およびその他）が <productname>PostgreSQL</productname> からインポートされた際にこの部分が省略されていました。
+     その結果、scram-sha-256 はリトルエンディアンマシンでのみ動作していました。
+     configure.ac に AC_C_BIGENDIAN マクロを追加することでこの問題を修正しました。。
+    </para>
+    <para>
+     この問題は Christoph Berg によって報告され、 pranavkaruvally によって分析されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/106">4.6.1 fails on big-endian s390x: backend response with kind 'E' when expecting 'R'</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-23 [2721c7b76]
+    -->
+    <para>
+     ソースコードのタイプミスを修正しました。 (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-09 [4305c42d6]
+    -->
+    <para>
+     ハートビートデバイスの処理を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <filename>pgpool.conf</filename> の処理中に、<varname>heartbeat_device</varname> が誤って処理され、最初のデバイスが無視されていました。
+    </para>
+    <para>
+     この問題は Bo Peng によって分析されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-02 [06ba7dde4]
+    -->
+    <para>
+     <filename>pgpool.conf</filename>のコメントのタイプミスを修正しました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-08-15 [a54f5d1ad]
+    -->
+    <para>
+     「8.3. ネイティブレプリケーション/スナップショットアイソレーションモードの構築の例」のドキュメントを改善しました。(Taiki Koshino)
+    </para>
+    <para>
+     サンプルスクリプトのリンクと「事前設定」説明を改善しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-04 [e2f24fec8]
+    -->
+    <para>
+     リロードによって反映されないパラメータのドキュメントを修正しました。 (Taiki Koshino)
+    </para>
+    <para>
+     <varname>authentication_timeout</varname> と <varname>memqcache_oiddir</varname> はリロードしても反映されません。
+     ドキュメントが「このパラメータはサーバー起動時にのみ設定できます。」に変更されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-07-24 [bc5fa5e7e]
+    -->
+    <!--
+    2025-07-23 [1e8963554]
+    -->
+    <para>
+     watchdog リーダーの用語を統一しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前は「leader」「active」「coordinater」という用語が、watchdog のリーダーノードを指すために使用されていました。このコミットではこれらを「leader」に統一しました。
+     advanced.sgml も修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-06 [31eee18d7]
+    -->
+    <!--
+    2025-07-16 [34b07c2d5]
+    -->
+    <para>
+     サンプルスクリプトを修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     「<ulink url="https://www.pgpool.net/docs/latest/ja/html/example-cluster.html">8.2. Pgpool-II + Watchdogの構築の例</ulink>」のサンプルスクリプトを修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-18 [f4ae9f39e]
+    2025-06-18 [7a20dc419]
+    -->
+    <para>
+     ロードバランスの説明で論理レプリケーションモードと Slony モードが抜けている問題を修正しました(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-18 [9d2e4e692]
+    -->
+    <para>
+     <xref linkend="pcp-node-info">のドキュメントを改善しました。 (Bo Peng)
+    </para>
+    <para>
+     「<varname>replication_state</varname>」と「<varname>replication_sync_state</varname>」を正しく表示するには、各 <varname>backend_application_nameX</varname> が <varname>primary_conninfo</varname> の <varname>application_name</varname> に指定された値と一致する必要があることを明確にしました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-08 [59f9df005]
+    -->
+    <para>
+     カーネルの資源に関するセクションを追加しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname> は System V の共有メモリとセマフォを使用します。
+     要件についてはドキュメントを参照することをお勧めします。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-07 [40617fd90]
+    -->
+    <para>
+     configure の <option>--with-ldap</option> オプションの説明を追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     これは LDAPサポートがv4.2で導入されたときに見落としていました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-04 [ff60bf930]
+    -->
+    <para>
+     <productname>Pgpool-II</productname> でサポートされているプラットフォームを明確にしました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-03 [cc4da5979]
+    -->
+    <para>
+     <xref linkend="guc-child-life-time"> のドキュメントを改善しました。 (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-06-08 [78e45decf]
+    -->
+    <para>
+     029.cert_passphrase 回帰テストを安定化しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     <varname>ssl_passphrase_command</varname> が有効でない場合、エラーメッセージは通常「bad decrypt」ですが、「wrong tag」となる場合もありました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-4-12">
  <title>リリース 4.4.12</title>
  <note>
