@@ -221,16 +221,6 @@ exclude=pgpool*
    PostgreSQL、Pgpool-IIの設定の前に、以下の設定を行います。
   </para>
 
-  <sect3 id="example-replication-mode-postgres-password">
-   <title>postgresユーザパスワードの設定</title>
-   <para>
-    全サーバで以下のコマンドを実行し、<literal>postgres</literal>ユーザのパスワードの設定を行います。
-   </para>
-   <programlisting>
-[全サーバ]# passwd postgres
-   </programlisting>
-  </sect3>
-
   <sect3 id="example-replication-mode-ssh">
    <title>SSHの設定</title>
    <para>
@@ -240,19 +230,42 @@ exclude=pgpool*
    </para>
    <programlisting>
 [全サーバ]# su - postgres
-[全サーバ]$ cd ~/.ssh
-[全サーバ]$ ssh-keygen -t rsa -f id_rsa_pgpool
-[全サーバ]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server1
-[全サーバ]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server2
-[全サーバ]$ ssh-copy-id -i id_rsa_pgpool.pub postgres@server3
-   </programlisting>
-   <para>
-    設定後、<literal>postgres</literal>ユーザで、
-    <command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command>コマンドを実行し、
-    パスワード入力せずログインできることを確認してください。
-    必要に応じて<filename>/etc/ssh/sshd_config</filename>を編集し、
-    <systemitem>sshd</systemitem>を再起動してください。
-   </para>
+[全サーバ]$ mkdir ~/.ssh && chmod 700 ~/.ssh
+[全サーバ]$ ssh-keygen -t rsa -f ~/.ssh/id_rsa_pgpool
+    </programlisting>
+    <para>
+     次に、公開鍵<literal>id_rsa_pgpool.pub</literal>を各サーバの<filename>/var/lib/pgsql/.ssh/authorized_keys</filename>ファイルに追加します。
+    </para>
+    <para>
+     設定後、<literal>postgres</literal>ユーザで<command>ssh postgres@serverX -i ~/.ssh/id_rsa_pgpool</command>コマンドを実行し、パスワードなしでログインできることを確認してください。
+    </para>
+
+    <note>
+     <para>
+      公開鍵認証によるログインに失敗した場合には、以下を確認してください。
+      <itemizedlist>
+       <listitem>
+        <para>
+         <filename>/etc/ssh/sshd_config</filename>で公開鍵認証が許可されていることを確認します。
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+PubkeyAuthentication yes
+      </programlisting>
+      <itemizedlist>
+       <listitem>
+        <para>
+         SELinuxを有効化している場合は、SSH公開鍵認証(パスワードなし)が失敗する可能性があるので、すべてのサーバで以下のコマンドを実行する必要があります。
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+[全サーバ]# su - postgres
+[全サーバ]$ restorecon -Rv ~/.ssh
+      </programlisting>
+     </para>
+    </note>
   </sect3>
 
   <sect3 id="example-replication-mode-pgpass">
@@ -265,7 +278,7 @@ exclude=pgpool*
    </para>
    <programlisting>
 [全サーバ]# su - postgres
-[全サーバ]$ vi /var/lib/pgsql/.pgpass
+[全サーバ]$ vi ~/.pgpass
 (以下を追加)
 server1:5432:replication:repl:&lt;replユーザのパスワード&gt;
 server2:5432:replication:repl:&lt;replユーザのパスワード&gt;
@@ -273,7 +286,7 @@ server3:5432:replication:repl:&lt;replユーザのパスワード&gt;
 server1:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
 server2:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
 server3:5432:postgres:postgres:&lt;postgresユーザのパスワード&gt;
-[全サーバ]$ chmod 600 /var/lib/pgsql/.pgpass
+[全サーバ]$ chmod 600 ~/.pgpass
    </programlisting>
   </sect3>
 
@@ -534,9 +547,9 @@ recovery_1st_stage_command = 'recovery_1st_stage.sh'
 recovery_2nd_stage_command = 'recovery_2nd_stage.sh'
    </programlisting>
    <para>
-    ネイティブレプリケーションモード/スナップショットアイソレーションモード専用のオンラインリカバリ用のサンプルスクリプト<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_1st_stage.sample;hb=refs/heads/V4_4_STABLE">replication_mode_recovery_1st_stage.sample</ulink>、
-    <ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/replication_mode_recovery_2nd_stage.sample;hb=refs/heads/V4_4_STABLE">replication_mode_recovery_2nd_stage.sample</ulink>
-    及び<ulink url="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/pgpool_remote_start.sample;hb=refs/heads/V4_4_STABLE">pgpool_remote_start.sample</ulink>は
+    ネイティブレプリケーションモード/スナップショットアイソレーションモード専用のオンラインリカバリ用のサンプルスクリプト<ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/replication_mode_recovery_1st_stage.sample">replication_mode_recovery_1st_stage.sample</ulink>、
+    <ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/replication_mode_recovery_2nd_stage.sample">replication_mode_recovery_2nd_stage.sample</ulink>
+    及び<ulink url="https://raw.githubusercontent.com/pgpool/pgpool2/refs/heads/master/src/sample/scripts/pgpool_remote_start.sample">pgpool_remote_start.sample</ulink>は
     <filename>/etc/pgpool-II/</filename>配下にインストールされていますので、
     これらのファイルをmainノード(<literal>server1</literal>)のデータベースクラスタ配下に配置します。
    </para>
