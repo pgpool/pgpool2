@@ -42,7 +42,6 @@ Pgpool-II documentation
   <para>
    <application>watchdog_setup</application> is for testing purpose
    only and should not be used to create production installations.
-   Also please note that heartbeat is not used.
   </para>
 
   <para>
@@ -108,6 +107,28 @@ Pgpool-II documentation
       <para>
        Specifies the number of PostgreSQL installations.
        If this is omitted, <literal>2</literal> is used.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-vip [<replaceable class="parameter">ip</replaceable>]</option></term>
+     <listitem>
+      <para>
+       Specify the virtual IP. If ip is omitted, it is assumed that
+       '127.0.0.1' is specified.  The specified virtual IP is set
+       to <xref linkend="guc-delegate-ip"> parameter.  Even if virtual
+       IP is specified, it will not be set to the system: just you
+       could confirm the action trying to set the virtual IP
+       in <xref linkend="PCP-WATCHDOG-INFO">, or the log file, yet
+       this is useful how <productname>Pgpool-II</productname> reacts
+       trying to set the virtual IP. In additioin to delegate_ip,
+       following parameters will be set too.
+	<programlisting>
+	 if_up_cmd = '/usr/bin/echo "if_up_cmd executed"'
+	 if_down_cmd = 'usr/bin/echo "if_down_cmd executed"'
+	 arping_cmd = '/usr/bin/true'
+	</programlisting>
       </para>
      </listitem>
     </varlistentry>

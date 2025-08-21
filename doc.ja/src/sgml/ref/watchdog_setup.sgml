@@ -161,6 +161,24 @@ Pgpool-II documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-vip [<replaceable class="parameter">ip</replaceable>]</option></term>
+     <listitem>
+      <para>
+       仮想IPを指定します。
+       ipを省略した場合は、'127.0.0.1'を指定したものと見なされます。
+       ここで指定した仮想IPは、<xref linkend="guc-delegate-ip">パラメータに設定されます。
+       仮想IPを指定しても、実際に仮想IPがシステムに設定されるわけではなく、単に<xref linkend="PCP-WATCHDOG-INFO">や、ログファイルで仮想IPを設定する動作が確認できるだけですが、<productname>Pgpool-II</productname>の仮想IPに関する挙動をテストするのに役立ちます。
+       また、以下のパラメータも設定されます。
+	<programlisting>
+	 if_up_cmd = '/usr/bin/echo "if_up_cmd executed"'
+	 if_down_cmd = 'usr/bin/echo "if_down_cmd executed"'
+	 arping_cmd = '/usr/bin/true'
+	</programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>--no-stop</option></term>
      <listitem>
       <para>

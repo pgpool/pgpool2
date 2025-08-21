@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013-2021 PgPool Global Development Group
+# Copyright (c) 2013-2025 PgPool Global Development Group
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby
@@ -18,10 +18,11 @@
 # this tool for production environment!
 # Note that this script uses pgpool_setup as a work horse.
 #
-# usage: watchdog_setup [-wn num_pgpool][-wp watchdog_base_port][-m r|s|n|i][-n num_clusters][-p base_port][--no-stop][-d]
+# usage: watchdog_setup [-wn num_pgpool][-wp watchdog_base_port][-m r|s|n|i][-n num_clusters][-p base_port][--no-stop][-vip [ip]][-d]
 # -wn num_pgpool: create num_pgpool pgpool nodes. The default is 3. Must be greater than 1.
 # -wp watchdog_base_port: starting port number. The default is
 #  50000.
+# -vip [ip]: allow to assign "ip" being set to delegate_ip. If "ip" is omitted, "127.0.0.1" is assumed.
 #-------------------------------------------
 # Configuration section
 #-------------------------------------------
@@ -40,6 +41,9 @@ export PGBASEPORT=`expr $W_BASE_PORT + 1000`
 # number of ports used in a single pgpool-II installation.
 # (port, pcp_port, wd_port, wd_heartbeat_port)
 num_ports_per_node=4
+
+# default vip
+DEFAULT_VIP="127.0.0.1"
 #-------------------------------------------
 # End of configuration section
 #-------------------------------------------
@@ -195,6 +199,12 @@ EOF
 		echo "wd_port$n = $wd_port" >> $conf
 		echo "heartbeat_hostname$n = 'localhost'" >> $conf
 		echo "heartbeat_port$n = $wd_heartbeat_port" >> $conf
+		if [ $VIP != "" ];then
+		    echo "delegate_ip = '$VIP'" >> $conf
+		    echo "if_up_cmd = '/usr/bin/echo \"if_up_cmd executed\"'" >> $conf
+		    echo "if_down_cmd = 'usr/bin/echo \"if_down_cmd executed\"'" >> $conf
+		    echo "arping_cmd = '/usr/bin/true'" >> $conf
+		fi
 		n=`expr $n + 1`
     done
 
@@ -208,17 +218,18 @@ EOF
 ################################################################################
 function usage()
 {
-    echo "usage: $0 [-wn num_pgpool][-wp watchdog_base_port][-m r|s|n|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d]";exit 1
+    echo "usage: $0 [-wn num_pgpool][-wp watchdog_base_port][-m r|s|n|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] -vip [ip]] [-d]";exit 1
 }
 
 #-------------------------------------------
 # Argument check
-# usage: $0  [-wn num_pgpool][-wp watchdog_base_port][-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-d]
+# usage: $0  [-wn num_pgpool][-wp watchdog_base_port][-m r|s|n][-n num_clusters][-p base_port][-pg pg_base_port][--no-stop][-vip [ip]][-d]
 #-------------------------------------------
 #
 # default mode is streaming replication mode
 MODE="s"
 NO_STOP="false"
+VIP=""
 
 while [ $# -gt 0 ]
 do
@@ -257,9 +268,23 @@ do
     elif [ $1 = "--no-stop" ];then
 	shift
 	NO_STOP="true"
+
+    elif [ $1 = "-vip" ];then
+	if [ $# = 1 ];then
+	    # there's no more argument. set the default vip
+	    VIP=$DEFAULT_VIP
+	else
+	    if [[ $2 =~ -.* ]];then
+		# next argument given. set the default vip
+		VIP=$DEFAULT_VIP
+	    else
+		# VIP is specified
+		shift
+		VIP=$1
+	    fi
+	fi
     elif [ $1 = "-d" ];then
 	export PGPOOLDEBUG="true"
-	shift;
     elif [ $1 = "--help" -o $1 = "-o" ];then
 	usage
 	exit
