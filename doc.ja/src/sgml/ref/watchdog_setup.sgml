@@ -54,10 +54,8 @@ Pgpool-II documentation
    <!--
    <application>watchdog_setup</application> is for testing purpose
    only and should not be used to create production installations.
-   Also please note that heartbeat is not used.
    -->
-   <application>watchdog_setup</application> はテストのために使うツールなので、
-   実際の業務システムで利用することはおすすめしません。また、heartbeat が使用されていないことにもご注意ください。
+   <application>watchdog_setup</application> はテストのために使うツールなので、実際の業務システムで利用することはおすすめしません。
   </para>
 
   <para>
