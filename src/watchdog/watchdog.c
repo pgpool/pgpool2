@@ -590,7 +590,7 @@ static bool get_authhash_for_node(WatchdogNode *wdNode, char *authhash);
 static bool verify_authhash_for_node(WatchdogNode *wdNode, char *authhash);
 
 static void print_watchdog_node_info(WatchdogNode *wdNode);
-static List *wd_create_recv_socket(int port);
+static List *wd_create_recv_socket(char *hostname, int port);
 static void wd_check_config(void);
 static pid_t watchdog_main(void);
 static pid_t fork_watchdog_child(void);
@@ -865,7 +865,7 @@ clear_command_node_result(WDCommandNodeResult *nodeResult)
 }
 
 static List *
-wd_create_recv_socket(int port)
+wd_create_recv_socket(char *hostname, int port)
 {
 	int			one = 1;
 	int			sock = -1;
@@ -886,7 +886,7 @@ wd_create_recv_socket(int port)
 	hints.ai_protocol = 0;
 	hints.ai_flags = AI_NUMERICSERV | AI_PASSIVE;
 
-	if ((gai_ret = getaddrinfo(NULL, portstr, &hints, &res)) != 0)
+	if ((gai_ret = getaddrinfo(!hostname ? NULL : hostname, portstr, &hints, &res)) != 0)
 	{
 		ereport(ERROR,
 				(errmsg("getaddrinfo failed with error \"%s\"", gai_strerror(gai_ret))));
@@ -1299,7 +1299,7 @@ watchdog_main(void)
 	/* initialize all the local structures for watchdog */
 	wd_cluster_initialize();
 	/* create a server socket for incoming watchdog connections */
-	g_wd_recv_socks = wd_create_recv_socket(g_cluster.localNode->wd_port);
+	g_wd_recv_socks = wd_create_recv_socket(g_cluster.localNode->hostname, g_cluster.localNode->wd_port);
 
 	/* open the command server */
 	g_cluster.command_server_sock = wd_create_command_server_socket();

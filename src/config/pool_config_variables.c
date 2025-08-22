@@ -5335,14 +5335,17 @@ SetPgpoolNodeId(int elevel)
 static bool
 SetHBDestIfFunc(int elevel)
 {
-	int			idx = 0;
+	int			dest_if_idx = 0;
+	int			local_if_idx = 0;
 	char	  **addrs;
 	char	  **if_names;
 	int			i,
 				j,
+				k,
 				n_addr,
 				n_if_name;
 
+	g_pool_config.num_hb_local_if = 0;
 	g_pool_config.num_hb_dest_if = 0;
 
 	if (g_pool_config.wd_lifecheck_method != LIFECHECK_BY_HB)
@@ -5352,22 +5355,14 @@ SetHBDestIfFunc(int elevel)
 
 	/*
 	 * g_pool_config.hb_ifs is the information for sending/receiving heartbeat
-	 * for all nodes specified in pgpool.conf. If it is local pgpool node
-	 * information, set dest_port to g_pool_config.wd_heartbeat_port and
-	 * ignore addr and if_name. g_pool_config.hb_dest_if is the heartbeat
+	 * for all nodes specified in pgpool.conf. g_pool_config.hb_local_if is
+	 * the local node information. g_pool_config.hb_dest_if is the heartbeat
 	 * destination information.
 	 */
 	for (i = 0; i < WD_MAX_IF_NUM; i++)
 	{
 		if (g_pool_config.hb_ifs[i].dest_port > 0)
 		{
-			/* Ignore local pgpool node */
-			if (i == g_pool_config.pgpool_node_id)
-			{
-				g_pool_config.wd_heartbeat_port = g_pool_config.hb_ifs[i].dest_port;
-				continue;
-			}
-
 			WdHbIf	   *hbNodeInfo = &g_pool_config.hb_ifs[i];
 
 			addrs = get_list_from_string(hbNodeInfo->addr, ";", &n_addr);
@@ -5375,7 +5370,10 @@ SetHBDestIfFunc(int elevel)
 
 			if (!addrs || n_addr < 0)
 			{
-				g_pool_config.hb_dest_if[idx].addr[0] = '\0';
+				if (i == g_pool_config.pgpool_node_id)
+					g_pool_config.hb_local_if[local_if_idx].addr[0] = '\0';
+				else
+					g_pool_config.hb_dest_if[dest_if_idx].addr[0] = '\0';
 
 				if (addrs)
 					pfree(addrs);
@@ -5391,19 +5389,46 @@ SetHBDestIfFunc(int elevel)
 
 			for (j = 0; j < n_addr; j++)
 			{
-				strlcpy(g_pool_config.hb_dest_if[idx].addr, addrs[j], WD_MAX_HOST_NAMELEN - 1);
-				g_pool_config.hb_dest_if[idx].dest_port = hbNodeInfo->dest_port;
-				if (n_if_name > j)
+				/* local pgpool node */
+				if (i == g_pool_config.pgpool_node_id)
 				{
-					strlcpy(g_pool_config.hb_dest_if[idx].if_name, if_names[j], WD_MAX_IF_NAME_LEN - 1);
-					pfree(if_names[j]);
-				}
-				else
-					g_pool_config.hb_dest_if[idx].if_name[0] = '\0';
+					for (k = 0; k < g_pool_config.wd_nodes.num_wd - 1; k++)
+					{
+						strlcpy(g_pool_config.hb_local_if[local_if_idx].addr, addrs[j], WD_MAX_HOST_NAMELEN - 1);
+						g_pool_config.hb_local_if[local_if_idx].dest_port = hbNodeInfo->dest_port;
 
-				g_pool_config.num_hb_dest_if = idx + 1;
-				idx++;
-				pfree(addrs[j]);
+						if (n_if_name > j )
+							strlcpy(g_pool_config.hb_local_if[local_if_idx].if_name, if_names[j], WD_MAX_IF_NAME_LEN - 1);
+						else
+							g_pool_config.hb_local_if[local_if_idx].if_name[0] = '\0';
+
+						g_pool_config.num_hb_local_if = local_if_idx + 1;
+						local_if_idx++;
+					}
+
+					if (n_if_name > j )
+						pfree(if_names[j]);
+
+					pfree(addrs[j]);
+
+				}
+				/* destination pgpool node */
+				else
+				{
+					strlcpy(g_pool_config.hb_dest_if[dest_if_idx].addr, addrs[j], WD_MAX_HOST_NAMELEN - 1);
+					g_pool_config.hb_dest_if[dest_if_idx].dest_port = hbNodeInfo->dest_port;
+					if (n_if_name > j)
+					{
+						strlcpy(g_pool_config.hb_dest_if[dest_if_idx].if_name, if_names[j], WD_MAX_IF_NAME_LEN - 1);
+						pfree(if_names[j]);
+					}
+					else
+						g_pool_config.hb_dest_if[dest_if_idx].if_name[0] = '\0';
+
+					g_pool_config.num_hb_dest_if = dest_if_idx + 1;
+					dest_if_idx++;
+					pfree(addrs[j]);
+				}
 			}
 
 			if (addrs)

@@ -665,16 +665,17 @@ typedef struct
 										 * lifecheck */
 	char	   *wd_lifecheck_user;	/* PostgreSQL user name for watchdog */
 	char	   *wd_lifecheck_password;	/* password for watchdog user */
-	int			wd_heartbeat_port;	/* Port number for heartbeat lifecheck */
 	int			wd_heartbeat_keepalive; /* Interval time of sending heartbeat
 										 * signal (sec) */
 	int			wd_heartbeat_deadtime;	/* Deadtime interval for heartbeat
 										 * signal (sec) */
 	WdHbIf		hb_ifs[WD_MAX_IF_NUM];	/* heartbeat interfaces of all
 										 * watchdog nodes */
+	WdHbIf		hb_local_if[WD_MAX_IF_NUM];     /* local heartbeat interfaces */
+	int			num_hb_local_if;                /* number of local interface */
 	WdHbIf		hb_dest_if[WD_MAX_IF_NUM];	/* heartbeat destination
 											 * interfaces */
-	int			num_hb_dest_if; /* number of interface devices */
+	int			num_hb_dest_if; /* number of destination interface */
 	char	  **wd_monitoring_interfaces_list;	/* network interface name list
 												 * to be monitored by watchdog */
 	bool		health_check_test;	/* if on, enable health check testing */

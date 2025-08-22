@@ -133,11 +133,14 @@ lifecheck_child_name(pid_t pid)
 {
 	int			i;
 
-	for (i = 0; i < pool_config->num_hb_dest_if; i++)
+	for (i = 0; i < pool_config->num_hb_local_if; i++)
 	{
 		if (g_hb_receiver_pid && pid == g_hb_receiver_pid[i])
 			return "heartBeat receiver";
-		else if (g_hb_sender_pid && pid == g_hb_sender_pid[i])
+	}
+	for (i = 0; i < pool_config->num_hb_dest_if; i++)
+	{
+		if (g_hb_sender_pid && pid == g_hb_sender_pid[i])
 			return "heartBeat sender";
 	}
 	/* Check if it was a ping to trusted server process */
@@ -211,13 +214,13 @@ wd_reaper_lifecheck(pid_t pid, int status)
 	if (g_hb_receiver_pid == NULL && g_hb_sender_pid == NULL)
 		return -1;
 
-	for (i = 0; i < pool_config->num_hb_dest_if; i++)
+	for (i = 0; i < pool_config->num_hb_local_if; i++)
 	{
 		if (g_hb_receiver_pid && pid == g_hb_receiver_pid[i])
 		{
 			if (restart_child)
 			{
-				g_hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_dest_if[i]));
+				g_hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_local_if[i]));
 				ereport(LOG,
 						(errmsg("fork a new %s process with pid: %d", proc_name, g_hb_receiver_pid[i])));
 			}
@@ -226,8 +229,11 @@ wd_reaper_lifecheck(pid_t pid, int status)
 
 			return g_hb_receiver_pid[i];
 		}
+	}
 
-		else if (g_hb_sender_pid && pid == g_hb_sender_pid[i])
+	for (i = 0; i < pool_config->num_hb_dest_if; i++)
+	{
+		if (g_hb_sender_pid && pid == g_hb_sender_pid[i])
 		{
 			if (restart_child)
 			{
@@ -253,17 +259,21 @@ lifecheck_kill_all_children(int sig)
 		&& g_hb_receiver_pid && g_hb_sender_pid)
 	{
 		int			i;
+		pid_t		pid_child;
 
-		for (i = 0; i < pool_config->num_hb_dest_if; i++)
+		for (i = 0; i < pool_config->num_hb_local_if; i++)
 		{
-			pid_t		pid_child = g_hb_receiver_pid[i];
+			pid_child = g_hb_receiver_pid[i];
 
 			if (pid_child > 0)
 			{
 				kill(pid_child, sig);
 				ret = true;
 			}
+		}
 
+		for (i = 0; i < pool_config->num_hb_dest_if; i++)
+		{
 			pid_child = g_hb_sender_pid[i];
 
 			if (pid_child > 0)
@@ -477,14 +487,17 @@ spawn_lifecheck_children(void)
 	{
 		int			i;
 
-		g_hb_receiver_pid = palloc0(sizeof(pid_t) * pool_config->num_hb_dest_if);
+		g_hb_receiver_pid = palloc0(sizeof(pid_t) * pool_config->num_hb_local_if);
 		g_hb_sender_pid = palloc0(sizeof(pid_t) * pool_config->num_hb_dest_if);
+
+		for (i = 0; i < pool_config->num_hb_local_if; i++)
+		{
+			/* heartbeat receiver process */
+			g_hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_local_if[i]));
+		}
 
 		for (i = 0; i < pool_config->num_hb_dest_if; i++)
 		{
-			/* heartbeat receiver process */
-			g_hb_receiver_pid[i] = wd_hb_receiver(1, &(pool_config->hb_dest_if[i]));
-
 			/* heartbeat sender process */
 			g_hb_sender_pid[i] = wd_hb_sender(1, &(pool_config->hb_dest_if[i]));
 		}

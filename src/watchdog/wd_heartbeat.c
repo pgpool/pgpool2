@@ -262,7 +262,7 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 			   *walk,
 			   *res = NULL;
 
-	portstr = psprintf("%d", pool_config->wd_heartbeat_port);
+	portstr = psprintf("%d", hb_if->dest_port);
 
 	memset(&hints, 0x00, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -270,7 +270,7 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 	hints.ai_protocol = 0;
 	hints.ai_flags = AI_NUMERICSERV | AI_PASSIVE;
 
-	if ((gai_ret = getaddrinfo(NULL, portstr, &hints, &res)) != 0)
+	if ((gai_ret = getaddrinfo(!hb_if->addr ? NULL : hb_if->addr, portstr, &hints, &res)) != 0)
 	{
 		ereport(WARNING,
 				(errmsg("getaddrinfo() failed with error \"%s\"", gai_strerror(gai_ret))));
@@ -285,7 +285,7 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 	if (n == 0)
 	{
 		ereport(ERROR, (errmsg("failed to create watchdog heartbeat receive socket"),
-						errdetail("getaddrinfo() result is empty: no sockets can be created because no available local address with port:%d", pool_config->wd_heartbeat_port)));
+						errdetail("getaddrinfo() result is empty: no sockets can be created because no available local address with port:%d", hb_if->dest_port)));
 		return NULL;
 	}
 	else
@@ -380,7 +380,7 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 		}
 		ereport(LOG,
 				(errmsg("creating watchdog heartbeat receive socket."),
-				 errdetail("creating socket on %s:%d", buf, pool_config->wd_heartbeat_port)));
+				 errdetail("creating socket on %s:%d", buf, hb_if->dest_port)));
 
 		bind_is_done = 0;
 		for (bind_tries = 0; !bind_is_done && bind_tries < MAX_BIND_TRIES; bind_tries++)
