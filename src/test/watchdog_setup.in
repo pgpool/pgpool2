@@ -199,14 +199,15 @@ EOF
 		echo "wd_port$n = $wd_port" >> $conf
 		echo "heartbeat_hostname$n = 'localhost'" >> $conf
 		echo "heartbeat_port$n = $wd_heartbeat_port" >> $conf
-		if [ $VIP != "" ];then
-		    echo "delegate_ip = '$VIP'" >> $conf
-		    echo "if_up_cmd = '/usr/bin/echo \"if_up_cmd executed\"'" >> $conf
-		    echo "if_down_cmd = 'usr/bin/echo \"if_down_cmd executed\"'" >> $conf
-		    echo "arping_cmd = '/usr/bin/true'" >> $conf
-		fi
 		n=`expr $n + 1`
     done
+
+    if [ "$VIP" != "" ];then
+	echo "delegate_ip = '$VIP'" >> $conf
+	echo "if_up_cmd = '/usr/bin/echo \"if_up_cmd executed\"'" >> $conf
+	echo "if_down_cmd = 'usr/bin/echo \"if_down_cmd executed\"'" >> $conf
+	echo "arping_cmd = '/usr/bin/true'" >> $conf
+    fi
 
 	echo "$id" >> $node_id_file
 }
