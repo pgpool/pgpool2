@@ -38,7 +38,7 @@ wait_for_pgpool_startup
 # check to see if alll nodes are up
 echo -n "starting to check follow primary results: "
 date
-cnt=60
+cnt=120
 while [ $cnt -gt 0 ]
 do
     # check to see if primary is now node 3
