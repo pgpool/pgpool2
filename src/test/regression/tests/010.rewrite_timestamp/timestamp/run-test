@@ -23,12 +23,12 @@ if ARGV.size != 1
 end
 
 file = ARGV.shift
-if !(File.exists? file)
+if !(File.exist? file)
   STDERR.puts "run-test: file does not exist: #{file}"
   exit 1
 end
 
-if !(File.exists? RESULT_DIRECTORY)
+if !(File.exist? RESULT_DIRECTORY)
   Dir.mkdir RESULT_DIRECTORY
 else
   Dir["#{RESULT_DIRECTORY}/*.out"].each do |f|
@@ -36,7 +36,7 @@ else
   end
 end
 
-File.unlink DIFF_FILE if File.exists? DIFF_FILE
+File.unlink DIFF_FILE if File.exist? DIFF_FILE
 
 begin
   IO.foreach(file) do |testcase|
