@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -48,7 +48,7 @@ static char *relation_cache_to_query_cache(POOL_SELECT_RESULT *res,size_t *size)
  */
 POOL_RELCACHE *
 pool_create_relcache(int cachesize, char *sql,
-					 func_ptr register_func, func_ptr unregister_func,
+					 void *(*register_func) (POOL_SELECT_RESULT *), void *(*unregister_func) (void *),
 					 bool issessionlocal)
 {
 	POOL_RELCACHE *p;

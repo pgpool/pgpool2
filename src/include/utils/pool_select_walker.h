@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -54,6 +54,9 @@ typedef struct
 	char		table_names[POOL_MAX_SELECT_OIDS][NAMEDATALEN];	/* table names */
 }			SelectContext;
 
+
+typedef bool (*tree_walker_callback) (Node *node, void *context);
+
 extern int	pool_get_terminate_backend_pid(Node *node);
 extern bool pool_has_function_call(Node *node);
 extern bool pool_has_non_immutable_function_call(Node *node);
@@ -66,7 +69,7 @@ extern bool pool_has_row_security(Node *node);
 extern bool pool_has_insertinto_or_locking_clause(Node *node);
 extern bool pool_has_pgpool_regclass(void);
 extern bool pool_has_to_regclass(void);
-extern bool raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
+extern bool raw_expression_tree_walker(Node *node, tree_walker_callback walker, void *context);
 extern int	pool_table_name_to_oid(char *table_name);
 extern int	pool_extract_table_oids_from_select_stmt(Node *node, SelectContext * ctx);
 extern RangeVar *makeRangeVarFromNameList(List *names);

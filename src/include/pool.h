@@ -650,7 +650,7 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif
 
 /* pool_worker_child.c */
-extern void do_worker_child(void);
+extern void do_worker_child(void *params);
 extern int	get_query_result(POOL_CONNECTION_POOL_SLOT * *slots, int backend_id, char *query, POOL_SELECT_RESULT * *res);
 
 #endif							/* POOL_H */

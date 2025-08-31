@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -74,7 +74,6 @@ static char *get_current_timestamp(POOL_CONNECTION_POOL * backend);
 static Node *makeTsExpr(TSRewriteContext * ctx);
 static TypeCast *makeTypeCastFromSvfOp(SQLValueFunctionOp op);
 static A_Const *makeStringConstFromQuery(POOL_CONNECTION_POOL * backend, char *expression);
-bool		raw_expression_tree_walker(Node *node, bool (*walker) (), void *context);
 
 POOL_RELCACHE *ts_relcache;
 
@@ -1360,9 +1359,10 @@ makeTypeCastFromSvfOp(SQLValueFunctionOp op)
  */
 bool
 raw_expression_tree_walker(Node *node,
-						   bool (*walker) (),
+						   tree_walker_callback walker,
 						   void *context)
 {
+#define WALK(n,c) walker((Node *) (n), c)
 	ListCell   *temp;
 
 	/*
@@ -1395,17 +1395,17 @@ raw_expression_tree_walker(Node *node,
 			/* we assume the colnames list isn't interesting */
 			break;
 		case T_RangeVar:
-			return walker(((RangeVar *) node)->alias, context);
+			return WALK(((RangeVar *) node)->alias, context);
 		case T_GroupingFunc:
-			return walker(((GroupingFunc *) node)->args, context);
+			return WALK(((GroupingFunc *) node)->args, context);
 		case T_SubLink:
 			{
 				SubLink    *sublink = (SubLink *) node;
 
-				if (walker(sublink->testexpr, context))
+				if (WALK(sublink->testexpr, context))
 					return true;
 				/* we assume the operName is not interesting */
-				if (walker(sublink->subselect, context))
+				if (WALK(sublink->subselect, context))
 					return true;
 			}
 			break;
@@ -1413,7 +1413,7 @@ raw_expression_tree_walker(Node *node,
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 
-				if (walker(caseexpr->arg, context))
+				if (WALK(caseexpr->arg, context))
 					return true;
 				/* we assume walker doesn't care about CaseWhens, either */
 				foreach(temp, caseexpr->args)
@@ -1421,48 +1421,48 @@ raw_expression_tree_walker(Node *node,
 					CaseWhen   *when = (CaseWhen *) lfirst(temp);
 
 					Assert(IsA(when, CaseWhen));
-					if (walker(when->expr, context))
+					if (WALK(when->expr, context))
 						return true;
-					if (walker(when->result, context))
+					if (WALK(when->result, context))
 						return true;
 				}
-				if (walker(caseexpr->defresult, context))
+				if (WALK(caseexpr->defresult, context))
 					return true;
 			}
 			break;
 		case T_RowExpr:
 			/* Assume colnames isn't interesting */
-			return walker(((RowExpr *) node)->args, context);
+			return WALK(((RowExpr *) node)->args, context);
 		case T_CoalesceExpr:
-			return walker(((CoalesceExpr *) node)->args, context);
+			return WALK(((CoalesceExpr *) node)->args, context);
 		case T_MinMaxExpr:
-			return walker(((MinMaxExpr *) node)->args, context);
+			return WALK(((MinMaxExpr *) node)->args, context);
 		case T_XmlExpr:
 			{
 				XmlExpr    *xexpr = (XmlExpr *) node;
 
-				if (walker(xexpr->named_args, context))
+				if (WALK(xexpr->named_args, context))
 					return true;
 				/* we assume walker doesn't care about arg_names */
-				if (walker(xexpr->args, context))
+				if (WALK(xexpr->args, context))
 					return true;
 			}
 			break;
 		case T_NullTest:
-			return walker(((NullTest *) node)->arg, context);
+			return WALK(((NullTest *) node)->arg, context);
 		case T_BooleanTest:
-			return walker(((BooleanTest *) node)->arg, context);
+			return WALK(((BooleanTest *) node)->arg, context);
 		case T_JoinExpr:
 			{
 				JoinExpr   *join = (JoinExpr *) node;
 
-				if (walker(join->larg, context))
+				if (WALK(join->larg, context))
 					return true;
-				if (walker(join->rarg, context))
+				if (WALK(join->rarg, context))
 					return true;
-				if (walker(join->quals, context))
+				if (WALK(join->quals, context))
 					return true;
-				if (walker(join->alias, context))
+				if (WALK(join->alias, context))
 					return true;
 				/* using list is deemed uninteresting */
 			}
@@ -1471,18 +1471,18 @@ raw_expression_tree_walker(Node *node,
 			{
 				IntoClause *into = (IntoClause *) node;
 
-				if (walker(into->rel, context))
+				if (WALK(into->rel, context))
 					return true;
 				/* colNames, options are deemed uninteresting */
 				/* viewQuery should be null in raw parsetree, but check it */
-				if (walker(into->viewQuery, context))
+				if (WALK(into->viewQuery, context))
 					return true;
 			}
 			break;
 		case T_List:
 			foreach(temp, (List *) node)
 			{
-				if (walker((Node *) lfirst(temp), context))
+				if (WALK((Node *) lfirst(temp), context))
 					return true;
 			}
 			break;
@@ -1490,11 +1490,11 @@ raw_expression_tree_walker(Node *node,
 			{
 				MergeWhenClause *mergeWhenClause = (MergeWhenClause *) node;
 
-				if (walker(mergeWhenClause->condition, context))
+				if (WALK(mergeWhenClause->condition, context))
 					return true;
-				if (walker(mergeWhenClause->targetList, context))
+				if (WALK(mergeWhenClause->targetList, context))
 					return true;
-				if (walker(mergeWhenClause->values, context))
+				if (WALK(mergeWhenClause->values, context))
 					return true;
 			}
 			break;
@@ -1502,9 +1502,9 @@ raw_expression_tree_walker(Node *node,
 			{
 				MergeAction *action = (MergeAction *) node;
 
-				if (walker(action->targetList, context))
+				if (WALK(action->targetList, context))
 					return true;
-				if (walker(action->qual, context))
+				if (WALK(action->qual, context))
 					return true;
 			}
 			break;
@@ -1512,17 +1512,17 @@ raw_expression_tree_walker(Node *node,
 			{
 				InsertStmt *stmt = (InsertStmt *) node;
 
-				if (walker(stmt->relation, context))
+				if (WALK(stmt->relation, context))
 					return true;
-				if (walker(stmt->cols, context))
+				if (WALK(stmt->cols, context))
 					return true;
-				if (walker(stmt->selectStmt, context))
+				if (WALK(stmt->selectStmt, context))
 					return true;
-				if (walker(stmt->onConflictClause, context))
+				if (WALK(stmt->onConflictClause, context))
 					return true;
-				if (walker(stmt->returningList, context))
+				if (WALK(stmt->returningList, context))
 					return true;
-				if (walker(stmt->withClause, context))
+				if (WALK(stmt->withClause, context))
 					return true;
 			}
 			break;
@@ -1530,15 +1530,15 @@ raw_expression_tree_walker(Node *node,
 			{
 				DeleteStmt *stmt = (DeleteStmt *) node;
 
-				if (walker(stmt->relation, context))
+				if (WALK(stmt->relation, context))
 					return true;
-				if (walker(stmt->usingClause, context))
+				if (WALK(stmt->usingClause, context))
 					return true;
-				if (walker(stmt->whereClause, context))
+				if (WALK(stmt->whereClause, context))
 					return true;
-				if (walker(stmt->returningList, context))
+				if (WALK(stmt->returningList, context))
 					return true;
-				if (walker(stmt->withClause, context))
+				if (WALK(stmt->withClause, context))
 					return true;
 			}
 			break;
@@ -1546,17 +1546,17 @@ raw_expression_tree_walker(Node *node,
 			{
 				UpdateStmt *stmt = (UpdateStmt *) node;
 
-				if (walker(stmt->relation, context))
+				if (WALK(stmt->relation, context))
 					return true;
-				if (walker(stmt->targetList, context))
+				if (WALK(stmt->targetList, context))
 					return true;
-				if (walker(stmt->whereClause, context))
+				if (WALK(stmt->whereClause, context))
 					return true;
-				if (walker(stmt->fromClause, context))
+				if (WALK(stmt->fromClause, context))
 					return true;
-				if (walker(stmt->returningList, context))
+				if (WALK(stmt->returningList, context))
 					return true;
-				if (walker(stmt->withClause, context))
+				if (WALK(stmt->withClause, context))
 					return true;
 			}
 			break;
@@ -1564,37 +1564,37 @@ raw_expression_tree_walker(Node *node,
 			{
 				SelectStmt *stmt = (SelectStmt *) node;
 
-				if (walker(stmt->distinctClause, context))
+				if (WALK(stmt->distinctClause, context))
 					return true;
-				if (walker(stmt->intoClause, context))
+				if (WALK(stmt->intoClause, context))
 					return true;
-				if (walker(stmt->targetList, context))
+				if (WALK(stmt->targetList, context))
 					return true;
-				if (walker(stmt->fromClause, context))
+				if (WALK(stmt->fromClause, context))
 					return true;
-				if (walker(stmt->whereClause, context))
+				if (WALK(stmt->whereClause, context))
 					return true;
-				if (walker(stmt->groupClause, context))
+				if (WALK(stmt->groupClause, context))
 					return true;
-				if (walker(stmt->havingClause, context))
+				if (WALK(stmt->havingClause, context))
 					return true;
-				if (walker(stmt->windowClause, context))
+				if (WALK(stmt->windowClause, context))
 					return true;
-				if (walker(stmt->valuesLists, context))
+				if (WALK(stmt->valuesLists, context))
 					return true;
-				if (walker(stmt->sortClause, context))
+				if (WALK(stmt->sortClause, context))
 					return true;
-				if (walker(stmt->limitOffset, context))
+				if (WALK(stmt->limitOffset, context))
 					return true;
-				if (walker(stmt->limitCount, context))
+				if (WALK(stmt->limitCount, context))
 					return true;
-				if (walker(stmt->lockingClause, context))
+				if (WALK(stmt->lockingClause, context))
 					return true;
-				if (walker(stmt->withClause, context))
+				if (WALK(stmt->withClause, context))
 					return true;
-				if (walker(stmt->larg, context))
+				if (WALK(stmt->larg, context))
 					return true;
-				if (walker(stmt->rarg, context))
+				if (WALK(stmt->rarg, context))
 					return true;
 			}
 			break;
@@ -1602,9 +1602,9 @@ raw_expression_tree_walker(Node *node,
 			{
 				A_Expr	   *expr = (A_Expr *) node;
 
-				if (walker(expr->lexpr, context))
+				if (WALK(expr->lexpr, context))
 					return true;
-				if (walker(expr->rexpr, context))
+				if (WALK(expr->rexpr, context))
 					return true;
 				/* operator name is deemed uninteresting */
 			}
@@ -1613,7 +1613,7 @@ raw_expression_tree_walker(Node *node,
 			{
 				BoolExpr   *expr = (BoolExpr *) node;
 
-				if (walker(expr->args, context))
+				if (WALK(expr->args, context))
 					return true;
 			}
 			break;
@@ -1624,26 +1624,26 @@ raw_expression_tree_walker(Node *node,
 			{
 				FuncCall   *fcall = (FuncCall *) node;
 
-				if (walker(fcall->args, context))
+				if (WALK(fcall->args, context))
 					return true;
-				if (walker(fcall->agg_order, context))
+				if (WALK(fcall->agg_order, context))
 					return true;
-				if (walker(fcall->agg_filter, context))
+				if (WALK(fcall->agg_filter, context))
 					return true;
-				if (walker(fcall->over, context))
+				if (WALK(fcall->over, context))
 					return true;
 				/* function name is deemed uninteresting */
 			}
 			break;
 		case T_NamedArgExpr:
-			return walker(((NamedArgExpr *) node)->arg, context);
+			return WALK(((NamedArgExpr *) node)->arg, context);
 		case T_A_Indices:
 			{
 				A_Indices  *indices = (A_Indices *) node;
 
-				if (walker(indices->lidx, context))
+				if (WALK(indices->lidx, context))
 					return true;
-				if (walker(indices->uidx, context))
+				if (WALK(indices->uidx, context))
 					return true;
 			}
 			break;
@@ -1651,51 +1651,51 @@ raw_expression_tree_walker(Node *node,
 			{
 				A_Indirection *indir = (A_Indirection *) node;
 
-				if (walker(indir->arg, context))
+				if (WALK(indir->arg, context))
 					return true;
-				if (walker(indir->indirection, context))
+				if (WALK(indir->indirection, context))
 					return true;
 			}
 			break;
 		case T_A_ArrayExpr:
-			return walker(((A_ArrayExpr *) node)->elements, context);
+			return WALK(((A_ArrayExpr *) node)->elements, context);
 		case T_ResTarget:
 			{
 				ResTarget  *rt = (ResTarget *) node;
 
-				if (walker(rt->indirection, context))
+				if (WALK(rt->indirection, context))
 					return true;
-				if (walker(rt->val, context))
+				if (WALK(rt->val, context))
 					return true;
 			}
 			break;
 		case T_MultiAssignRef:
-			return walker(((MultiAssignRef *) node)->source, context);
+			return WALK(((MultiAssignRef *) node)->source, context);
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) node;
 
-				if (walker(tc->arg, context))
+				if (WALK(tc->arg, context))
 					return true;
-				if (walker(tc->typeName, context))
+				if (WALK(tc->typeName, context))
 					return true;
 			}
 			break;
 		case T_CollateClause:
-			return walker(((CollateClause *) node)->arg, context);
+			return WALK(((CollateClause *) node)->arg, context);
 		case T_SortBy:
-			return walker(((SortBy *) node)->node, context);
+			return WALK(((SortBy *) node)->node, context);
 		case T_WindowDef:
 			{
 				WindowDef  *wd = (WindowDef *) node;
 
-				if (walker(wd->partitionClause, context))
+				if (WALK(wd->partitionClause, context))
 					return true;
-				if (walker(wd->orderClause, context))
+				if (WALK(wd->orderClause, context))
 					return true;
-				if (walker(wd->startOffset, context))
+				if (WALK(wd->startOffset, context))
 					return true;
-				if (walker(wd->endOffset, context))
+				if (WALK(wd->endOffset, context))
 					return true;
 			}
 			break;
@@ -1703,9 +1703,9 @@ raw_expression_tree_walker(Node *node,
 			{
 				RangeSubselect *rs = (RangeSubselect *) node;
 
-				if (walker(rs->subquery, context))
+				if (WALK(rs->subquery, context))
 					return true;
-				if (walker(rs->alias, context))
+				if (WALK(rs->alias, context))
 					return true;
 			}
 			break;
@@ -1713,11 +1713,11 @@ raw_expression_tree_walker(Node *node,
 			{
 				RangeFunction *rf = (RangeFunction *) node;
 
-				if (walker(rf->functions, context))
+				if (WALK(rf->functions, context))
 					return true;
-				if (walker(rf->alias, context))
+				if (WALK(rf->alias, context))
 					return true;
-				if (walker(rf->coldeflist, context))
+				if (WALK(rf->coldeflist, context))
 					return true;
 			}
 			break;
@@ -1725,12 +1725,12 @@ raw_expression_tree_walker(Node *node,
 			{
 				RangeTableSample *rts = (RangeTableSample *) node;
 
-				if (walker(rts->relation, context))
+				if (WALK(rts->relation, context))
 					return true;
 				/* method name is deemed uninteresting */
-				if (walker(rts->args, context))
+				if (WALK(rts->args, context))
 					return true;
-				if (walker(rts->repeatable, context))
+				if (WALK(rts->repeatable, context))
 					return true;
 			}
 			break;
@@ -1738,9 +1738,9 @@ raw_expression_tree_walker(Node *node,
 			{
 				TypeName   *tn = (TypeName *) node;
 
-				if (walker(tn->typmods, context))
+				if (WALK(tn->typmods, context))
 					return true;
-				if (walker(tn->arrayBounds, context))
+				if (WALK(tn->arrayBounds, context))
 					return true;
 				/* type name itself is deemed uninteresting */
 			}
@@ -1749,38 +1749,38 @@ raw_expression_tree_walker(Node *node,
 			{
 				ColumnDef  *coldef = (ColumnDef *) node;
 
-				if (walker(coldef->typeName, context))
+				if (WALK(coldef->typeName, context))
 					return true;
-				if (walker(coldef->raw_default, context))
+				if (WALK(coldef->raw_default, context))
 					return true;
-				if (walker(coldef->collClause, context))
+				if (WALK(coldef->collClause, context))
 					return true;
 				/* for now, constraints are ignored */
 			}
 			break;
 		case T_GroupingSet:
-			return walker(((GroupingSet *) node)->content, context);
+			return WALK(((GroupingSet *) node)->content, context);
 		case T_LockingClause:
-			return walker(((LockingClause *) node)->lockedRels, context);
+			return WALK(((LockingClause *) node)->lockedRels, context);
 		case T_XmlSerialize:
 			{
 				XmlSerialize *xs = (XmlSerialize *) node;
 
-				if (walker(xs->expr, context))
+				if (WALK(xs->expr, context))
 					return true;
-				if (walker(xs->typeName, context))
+				if (WALK(xs->typeName, context))
 					return true;
 			}
 			break;
 		case T_WithClause:
-			return walker(((WithClause *) node)->ctes, context);
+			return WALK(((WithClause *) node)->ctes, context);
 		case T_InferClause:
 			{
 				InferClause *stmt = (InferClause *) node;
 
-				if (walker(stmt->indexElems, context))
+				if (WALK(stmt->indexElems, context))
 					return true;
-				if (walker(stmt->whereClause, context))
+				if (WALK(stmt->whereClause, context))
 					return true;
 			}
 			break;
@@ -1788,16 +1788,16 @@ raw_expression_tree_walker(Node *node,
 			{
 				OnConflictClause *stmt = (OnConflictClause *) node;
 
-				if (walker(stmt->infer, context))
+				if (WALK(stmt->infer, context))
 					return true;
-				if (walker(stmt->targetList, context))
+				if (WALK(stmt->targetList, context))
 					return true;
-				if (walker(stmt->whereClause, context))
+				if (WALK(stmt->whereClause, context))
 					return true;
 			}
 			break;
 		case T_CommonTableExpr:
-			return walker(((CommonTableExpr *) node)->ctequery, context);
+			return WALK(((CommonTableExpr *) node)->ctequery, context);
 		default:
 
 			/*

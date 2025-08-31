@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2020	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -43,7 +43,7 @@ typedef struct {
 
 extern volatile POOL_HEALTH_CHECK_STATISTICS	*health_check_stats;	/* health check stats area in shared memory */
 
-extern void do_health_check_child(int *node_id);
+extern void do_health_check_child(void *params);
 extern size_t	health_check_stats_shared_memory_size(void);
 extern void		health_check_stats_init(POOL_HEALTH_CHECK_STATISTICS *addr);
 

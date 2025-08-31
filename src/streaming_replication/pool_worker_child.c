@@ -106,7 +106,7 @@ static	volatile bool follow_primary_lock_acquired;
 * worker child main loop
 */
 void
-do_worker_child(void)
+do_worker_child(void *params)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext WorkerMemoryContext;
