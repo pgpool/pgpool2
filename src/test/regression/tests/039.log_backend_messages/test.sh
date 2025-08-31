@@ -23,16 +23,20 @@ do
 
     echo > result
 
-    # We set backend_weight0 to 0 to send ready queries to backend 1.
+    # We set backend_weight0 to send read queries to backend 1.
     # We set client_min_messages to log so that log messages appear on
     # the client screen.
     # We set connection_cache to off so that each time client connects
     # to pgpool, it receives ready for query from backend.
+    # We set synchronous_commit = remote_apply, and synchronous_standby_names = 'server1'
+    # so that updation to primary is replicated to standby with no lag.
         cat >> etc/pgpool.conf <<EOF
 backend_weight0 = 0
 client_min_messages = log
 log_per_node_statement = off
 connection_cache = off
+synchronous_commit = remote_apply
+synchronous_standby_names = 'server1'
 EOF
     for option in none terse verbose
     do
