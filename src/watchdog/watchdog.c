@@ -658,7 +658,7 @@ wd_check_config(void)
 						MAX_PASSWORD_SIZE)));
 	if (pool_config->wd_lifecheck_method == LIFECHECK_BY_HB)
 	{
-		if (pool_config->num_hb_dest_if <= 0)
+		if (pool_config->num_hb_local_if <= 0 || pool_config->num_hb_dest_if <= 0)
 			ereport(ERROR,
 					(errmsg("invalid life-check configuration. no heartbeat interfaces defined")));
 	}
