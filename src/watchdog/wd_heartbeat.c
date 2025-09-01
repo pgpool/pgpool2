@@ -270,7 +270,7 @@ wd_create_hb_recv_socket(WdHbIf *hb_if)
 	hints.ai_protocol = 0;
 	hints.ai_flags = AI_NUMERICSERV | AI_PASSIVE;
 
-	if ((gai_ret = getaddrinfo(!hb_if->addr ? NULL : hb_if->addr, portstr, &hints, &res)) != 0)
+	if ((gai_ret = getaddrinfo(hb_if->addr[0] == '\0' ? NULL : hb_if->addr, portstr, &hints, &res)) != 0)
 	{
 		ereport(WARNING,
 				(errmsg("getaddrinfo() failed with error \"%s\"", gai_strerror(gai_ret))));
