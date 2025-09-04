@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -302,8 +302,11 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	 */
 	volatile bool first = true;
 
-	/* For PostmasterRandom */
-	gettimeofday(&random_start_time, NULL);
+	/*
+	 * Query cache lock file path. This should be declared as "static" because
+	 * the path is passed to be registered using on_proc_exit().
+	 */
+	static char query_cache_lock_path[MAXPGPATH];
 
 	processState = INITIALIZING;
 
@@ -495,23 +498,23 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 
 	/* For query cache concurrency control */
-	if (pool_config->memory_cache_enabled)
+	if (pool_config->memory_cache_enabled || pool_config->enable_shared_relcache)
 	{
-		char path[1024];
-		int		lfd;
+		int			lfd;
 
-		snprintf(path, sizeof(path), "%s/QUERY_CACHE_LOCK_FILE", pool_config->logdir);
-		lfd = open(path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
+		snprintf(query_cache_lock_path, sizeof(query_cache_lock_path),
+				 "%s/%s", pool_config->logdir, QUERY_CACHE_LOCK_FILE);
+		lfd = open(query_cache_lock_path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
 		if (lfd == -1)
 		{
 			ereport(FATAL,
-					(errmsg("Failed to open lock file for query cache \"%s\"", path),
+					(errmsg("Failed to open lock file for query cache \"%s\"", query_cache_lock_path),
 					 errdetail("%m")));
 		}
 		close(lfd);
 
 		/* Register file unlink at exit */
-		on_proc_exit(FileUnlink, (Datum) path);
+		on_proc_exit(FileUnlink, (Datum) query_cache_lock_path);
 	}
 
 	/*
