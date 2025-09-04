@@ -306,6 +306,12 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	 */
 	volatile bool first = true;
 
+	/*
+	 * Query cache lock file path. This should be declared as "static" because
+	 * the path is passed to be registered using on_proc_exit().
+	 */
+	static char query_cache_lock_path[MAXPGPATH];
+
 	processState = INITIALIZING;
 
 	/*
@@ -512,23 +518,23 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 	}
 
 	/* For query cache concurrency control */
-	if (pool_config->memory_cache_enabled)
+	if (pool_config->memory_cache_enabled || pool_config->enable_shared_relcache)
 	{
-		char		path[1024];
 		int			lfd;
 
-		snprintf(path, sizeof(path), "%s/QUERY_CACHE_LOCK_FILE", pool_config->logdir);
-		lfd = open(path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
+		snprintf(query_cache_lock_path, sizeof(query_cache_lock_path),
+				 "%s/%s", pool_config->logdir, QUERY_CACHE_LOCK_FILE);
+		lfd = open(query_cache_lock_path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
 		if (lfd == -1)
 		{
 			ereport(FATAL,
-					(errmsg("Failed to open lock file for query cache \"%s\"", path),
+					(errmsg("Failed to open lock file for query cache \"%s\"", query_cache_lock_path),
 					 errdetail("%m")));
 		}
 		close(lfd);
 
 		/* Register file unlink at exit */
-		on_proc_exit(FileUnlink, (Datum) path);
+		on_proc_exit(FileUnlink, (Datum) query_cache_lock_path);
 	}
 
 	/*
@@ -1652,14 +1658,14 @@ failover(void)
 		 */
 		if (failover_context.request_details & REQ_DETAIL_PROMOTE)
 		{
-			promote_node = failover_context.node_id_set[0];	/* requested node */
+			promote_node = failover_context.node_id_set[0]; /* requested node */
 			for (i = 0; i < failover_context.node_count; i++)
 			{
 				failover_context.node_id_set[i] = REAL_PRIMARY_NODE_ID;
 			}
 		}
 
-		node_id = failover_context.node_id_set[0];		/* set target node id */
+		node_id = failover_context.node_id_set[0];	/* set target node id */
 
 		/* failback request? */
 		if (failover_context.reqkind == NODE_UP_REQUEST)
