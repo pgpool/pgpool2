@@ -4874,8 +4874,8 @@ query_cache_delete_by_stmt(char *query, POOL_CONNECTION_POOL *backend)
 		else
 			pool_delete_item_shmem_cache(cacheid);
 	}
-#ifdef USE_MEMCACHED
 	else
+#ifdef USE_MEMCACHED
 	{
 		if (delete_cache_on_memcached(key) == 0)
 			rtn = false;
