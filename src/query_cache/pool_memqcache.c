@@ -537,10 +537,12 @@ pool_fetch_cache(POOL_CONNECTION_POOL * backend, const char *query, char **buf, 
 
 	memcpy(p, ptr, *len);
 
+#ifdef USE_MEMCACHED
 	if (!pool_is_shmem_cache())
 	{
 		free(ptr);
 	}
+#endif
 
 	ereport(DEBUG1,
 			(errmsg("fetching from cache storage"),
