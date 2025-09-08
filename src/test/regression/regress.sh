@@ -204,6 +204,10 @@ fi
 
 for i in $dirs
 do
+	# skip if it's not a directory
+	if [ ! -d $i ];then
+	    continue;
+	fi
 	cd $i
 
 	# skip the test if there's no test.sh

@@ -1,0 +1,6 @@
+All test directory names should have following format:
+
+3-digit-numbers '.' (dot) test-names
+
+For the 3-digit-number, range 000-099 are reserved for tests of
+features.  Range 100- are reserved for tests for bugs.
