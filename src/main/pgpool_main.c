@@ -155,7 +155,7 @@ static void signal_user1_to_parent_with_reason(User1SignalReason reason);
 static void FileUnlink(int code, Datum path);
 static pid_t pcp_fork_a_child(int *fds, char *pcp_conf_file);
 static pid_t fork_a_child(int *fds, int id);
-static pid_t worker_fork_a_child(ProcessType type, void (*func) (), void *params);
+static pid_t worker_fork_a_child(ProcessType type, void (*func) (void *), void *params);
 static int	create_unix_domain_socket(struct sockaddr_un un_addr_tmp, const char *group, const int permissions);
 static int *create_unix_domain_sockets_by_list(struct sockaddr_un *un_addrs, char *group, int permissions, int n_sockets);
 static int *create_inet_domain_sockets(const char *hostname, const int port);
@@ -885,7 +885,7 @@ fork_a_child(int *fds, int id)
 * fork worker child process
 */
 static pid_t
-worker_fork_a_child(ProcessType type, void (*func) (), void *params)
+worker_fork_a_child(ProcessType type, void (*func) (void *), void *params)
 {
 	pid_t		pid;
 

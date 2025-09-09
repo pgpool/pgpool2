@@ -109,7 +109,7 @@ static bool check_backend_down_request(int node, bool done_requests);
 * health check child main loop
 */
 void
-do_health_check_child(int *node_id)
+do_health_check_child(void *params)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext HealthCheckMemoryContext;
@@ -117,20 +117,22 @@ do_health_check_child(int *node_id)
 	static struct timeval start_time;
 	static struct timeval end_time;
 	long		diff_t;
+	int			node_id;
 
 	POOL_HEALTH_CHECK_STATISTICS mystat;
 
-	stats = &health_check_stats[*node_id];
+	node_id = *((int *) params);
+	stats = &health_check_stats[node_id];
 
 	/* Set application name */
-	set_application_name_with_suffix(PT_HEALTH_CHECK, *node_id);
+	set_application_name_with_suffix(PT_HEALTH_CHECK, node_id);
 
 	ereport(DEBUG1,
-			(errmsg("I am health check process pid:%d DB node id:%d", getpid(), *node_id)));
+			(errmsg("I am health check process pid:%d DB node id:%d", getpid(), node_id)));
 
 	/* Identify myself via ps */
 	init_ps_display("", "", "", "");
-	snprintf(psbuffer, sizeof(psbuffer), "health check process(%d)", *node_id);
+	snprintf(psbuffer, sizeof(psbuffer), "health check process(%d)", node_id);
 	set_ps_display(psbuffer, false);
 
 	/* set up signal handlers */
@@ -193,7 +195,7 @@ do_health_check_child(int *node_id)
 
 		CHECK_REQUEST;
 
-		if (pool_config->health_check_params[*node_id].health_check_period <= 0)
+		if (pool_config->health_check_params[node_id].health_check_period <= 0)
 		{
 			stats->min_health_check_duration = 0;
 			sleep(30);
@@ -203,27 +205,27 @@ do_health_check_child(int *node_id)
 		 * If health checking is enabled and the node is not in down status,
 		 * do health check.
 		 */
-		else if (pool_config->health_check_params[*node_id].health_check_period > 0)
+		else if (pool_config->health_check_params[node_id].health_check_period > 0)
 		{
 			bool		result;
-			BackendInfo *bkinfo = pool_get_node_info(*node_id);
+			BackendInfo *bkinfo = pool_get_node_info(node_id);
 
 			stats->total_count++;
 			gettimeofday(&start_time, NULL);
 
 			stats->last_health_check = time(NULL);
 
-			result = establish_persistent_connection(*node_id);
+			result = establish_persistent_connection(node_id);
 
 			if (result && slot == NULL)
 			{
 				stats->last_failed_health_check = time(NULL);
 
-				if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(*node_id).flag))
+				if (POOL_DISALLOW_TO_FAILOVER(BACKEND_INFO(node_id).flag))
 				{
 					ereport(LOG,
 							(errmsg("health check failed on node %d but failover is disallowed for the node",
-									*node_id)));
+									node_id)));
 				}
 				else
 				{
@@ -232,19 +234,19 @@ do_health_check_child(int *node_id)
 					stats->fail_count++;
 
 					ereport(LOG, (errmsg("health check failed on node %d (timeout:%d)",
-										 *node_id, health_check_timer_expired)));
+										 node_id, health_check_timer_expired)));
 
 					if (bkinfo->backend_status == CON_DOWN && bkinfo->quarantine == true)
 					{
 						ereport(LOG, (errmsg("health check failed on quarantine node %d (timeout:%d)",
-											 *node_id, health_check_timer_expired),
+											 node_id, health_check_timer_expired),
 									  errdetail("ignoring..")));
 					}
 					else
 					{
 						/* trigger failover */
 						partial = health_check_timer_expired ? false : true;
-						degenerate_backend_set(node_id, 1, partial ? REQ_DETAIL_SWITCHOVER : 0);
+						degenerate_backend_set(&node_id, 1, partial ? REQ_DETAIL_SWITCHOVER : 0);
 					}
 				}
 			}
@@ -257,7 +259,7 @@ do_health_check_child(int *node_id)
 				 * The node has become reachable again. Reset the quarantine
 				 * state
 				 */
-				send_failback_request(*node_id, false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
+				send_failback_request(node_id, false, REQ_DETAIL_UPDATE | REQ_DETAIL_WATCHDOG);
 			}
 			else if (result && slot)
 			{
@@ -274,7 +276,7 @@ do_health_check_child(int *node_id)
 			}
 
 			/* Discard persistent connections */
-			discard_persistent_connection(*node_id);
+			discard_persistent_connection(node_id);
 
 			/*
 			 * Update health check duration only if health check was not
@@ -302,7 +304,7 @@ do_health_check_child(int *node_id)
 
 			memcpy(&mystat, (void *) stats, sizeof(mystat));
 
-			sleep(pool_config->health_check_params[*node_id].health_check_period);
+			sleep(pool_config->health_check_params[node_id].health_check_period);
 		}
 	}
 	exit(0);

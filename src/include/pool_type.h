@@ -31,32 +31,34 @@
 #include <sys/socket.h>
 #include <stddef.h>
 #include "libpq-fe.h"
-/* Define common boolean type. C++ and BEOS already has it so exclude them. */
-#ifdef c_plusplus
-#ifndef __cplusplus
-#define __cplusplus
-#endif							/* __cplusplus */
-#endif							/* c_plusplus */
 
-#ifndef __BEOS__
-#ifndef __cplusplus
-#ifndef bool
-typedef char bool;
-#endif
-#ifndef true
-#define true ((bool) 1)
-#endif
+/* ----------------------------------------------------------------
+ *				Section 2:	bool, true, false
+ * ----------------------------------------------------------------
+ */
+
+/*
+ * bool
+ *		Boolean value, either true or false.
+ *
+ * PostgreSQL currently cannot deal with bool of size other than 1; there are
+ * static assertions around the code to prevent that.
+ */
+
+#include <stdbool.h>
+
+/*
+ * Pgpool-II still uses TRUE/FALSE, that are only used Windows build in
+ * PostgreSQL.  In the feature, we should replace TRUE/FALSE with true/false,
+ * but until that day...
+ */
+
 #ifndef TRUE
 #define TRUE ((bool) 1)
-#endif
-#ifndef false
-#define false ((bool) 0)
 #endif
 #ifndef FALSE
 #define FALSE ((bool) 0)
 #endif
-#endif							/* not C++ */
-#endif							/* __BEOS__ */
 
 /* ----------------------------------------------------------------
  *              Section 5:  offsetof, lengthof, endof, alignment

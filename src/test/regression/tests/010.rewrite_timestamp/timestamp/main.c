@@ -90,7 +90,9 @@ Pgversion(POOL_CONNECTION_POOL *backend)
 }
 
 POOL_RELCACHE *
-pool_create_relcache(int cachesize, char *sql, func_ptr register_func, func_ptr unregister_func, bool issessionlocal)
+pool_create_relcache(int cachesize, char *sql,
+					 void *(*register_func) (), void *(*unregister_func) (),
+					 bool issessionlocal)
 {
 	return (POOL_RELCACHE *) 1;
 }
