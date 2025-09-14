@@ -540,7 +540,7 @@ get_watchdog_node_from_json(char *json_data, int data_len, char **authkey)
 	if (root == NULL || root->type != json_object)
 		goto ERROR_EXIT;
 
-	if (json_get_long_value_for_key(root, "StartupTimeSecs", &wdNode->startup_time.tv_sec))
+	if (json_get_time_value_for_key(root, "StartupTimeSecs", &wdNode->startup_time.tv_sec))
 	{
 		bool		escalated;
 		long		seconds_since_node_startup;

@@ -316,5 +316,6 @@ int			json_get_int_value_for_key(json_value *source, const char *key, int *value
 int			json_get_long_value_for_key(json_value *source, const char *key, long *value);
 char	   *json_get_string_value_for_key(json_value *source, const char *key);
 int			json_get_bool_value_for_key(json_value *source, const char *key, bool *value);
+int                    json_get_time_value_for_key(json_value * source, const char *key, time_t *value);
 
 #endif
