@@ -1223,3 +1223,17 @@ json_get_string_value_for_key(json_value *source, const char *key)
 		return NULL;
 	return jNode->u.string.ptr;
 }
+
+int   
+json_get_time_value_for_key(json_value * source, const char *key, time_t *value)
+{
+	json_value *jNode;
+
+	jNode = json_get_value_for_key(source, key);
+	if (jNode == NULL)
+		return -1;
+	if (jNode->type != json_integer)
+		return -1;
+	*value = jNode->u.integer;
+	return 0;
+}
