@@ -402,16 +402,38 @@ wal_log_hints = on
     <itemizedlist>
      <listitem>
       <para>
-       スタンバイで<command>pg_basebackup</command>を実行して、プライマリのデータディレクトリのバックアップを生成します。（この方法を利用する場合は、手動でレプリケーションスロットを作成してください。）
+       <productname>Pgpool-II</productname>のオンラインリカバリ機能（<xref linkend="runtime-online-recovery">）を使用して、スタンバイサーバを自動的にセットアップします。
       </para>
      </listitem>
      <listitem>
       <para>
-       <productname>Pgpool-II</productname>のオンラインリカバリ機能（<xref linkend="runtime-online-recovery">）を使用して、スタンバイサーバを自動的にセットアップします。
+       スタンバイで<command>pg_basebackup</command>を実行して、プライマリのデータディレクトリのバックアップを生成します。
       </para>
      </listitem>
     </itemizedlist>
    </para>
+   <note>
+    <para>
+     オンラインリカバリを使用せず手動でスタンバイをセットアップする場合は次の注意点があります。
+     <itemizedlist>
+      <listitem>
+       <para>
+        手動でレプリケーションスロットを作成する必要があります。
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        pg_basebackup を実行する際には -R オプションを指定しないでください。<varname>primary_conninfo</varname>、 <varname>recovery_target_timeline</varname>、 <varname>primary_slot_name</varname> は <filename>postgresql.auto.conf</filename> ではなく、<filename>$PGDATA/myrecovery.conf</filename> に記載し、<filename>postgresql.conf</filename> に以下を追記してください。
+       </para>
+      </listitem>
+     </itemizedlist>
+     <programlisting>
+include_if_exists = 'myrecovery.conf'
+     </programlisting>
+    </para>
+   </note>
    <para>
     この設定例では、<productname>Pgpool-II</productname>の構成が完了した後に、<xref linkend="example-cluster-verify-standby">で<productname>Pgpool-II</productname>のオンラインリカバリを使用してスタンバイサーバをセットアップします。
    </para>

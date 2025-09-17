@@ -417,18 +417,43 @@ wal_log_hints = on
     <itemizedlist>
      <listitem>
       <para>
-       use <command>pg_basebackup</command> to backup the data directory of the primary from the standby.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
        use <productname>Pgpool-II</productname>'s online recovery feature
        (<xref linkend="runtime-online-recovery">) to automatically
        setup a standby server.
       </para>
      </listitem>
+     <listitem>
+      <para>
+       use <command>pg_basebackup</command> to backup the data directory of the primary from the standby.
+      </para>
+     </listitem>
     </itemizedlist>
    </para>
+
+   <note>
+    <para>
+     If you manually set up standby without using online recovery, please note the following:
+     <itemizedlist>
+      <listitem>
+       <para>
+        You must manually create the replication slots.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Do not specify the -R option when running pg_basebackup.
+        Write <varname>primary_conninfo</varname>, <varname>recovery_target_timeline</varname>, and <varname>primary_slot_name</varname> in <filename>$PGDATA/myrecovery.conf</filename>, not in <filename>postgresql.auto.conf</filename>, and add the following to <filename>postgresql.conf</filename>.
+       </para>
+      </listitem>
+     </itemizedlist>
+     <programlisting>
+include_if_exists = 'myrecovery.conf'
+     </programlisting>
+    </para>
+   </note>
+
    <para>
     In this example, we use <productname>Pgpool-II</productname>'s
     online recovery to setup the standby server 
