@@ -288,20 +288,7 @@ exclude=pgpool*
   <itemizedlist>
    <listitem>
     <para>
-     <productname>PostgreSQL</productname>プライマリサーバのみでストリーミングレプリケーションの設定を行います。
-     スタンバイサーバの設定は、プライマリが起動した状態で、<productname>Pgpool-II</productname>のオンラインリカバリ機能を使って行うため不要です。
-     この設定の例ではアーカイブリカバリを行うように設定します。
-    </para>
-    <para>
-     まず、すべてのサーバにて<acronym>WAL</acronym>を格納するディレクトリ<filename>/var/lib/pgsql/archivedir</filename>を事前に作成します。この設定例では、プライマリサーバのみで<acronym>WAL</acronym>アーカイブをローカルで実施します。
-    </para>
-    <programlisting>
-[全サーバ]# su - postgres
-[全サーバ]$ mkdir /var/lib/pgsql/archivedir
-    </programlisting>
-
-    <para>
-     プライマリサーバの<productname>PostgreSQL</productname>を初期化します。
+     プライマリサーバーをセットアップします。まずプライマリサーバの<productname>PostgreSQL</productname>を初期化します。
     </para>
     <programlisting>
 [server1]# su - postgres
@@ -310,6 +297,7 @@ exclude=pgpool*
 
     <para>
      次に<literal>server1</literal>にて、設定ファイル<filename>$PGDATA/postgresql.conf</filename>を以下のように編集します。
+     この設定例では、プライマリサーバのみでWALアーカイブをローカルで実施します。
      <literal>pg_rewind</literal>を使うために<literal>wal_log_hints</literal>を有効にしておきます。
      プライマリが後でスタンバイになる可能性があるので、<varname>hot_standby = on</varname>にしておきます。
 
@@ -325,6 +313,55 @@ hot_standby = on
 wal_log_hints = on
     </programlisting>
    </listitem>
+
+   <listitem>
+    <para>
+     スタンバイサーバをセットアップします。スタンバイサーバをセットアップする方法としては、次のような複数の方法があります。
+     <itemizedlist>
+      <listitem>
+       <para>
+        <productname>Pgpool-II</productname>のオンラインリカバリ機能（<xref linkend="runtime-online-recovery">）を使用して、スタンバイサーバを自動的にセットアップします。
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        スタンバイで<command>pg_basebackup</command>を実行して、プライマリのデータディレクトリのバックアップを生成します。
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+    <note>
+     <para>
+      オンラインリカバリを使用せず手動でスタンバイをセットアップする場合は次の注意点があります。
+      <itemizedlist>
+       <listitem>
+        <para>
+         手動でレプリケーションスロットを作成する必要があります。
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         pg_basebackup を実行する際には -R オプションを指定しないでください。<varname>primary_conninfo</varname>、 <varname>recovery_target_timeline</varname>、 <varname>primary_slot_name</varname> は <filename>postgresql.auto.conf</filename> ではなく、<filename>$PGDATA/myrecovery.conf</filename> に記載し、<filename>postgresql.conf</filename> に以下を追記してください。
+        </para>
+       </listitem>
+      </itemizedlist>
+      <programlisting>
+include_if_exists = 'myrecovery.conf'
+      </programlisting>
+     </para>
+    </note>
+   </listitem>
+   <listitem>
+    <para>
+     この設定の例ではアーカイブリカバリを行うように設定します。
+     すべてのサーバにて<acronym>WAL</acronym>を格納するディレクトリ<filename>/var/lib/pgsql/archivedir</filename>を事前に作成します。
+    </para>
+    <programlisting>
+[全サーバ]# su - postgres
+[全サーバ]$ mkdir /var/lib/pgsql/archivedir
+    </programlisting>
+   </listitem>
+
 
    <listitem>
     <para>
