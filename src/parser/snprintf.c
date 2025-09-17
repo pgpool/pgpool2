@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2024, PgPool Global Development Group
+ * Copyright (c) 2003-2025, PgPool Global Development Group
  * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,17 +32,14 @@
  * src/port/snprintf.c
  */
 
-#if 0
-#include "c.h"
-#endif
-
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <math.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "pool_parser.h"
 #include "stringinfo.h"
 #include "utils/palloc.h"
