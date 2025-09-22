@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -112,8 +112,8 @@ CommandComplete(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, bool
 				if (session_context->query_context &&
 					session_context->query_context->parse_tree &&
 					is_start_transaction_query(session_context->query_context->parse_tree))
-					TSTATE(backend, i) = 'T';	/* we are inside a transaction */
 				{
+					TSTATE(backend, i) = 'T';	/* we are inside a transaction */
 					ereport(DEBUG1,
 							(errmsg("processing command complete"),
 							 errdetail("set transaction state to T")));
