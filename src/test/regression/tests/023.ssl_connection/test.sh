@@ -65,7 +65,13 @@ $PSQL -h localhost test <<EOF > result
 \q
 EOF
 
-grep SSL result
+# PostgreSQL 18 or later prints tablular output for \conninfo.
+# For SSL, "SSL Connection | true (or false)"
+if [ $PGVERSION -ge 18 ];then
+    grep "SSL Connection" result|grep true
+else
+    grep SSL result
+fi
 
 if [ $? != 0 ];then
     echo "Checking SSL connection between frontend and Pgpool-II failed."
@@ -75,7 +81,11 @@ fi
 
 echo "Checking SSL connection between frontend and Pgpool-II was ok."
 
-grep SSL result |grep TLSv1.2
+if [ $PGVERSION -ge 18 ];then
+    grep "SSL Protocol" result|grep TLSv1.2
+else
+    grep SSL result |grep TLSv1.2
+fi
 
 # if SSl protocol version TLSv1.2
 if [ $? = 0 ];then
@@ -111,7 +121,11 @@ $PSQL -h localhost test <<EOF > result
 \q
 EOF
 
-grep SSL result
+if [ $PGVERSION -ge 18 ];then
+    grep "SSL Connection" result|grep true
+else
+    grep SSL result
+fi
 
 if [ $? = 0 ];then
     echo "Checking SSL connection between frontend and Pgpool-II succeeded despite bad ssl_ecdh_curve."
