@@ -193,9 +193,9 @@ get_wd_runtime_variable_value(char *wd_authkey, char *varName)
 
 			case VALUE_DATA_TYPE_LONG:
 				{
-					long		longVal;
+					long long	longVal;
 
-					if (json_get_long_value_for_key(root, WD_JSON_KEY_VALUE_DATA, &longVal))
+					if (json_get_llong_value_for_key(root, WD_JSON_KEY_VALUE_DATA, &longVal))
 					{
 						ereport(WARNING,
 								(errmsg("get runtime variable value from watchdog failed"),
