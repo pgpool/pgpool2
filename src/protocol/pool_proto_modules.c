@@ -1675,9 +1675,26 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		parse_msg = pool_get_sent_message('P', pstmt_name, POOL_SENT_MESSAGE_CREATED);
 	if (!parse_msg)
 	{
-		ereport(FATAL,
-				(errmsg("unable to bind"),
-				 errdetail("cannot get parse message \"%s\"", pstmt_name)));
+		char	   *errmessage;
+
+		/* send error message to frontend */
+		errmessage = psprintf("prepared statement \"%s\" does not exist",
+							  pstmt_name);
+		pool_send_error_message(frontend, MAJOR(cp), "XX000", errmessage,
+								"", "", __FILE__, __LINE__);
+		pfree(errmessage);
+
+		/*
+		 * Since we do not receive an error response from backend, we need
+		 * similar treatement in case of error response.
+		 */
+		pool_set_ignore_till_sync();
+		pool_unset_query_in_progress();
+		pool_unset_suspend_reading_from_frontend();
+		if (SL_MODE)
+			pool_discard_except_sync_and_ready_for_query(frontend, backend);
+
+		return POOL_CONTINUE;
 	}
 
 	bind_msg = pool_create_sent_message('B', len, contents,
