@@ -523,7 +523,7 @@ rewrite_timestamp_insert(InsertStmt *i_stmt, TSRewriteContext *ctx)
 							   rewrite_timestamp_walker, (void *) ctx);
 
 	raw_expression_tree_walker(
-							   (Node *) i_stmt->returningList,
+							   (Node *) i_stmt->returningClause,
 							   rewrite_timestamp_walker, (void *) ctx);
 
 	rewrite = ctx->rewrite;
@@ -743,7 +743,7 @@ rewrite_timestamp_update(UpdateStmt *u_stmt, TSRewriteContext *ctx)
 							   rewrite_timestamp_walker, (void *) ctx);
 
 	raw_expression_tree_walker(
-							   (Node *) u_stmt->returningList,
+							   (Node *) u_stmt->returningClause,
 							   rewrite_timestamp_walker, (void *) ctx);
 
 	rewrite = ctx->rewrite;
@@ -881,7 +881,7 @@ rewrite_timestamp(POOL_CONNECTION_POOL *backend, Node *node,
 								   rewrite_timestamp_walker, (void *) &ctx);
 
 		raw_expression_tree_walker(
-								   (Node *) d_stmt->returningList,
+								   (Node *) d_stmt->returningClause,
 								   rewrite_timestamp_walker, (void *) &ctx);
 
 		raw_expression_tree_walker(
@@ -1533,7 +1533,7 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (WALK(stmt->onConflictClause, context))
 					return true;
-				if (WALK(stmt->returningList, context))
+				if (WALK(stmt->returningClause, context))
 					return true;
 				if (WALK(stmt->withClause, context))
 					return true;
@@ -1549,7 +1549,7 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (WALK(stmt->whereClause, context))
 					return true;
-				if (WALK(stmt->returningList, context))
+				if (WALK(stmt->returningClause, context))
 					return true;
 				if (WALK(stmt->withClause, context))
 					return true;
@@ -1567,7 +1567,7 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (WALK(stmt->fromClause, context))
 					return true;
-				if (WALK(stmt->returningList, context))
+				if (WALK(stmt->returningClause, context))
 					return true;
 				if (WALK(stmt->withClause, context))
 					return true;

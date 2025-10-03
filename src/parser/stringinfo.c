@@ -6,11 +6,11 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
- * Portions Copyright (c) 2003-2024, PgPool Global Development Group
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2025, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  src/backend/lib/stringinfo.c
+ *	  src/common/stringinfo.c
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,40 @@
 #include "utils/palloc.h"
 
 /*
+ * initStringInfoInternal
+ *
+ * Initialize a StringInfoData struct (with previously undefined contents)
+ * to describe an empty string.
+ * The initial memory allocation size is specified by 'initsize'.
+ * The valid range for 'initsize' is 1 to MaxAllocSize.
+ */
+static inline void
+initStringInfoInternal(StringInfo str, int initsize)
+{
+	Assert(initsize >= 1 && initsize <= MaxAllocSize);
+
+	str->data = (char *) palloc(initsize);
+	str->maxlen = initsize;
+	resetStringInfo(str);
+}
+
+/*
+ * makeStringInfoInternal(int initsize)
+ *
+ * Create an empty 'StringInfoData' & return a pointer to it.
+ * The initial memory allocation size is specified by 'initsize'.
+ * The valid range for 'initsize' is 1 to MaxAllocSize.
+ */
+static inline StringInfo
+makeStringInfoInternal(int initsize)
+{
+	StringInfo  res = (StringInfo) palloc(sizeof(StringInfoData));
+
+	initStringInfoInternal(res, initsize);
+	return res;
+}
+
+/*
  * makeStringInfo
  *
  * Create an empty 'StringInfoData' & return a pointer to it.
@@ -29,13 +63,20 @@
 StringInfo
 makeStringInfo(void)
 {
-	StringInfo	res;
+	return makeStringInfoInternal(STRINGINFO_DEFAULT_SIZE);
+}
 
-	res = (StringInfo) palloc(sizeof(StringInfoData));
-
-	initStringInfo(res);
-
-	return res;
+/*
+ * makeStringInfoExt(int initsize)
+ *
+ * Create an empty 'StringInfoData' & return a pointer to it.
+ * The initial memory allocation size is specified by 'initsize'.
+ * The valid range for 'initsize' is 1 to MaxAllocSize.
+ */
+StringInfo
+makeStringInfoExt(int initsize)
+{
+	return makeStringInfoInternal(initsize);
 }
 
 /*
@@ -47,11 +88,21 @@ makeStringInfo(void)
 void
 initStringInfo(StringInfo str)
 {
-	int			size = 1024;	/* initial default buffer size */
+	initStringInfoInternal(str, STRINGINFO_DEFAULT_SIZE);
+}
 
-	str->data = (char *) palloc(size);
-	str->maxlen = size;
-	resetStringInfo(str);
+/*
+ * initStringInfoExt
+ *
+ * Initialize a StringInfoData struct (with previously undefined contents)
+ * to describe an empty string.
+ * The initial memory allocation size is specified by 'initsize'.
+ * The valid range for 'initsize' is 1 to MaxAllocSize.
+ */
+void
+initStringInfoExt(StringInfo str, int initsize)
+{
+	initStringInfoInternal(str, initsize);
 }
 
 /*
@@ -292,7 +343,7 @@ enlargeStringInfo(StringInfo str, int needed)
 	if (((Size) needed) >= (MaxAllocSize - (Size) str->len))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("out of memory"),
+				 errmsg("string buffer exceeds maximum allowed length (%zu bytes)", MaxAllocSize),
 				 errdetail("Cannot enlarge string buffer containing %d bytes by %d more bytes.",
 						   str->len, needed)));
 #endif

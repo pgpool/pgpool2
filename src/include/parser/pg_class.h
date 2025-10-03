@@ -4,8 +4,8 @@
  *	  definition of the "relation" system catalog (pg_class)
  *
  *
- * Portions Copyright (c) 2003-2024, PgPool Global Development Group
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2025, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_class.h
@@ -22,7 +22,7 @@
 #if 0							/* NOT_USED_IN_PGPOOL */
 
 #include "catalog/genbki.h"
-#include "catalog/pg_class_d.h"
+#include "catalog/pg_class_d.h" /* IWYU pragma: export */
 
 CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,RelationRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
@@ -62,6 +62,9 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 
 	/* # of all-visible blocks (not always up-to-date) */
 	int32		relallvisible BKI_DEFAULT(0);
+
+	/* # of all-frozen blocks (not always up-to-date) */
+	int32		relallfrozen BKI_DEFAULT(0);
 
 	/* OID of toast table; 0 if none */
 	Oid			reltoastrelid BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_class);
@@ -227,7 +230,7 @@ MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
 	 (relkind) == RELKIND_TOASTVALUE || \
 	 (relkind) == RELKIND_MATVIEW)
 
-extern int	errdetail_relkind_not_supported(char relkind);
+extern int errdetail_relkind_not_supported(char relkind);
 
 #endif							/* NOT_USED_IN_PGPOOL */
 

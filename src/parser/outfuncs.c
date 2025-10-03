@@ -3,8 +3,8 @@
  * outfuncs.c
  *	  Output functions for Postgres tree nodes.
  *
- * Portions Copyright (c) 2003-2024, PgPool Global Development Group
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2025, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -72,6 +72,7 @@ static void _outCoerceToDomainValue(StringInfo str, CoerceToDomainValue *node);
 static void _outSetToDefault(StringInfo str, SetToDefault *node);
 static void _outCurrentOfExpr(StringInfo str, CurrentOfExpr *node);
 static void _outInferenceElem(StringInfo str, InferenceElem *node);
+static void _outReturningExpr(StringInfo str, ReturningExpr *node);
 static void _outTargetEntry(StringInfo str, TargetEntry *node);
 static void _outRangeTblRef(StringInfo str, RangeTblRef *node);
 static void _outJoinExpr(StringInfo str, JoinExpr *node);
@@ -100,6 +101,8 @@ static void _outCTECycleClause(StringInfo str, CTECycleClause *node);
 static void _outCommonTableExpr(StringInfo str, CommonTableExpr *node);
 static void _outMergeWhenClauses(StringInfo str, List *node);
 static void _outMergeAction(StringInfo str, MergeAction *node);
+static void _outReturningOption(StringInfo str, List *node);
+static void _outReturningClause(StringInfo str, ReturningClause *node);
 static void _outSetOperationStmt(StringInfo str, SetOperationStmt *node);
 static void _outTableSampleClause(StringInfo str, TableSampleClause *node);
 static void _outA_Expr(StringInfo str, A_Expr *node);
@@ -185,6 +188,7 @@ static void _outFuncName(StringInfo str, List *func_name);
 static void _outSetRest(StringInfo str, VariableSetStmt *node);
 static void _outSetTransactionModeList(StringInfo str, List *list);
 static void _outAlterTableCmd(StringInfo str, AlterTableCmd *node);
+static void _outATAlterConstraint(StringInfo str, ATAlterConstraint *node);
 static void _outOptSeqList(StringInfo str, List *options);
 static void _outObjectWithArgs(StringInfo str, ObjectWithArgs *node);
 static void _outFunctionParameter(StringInfo str, FunctionParameter *node);
@@ -811,6 +815,12 @@ _outInferenceElem(StringInfo str, InferenceElem *node)
 }
 
 static void
+_outReturningExpr(StringInfo str, ReturningExpr *node)
+{
+
+}
+
+static void
 _outTargetEntry(StringInfo str, TargetEntry *node)
 {
 
@@ -924,9 +934,17 @@ static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
 {
 	appendStringInfoString(str, "CREATE ");
+
 	if (node->relation->relpersistence == RELPERSISTENCE_TEMP)
 		appendStringInfoString(str, "TEMP ");
+	else if (node->relation->relpersistence == RELPERSISTENCE_UNLOGGED)
+		appendStringInfoString(str, "UNLOGGED ");
+
 	appendStringInfoString(str, "TABLE ");
+
+	if (node->if_not_exists)
+		appendStringInfoString(str, "IF NOT EXISTS ");
+
 	_outNode(str, node->relation);
 	appendStringInfoString(str, " (");
 	_outNode(str, node->tableElts);
@@ -937,6 +955,12 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 		appendStringInfoString(str, "INHERITS (");
 		_outNode(str, node->inhRelations);
 		appendStringInfoString(str, ")");
+	}
+
+	if (node->accessMethod)
+	{
+		appendStringInfoString(str, " USING ");
+		appendStringInfoString(str, node->accessMethod);
 	}
 
 	if (node->options)
@@ -972,9 +996,17 @@ static void
 _outCreateTableAsStmt(StringInfo str, CreateTableAsStmt *node)
 {
 	appendStringInfoString(str, "CREATE ");
+
 	if (node->into->rel->relpersistence == RELPERSISTENCE_TEMP)
 		appendStringInfoString(str, "TEMP ");
+	else if (node->into->rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+		appendStringInfoString(str, "UNLOGGED ");
+
 	appendStringInfoString(str, "TABLE ");
+
+	if (node->if_not_exists)
+		appendStringInfoString(str, "IF NOT EXISTS ");
+
 	_outNode(str, node->into->rel);
 
 	if (node->into->colNames)
@@ -982,6 +1014,12 @@ _outCreateTableAsStmt(StringInfo str, CreateTableAsStmt *node)
 		appendStringInfoString(str, " (");
 		_outIdList(str, node->into->colNames);
 		appendStringInfoString(str, ") ");
+	}
+
+	if (node->into->accessMethod)
+	{
+		appendStringInfoString(str, " USING ");
+		appendStringInfoString(str, node->into->accessMethod);
 	}
 
 	if (node->into->options)
@@ -1016,6 +1054,14 @@ _outCreateTableAsStmt(StringInfo str, CreateTableAsStmt *node)
 	{
 		appendStringInfoString(str, " AS");
 		_outSelectStmt(str, (SelectStmt *) node->query);
+	}
+
+	if (node->into->skipData)
+	{
+		if (node->into->skipData == TRUE)
+			appendStringInfoString(str, " WITH NO DATA");
+		else
+			appendStringInfoString(str, " WITH DATA");
 	}
 }
 
@@ -1180,6 +1226,8 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 			appendStringInfoString(str, "CREATE ");
 			if (rel->relpersistence == RELPERSISTENCE_TEMP)
 				appendStringInfoString(str, "TEMP ");
+			else if (rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+				appendStringInfoString(str, "UNLOGGED ");
 			appendStringInfoString(str, "TABLE ");
 			_outNode(str, into->rel);
 
@@ -1832,6 +1880,48 @@ _outMergeWhenClauses(StringInfo str, List *node)
 static void
 _outMergeAction(StringInfo str, MergeAction *node)
 {
+}
+
+static void
+_outReturningOption(StringInfo str, List *node)
+{
+	ListCell   *lc;
+	char        comma = 0;
+
+	appendStringInfoString(str, "WITH (");
+
+	foreach(lc, node)
+	{
+		ReturningOption *r = (ReturningOption *) lfirst(lc);
+
+		if (comma == 0)
+			comma = 1;
+		else
+			appendStringInfoString(str, ", ");
+
+		if (r->option == RETURNING_OPTION_OLD)
+			appendStringInfoString(str, "OLD ");
+		else if (r->option == RETURNING_OPTION_NEW)
+			appendStringInfoString(str, "NEW ");
+
+		appendStringInfoString(str, "AS ");
+		appendStringInfoString(str, "\"");
+		appendStringInfoString(str, r->value);
+		appendStringInfoString(str, "\"");
+	}
+
+	appendStringInfoString(str, ") ");
+}
+
+static void
+_outReturningClause(StringInfo str, ReturningClause *node)
+{
+
+	if (node->options)
+		_outReturningOption(str, node->options);
+
+	if (node->exprs)
+		_outList(str, node->exprs);
 }
 
 static void
@@ -2604,10 +2694,10 @@ _outInsertStmt(StringInfo str, InsertStmt *node)
 		_outOnConflictClause(str, node->onConflictClause);
 	}
 
-	if (node->returningList)
+	if (node->returningClause)
 	{
 		appendStringInfoString(str, " RETURNING ");
-		_outNode(str, node->returningList);
+		_outNode(str, node->returningClause);
 	}
 }
 
@@ -2719,10 +2809,10 @@ _outUpdateStmt(StringInfo str, UpdateStmt *node)
 		_outNode(str, node->whereClause);
 	}
 
-	if (node->returningList)
+	if (node->returningClause)
 	{
 		appendStringInfoString(str, " RETURNING ");
-		_outNode(str, node->returningList);
+		_outNode(str, node->returningClause);
 	}
 }
 
@@ -2748,10 +2838,10 @@ _outDeleteStmt(StringInfo str, DeleteStmt *node)
 		_outNode(str, node->whereClause);
 	}
 
-	if (node->returningList)
+	if (node->returningClause)
 	{
 		appendStringInfoString(str, " RETURNING ");
-		_outNode(str, node->returningList);
+		_outNode(str, node->returningClause);
 	}
 }
 
@@ -2778,10 +2868,10 @@ _outMergeStmt(StringInfo str, MergeStmt *node)
 		_outMergeWhenClauses(str, node->mergeWhenClauses);
 	}
 
-	if (node->returningList)
+	if (node->returningClause)
 	{
 		appendStringInfoString(str, " RETURNING ");
-		_outNode(str, node->returningList);
+		_outNode(str, node->returningClause);
 	}
 }
 
@@ -3843,6 +3933,11 @@ _outAlterTableCmd(StringInfo str, AlterTableCmd *node)
 }
 
 static void
+_outATAlterConstraint(StringInfo str, ATAlterConstraint *node)
+{
+}
+
+static void
 _outAlterTableStmt(StringInfo str, AlterTableStmt *node)
 {
 	if (node->objtype == OBJECT_TABLE)
@@ -3912,9 +4007,17 @@ static void
 _outCreateSeqStmt(StringInfo str, CreateSeqStmt *node)
 {
 	appendStringInfoString(str, "CREATE ");
+
 	if (node->sequence->relpersistence == RELPERSISTENCE_TEMP)
 		appendStringInfoString(str, "TEMP ");
+	else if (node->sequence->relpersistence == RELPERSISTENCE_UNLOGGED)
+		appendStringInfoString(str, "UNLOGGED ");
+
 	appendStringInfoString(str, "SEQUENCE ");
+
+	if (node->if_not_exists)
+		appendStringInfoString(str, "IF NOT EXISTS ");
+
 	_outNode(str, node->sequence);
 
 	_outOptSeqList(str, node->options);
@@ -6076,11 +6179,6 @@ _outPartitionRangeDatum(StringInfo str, PartitionRangeDatum *node)
 {
 }
 
-static void
-_outSinglePartitionSpec(StringInfo str, const SinglePartitionSpec *node)
-{
-}
-
 /*
  * _outNode -
  *	  converts a Node into ascii string and append it to 'str'
@@ -6297,6 +6395,9 @@ _outNode(StringInfo str, void *obj)
 			case T_InferenceElem:
 				_outInferenceElem(str, obj);
 				break;
+			case T_ReturningExpr:
+				_outReturningExpr(str, obj);
+				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);
 				break;
@@ -6397,6 +6498,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_MergeWhenClause:
 				_outMergeWhenClauses(str, obj);
+				break;
+			case T_ReturningOption:
+				_outReturningOption(str, obj);
+				break;
+			case T_ReturningClause:
+				_outReturningClause(str, obj);
 				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);
@@ -6546,9 +6653,6 @@ _outNode(StringInfo str, void *obj)
 			case T_PartitionRangeDatum:
 				_outPartitionRangeDatum(str, obj);
 				break;
-			case T_SinglePartitionSpec:
-				_outSinglePartitionSpec(str, obj);
-				break;
 
 			case T_InsertStmt:
 				_outInsertStmt(str, obj);
@@ -6660,6 +6764,10 @@ _outNode(StringInfo str, void *obj)
 
 			case T_AlterTableCmd:
 				_outAlterTableCmd(str, obj);
+				break;
+
+			case T_ATAlterConstraint:
+				_outATAlterConstraint(str, obj);
 				break;
 
 			case T_CreateSeqStmt:

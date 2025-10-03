@@ -113,7 +113,7 @@ static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t rotation_requested = false;
 
 
-static void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();
+pg_noreturn static void SysLoggerMain(int argc, char *argv[]);
 static void process_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static void flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer);
 static FILE *logfile_open(const char *filename, const char *mode,

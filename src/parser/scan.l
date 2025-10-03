@@ -22,8 +22,8 @@
  * Postgres 9.2, this check is made automatically by the Makefile.)
  *
  *
- * Portions Copyright (c) 2003-2024, PgPool Global Development Group
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2025, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -42,9 +42,11 @@
 #include "scansup.h"
 #include "kwlookup.h"
 #include "pg_wchar.h"
+#include "miscnodes.h"
 
 #include "gram.h"
 #include "utils/palloc.h"
+#include "utils/elog.h"
 #include "utils/elog.h"
 }
 
@@ -96,12 +98,6 @@ const uint16 ScanKeywordTokens[] = {
 #define YYSTYPE core_YYSTYPE
 
 /*
- * Set the type of yyextra.  All state variables used by the scanner should
- * be in yyextra, *not* statically allocated.
- */
-#define YY_EXTRA_TYPE core_yy_extra_type *
-
-/*
  * Each call to yylex must set yylloc to the location of the found token
  * (expressed as a byte offset from the start of the input text).
  * When we parse a token that requires multiple lexer rules to process,
@@ -142,15 +138,6 @@ static void addunicode(pg_wchar c, yyscan_t yyscanner);
 static void check_string_escape_warning(unsigned char ychar, core_yyscan_t yyscanner);
 static void check_escape_warning(core_yyscan_t yyscanner);
 
-/*
- * Work around a bug in flex 2.5.35: it emits a couple of functions that
- * it forgets to emit declarations for.  Since we use -Wmissing-prototypes,
- * this would cause warnings.  Providing our own declarations should be
- * harmless even when the bug gets fixed.
- */
-extern int	core_yyget_column(yyscan_t yyscanner);
-extern void core_yyset_column(int column_no, yyscan_t yyscanner);
-
 %}
 
 %option reentrant
@@ -167,6 +154,7 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
 %option noyyfree
 %option warn
 %option prefix="core_yy"
+%option extra-type="core_yy_extra_type *"
 
 /*
  * OK, here is a short description of lex/flex rules behavior.
@@ -418,16 +406,30 @@ numericfail		{decinteger}\.\.
 real			({decinteger}|{numeric})[Ee][-+]?{decinteger}
 realfail		({decinteger}|{numeric})[Ee][-+]
 
-decinteger_junk	{decinteger}{ident_start}
-hexinteger_junk	{hexinteger}{ident_start}
-octinteger_junk	{octinteger}{ident_start}
-bininteger_junk	{bininteger}{ident_start}
-numeric_junk	{numeric}{ident_start}
-real_junk		{real}{ident_start}
-
 /* Positional parameters don't accept underscores. */
 param			\${decdigit}+
-param_junk		\${decdigit}+{ident_start}
+
+/*
+ * An identifier immediately following an integer literal is disallowed because
+ * in some cases it's ambiguous what is meant: for example, 0x1234 could be
+ * either a hexinteger or a decinteger "0" and an identifier "x1234".  We can
+ * detect such problems by seeing if integer_junk matches a longer substring
+ * than any of the XXXinteger patterns (decinteger, hexinteger, octinteger,
+ * bininteger).  One "junk" pattern is sufficient because
+ * {decinteger}{identifier} will match all the same strings we'd match with
+ * {hexinteger}{identifier} etc.
+ *
+ * Note that the rule for integer_junk must appear after the ones for
+ * XXXinteger to make this work correctly: 0x1234 will match both hexinteger
+ * and integer_junk, and we need hexinteger to be chosen in that case.
+ *
+ * Also disallow strings matched by numeric_junk, real_junk and param_junk
+ * for consistency.
+ */
+integer_junk	{decinteger}{identifier}
+numeric_junk	{numeric}{identifier}
+real_junk		{real}{identifier}
+param_junk		\${decdigit}+{identifier}
 
 other			.
 
@@ -1057,19 +1059,7 @@ other			.
 					SET_YYLLOC();
 					yyerror("trailing junk after numeric literal");
 				}
-{decinteger_junk}	{
-					SET_YYLLOC();
-					yyerror("trailing junk after numeric literal");
-				}
-{hexinteger_junk}	{
-					SET_YYLLOC();
-					yyerror("trailing junk after numeric literal");
-				}
-{octinteger_junk}	{
-					SET_YYLLOC();
-					yyerror("trailing junk after numeric literal");
-				}
-{bininteger_junk}	{
+{integer_junk}	{
 					SET_YYLLOC();
 					yyerror("trailing junk after numeric literal");
 				}
@@ -1210,7 +1200,7 @@ setup_scanner_errposition_callback(ScannerCallbackState *scbstate,
 	scbstate->yyscanner = yyscanner;
 	scbstate->location = location;
 	scbstate->errcallback.callback = scb_error_callback;
-	scbstate->errcallback.arg = (void *) scbstate;
+	scbstate->errcallback.arg = scbstate;
 	scbstate->errcallback.previous = error_context_stack;
 	error_context_stack = &scbstate->errcallback;
 }
@@ -1490,10 +1480,10 @@ check_escape_warning(core_yyscan_t yyscanner)
 		ereport(WARNING,
 				(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 				 errmsg("nonstandard use of escape in a string literal"),
-		errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
+				 errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
 				 lexer_errposition()));
 #endif
-	yyextra->warn_on_first_escape = false;		/* warn only once per string */
+	yyextra->warn_on_first_escape = false;  /* warn only once per string */
 }
 
 /*

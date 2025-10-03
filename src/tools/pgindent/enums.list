@@ -60,4 +60,4 @@ WDCommandStatus
 fe_scram_state_enum
 scram_state_enum
 ExplainFormat
-RowCompareType
+CompareType

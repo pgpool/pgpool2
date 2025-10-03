@@ -453,7 +453,7 @@ RoleSpec
 RoleSpecType
 RoleStmtType
 RowCompareExpr
-RowCompareType
+CompareType
 RowDesc
 RowExpr
 RowMarkClause

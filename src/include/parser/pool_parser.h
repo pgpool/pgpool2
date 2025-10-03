@@ -66,6 +66,26 @@ typedef unsigned int Index;
  */
 #define endof(array) (&(array)[lengthof(array)])
 
+/*
+ * pg_noreturn corresponds to the C11 noreturn/_Noreturn function specifier.
+ * We can't use the standard name "noreturn" because some third-party code
+ * uses __attribute__((noreturn)) in headers, which would get confused if
+ * "noreturn" is defined to "_Noreturn", as is done by <stdnoreturn.h>.
+ *
+ * In a declaration, function specifiers go before the function name.  The
+ * common style is to put them before the return type.  (The MSVC fallback has
+ * the same requirement.  The GCC fallback is more flexible.)
+ */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define pg_noreturn _Noreturn
+#elif defined(__GNUC__) || defined(__SUNPRO_C)
+#define pg_noreturn __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define pg_noreturn __declspec(noreturn)
+#else
+#define pg_noreturn
+#endif
+
 /* GCC and XLC support format attributes */
 #if defined(__GNUC__) || defined(__IBMC__)
 #define pg_attribute_format_arg(a) __attribute__((format_arg(a)))
@@ -78,16 +98,13 @@ typedef unsigned int Index;
 /* GCC, Sunpro and XLC support aligned, packed and noreturn */
 #if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
 #define pg_attribute_aligned(a) __attribute__((aligned(a)))
-#define pg_attribute_noreturn() __attribute__((noreturn))
 #define pg_attribute_packed() __attribute__((packed))
-#define HAVE_PG_ATTRIBUTE_NORETURN 1
 #else
 /*
  * NB: aligned and packed are not given default definitions because they
  * affect code functionality; they *must* be implemented by the compiler
  * if they are to be used.
  */
-#define pg_attribute_noreturn()
 #endif
 
 /*
