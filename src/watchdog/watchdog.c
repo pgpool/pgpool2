@@ -7030,6 +7030,35 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode * wdNode, WDPacketD
 					(errmsg("we have not received a beacon message from leader node \"%s\" and it has not replied to our info request",
 							WD_LEADER_NODE->nodeName),
 					 errdetail("re-initializing the cluster")));
+			/*
+			 * Starting to set LOST status to the leader node.  This needs to
+			 * be done because there could be two leader nodes.
+			 */
+			WD_LEADER_NODE->state = WD_LOST;
+			ereport(LOG,
+					(errmsg("remote node \"%s\" is lost due to missed beacons", WD_LEADER_NODE->nodeName)));
+
+			/* Inform the node, that it is lost for us */
+			send_cluster_service_message(WD_LEADER_NODE, pkt, CLUSTER_NODE_APPEARING_LOST);
+			ereport(LOG,
+					(errmsg("watchdog cluster has lost the coordinator node")));
+
+			/* close all socket connections to the node */
+			close_socket_connection(&WD_LEADER_NODE->client_socket);
+			close_socket_connection(&WD_LEADER_NODE->server_socket);
+
+			/* clear the wait timer on the node */
+			WD_LEADER_NODE->last_sent_time.tv_sec = 0;
+			WD_LEADER_NODE->last_sent_time.tv_usec = 0;
+			WD_LEADER_NODE->sending_failures_count = 0;
+
+			node_lost_while_ipc_command(WD_LEADER_NODE);
+			set_cluster_leader_node(NULL);
+			/*
+			 * Finish setting LOST status to the leader node.
+			 */
+
+			/* re-initialize the cluster */
 			set_state(WD_JOINING);
 		}
 		else if (last_rcv_sec >= (2 * BEACON_MESSAGE_INTERVAL_SECONDS))
