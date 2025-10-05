@@ -1652,6 +1652,13 @@ VariableSetStmt:
 					n->is_local = false;
 					$$ = (Node *) n;
 				}
+			| PGPOOL set_rest_more
+				{
+					VariableSetStmt *n = $2;
+					n->type = T_PgpoolQueryCacheStmt; /* Hack to keep changes minimum */
+					n->is_local = false;
+					$$ = (Node *) n;
+				}
 			| SET set_rest
 				{
 					VariableSetStmt *n = $2;
@@ -1848,6 +1855,13 @@ set_rest_more:	/* Generic SET syntaxes: */
 					n->name = "TRANSACTION SNAPSHOT";
 					n->args = list_make1(makeStringConst($3, @3));
 					n->location = @3;
+					$$ = n;
+				}
+			/* PGPOOL CACHE DELETE */
+			| SET CACHE DELETE_P Sconst
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name = $4;   /* query to delete query cache */
 					$$ = n;
 				}
 		;
