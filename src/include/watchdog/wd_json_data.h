@@ -51,8 +51,8 @@ extern bool parse_node_status_json(char *json_data, int data_len, int *nodeID, i
 
 
 extern bool parse_beacon_message_json(char *json_data, int data_len, int *state,
-						  long *seconds_since_node_startup,
-						  long *seconds_since_current_state,
+						  long long *seconds_since_node_startup,
+						  long long *seconds_since_current_state,
 						  int *quorumStatus,
 						  int *standbyNodesCount,
 						  bool *escalated);

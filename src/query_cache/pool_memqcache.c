@@ -280,7 +280,7 @@ pool_commit_cache(POOL_CONNECTION_POOL * backend, char *query, char *data, size_
 	memqcache_expire = pool_config->memqcache_expire;
 	ereport(DEBUG1,
 			(errmsg("committing SELECT results to cache storage"),
-			 errdetail("memqcache_expire = %ld", memqcache_expire)));
+			 errdetail("memqcache_expire = %lld", (long long)memqcache_expire)));
 
 	if (pool_is_shmem_cache())
 	{
@@ -2889,8 +2889,8 @@ static POOL_CACHEID * pool_find_item_on_shmem_cache(POOL_QUERY_HASH * query_hash
 			{
 				ereport(DEBUG1,
 						(errmsg("memcache finding item"),
-						 errdetail("cache expired: now: %ld timestamp: %ld",
-								   now, cih->timestamp + cih->expire)));
+						 errdetail("cache expired: now: %lld timestamp: %lld",
+								   (long long)now, (long long)(cih->timestamp + cih->expire))));
 				pool_delete_item_shmem_cache(c);
 				return NULL;
 			}

@@ -50,7 +50,7 @@
 #include "main/pgpool_logger.h"
 
 #define DEVNULL "/dev/null"
-typedef int64 pg_time_t;
+typedef time_t pg_time_t;
 /*
  * We read() into a temp buffer twice as big as a chunk, so that any fragment
  * left after processing can be moved down to the front and we'll still have

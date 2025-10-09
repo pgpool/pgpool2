@@ -52,7 +52,7 @@ typedef struct WDGenericData
 		char	   *stringVal;
 		int			intVal;
 		bool		boolVal;
-		long		longVal;
+		long long	longVal;
 	}			data;
 }			WDGenericData;
 

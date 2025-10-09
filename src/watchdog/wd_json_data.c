@@ -530,6 +530,7 @@ get_watchdog_node_from_json(char *json_data, int data_len, char **authkey)
 {
 	json_value *root = NULL;
 	char	   *ptr;
+	long long	longVal;
 	WatchdogNode *wdNode = palloc0(sizeof(WatchdogNode));
 
 	root = json_parse(json_data, data_len);
@@ -537,19 +538,20 @@ get_watchdog_node_from_json(char *json_data, int data_len, char **authkey)
 	if (root == NULL || root->type != json_object)
 		goto ERROR_EXIT;
 
-	if (json_get_long_value_for_key(root, "StartupTimeSecs", &wdNode->startup_time.tv_sec))
+	if (json_get_llong_value_for_key(root, "StartupTimeSecs", &longVal))
 	{
 		bool		escalated;
-		long		seconds_since_node_startup;
-		long		seconds_since_current_state;
+		long long	seconds_since_node_startup;
+		long long	seconds_since_current_state;
 		struct timeval current_time;
 
+		wdNode->startup_time.tv_sec = longVal;
 		gettimeofday(&current_time, NULL);
 
 		/* The new version does not have StartupTimeSecs Key */
-		if (json_get_long_value_for_key(root, "SecondsSinceStartup", &seconds_since_node_startup))
+		if (json_get_llong_value_for_key(root, "SecondsSinceStartup", &seconds_since_node_startup))
 			goto ERROR_EXIT;
-		if (json_get_long_value_for_key(root, "SecondsSinceCurrentState", &seconds_since_current_state))
+		if (json_get_llong_value_for_key(root, "SecondsSinceCurrentState", &seconds_since_current_state))
 			goto ERROR_EXIT;
 		if (json_get_bool_value_for_key(root, "Escalated", &escalated))
 			goto ERROR_EXIT;
@@ -640,8 +642,8 @@ ERROR_EXIT:
 bool
 parse_beacon_message_json(char *json_data, int data_len,
 						  int *state,
-						  long *seconds_since_node_startup,
-						  long *seconds_since_current_state,
+						  long long *seconds_since_node_startup,
+						  long long *seconds_since_current_state,
 						  int *quorumStatus,
 						  int *standbyNodesCount,
 						  bool *escalated)
@@ -655,9 +657,9 @@ parse_beacon_message_json(char *json_data, int data_len,
 
 	if (json_get_int_value_for_key(root, "State", state))
 		goto ERROR_EXIT;
-	if (json_get_long_value_for_key(root, "SecondsSinceStartup", seconds_since_node_startup))
+	if (json_get_llong_value_for_key(root, "SecondsSinceStartup", seconds_since_node_startup))
 		goto ERROR_EXIT;
-	if (json_get_long_value_for_key(root, "SecondsSinceCurrentState", seconds_since_current_state))
+	if (json_get_llong_value_for_key(root, "SecondsSinceCurrentState", seconds_since_current_state))
 		goto ERROR_EXIT;
 	if (json_get_bool_value_for_key(root, "Escalated", escalated))
 		goto ERROR_EXIT;
