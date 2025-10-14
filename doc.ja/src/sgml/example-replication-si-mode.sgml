@@ -688,7 +688,7 @@ postgres:AESHs/pWL5rtXy2IwuzroHfqg==
    <programlisting>
 log_destination = 'stderr'
 logging_collector = on
-log_directory = '/var/log/pgpool_log'
+log_directory = '/var/log/pgpool'
 log_filename = 'pgpool-%Y-%m-%d_%H%M%S.log'
 log_truncate_on_rotation = on
 log_rotation_age = 1d

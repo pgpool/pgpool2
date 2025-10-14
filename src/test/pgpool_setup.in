@@ -1380,7 +1380,7 @@ chmod 0600 $PCP_PASS_FILE
 test ! -d run && mkdir run
 echo "pid_file_name = '$BASEDIR/run/pgpool.pid'" >> $CONF
 test ! -d log && mkdir log
-echo "logdir = '$BASEDIR/log'" >> $CONF
+echo "work_dir" = '$BASEDIR/log'" >> $CONF
 
 if [ "$PGPOOLDEBUG" = "true" ];then    
     echo '$PGPOOL_INSTALL_DIR/bin/pgpool -d -D -n -f $dir/etc/pgpool.conf -F $dir/etc/pcp.conf -a $dir/etc/pool_hba.conf 2>&1 | cat > $dir/log/pgpool.log &' >> $STARTALL
