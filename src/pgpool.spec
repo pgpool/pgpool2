@@ -22,6 +22,7 @@
 
 %global _varrundir %{_localstatedir}/run/pgpool
 %global _varlogdir %{_localstatedir}/log/pgpool_log
+%global _varlibdir %{_localstatedir}/lib/pgpool
 
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
 Name:           pgpool-II-pg%{pg_version}
@@ -45,6 +46,7 @@ Patch1:         pgpool_socket_dir.patch
 Patch2:         pcp_unix_domain_path.patch
 %endif
 Patch3:         pgpool_log.patch
+Patch4:         pgpool.conf.sample.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  postgresql%{pg_version}-devel pam-devel openssl-devel jade libxslt docbook-dtds docbook-style-xsl docbook-style-dsssl openldap-devel
 %if %{rhel} >= 9
@@ -107,6 +109,7 @@ PostgreSQL extensions libraries and sql files for pgpool-II.
 %patch2 -p0
 %endif
 %patch3 -p0
+%patch4 -p0
 
 %build
 %configure --with-pgsql=%{pghome} \
@@ -177,6 +180,7 @@ install -m 755 %{SOURCE1} %{buildroot}%{_initrddir}/pgpool
 %endif
 
 mkdir -p %{buildroot}%{_varlogdir} 
+mkdir -p %{buildroot}%{_varlibdir}
 
 install -d %{buildroot}%{_sysconfdir}/sysconfig
 %if 0%{rhel} && 0%{rhel} <= 6
@@ -290,6 +294,7 @@ fi
 %{_initrddir}/pgpool
 %endif
 %attr(0755,postgres,postgres) %dir %{_varlogdir}
+%attr(0755,postgres,postgres) %dir %{_varlibdir}
 %defattr(600,postgres,postgres,-)
 %{_sysconfdir}/%{short_name}/pgpool.conf.sample
 %{_sysconfdir}/%{short_name}/pcp.conf.sample

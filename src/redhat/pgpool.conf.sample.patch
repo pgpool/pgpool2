@@ -1,10 +1,10 @@
-*** src/sample/pgpool.conf.sample	2014-10-21 16:03:55.605775451 +0900
---- pgpool.conf.sample.new	2014-10-21 16:04:15.557776162 +0900
+*** src/sample/pgpool.conf.sample	2025-09-30 17:44:36.223222257 +0900
+--- pgpool.conf.sample	2025-09-30 17:46:22.952860803 +0900
 ***************
-*** 58,72 ****
-  
+*** 82,96 ****
+
   # - Backend Connection Settings -
-  
+
 ! #backend_hostname0 = 'host1'
                                      # Host name or IP address to connect to for backend 0
 ! #backend_port0 = 5432
@@ -15,12 +15,12 @@
                                      # Data directory for backend 0
 ! #backend_flag0 = 'ALLOW_TO_FAILOVER'
                                      # Controls various backend behavior
-                                     # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
-  #backend_hostname1 = 'host2'
---- 58,72 ----
-  
+                                     # ALLOW_TO_FAILOVER, DISALLOW_TO_FAILOVER
+                                     # or ALWAYS_PRIMARY
+--- 82,96 ----
+
   # - Backend Connection Settings -
-  
+
 ! backend_hostname0 = 'localhost'
                                      # Host name or IP address to connect to for backend 0
 ! backend_port0 = 5432
@@ -31,28 +31,22 @@
                                      # Data directory for backend 0
 ! backend_flag0 = 'ALLOW_TO_FAILOVER'
                                      # Controls various backend behavior
-                                     # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
-  #backend_hostname1 = 'host2'
+                                     # ALLOW_TO_FAILOVER, DISALLOW_TO_FAILOVER
+                                     # or ALWAYS_PRIMARY
 ***************
-*** 214,220 ****
-  pid_file_name = '/var/run/pgpool/pgpool.pid'
-                                     # PID file name
-                                     # Can be specified as relative to the"
+*** 351,357 ****
                                      # location of pgpool.conf file or
                                      # as an absolute path
                                      # (change requires restart)
-! logdir = '/tmp'
-                                     # Directory of pgPool status file
+! #work_dir = '/tmp'
+                                     # Directory for pgpool_status and lock files.
                                      # (change requires restart)
-  
---- 214,220 ----
-  pid_file_name = '/var/run/pgpool/pgpool.pid'
-                                     # PID file name
-                                     # Can be specified as relative to the"
+
+--- 351,357 ----
                                      # location of pgpool.conf file or
-                                     # or as absolute path
+                                     # as an absolute path
                                      # (change requires restart)
-! logdir = '/var/log/pgpool'
-                                     # Directory of pgPool status file
+! work_dir = '/var/lib/pgpool'
+                                     # Directory for pgpool_status and lock files.
                                      # (change requires restart)
   
