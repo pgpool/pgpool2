@@ -21,7 +21,7 @@
 %endif
 
 %global _varrundir %{_localstatedir}/run/pgpool
-%global _varlogdir %{_localstatedir}/log/pgpool_log
+%global _varlogdir %{_localstatedir}/log/pgpool
 %global _varlibdir %{_localstatedir}/lib/pgpool
 
 Summary:        Pgpool is a connection pooling/replication server for PostgreSQL
@@ -367,6 +367,10 @@ fi
 %endif
 
 %changelog
+* Tue Oct 14 2025 Taiki Koshino <koshino@sraoss.co.jp> 4.7.0
+- Change the value of log_directory parameter to '/var/log/pgpool'.
+- Create '/var/lib/pgpool' and set it to work_dir.
+
 * Wed Nov 2 2022 Bo Peng <pengbo@sraoss.co.jp> 4.4.0
 - Change /lib/tmpfiles.d/ file from /var/run to /run
 - Install /etc/sudoers.d/pgpool
