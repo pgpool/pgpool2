@@ -4838,7 +4838,12 @@ DelegateIPAssignMessage(ConfigContext scontext, char *newval, int elevel)
 		ereport(WARNING,
 				(errmsg("delegate_IP is changed to delegate_ip"),
 				 errdetail("if delegate_IP is specified, the value will be set to delegate_ip")));
-	g_pool_config.delegate_ip = newval;
+	if (g_pool_config.delegate_ip)
+		pfree(g_pool_config.delegate_ip);
+	if (newval)
+		g_pool_config.delegate_ip = pstrdup(newval);
+	else
+		g_pool_config.delegate_ip = NULL;
 	return true;
 }
 
