@@ -620,7 +620,7 @@ check_backend_down_request(int node, bool done_requests)
 	if (backend_down_request_file[0] == '\0')
 	{
 		snprintf(backend_down_request_file, sizeof(backend_down_request_file),
-				 "%s/%s", pool_config->logdir, BACKEND_DOWN_REQUEST_FILE);
+				 "%s/%s", pool_config->work_dir, BACKEND_DOWN_REQUEST_FILE);
 	}
 
 	fd = fopen(backend_down_request_file, "r");

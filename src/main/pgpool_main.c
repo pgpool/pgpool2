@@ -523,7 +523,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 		int			lfd;
 
 		snprintf(query_cache_lock_path, sizeof(query_cache_lock_path),
-				 "%s/%s", pool_config->logdir, QUERY_CACHE_LOCK_FILE);
+				 "%s/%s", pool_config->work_dir, QUERY_CACHE_LOCK_FILE);
 		lfd = open(query_cache_lock_path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
 		if (lfd == -1)
 		{
@@ -3204,7 +3204,7 @@ read_status_file(bool discard_status)
 		pool_set_backend_status_changed_time(i);
 	}
 
-	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->logdir, STATUS_FILE_NAME);
+	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->work_dir, STATUS_FILE_NAME);
 	fd = fopen(fnamebuf, "r");
 	if (!fd)
 	{
@@ -3391,7 +3391,7 @@ write_status_file(void)
 		return 0;
 	}
 
-	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->logdir, STATUS_FILE_NAME);
+	snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", pool_config->work_dir, STATUS_FILE_NAME);
 	fd = fopen(fnamebuf, "w");
 	if (!fd)
 	{

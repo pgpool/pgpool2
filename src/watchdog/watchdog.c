@@ -8577,7 +8577,7 @@ load_watchdog_debug_test_option(void)
 	if (wd_debug_request_file[0] == '\0')
 	{
 		snprintf(wd_debug_request_file, sizeof(wd_debug_request_file),
-				 "%s/%s", pool_config->logdir, WATCHDOG_DEBUG_FILE);
+				 "%s/%s", pool_config->work_dir, WATCHDOG_DEBUG_FILE);
 	}
 
 	fd = fopen(wd_debug_request_file, "r");

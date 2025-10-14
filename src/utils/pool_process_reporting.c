@@ -507,9 +507,9 @@ get_config(int *nrows)
 	StrNCpy(status[i].desc, "path to pid file", POOLCONFIG_MAXDESCLEN);
 	i++;
 
-	StrNCpy(status[i].name, "logdir", POOLCONFIG_MAXNAMELEN);
-	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->logdir);
-	StrNCpy(status[i].desc, "PgPool status file logging directory", POOLCONFIG_MAXDESCLEN);
+	StrNCpy(status[i].name, "work_dir", POOLCONFIG_MAXNAMELEN);
+	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", pool_config->work_dir);
+	StrNCpy(status[i].desc, "directory to create pgpool_status and lock files ", POOLCONFIG_MAXDESCLEN);
 	i++;
 
 	/* CONNECTION POOLING */

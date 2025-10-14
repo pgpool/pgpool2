@@ -260,10 +260,10 @@
    </listitem>
   </varlistentry>
 
-  <varlistentry id="guc-logdir" xreflabel="logdir">
-   <term><varname>logdir</varname> (<type>string</type>)
+  <varlistentry id="guc-work-dir" xreflabel="work_dir">
+   <term><varname>work_dir</varname> (<type>string</type>)
     <indexterm>
-     <primary><varname>logdir</varname> configuration parameter</primary>
+     <primary><varname>work_dir</varname> configuration parameter</primary>
     </indexterm>
    </term>
    <listitem>
@@ -298,7 +298,7 @@
      enables the testing facility of health checking. In this case the
      health check process looks
      into <filename>backend_down_request</filename>
-     under <xref linkend="guc-logdir">.  The file may contain multiple
+     under <xref linkend="guc-work-dir">.  The file may contain multiple
      lines, and each line corresponds to each backend. A line in the
      file starts with backend id (must be a decimal number starting
      with zero), then a TAB, and ends with "down". The backend is

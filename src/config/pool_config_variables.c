@@ -142,6 +142,7 @@ static bool BackendSlotEmptyCheckFunc(int index);
 /*variable custom assign functions */
 static bool FailOverOnBackendErrorAssignMessage(ConfigContext scontext, bool newval, int elevel);
 static bool DelegateIPAssignMessage(ConfigContext scontext, char *newval, int elevel);
+static bool LogDirAssignMessage(ConfigContext scontext, char *newval, int elevel);
 static bool BackendPortAssignFunc(ConfigContext context, int newval, int index, int elevel);
 static bool BackendHostAssignFunc(ConfigContext context, char *newval, int index, int elevel);
 static bool BackendDataDirAssignFunc(ConfigContext context, char *newval, int index, int elevel);
@@ -1353,13 +1354,24 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"logdir", CFGCXT_INIT, LOGGING_CONFIG,
-			"PgPool status file logging directory.",
+			"Old config parameter for work_dir.",
+			CONFIG_VAR_TYPE_STRING, false, VAR_HIDDEN_IN_SHOW_ALL
+		},
+		NULL,
+		"",
+		LogDirAssignMessage, NULL, NULL, NULL
+	},
+
+	{
+		{"work_dir", CFGCXT_INIT, LOGGING_CONFIG,
+			"directory to create pgpool_status and lock files.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
-		&g_pool_config.logdir,
+		&g_pool_config.work_dir,
 		DEFAULT_LOGDIR,
 		NULL, NULL, NULL, NULL
 	},
+
 	{
 		{"log_directory", CFGCXT_RELOAD, LOGGING_CONFIG,
 			"directory where log files are written.",
@@ -4827,6 +4839,26 @@ DelegateIPAssignMessage(ConfigContext scontext, char *newval, int elevel)
 				(errmsg("delegate_IP is changed to delegate_ip"),
 				 errdetail("if delegate_IP is specified, the value will be set to delegate_ip")));
 	g_pool_config.delegate_ip = newval;
+	return true;
+}
+
+/*
+ * Throws warning for if someone uses the removed logdir
+ * configuration parameter and set the value to work_dir
+ */
+static bool
+LogDirAssignMessage(ConfigContext scontext, char *newval, int elevel)
+{
+	if (scontext != CFGCXT_BOOT)
+		ereport(WARNING,
+				(errmsg("logdir is changed to work_dir"),
+				 errdetail("if logdir is specified, the value will be set to work_dir")));
+	if (g_pool_config.work_dir)
+		pfree(g_pool_config.work_dir);
+	if (newval)
+		g_pool_config.work_dir = pstrdup(newval);
+	else
+		g_pool_config.work_dir = NULL;
 	return true;
 }
 

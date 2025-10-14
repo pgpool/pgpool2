@@ -3137,7 +3137,7 @@ pool_shmem_lock(POOL_MEMQ_LOCK_TYPE type)
 	{
 		char	   *path;
 
-		path = psprintf("%s/%s", pool_config->logdir, QUERY_CACHE_LOCK_FILE);
+		path = psprintf("%s/%s", pool_config->work_dir, QUERY_CACHE_LOCK_FILE);
 		memq_lock_fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
 		if (memq_lock_fd == -1)
 		{

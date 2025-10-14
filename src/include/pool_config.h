@@ -261,7 +261,7 @@ typedef struct
 	int			authentication_timeout; /* maximum time in seconds to complete
 										 * client authentication */
 	int			max_pool;		/* max # of connection pool per child */
-	char	   *logdir;			/* logging directory */
+	char	   *work_dir;		/* directory to create pgpool_status and lock files */
 	char	   *log_destination_str;	/* log destination: stderr and/or
 										 * syslog */
 	int			log_destination;	/* log destination */

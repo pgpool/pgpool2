@@ -3707,7 +3707,7 @@
     2019-01-03 [de632ca]
     -->
     <para>
-     Doc: fix typo in <xref linkend="GUC-LOGDIR"> description. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=453">bug 453</ulink>) (Tatsuo Ishii)
+     Doc: fix typo in <link linkend="GUC-WORK-DIR">logdir</link> description. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=453">bug 453</ulink>) (Tatsuo Ishii)
     </para>
    </listitem>
 

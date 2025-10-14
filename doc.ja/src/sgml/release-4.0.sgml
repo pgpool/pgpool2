@@ -4260,7 +4260,7 @@
      <!--
      Doc: fix typo in logdir description. (<ulink url="http://www.pgpool.net/mantisbt/view.php?id=453">bug 453</ulink>)(Tatsuo Ishii)
      -->
-     Doc: <xref linkend="GUC-LOGDIR">に関するドキュメントのタイポを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=453">bug 453</ulink>)(Tatsuo Ishii)
+     Doc: <link linkend="GUC-WORK-DIR">logdir</link>に関するドキュメントのタイポを修正しました。(<ulink url="http://www.pgpool.net/mantisbt/view.php?id=453">bug 453</ulink>)(Tatsuo Ishii)
     </para>
    </listitem>
 

@@ -351,8 +351,8 @@ backend_clustering_mode = streaming_replication
                                    # location of pgpool.conf file or
                                    # as an absolute path
                                    # (change requires restart)
-#logdir = '/tmp'
-                                   # Directory of pgPool status file
+#work_dir = '/tmp'
+                                   # Directory for pgpool_status and lock files.
                                    # (change requires restart)
 
 
