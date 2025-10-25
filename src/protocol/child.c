@@ -1340,6 +1340,8 @@ send_params(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 		pool_write(frontend, &sendlen, sizeof(sendlen));
 		pool_write(frontend, name, strlen(name) + 1);
 		pool_write(frontend, value, strlen(value) + 1);
+		elog(DEBUG1, "send parameter status message to frontend: \"%s\" = \"%s\"",
+			 name, value);
 	}
 
 	if (pool_flush(frontend))
