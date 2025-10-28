@@ -278,9 +278,9 @@ function do_auth
 
 	    add_user $username $pg_hba $PGPORT
 
-	    # for logical replication and slony, we need to manually
+	    # for logical replication, we need to manually
 	    # add PostgreSQL user to node 1.
-	    if [ $mode = 'l' -o $mode = 'y' ];then
+	    if [ $mode = 'l' ];then
 		add_user $username $pg_hba "11003"
 	    fi
 	    add_pool_hba $username $pool_hba $PGPOOL_VERSION_DIGIT

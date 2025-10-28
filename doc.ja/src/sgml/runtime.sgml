@@ -240,10 +240,6 @@
        <entry><literal>logical_replication</literal> </entry>
       </row>
       <row>
-       <entry>slonyモード</entry>
-       <entry><literal>slony</literal></entry>
-      </row>
-      <row>
        <entry>スナップショットアイソレーションモード</entry>
        <entry><literal>snapshot_isolation</literal></entry>
       </row>
@@ -313,7 +309,7 @@
    </indexterm>
 
    <para>
-    <productname>Pgpool-II</>にはストリーミングレプリケーションモード、ロジカルレプリケーションモード、メインレプリカモード(Slonyモード)、ネイティブレプリケーションモード、スナップショットアイソレーションモード、rawモードの6つの<link linkend="guc-backend-clustering-mode">クラスタリングモード</link>があります。
+    <productname>Pgpool-II</>にはストリーミングレプリケーションモード、ロジカルレプリケーションモード、ネイティブレプリケーションモード、スナップショットアイソレーションモード、rawモードの6つの<link linkend="guc-backend-clustering-mode">クラスタリングモード</link>があります。
     いずれのモードにおいても、<productname>Pgpool-II</>はコネクションプーリング、自動フェイルオーバの機能を提供します。
     ストリーミングレプリケーションモード、ネイティブレプリケーションモード、スナップショットアイソレーションモードでは、更新処理を受け付けながらデータベースノードの同期を取り直すオンラインリカバリが利用可能です。
     オンラインリカバリの詳細については<xref linkend="runtime-online-recovery">を参照してください。
@@ -377,26 +373,6 @@ default_transaction_isolation = 'repeatable read'
     <productname>Pgpool-II</>はすべてのテーブルをロードバランスします。
     このことは、テーブルがレプリケーションされていない場合には、<productname>Pgpool-II</>がサブスクライバー側の更新されていない古いテーブルを見てしまうかもしれないことを意味します。
    </para>
-
-   <para>
-    <!--
-    The <firstterm>native replication mode</firstterm> mode (slony mode)
-    can be used with <productname>PostgreSQL</> servers
-    operating <productname>Slony</>. In this
-    mode, <productname>Slony</>/<productname>PostgreSQL</> is
-    responsible for synchronizing
-    databases. Since <productname>Slony-I</> is being obsoleted by
-    streaming replication, we do not recommend to use this mode
-    unless you have specific reason to
-    use <productname>Slony</>. Load balancing is possible in the
-    mode.
-    -->
-    <firstterm>メインレプリカモード</firstterm>(slonyモード)は<productname>Slony-I</>を使用する<productname>PostgreSQL</>サーバと一緒に使うことができます。
-    このモードでは、<productname>Slony</>/<productname>PostgreSQL</>がデータベースを同期する責任を持ちます。
-    <productname>Slony</>はストリーミングレプリケーションの登場により廃れつつあるため、<productname>Slony</>を使う特別な理由が無い限りこのモードの使用を推奨しません。
-    このモードでは負荷分散が可能です。
-   </para>
-
 
    <para>
     <!--

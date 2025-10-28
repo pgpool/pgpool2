@@ -410,11 +410,9 @@ typedef enum
 #define REPLICATION (pool_config->backend_clustering_mode == CM_NATIVE_REPLICATION || \
 					 pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION)
 #define MAIN_REPLICA (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION || \
-					  pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION || \
-					  pool_config->backend_clustering_mode == CM_SLONY)
+					  pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION)
 #define STREAM (pool_config->backend_clustering_mode == CM_STREAMING_REPLICATION)
 #define LOGICAL (pool_config->backend_clustering_mode == CM_LOGICAL_REPLICATION)
-#define SLONY (pool_config->backend_clustering_mode == CM_SLONY)
 #define RAW_MODE (pool_config->backend_clustering_mode == CM_RAW)
 #define SL_MODE (STREAM || LOGICAL) /* streaming or logical replication mode */
 

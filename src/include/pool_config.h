@@ -70,19 +70,11 @@ typedef enum ProcessManagementSstrategies
 	PM_STRATEGY_LAZY
 } ProcessManagementSstrategies;
 
-typedef enum NativeReplicationSubModes
-{
-	SLONY_MODE = 1,
-	STREAM_MODE,
-	LOGICAL_MODE
-}			NativeReplicationSubModes;
-
 typedef enum ClusteringModes
 {
 	CM_STREAMING_REPLICATION = 1,
 	CM_NATIVE_REPLICATION,
 	CM_LOGICAL_REPLICATION,
-	CM_SLONY,
 	CM_RAW,
 	CM_SNAPSHOT_ISOLATION
 } ClusteringModes;

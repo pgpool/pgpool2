@@ -142,7 +142,7 @@
  <sect1 id="read-query-load-balancing">
   <title>読み出しクエリの負荷分散</title>
   <para>
-   複数の<productname>PostgreSQL</productname>ノードがあり、<productname>Pgpool-II</productname>がストリーミングレプリケーションモード、ロジカルレプリケーションモード、slonyモード、レプリケーションモードで動作していると(これらの動作モードについては<xref linkend="running-mode">を参照のこと)、読み出しクエリをこれらのデータベースノードに分散させ、各々のノードにより少ない数のクエリを処理させることによってより高いスループットを得ることができます。
+   複数の<productname>PostgreSQL</productname>ノードがあり、<productname>Pgpool-II</productname>がストリーミングレプリケーションモード、ロジカルレプリケーションモード、レプリケーションモードで動作していると(これらの動作モードについては<xref linkend="running-mode">を参照のこと)、読み出しクエリをこれらのデータベースノードに分散させ、各々のノードにより少ない数のクエリを処理させることによってより高いスループットを得ることができます。
     この機能を使うためには、<xref linkend="guc-load-balance-mode">をonにする必要があります。
   </para>
 

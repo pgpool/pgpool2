@@ -1660,29 +1660,6 @@ backend_clustering_mode = logical_replication
   </para>
  </sect2>
 
- <sect2 id="runtime-config-slony-mode">
-  <title>Slonyモード</title>
-
-  <para>
-   このモードでは<productname>Pgpool-II</productname>を<acronym>Slony-I</acronym>と組み合わせて使用します。
-   Slony-Iが実際にデータのレプリケーションを行います。
-   このモードを有効にするには<varname>backend_clustering_mode</varname>にslonyを設定してください。
-    <programlisting>
-backend_clustering_mode = slony
-    </programlisting>
-   このモードでは127台までのレプリカサーバを使用できます。
-   また、レプリカサーバをまったく使用しないことも可能です。
-  </para>
-  <para>
-   このモードの難点は、検索問い合わせを負荷分散させた時に、スタンバイサーバのレプリケーション遅延を意識しなければならない点です。
-   ノードをまたがる可視性の一貫性も保証されません。
-   また、DDLやラージオブジェクトなど、一部のデータオブジェクトはレプリケーションされません。
-  </para>
-  <para>
-   ストリーミングレプリケーションやロジカルレプリケーションが登場後、Slony-Iを新規に採用するシステムは少ないので、特に理由がない限りこのモードを使用することはお勧めしません。
-  </para>
- </sect2>
-
  <sect2 id="guc-raw-mode" xreflabel="rawモード">
   <title>rawモード</title>
   <para>

@@ -124,7 +124,7 @@
       supported, however.
      </para>
      <para>
-      In other mode, including Slony mode, large
+      In other mode, large
       objects are not supported.
      </para>
     </listitem>

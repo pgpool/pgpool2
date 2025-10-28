@@ -1609,7 +1609,7 @@ Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		}
 	}
 
-	if (REPLICATION || SLONY)
+	if (REPLICATION)
 	{
 		/*
 		 * We must synchronize because Parse message acquires table locks.

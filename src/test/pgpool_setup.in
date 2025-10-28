@@ -23,7 +23,6 @@
 # -m r: create an installation as native replication mode.
 # -m n: create an installation as raw mode.
 # -m l: create an installation as logical replication mode.
-# -m y: create an installation as slony mode.
 # -m i: create an installation as snapshot isolation mode.
 # -n num_clusters: create num_clusters PostgreSQL database cluster nodes
 # -p base_port: specify base port. pgpool port is base_port.
@@ -1171,7 +1170,7 @@ EOF
 ################################################################################
 function usage()
 {
-	echo "usage: $0 [-m r|s|n|l|y|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r] [-e] [-t] [-c]";exit 1
+	echo "usage: $0 [-m r|s|n|l|i] [-n num_clusters] [-p base_port] [-pg pg_base_port][--no-stop] [-d] [-s] [-r] [-e] [-t] [-c]";exit 1
 }
 
 #-------------------------------------------
@@ -1195,7 +1194,6 @@ do
 			s ) MODE="s";;
 			n ) MODE="n";;
 			l ) MODE="l";;
-			y ) MODE="y";;
 			i ) MODE="i";;
 			* ) usage;;
 		esac
@@ -1246,9 +1244,6 @@ case $MODE in
 		;;
 	l ) MODENAME="logical replication mode"
 	    CLUSTERING_MODE_STR="logical_replication"
-	    ;;
-	y ) MODENAME="slony mode"
-	    CLUSTERING_MODE_STR="slony"
 	    ;;
 	i ) MODENAME="snapshot isolation mode"
 	    CLUSTERING_MODE_STR="snapshot_isolation"

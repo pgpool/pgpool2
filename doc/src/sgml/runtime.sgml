@@ -168,10 +168,6 @@
        <entry><literal>logical_replication</literal> </entry>
       </row>
       <row>
-       <entry>Slony mode</entry>
-       <entry><literal>slony</literal></entry>
-      </row>
-      <row>
        <entry>Snapshot isolation mode</entry>
        <entry><literal>snapshot_isolation</literal></entry>
       </row>
@@ -221,7 +217,7 @@
    <para>
     There are six different <link linkend="guc-backend-clustering-mode">clustering modes</link> in
     <productname>Pgpool-II</>: streaming replication mode, logical
-    replication mode, main replica mode (slony mode), native
+    replication mode, native
     replication mode, raw mode and snapshot isolation mode. In any
     mode, <productname>Pgpool-II</> provides connection pooling, and
     automatic fail over.  Online recovery can be used only with
@@ -303,19 +299,6 @@ default_transaction_isolation = 'repeatable read'
     all tables. This means that if a table is not
     replicated, <productname>Pgpool-II</> may lookup outdated tables
     in the subscriber side.
-   </para>
-
-   <para>
-    The <firstterm>main replica mode</firstterm> (slony mode)
-    can be used with <productname>PostgreSQL</> servers
-    operating <productname>Slony</>. In this
-    mode, <productname>Slony</>/<productname>PostgreSQL</> is
-    responsible for synchronizing
-    databases. Since <productname>Slony-I</> is being obsoleted by
-    streaming replication, we do not recommend to use this mode
-    unless you have specific reason to
-    use <productname>Slony</>. Load balancing is possible in the
-    mode.
    </para>
 
    <para>

@@ -182,7 +182,7 @@
       In other mode, including Slony mode, large
       objects are not supported.
       -->
-      Slonyモードも含め、その他のモードではラージオブジェクトはサポートされていません。
+      その他のモードではラージオブジェクトはサポートされていません。
      </para>
     </listitem>
    </varlistentry>

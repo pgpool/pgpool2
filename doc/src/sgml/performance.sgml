@@ -202,7 +202,7 @@
   <para>
    If there are multiple <productname>PostgreSQL</productname>
    nodes and <productname>Pgpool-II</productname> operates in
-   streaming replication mode, logical replication mode, slony mode
+   streaming replication mode, logical replication mode,
    or replication mode (for those running mode
    see <xref linkend="running-mode"> for more details), it is
     possible to distribute read queries among those database nodes

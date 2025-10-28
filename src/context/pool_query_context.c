@@ -1983,7 +1983,7 @@ dml_adaptive(Node *node, char *query)
 
 /*
  * Decide the backend node to be sent in streaming replication mode, logical
- * replication mode and slony mode.  Called by pool_where_to_send.
+ * replication mode.  Called by pool_where_to_send.
  */
 static void
 where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node *node)

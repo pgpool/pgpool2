@@ -1212,35 +1212,6 @@ backend_clustering_mode = logical_replication
 
  </sect2>
 
- <sect2 id="runtime-config-slony-mode">
-  <title>Slony mode</title>
-
-  <para>
-   This mode is used to couple <productname>Pgpool-II</productname>
-   with <acronym>Slony-I</acronym>.  Slony-I is responsible for doing
-   the actual data replication. To enable this mode, use slony for
-   <varname>backend_clustering_mode</varname>.
-    <programlisting>
-backend_clustering_mode = slony
-    </programlisting>
-   In this mode you can have up to 127 replica servers.  Also it is
-   possible not to have replica server at all.
-  </para>
-
-  <para>
-   The drawback of this mode is, it is necessary to consider the
-   replication delay while distributing read queries. The visibility
-   consistency among nodes is not guaranteed either.  Also certain
-   kind of objects such as DDL and large objects are not replicated.
-  </para>
-
-  <para>
-   After streaming replication and logical replication are introduced,
-   there are few systems that employ Slony-I.  If there's no
-   particular reason, it is not recommended to use this mode.
-  </para>
- </sect2>
-
  <sect2 id="guc-raw-mode" xreflabel="raw mode">
   <title>Raw mode</title>
   <para>
