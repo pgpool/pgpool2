@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 
 lib_LTLIBRARIES = libpcp.la
-libpcp_la_LDFLAGS = -version-info 2:1:0
+libpcp_la_LDFLAGS = -version-info 3:0:0
 dist_libpcp_la_SOURCES = pcp.c \
 					../../utils/pool_path.c \
 					../../tools/fe_port.c \
