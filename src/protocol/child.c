@@ -835,35 +835,7 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 
 	if (MAJOR(backend) == 3)
 	{
-		char		command_buf[1024];
-
-		/*
-		 * If we have received application_name in the start up packet, we
-		 * send SET command to backend. Also we add or replace existing
-		 * application_name data.
-		 */
-		if (sp->application_name)
-		{
-			snprintf(command_buf, sizeof(command_buf), "SET application_name TO '%s'", sp->application_name);
-
-			for (i = 0; i < NUM_BACKENDS; i++)
-			{
-				if (VALID_BACKEND(i))
-					if (do_command(frontend, CONNECTION(backend, i),
-								   command_buf, MAJOR(backend),
-								   MAIN_CONNECTION(backend)->pid,
-								   MAIN_CONNECTION(backend)->key, 0) != POOL_CONTINUE)
-					{
-						ereport(ERROR,
-								(errmsg("unable to process command for backend connection"),
-								 errdetail("do_command returned DEADLOCK status")));
-					}
-			}
-
-			pool_add_param(&MAIN(backend)->params, "application_name", sp->application_name);
-			set_application_name_with_string(sp->application_name);
-		}
-
+		/* Send parameter status message to frontend. */
 		send_params(frontend, backend);
 	}
 
