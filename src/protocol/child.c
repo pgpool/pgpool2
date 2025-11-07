@@ -847,49 +847,7 @@ connect_using_existing_connection(POOL_CONNECTION * frontend,
 
 	if (MAJOR(backend) == 3)
 	{
-		char		command_buf[1024];
-
-		/*
-		 * If we have received application_name in the start up packet, we
-		 * send SET command to backend. Also we add or replace existing
-		 * application_name data.
-		 */
-		if (sp->application_name)
-		{
-			snprintf(command_buf, sizeof(command_buf), "SET application_name TO '%s'", sp->application_name);
-
-			for (i = 0; i < NUM_BACKENDS; i++)
-			{
-				if (VALID_BACKEND(i))
-				{
-					/*
-					 * We want to catch and ignore errors in do_command if a
-					 * backend is just going down right now. Otherwise
-					 * do_command raises an error and disconnects the
-					 * connection to frontend. We can safely ignore error from
-					 * "SET application_name" command if the backend goes
-					 * down.
-					 */
-					PG_TRY();
-					{
-						do_command(frontend, CONNECTION(backend, i),
-								   command_buf, MAJOR(backend),
-								   MAIN_CONNECTION(backend)->pid,
-								   MAIN_CONNECTION(backend)->key, 0);
-					}
-					PG_CATCH();
-					{
-						/* ignore the error message */
-						MemoryContextSwitchTo(oldContext);
-						FlushErrorState();
-					}
-					PG_END_TRY();
-				}
-			}
-			pool_add_param(&MAIN(backend)->params, "application_name", sp->application_name);
-			set_application_name_with_string(sp->application_name);
-		}
-
+		/* Send parameter status message to frontend. */
 		send_params(frontend, backend);
 	}
 
