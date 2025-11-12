@@ -16,8 +16,7 @@
   the visibility consistency among nodes.
  </para>
  <para>
-  <productname>PostgreSQL</productname> 14 is used in this configuration example.
-  All scripts have been tested with <productname>PostgreSQL</productname> 10 and later.
+  <productname>PostgreSQL</productname> 18 is used in this configuration example.
  </para>
 
  <sect2 id="example-replication-mode-structure">
@@ -28,7 +27,7 @@
    replication.
   </para>
   <para>
-   In this example we use 3 servers with CentOS 7.9 installed.
+   In this example we use 3 servers with Rocky Linux 10 installed.
    Let these servers be <literal>server1</literal>,
    <literal>server2</literal>, <literal>server3</literal>.
    We install <productname>PostgreSQL</productname> on all servers and
@@ -84,7 +83,7 @@
     <tbody>
      <row>
       <entry>PostgreSQL Version</entry>
-      <entry>14.0</entry>
+      <entry>18.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -94,7 +93,7 @@
      </row>
      <row>
       <entry>$PGDATA</entry>
-      <entry>/var/lib/pgsql/14/data</entry>
+      <entry>/var/lib/pgsql/18/data</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -164,8 +163,8 @@
    Install <productname>PostgreSQL</productname> from <productname>PostgreSQL</productname> YUM repository.
   </para>
   <programlisting>
-[all servers]# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-[all servers]# yum install -y postgresql14-server
+[all servers]# yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+[all servers]# yum install -y postgresql18-server
   </programlisting>
 
   <para>
@@ -184,6 +183,22 @@
 ...
 exclude=pgpool*
 
+[pgdg18]
+...
+exclude=pgpool*
+
+[pgdg17]
+...
+exclude=pgpool*
+
+[pgdg16]
+...
+exclude=pgpool*
+
+[pgdg15]
+...
+exclude=pgpool*
+
 [pgdg14]
 ...
 exclude=pgpool*
@@ -191,20 +206,6 @@ exclude=pgpool*
 [pgdg13]
 ...
 exclude=pgpool*
-
-[pgdg12]
-...
-exclude=pgpool*
-
-[pgdg11]
-...
-exclude=pgpool*
-
-[pgdg10]
-...
-exclude=pgpool*
-
-[pgdg96]
 ...
 exclude=pgpool*
   </programlisting>
@@ -212,8 +213,8 @@ exclude=pgpool*
    Install <productname>Pgpool-II</productname> using Pgpool-II YUM repository.
   </para>
   <programlisting>
-[all servers]# yum install -y https://www.pgpool.net/yum/rpms/4.4/redhat/rhel-7-x86_64/pgpool-II-release-4.4-1.noarch.rpm
-[all servers]# yum install -y pgpool-II-pg14-*
+[all servers]# yum install -y https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-10-x86_64/pgpool-II-release-4.6-1.noarch.rpm
+[all servers]# yum install -y pgpool-II-pg18-*
   </programlisting>
  </sect2>
 
@@ -303,7 +304,7 @@ server3:5432:postgres:postgres:&lt;postgres user password&gt;
   <sect3 id="example-replication-mode-firewall">
    <title>Configure firewall</title>
    <para>
-     When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>CentOS/RHEL7</systemitem>.
+     When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>Rocky Linux 10</systemitem>.
    </para>
    <programlisting>
 [all servers]# firewall-cmd --permanent --zone=public --add-service=postgresql
@@ -343,7 +344,7 @@ server3:5432:postgres:postgres:&lt;postgres user password&gt;
   </para>
   <programlisting>
 [server1]# su - postgres
-[server1]$ /usr/pgsql-14/bin/initdb -E UTF8 --no-locale
+[server1]$ /usr/pgsql-18/bin/initdb -E UTF8 --no-locale
   </programlisting>
   <para>
    Then edit <filename>$PGDATA/postgresql.conf</filename> on server1.
@@ -370,7 +371,7 @@ host    replication     all             samenet                 scram-sha-256
    Run the following command to start PostgreSQL server.
   </para>
   <programlisting>
-[server1]$ /usr/pgsql-14/bin/pg_ctl start
+[server1]$ /usr/pgsql-18/bin/pg_ctl start
   </programlisting>
 
   <para>
@@ -513,19 +514,19 @@ health_check_max_retries = 3
 backend_hostname0 = 'server1'
 backend_port0 = 5432
 backend_weight0 = 1
-backend_data_directory0 = '/var/lib/pgsql/14/data'
+backend_data_directory0 = '/var/lib/pgsql/18/data'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname1 = 'server2'
 backend_port1 = 5432
 backend_weight1 = 1
-backend_data_directory1 = '/var/lib/pgsql/14/data'
+backend_data_directory1 = '/var/lib/pgsql/18/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname2 = 'server3'
 backend_port2 = 5432
 backend_weight2 = 1
-backend_data_directory2 = '/var/lib/pgsql/14/data'
+backend_data_directory2 = '/var/lib/pgsql/18/data'
 backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
   </sect3>
@@ -554,28 +555,28 @@ recovery_2nd_stage_command = 'recovery_2nd_stage'
     Create the scripts used by online recovery command from sample scripts and copy these files to the database cluster directory.
    </para>
    <programlisting>
-[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_1st_stage.sample /var/lib/pgsql/14/data/recovery_1st_stage
-[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_2nd_stage.sample /var/lib/pgsql/14/data/recovery_2nd_stage
-[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/14/data/pgpool_remote_start
-[server1]# chown postgres:postgres /var/lib/pgsql/14/data/{recovery_1st_stage,recovery_2nd_stage,pgpool_remote_start}
+[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_1st_stage.sample /var/lib/pgsql/18/data/recovery_1st_stage
+[server1]# cp -p /etc/pgpool-II/sample_scripts/replication_mode_recovery_2nd_stage.sample /var/lib/pgsql/18/data/recovery_2nd_stage
+[server1]# cp -p /etc/pgpool-II/sample_scripts/pgpool_remote_start.sample /var/lib/pgsql/18/data/pgpool_remote_start
+[server1]# chown postgres:postgres /var/lib/pgsql/18/data/{recovery_1st_stage,recovery_2nd_stage,pgpool_remote_start}
    </programlisting>
    <para>
     Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
    </para>
    <programlisting>
-[server1]# vi /var/lib/pgsql/14/data/recovery_1st_stage
+[server1]# vi /var/lib/pgsql/18/data/recovery_1st_stage
 ...
-PGHOME=/usr/pgsql-14
-...
-
-[server1]# vi /var/lib/pgsql/14/data/recovery_2nd_stage
-...
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-18
 ...
 
-[server1]# vi /var/lib/pgsql/14/data/pgpool_remote_start
+[server1]# vi /var/lib/pgsql/18/data/recovery_2nd_stage
 ...
-PGHOME=/usr/pgsql-14
+PGHOME=/usr/pgsql-18
+...
+
+[server1]# vi /var/lib/pgsql/18/data/pgpool_remote_start
+...
+PGHOME=/usr/pgsql-18
 ...
    </programlisting>
 
@@ -784,15 +785,15 @@ Password for user pgpool:
     Next, let's verify the replication functionality using a benchmark tool pgbench.
    </para>
    <programlisting>
-[server1]# /usr/pgsql-14/bin/createdb test -U postgres -p 9999
-[server1]# /usr/pgsql-14/bin/pgbench -h server1 -U postgres -i -p 9999 test
+[server1]# /usr/pgsql-18/bin/createdb test -U postgres -p 9999
+[server1]# /usr/pgsql-18/bin/pgbench -h server1 -U postgres -i -p 9999 test
    </programlisting>
    <para>
     To check if the replication works correctly, directly connect to each PostgreSQL
     server to see if they return identical results.
    </para>
    <programlisting>
-[server1]# /usr/pgsql-14/bin/psql -h server1 -U postgres -p 5432 test
+[server1]# /usr/pgsql-18/bin/psql -h server1 -U postgres -p 5432 test
 test=# \d
               List of relations
  Schema |       Name       | Type  |  Owner
@@ -803,7 +804,7 @@ test=# \d
  public | pgbench_tellers  | table | postgres
 (4 rows)
 
-[server1]# /usr/pgsql-14/bin/psql -h server2 -U postgres -p 5432 test
+[server1]# /usr/pgsql-18/bin/psql -h server2 -U postgres -p 5432 test
 test=# \d
               List of relations
  Schema |       Name       | Type  |  Owner
@@ -814,7 +815,7 @@ test=# \d
  public | pgbench_tellers  | table | postgres
 (4 rows)
 
-[server1]# /usr/pgsql-14/bin/psql -h server3 -U postgres -p 5432 test
+[server1]# /usr/pgsql-18/bin/psql -h server3 -U postgres -p 5432 test
 test=# \d
               List of relations
  Schema |       Name       | Type  |  Owner
@@ -832,27 +833,27 @@ test=# \d
     Next, let's run pgbench for a while and check to results.
    </para>
    <programlisting>
-[server1]# /usr/pgsql-14/bin/pgbench -h server1 -U postgres -p 9999 -T 10 test
+[server1]# /usr/pgsql-18/bin/pgbench -h server1 -U postgres -p 9999 -T 10 test
    </programlisting>
    <para>
     All PostgreSQL servers return identical results.
    </para>
    <programlisting>
-[server1]# /usr/pgsql-14/bin/psql -h server1 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
+[server1]# /usr/pgsql-18/bin/psql -h server1 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
 Password for user postgres:
   sum
 --------
  -99710
 (1 row)
 
-[server1]# /usr/pgsql-14/bin/psql -h server2 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
+[server1]# /usr/pgsql-18/bin/psql -h server2 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
 Password for user postgres:
   sum
 --------
  -99710
 (1 row)
 
-[server1]# /usr/pgsql-14/bin/psql -h server3 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
+[server1]# /usr/pgsql-18/bin/psql -h server3 -U postgres -p 5432 test -c "SELECT sum(abalance) FROM pgbench_accounts"
 Password for user postgres:
   sum
 --------
@@ -868,7 +869,7 @@ Password for user postgres:
     and verify the switchover of the main node.
    </para>
    <programlisting>
-[server1]# su - postgres -c "/usr/pgsql-14/bin/pg_ctl -m i stop"
+[server1]# su - postgres -c "/usr/pgsql-18/bin/pg_ctl -m i stop"
    </programlisting>
    <para>
     After stopping <productname>PostgreSQL</productname> on <literal>server1</literal>,

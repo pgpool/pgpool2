@@ -33,7 +33,7 @@
   </para>
 
   <para>
-   Here is an example for CentOS/RHEL7 when access
+   Here is an example for Rocky Linux/RHEL10 when access
    to <productname>PostgreSQL</productname> is required.
 
    <programlisting>

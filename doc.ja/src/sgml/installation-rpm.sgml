@@ -15,12 +15,12 @@
  </para>
   <para>
    <!--
-   <productname>Pgpool-II</productname> community provides RPM packages for RHEL9/8/7
+   <productname>Pgpool-II</productname> community provides RPM packages for RHEL10/9/8
    and the operating system which is compatible with RHEL.
    You can download package files from
    <ulink url="https://www.pgpool.net/yum/">official Pgpool-II repository</ulink>.
    -->
-   <productname>Pgpool-II</productname>コミュニティはRHEL9/8/7および互換OS向けにRPMパッケージを提供しています。
+   <productname>Pgpool-II</productname>コミュニティはRHEL10/9/8および互換OS向けにRPMパッケージを提供しています。
    パッケージファイルは<ulink url="https://www.pgpool.net/yum/">Pgpool-IIの公式リポジトリ</ulink>から入手できます。
   </para>
   <para>
@@ -53,11 +53,11 @@
      </row>
      <row>
       <entry>pgpool-II-pgXX-debugsource</entry>
-      <entry>RHEL8/9の場合のみ。デバッグ情報が含まれる</entry>
+      <entry>RHEL10/9/8の場合のみ。デバッグ情報が含まれる</entry>
      </row>
      <row>
       <entry>pgpool-II-pgXX-extensions-debuginfo</entry>
-      <entry>RHEL8/9の場合のみ。デバッグ情報が含まれる</entry>
+      <entry>RHEL10/9/8の場合のみ。デバッグ情報が含まれる</entry>
      </row>
      <row>
       <entry>pgpool-II-pgXX-devel</entry>
@@ -75,11 +75,11 @@
    <productname>Pgpool-II</productname> provides separate packages for each PostgreSQL version.
    "XX" in the above package is a two-digit number representing the version of PostgreSQL.
    Choose <productname>Pgpool-II</productname> RPM corresponding to your PostgreSQL version.
-   (For example, if you are using PostgreSQL 17, you need to install <filename>pgpool-II-pg17</filename>)
+   (For example, if you are using PostgreSQL 18, you need to install <filename>pgpool-II-pg18</filename>)
    -->
    <productname>Pgpool-II</productname>は<productname>PostgreSQL</productname>のライブラリと拡張のディレクトリが必要です。
    そのディレクトリへのパスは<productname>PostgreSQL</productname>のバージョンごとに異なっているので、<productname>Pgpool-II</productname>はPostgreSQLバージョンごとにパッケージを提供しています。
-   上記パッケージの「XX」はPostgreSQLのバージョンを表す2桁の数値です。<productname>PostgreSQL</productname>バージョンに対応する<productname>Pgpool-II</productname>のRPMを選んでください。(例えば、PostgreSQL 17を利用している場合は、<filename>pgpool-II-pg17</filename>を使用してください)
+   上記パッケージの「XX」はPostgreSQLのバージョンを表す2桁の数値です。<productname>PostgreSQL</productname>バージョンに対応する<productname>Pgpool-II</productname>のRPMを選んでください。(例えば、PostgreSQL 18を利用している場合は、<filename>pgpool-II-pg18</filename>を使用してください)
   </para>
 
  <sect2 id="before-installing">
@@ -116,6 +116,10 @@ vi /etc/yum.repos.d/pgdg-redhat-all.repo
 exclude=pgpool*
 
 
+[pgdg18]
+...
+exclude=pgpool*
+
 [pgdg17]
 ...
 exclude=pgpool*
@@ -135,14 +139,6 @@ exclude=pgpool*
 [pgdg13]
 ...
 exclude=pgpool*
-
-[pgdg12]
-...
-exclude=pgpool*
-
-[pgdg11]
-...
-exclude=pgpool*
   </programlisting>
  </sect2>
 
@@ -160,23 +156,23 @@ exclude=pgpool*
   </para>
   <para>
    <!--
-   The following commands assume that you are using Pgpool-II 4.6.x for PostgreSQL 17 on RHEL9.
+   The following commands assume that you are using Pgpool-II 4.6.x for PostgreSQL 18 on RHEL10.
    If you are using other versions, replace "pgXX" with your PostgreSQL version.
    -->
-   以下の手順はRHEL9に<productname>PostgreSQL 17</productname>に対応した<productname>Pgpool-II 4.6.x</productname>をインストールすることが前提となります。
+   以下の手順はRHEL10に<productname>PostgreSQL 18</productname>に対応した<productname>Pgpool-II 4.6.x</productname>をインストールすることが前提となります。
    他のバージョンの<productname>PostgreSQL</productname>を利用している場合は、<productname>PostgreSQL</productname>のバージョンに応じて「pgXX」を適宜置き換えてください。
   </para>
   <para>
    <!--
    First, install the repository corresponding to your <productname>Pgpool-II</productname>
    version and distribution.
-   For REHL7/9, see <ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">here</ulink>.
+   For REHL9/8, see <ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">here</ulink>.
    -->
    まず、Pgpool-IIバージョンとディストリビューションに対応するレポジトリをインストールします。
-   REHL7/8の場合は、<ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">こちら</ulink>を参照してください。
+   REHL9/8の場合は、<ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">こちら</ulink>を参照してください。
   </para>
   <programlisting>
-dnf install https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-9-x86_64/pgpool-II-release-4.6-1.noarch.rpm
+dnf install https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-10-x86_64/pgpool-II-release-4.6-1.noarch.rpm
   </programlisting>
   <para>
    <!--
@@ -185,7 +181,7 @@ dnf install https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-9-x86_64/pgpool-II-r
    次に、<productname>Pgpool-II</productname>をインストールします。
   </para>
   <programlisting>
-dnf install pgpool-II-pg17
+dnf install pgpool-II-pg18
   </programlisting>
   <para>
    <!--
@@ -212,7 +208,7 @@ dnf install pgpool-II-pg17
    </para>
   </note>
   <programlisting>
-dnf install pgpool-II-pg17-extensions pgpool-II-pg17
+dnf install pgpool-II-pg18-extensions pgpool-II-pg18
   </programlisting>
   <para>
     <!--
@@ -221,7 +217,7 @@ dnf install pgpool-II-pg17-extensions pgpool-II-pg17
    必要に応じて、開発者向けのオプションパッケージdebuginfoおよびdevelパッケージをインストールします。
   </para>
   <programlisting>
-dnf install pgpool-II-pg17-debuginfo pgpool-II-pg17-devel
+dnf install pgpool-II-pg18-debuginfo pgpool-II-pg18-devel
   </programlisting>
  </sect2>
 
@@ -249,9 +245,9 @@ dnf install pgpool-II-pg17-debuginfo pgpool-II-pg17-devel
   <title>Pgpool-IIの起動と停止</title>
   <para>
    <!--
-   On RHEL7,8/CentOS7,8, do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
+   On RHEL10/9/8, do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
    -->
-   RHEL7/8/9では、<productname>Pgpool-II</productname>の自動起動を設定する場合、以下を実行してください。
+   RHEL10/9/8では、<productname>Pgpool-II</productname>の自動起動を設定する場合、以下を実行してください。
    <programlisting>
 systemctl enable pgpool.service
    </programlisting>

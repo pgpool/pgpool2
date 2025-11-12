@@ -7,7 +7,7 @@
   If you are going to install from the source code, please check <xref linkend="install-source">.
  </para>
  <para>
-  <productname>Pgpool-II</productname> community provides RPM packages for RHEL9/8/7
+  <productname>Pgpool-II</productname> community provides RPM packages for RHEL10/9/8
   and the operating system which is compatible with RHEL.
   You can download package files from
   <ulink url="https://www.pgpool.net/yum/">official Pgpool-II repository</ulink>.
@@ -39,11 +39,11 @@
     </row>
     <row>
      <entry>pgpool-II-pgXX-debugsource</entry>
-     <entry>Only for RHEL8/9. Debug symbols for debugging</entry>
+     <entry>Only for RHEL10/9/8. Debug symbols for debugging</entry>
     </row>
     <row>
      <entry>pgpool-II-pgXX-extensions-debuginfo</entry>
-     <entry>Only for RHEL8/9. Debug symbols for debugging</entry>
+     <entry>Only for RHEL10/9/8. Debug symbols for debugging</entry>
     </row>
     <row>
      <entry>pgpool-II-pgXX-devel</entry>
@@ -60,7 +60,7 @@
   <productname>Pgpool-II</productname> provides separate packages for each PostgreSQL version.
   "XX" in the above package is a two-digit number representing the version of PostgreSQL.
   Choose <productname>Pgpool-II</productname> RPM corresponding to your PostgreSQL version.
-  (For example, if you are using PostgreSQL 17, you need to install <filename>pgpool-II-pg17</filename>)
+  (For example, if you are using PostgreSQL 18, you need to install <filename>pgpool-II-pg18</filename>)
  </para>
 
  <sect2 id="before-installing">
@@ -86,6 +86,10 @@ vi /etc/yum.repos.d/pgdg-redhat-all.repo
 ...
 exclude=pgpool*
 
+[pgdg18]
+...
+exclude=pgpool*
+
 [pgdg17]
 ...
 exclude=pgpool*
@@ -105,14 +109,6 @@ exclude=pgpool*
 [pgdg13]
 ...
 exclude=pgpool*
-
-[pgdg12]
-...
-exclude=pgpool*
-
-[pgdg11]
-...
-exclude=pgpool*
   </programlisting>
  </sect2>
 
@@ -124,25 +120,25 @@ exclude=pgpool*
   </para>
 
   <para>
-   The following commands assume that you are using Pgpool-II 4.6.x for PostgreSQL 17 on RHEL9.
+   The following commands assume that you are using Pgpool-II 4.6.x for PostgreSQL 18 on RHEL10.
    If you are using other versions, replace "pgXX" with your PostgreSQL version.
   </para>
   <para>
    First, install the repository corresponding to your <productname>Pgpool-II</productname>
    version and distribution.
-   For REHL7/8, see <ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">here</ulink>.
+   For REHL9/8, see <ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">here</ulink>.
   </para>
   <programlisting>
-dnf install https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-9-x86_64/pgpool-II-release-4.6-1.noarch.rpm
+dnf install https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-10-x86_64/pgpool-II-release-4.6-1.noarch.rpm
   </programlisting>
   <para>
    Then, install <productname>Pgpool-II</productname>.
   </para>
   <programlisting>
-dnf install pgpool-II-pg17
+dnf install pgpool-II-pg18
   </programlisting>
   <para>
-   To use online recovery feature, install <filename>pgpool-II-pg17-extensions</filename>
+   To use online recovery feature, install <filename>pgpool-II-pg18-extensions</filename>
    on <emphasis>all PostgreSQL servers</emphasis>.
    Because <filename>pgpool-II-pgXX-extensions</filename> depends on
    <filename>pgpool-II-pgXX</filename> package,
@@ -160,14 +156,14 @@ dnf install pgpool-II-pg17
    </para>
   </note>
   <programlisting>
-dnf install pgpool-II-pg17-extensions pgpool-II-pg17
+dnf install pgpool-II-pg18-extensions pgpool-II-pg18
   </programlisting>
 
   <para>
    Optionally you can install debuginfo and devel packages for developers if necessary.
   </para>
   <programlisting>
-dnf install pgpool-II-pg17-debuginfo pgpool-II-pg17-devel
+dnf install pgpool-II-pg18-debuginfo pgpool-II-pg18-devel
   </programlisting>
  </sect2>
 
@@ -184,7 +180,7 @@ dnf install pgpool-II-pg17-debuginfo pgpool-II-pg17-devel
  <sect2 id="start-rpm">
   <title>Starting/stopping Pgpool-II</title>
   <para>
-   On RHEL9/8/7, do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
+   On RHEL10/9/8, do this once, if set the automatic startup of <productname>Pgpool-II</productname>.
    <programlisting>
 systemctl enable pgpool.service
    </programlisting>

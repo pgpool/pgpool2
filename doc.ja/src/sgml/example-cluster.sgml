@@ -7,8 +7,7 @@
   この設定例では、3台の<productname>Pgpool-II</productname>を使って<productname>PostgreSQL</productname>（プライマリ1台、スタンバイ2台）を管理し、単一障害点やスプリットブレインの起きない堅牢なクラスタを運用することが可能です。
  </para>
  <para>
-  この設定例では<emphasis><productname>PostgreSQL</productname> 17</emphasis>を使っていますが、
-  各種スクリプトは<productname>PostgreSQL</productname> 10以降での動作確認を行っています。
+  この設定例では<emphasis><productname>PostgreSQL</productname> 18</emphasis>を使っています。
  </para>
  <sect2 id="example-cluster-requirement">
   <title>前提条件</title>
@@ -22,7 +21,7 @@
   <title>全体構成</title>
   <para>
    今回は、Linuxサーバを3台用意し、それぞれのホスト名は<literal>server1</literal>、<literal>server2</literal>、<literal>server3</literal>とします。
-   使用するOSはすべて<emphasis>Rocky Linux 9</emphasis>とします。
+   使用するOSはすべて<emphasis>Rocky Linux 10</emphasis>とします。
    それぞれのサーバに<productname>PostgreSQL</productname>と<productname>Pgpool-II</productname>をインストールします。
    3台の<productname>PostgreSQL</productname>がストリーミングレプリケーション構成になります。全体構成図は以下の通りです。
   </para>
@@ -83,7 +82,7 @@
     <tbody>
      <row>
       <entry>PostgreSQLバージョン</entry>
-      <entry>17.0</entry>
+      <entry>18.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -93,7 +92,7 @@
      </row>
      <row>
       <entry>$PGDATA</entry>
-      <entry>/var/lib/pgsql/17/data</entry>
+      <entry>/var/lib/pgsql/18/data</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -131,7 +130,7 @@
     <tbody>
      <row>
       <entry>Pgpool-IIバージョン</entry>
-      <entry>4.6.0</entry>
+      <entry>4.6.1</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -228,9 +227,9 @@
    <productname>PostgreSQL</productname>のインストールは<productname>PostgreSQL</productname>コミュニティのリポジトリを使います。
   </para>
   <programlisting>
-[全サーバ]# dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+[全サーバ]# dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 [全サーバ]# dnf -qy module disable postgresql
-[全サーバ]# dnf install -y postgresql17-server
+[全サーバ]# dnf install -y postgresql18-server
   </programlisting>
 
   <para>
@@ -252,6 +251,10 @@
 exclude=pgpool*
 
 
+[pgdg18]
+...
+exclude=pgpool*
+
 [pgdg17]
 ...
 exclude=pgpool*
@@ -271,10 +274,6 @@ exclude=pgpool*
 [pgdg13]
 ...
 exclude=pgpool*
-
-[pgdg12]
-...
-exclude=pgpool*
   </programlisting>
 
   <para>
@@ -284,8 +283,8 @@ exclude=pgpool*
    
   </para>
   <programlisting>
-[全サーバ]# dnf install -y https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-9-x86_64/pgpool-II-release-4.6-1.noarch.rpm
-[全サーバ]# dnf install -y --enablerepo=crb pgpool-II-pg17-*
+[全サーバ]# dnf install -y https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-10-x86_64/pgpool-II-release-4.6-1.noarch.rpm
+[全サーバ]# dnf install -y --enablerepo=crb pgpool-II-pg18-*
   </programlisting>
  </sect2>
 
@@ -350,7 +349,7 @@ PubkeyAuthentication yes
    <title>firewallの設定</title>
    <para>
     <productname>Pgpool-II</productname>や<productname>PostgreSQL</productname>に接続する際には、ファイアーウォールによって目的のポートが開けられていなければなりません。
-    <systemitem>Rocky Linux 9/RHEL 9</systemitem>の場合、以下のように設定します。
+    <systemitem>Rocky Linux 10/RHEL 10</systemitem>の場合、以下のように設定します。
    </para>
    <programlisting>
 [全サーバ]# firewall-cmd --permanent --zone=public --add-service=postgresql
@@ -366,16 +365,16 @@ PubkeyAuthentication yes
     </para>
     <para>
      まず、データベースクラスタの初期化を行います。
-     <productname>PostgreSQL</productname> 17ではデータベースクラスタのデフォルトの作成先は<filename>/var/lib/pgsql/17/data</filename>で、<literal>postgres</literal>ユーザの設定ファイル<filename>~/.bash_profile</filename>で環境変数<varname>PGDATA</varname>に指定されています。
+     <productname>PostgreSQL</productname> 18ではデータベースクラスタのデフォルトの作成先は<filename>/var/lib/pgsql/18/data</filename>で、<literal>postgres</literal>ユーザの設定ファイル<filename>~/.bash_profile</filename>で環境変数<varname>PGDATA</varname>に指定されています。
      必要に応じて変更してください。
     </para>
     <para>
      <command>initdb</command>コマンドを実行して、データベースクラスタの初期化を行います。
-     必要に応じて、<literal>--encoding</literal>や<literal>--locale</literal><ulink url="https://www.postgresql.org/docs/17/app-initdb.html">オプション</ulink>を指定して、データベースのエンコーディングやロケールを設定してください。
+     必要に応じて、<literal>--encoding</literal>や<literal>--locale</literal><ulink url="https://www.postgresql.org/docs/18/app-initdb.html">オプション</ulink>を指定して、データベースのエンコーディングやロケールを設定してください。
     </para>
     <programlisting>
 [root@server1 ~]# su - postgres
-[postgres@server1 ~]$ /usr/pgsql-17/bin/initdb
+[postgres@server1 ~]$ /usr/pgsql-18/bin/initdb
     </programlisting>
 
     <para>
@@ -391,7 +390,7 @@ wal_log_hints = on
      最後に、<literal>server1</literal>で<productname>PostgreSQL</productname>を起動します。
     </para>
    <programlisting>
-[postgres@server1 ~]$ /usr/pgsql-17/bin/pg_ctl start
+[postgres@server1 ~]$ /usr/pgsql-18/bin/pg_ctl start
     </programlisting>
   </sect3>
 
@@ -725,19 +724,19 @@ health_check_max_retries = 3
 backend_hostname0 = 'server1'
 backend_port0 = 5432
 backend_weight0 = 1
-backend_data_directory0 = '/var/lib/pgsql/17/data'
+backend_data_directory0 = '/var/lib/pgsql/18/data'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname1 = 'server2'
 backend_port1 = 5432
 backend_weight1 = 1
-backend_data_directory1 = '/var/lib/pgsql/17/data'
+backend_data_directory1 = '/var/lib/pgsql/18/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname2 = 'server3'
 backend_port2 = 5432
 backend_weight2 = 1
-backend_data_directory2 = '/var/lib/pgsql/17/data'
+backend_data_directory2 = '/var/lib/pgsql/18/data'
 backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
 
@@ -806,12 +805,12 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
    <programlisting>
 [root@server1 ~]# vi /etc/pgpool-II/failover.sh
 ...
-PGHOME=/usr/pgsql-17
+PGHOME=/usr/pgsql-18
 ...
 
 [root@server1 ~]# vi /etc/pgpool-II/follow_primary.sh
 ...
-PGHOME=/usr/pgsql-17
+PGHOME=/usr/pgsql-18
 ...
    </programlisting>
    <para>
@@ -862,14 +861,14 @@ recovery_1st_stage_command = 'recovery_1st_stage'
     基本的には<emphasis>PGHOME</emphasis>を環境に合わせて変更すれば、動作します。
    </para>
    <programlisting>
-[root@server1 ~]# vi /var/lib/pgsql/17/data/recovery_1st_stage
+[root@server1 ~]# vi /var/lib/pgsql/18/data/recovery_1st_stage
 ...
-PGHOME=/usr/pgsql-17
+PGHOME=/usr/pgsql-18
 ...
 
-[root@server1 ~]# vi /var/lib/pgsql/17/data/pgpool_remote_start
+[root@server1 ~]# vi /var/lib/pgsql/18/data/pgpool_remote_start
 ...
-PGHOME=/usr/pgsql-17
+PGHOME=/usr/pgsql-18
 ...
    </programlisting>
 
@@ -1163,7 +1162,7 @@ log_rotation_age = 1d
       <productname>PostgreSQL</productname>プライマリサーバがまだ起動していない場合は、まず次のコマンドを実行して<productname>PostgreSQL</productname>起動します。
      </para>
      <programlisting>
-[root@server1 ~]# su - postgres -c "/usr/pgsql-17/bin/pg_ctl start"
+[root@server1 ~]# su - postgres -c "/usr/pgsql-18/bin/pg_ctl start"
      </programlisting>
      <para>
       <literal>server1</literal>、<literal>server2</literal>および<literal>server3</literal>で以下のコマンドを実行し、<productname>Pgpool-II</productname>を起動します。
@@ -1304,7 +1303,7 @@ Password for user pgpool:
     フェイルオーバするかどうか確認してみます。
    </para>
    <programlisting>
-[root@server1 ~]# su - postgres -c "/usr/pgsql-17/bin/pg_ctl -m immediate stop"
+[root@server1 ~]# su - postgres -c "/usr/pgsql-18/bin/pg_ctl -m immediate stop"
    </programlisting>
    <para>
     <literal>ノード1</literal>を停止した後に、フェイルオーバが発生し、<literal>server2</literal>が

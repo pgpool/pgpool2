@@ -49,10 +49,10 @@
   </para>
   <para>
    <!--
-   Here is an example for CentOS/RHEL7 when access
+   Here is an example for Rocky Linux/RHEL10 when access
    to <productname>PostgreSQL</productname> is required.
    -->
-   CentOS/RHEL7において、<productname>PostgreSQL</productname>にアクセスが必要な場合の例を示します。
+   Rocky Linux/RHEL10において、<productname>PostgreSQL</productname>にアクセスが必要な場合の例を示します。
    <programlisting>
     firewall-cmd --permanent --zone=public --add-service=postgresql
     firewall-cmd --reload

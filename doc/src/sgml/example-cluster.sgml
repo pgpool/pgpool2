@@ -7,8 +7,7 @@
   servers to create a robust cluster system and avoid the single point of failure or split brain.
  </para>
  <para>
-  <emphasis><productname>PostgreSQL</productname> 17</emphasis> is used in this configuration example.
-  All scripts have been tested with <productname>PostgreSQL</productname> 10 and later.
+  <emphasis><productname>PostgreSQL</productname> 18</emphasis> is used in this configuration example.
  </para>
  <sect2 id="example-cluster-requirement">
   <title>Requirements</title>
@@ -20,7 +19,7 @@
  <sect2 id="example-cluster-structure">
   <title>Cluster System Configuration</title>
   <para>
-   We use three servers with <emphasis>Rocky Linux 9</emphasis> installed and
+   We use three servers with <emphasis>Rocky Linux 10</emphasis> installed and
    the hostnames of the three servers are <literal>server1</literal>
    <literal>server2</literal> and <literal>server3</literal> respectively.
    We install <productname>PostgreSQL</productname> and <productname>Pgpool-II</productname> on each server.
@@ -82,7 +81,7 @@
     <tbody>
      <row>
       <entry>PostgreSQL Version</entry>
-      <entry>17.0</entry>
+      <entry>18.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -92,7 +91,7 @@
      </row>
      <row>
       <entry>$PGDATA</entry>
-      <entry>/var/lib/pgsql/17/data</entry>
+      <entry>/var/lib/pgsql/18/data</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -133,7 +132,7 @@
     <tbody>
      <row>
       <entry>Pgpool-II Version</entry>
-      <entry>4.6.0</entry>
+      <entry>4.6.1</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -229,9 +228,9 @@
    Install <productname>PostgreSQL</productname> from <productname>PostgreSQL</productname> YUM repository.
   </para>
   <programlisting>
-[all servers]# dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+[all servers]# dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 [all servers]# dnf -qy module disable postgresql
-[all servers]# dnf install -y postgresql17-server
+[all servers]# dnf install -y postgresql18-server
   </programlisting>
   <para>
    Since <productname>Pgpool-II</productname> related packages are also included in <productname>PostgreSQL</productname> YUM repository,
@@ -246,6 +245,10 @@
   </para>
   <programlisting>
 [pgdg-common]
+...
+exclude=pgpool*
+
+[pgdg18]
 ...
 exclude=pgpool*
 
@@ -268,10 +271,6 @@ exclude=pgpool*
 [pgdg13]
 ...
 exclude=pgpool*
-
-[pgdg12]
-...
-exclude=pgpool*
   </programlisting>
 
   <para>
@@ -285,7 +284,7 @@ exclude=pgpool*
   </para>
   <programlisting>
 [all servers]# dnf install -y https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-9-x86_64/pgpool-II-release-4.6-1.noarch.rpm
-[all servers]# dnf install -y --enablerepo=crb pgpool-II-pg17-*
+[all servers]# dnf install -y --enablerepo=crb pgpool-II-pg18-*
   </programlisting>
  </sect2>
 
@@ -358,7 +357,7 @@ PubkeyAuthentication yes
   <sect3 id="example-cluster-before-starting-firewall">
    <title>Setting up firewall</title>
    <para>
-    When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>Rocky Linux 8/RHEL 8</systemitem>.
+    When connect to <productname>Pgpool-II</productname> and <productname>PostgreSQL</productname> servers, the target port must be accessible by enabling firewall management softwares. Following is an example for <systemitem>Rocky Linux 10/RHEL 10</systemitem>.
    </para>
    <programlisting>
 [all servers]# firewall-cmd --permanent --zone=public --add-service=postgresql
@@ -375,21 +374,21 @@ PubkeyAuthentication yes
 
    <para>
     First, initialize the database cluster. 
-    In <productname>PostgreSQL</productname> 17, the default directory
-    for creating the database cluster is <filename>/var/lib/pgsql/17/data</filename>,
+    In <productname>PostgreSQL</productname> 18, the default directory
+    for creating the database cluster is <filename>/var/lib/pgsql/18/data</filename>,
     and this is specified in the environment variable <varname>PGDATA</varname>
     in the <filename>~/.bash_profile</filename> of the <literal>postgres</literal>
     user. Modify it if you want to change the default path.
    </para>
    <para>
     Run <command>initdb</command> to initialize the database cluster.
-    Specify <ulink url="https://www.postgresql.org/docs/17/app-initdb.html">options</ulink>
+    Specify <ulink url="https://www.postgresql.org/docs/18/app-initdb.html">options</ulink>
     such as <literal>--encoding</literal> and <literal>--locale</literal>
     if you need to configure the database encoding and locale settings.
    </para>
    <programlisting>
 [root@server1 ~]# su - postgres
-[postgres@server1 ~]$ /usr/pgsql-17/bin/initdb
+[postgres@server1 ~]$ /usr/pgsql-18/bin/initdb
     </programlisting>
 
     <para>
@@ -406,7 +405,7 @@ wal_log_hints = on
      Start <productname>PostgreSQL</productname> on <literal>server1</literal>.
     </para>
    <programlisting>
-[postgres@server1 ~]$ /usr/pgsql-17/bin/pg_ctl start
+[postgres@server1 ~]$ /usr/pgsql-18/bin/pg_ctl start
     </programlisting>
   </sect3>
 
@@ -776,19 +775,19 @@ health_check_max_retries = 3
 backend_hostname0 = 'server1'
 backend_port0 = 5432
 backend_weight0 = 1
-backend_data_directory0 = '/var/lib/pgsql/17/data'
+backend_data_directory0 = '/var/lib/pgsql/18/data'
 backend_flag0 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname1 = 'server2'
 backend_port1 = 5432
 backend_weight1 = 1
-backend_data_directory1 = '/var/lib/pgsql/17/data'
+backend_data_directory1 = '/var/lib/pgsql/18/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 backend_hostname2 = 'server3'
 backend_port2 = 5432
 backend_weight2 = 1
-backend_data_directory2 = '/var/lib/pgsql/17/data'
+backend_data_directory2 = '/var/lib/pgsql/18/data'
 backend_flag2 = 'ALLOW_TO_FAILOVER'
    </programlisting>
    <para>
@@ -860,12 +859,12 @@ follow_primary_command = '/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M 
    <programlisting>
 [root@server1 ~]# vi /etc/pgpool-II/failover.sh
 ...
-PGHOME=/usr/pgsql-17
+PGHOME=/usr/pgsql-18
 ...
 
 [root@server1 ~]# vi /etc/pgpool-II/follow_primary.sh
 ...
-PGHOME=/usr/pgsql-17
+PGHOME=/usr/pgsql-18
 ...
    </programlisting>
 
@@ -923,14 +922,14 @@ recovery_1st_stage_command = 'recovery_1st_stage'
     Basically, it should work if you change <emphasis>PGHOME</emphasis> according to PostgreSQL installation directory.
    </para>
    <programlisting>
-[root@server1 ~]# vi /var/lib/pgsql/17/data/recovery_1st_stage
+[root@server1 ~]# vi /var/lib/pgsql/18/data/recovery_1st_stage
 ...
-PGHOME=/usr/pgsql-17
+PGHOME=/usr/pgsql-18
 ...
 
-[root@server1 ~]# vi /var/lib/pgsql/17/data/pgpool_remote_start
+[root@server1 ~]# vi /var/lib/pgsql/18/data/pgpool_remote_start
 ...
-PGHOME=/usr/pgsql-17
+PGHOME=/usr/pgsql-18
 ...
    </programlisting>
 
@@ -1245,7 +1244,7 @@ log_rotation_age = 1d
       using the following command.
      </para>
      <programlisting>
-[root@server1 ~]# su - postgres -c "/usr/pgsql-17/bin/pg_ctl start"
+[root@server1 ~]# su - postgres -c "/usr/pgsql-18/bin/pg_ctl start"
      </programlisting>
      <para>
       Start <productname>Pgpool-II</productname> on <literal>server1</literal>,
@@ -1402,7 +1401,7 @@ Password for user pgpool:
     automatically.
    </para>
    <programlisting>
-[root@server1 ~]# su - postgres -c "/usr/pgsql-17/bin/pg_ctl -m immediate stop"
+[root@server1 ~]# su - postgres -c "/usr/pgsql-18/bin/pg_ctl -m immediate stop"
    </programlisting>
    <para>
     After stopping <productname>PostgreSQL</productname> on
