@@ -14,7 +14,7 @@ fi
 AM_INIT_AUTOMAKE([foreign no-dependencies subdir-objects])
 
 dnl Disallow to rebuild configure.
-AM_MAINTAINER_MODE(enable)
+AM_MAINTAINER_MODE(disable)
 
 # AC_PROG_RANLIB
 AR_FLAGS="cr"
