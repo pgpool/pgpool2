@@ -1,6 +1,238 @@
 <!-- doc/src/sgml/release-4.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-5-9">
+ <title>リリース 4.5.9</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2025-11-20</simpara>
+ </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-11-07 [4fabca331]
+    -->
+    <para>
+     不要な <varname>application_name</varname> の処理を削除しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     以前のコミットで、既存接続を再利用する際に <varname>application_name</varname> を設定する処理が追加されました。
+     しかしこれは不要です。DISCARD ALLにより接続再利用時に自動的に <varname>application_name</varname> がリセットされ、
+     <function>send_params()</function>によってフロントエンドに必要なパラメータステータス（<varname>application_name</varname> を含む）が送信されます。
+     この冗長な処理を削除することで、特に地理的に離れたバックエンドノードでのパフォーマンスが向上します。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/130">Severely degraded performance of pgPool in geo-distributed configurations</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-10-03 [b84553bf0]
+    -->
+    <para>
+     Watchdogのスプリットブレイン回避するよう修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     Watchdogはビーコンメッセージとハートビートで通信します。
+     ハートビートが有効でない場合、ビーコンが30秒以上届かないとスプリットブレインが発生することがあります。
+     古いリーダーを無効化することで、同時に二人のリーダーが存在しないように修正しました。
+     ノードがリーダーからのビーコンを2回以上見逃すと、リーダーはLOST状態となり、
+     set_state(WD_JOINING) により新リーダー選出が開始されます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-10-03 [ef8ccb9e7]
+    -->
+    <para>
+     存在しないプリペアドステートメント使用時のFATALエラー防止するよう修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     以前は<function>Bind()</function>が存在しないプリペアドステートメントでFATALエラーを出していました。
+     はステートメントの存在を確認し、存在しない場合はフロントエンドにERRORメッセージを送信するようになりました。ログは残りません。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-24 [59a359eef]
+    -->
+    <para>
+     <xref linkend="pg-enc"> -pと -P両方使用時に動作しない問題を修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     元の報告では、pg_enc -p -P実行時にパスワードと暗号キーを求められましたが、
+     キーが提供されない場合に失敗していました。
+     また、コメント /* prompt for postgres password */ が誤解を招くため、
+     /* prompt for password to be encrypted */ に修正されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/7f18c30b.237.1997555ca11.Coremail.liujy%40highgo.com">pg_enc</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-18 [f20f7041c]
+    -->
+    <para>
+     32ビット環境でのコンパイルの問題を修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     32ビットシステムでsrc/parser/snprintf.cをコンパイルすると<function>isnan()</function>や<function>isinf()</function>が未定義でエラーになりました。
+     math.hをインクルードし、ヘッダーファイルの順序も整理しました。
+     元々 PostgreSQLから取り込まれたファイルで、math.hは既に含まれていました。
+     修正は <ulink url="https://github.com/pgpool/pgpool2/pull/128">fix compiling issues for 32-bit targets</ulink> のプルリクエストに記載してあります。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-10 [0a6868d40]
+    -->
+    <para>
+     recovery_1st_stage.sampleでBashのディレクトリ削除を安全に行うよう修正しました。（Taiki Koshino）
+    </para>
+    <para>
+     rmコマンドの変数をクォートし、意図しない削除を防止しました：
+     <command>rm -rf "${DEST_NODE_PGDATA}"</command>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-05 [441f338ab]
+    -->
+    <para>
+     <option>--with-memcached</option>指定なしでコンパイルする際のエラーを修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     <option>--with-memcached</option>指定なしでコンパイルするとエラーが発生していました。
+     対応として該当コードブロックを #ifdef USE_MEMCACHEDで囲みました。
+    </para>
+    <para>
+     この問題はBo Pengによって報告されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-04 [9e0324575]
+    -->
+    <para>
+     クエリキャッシュロックファイルの取り扱い修正を修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     クエリキャッシュモジュールは並列制御のため <varname>logdir</varname> にロックファイルを作成しますが、
+     メインプロセスがゴミファイルを作成したり、シャットダウン時に削除されない問題がありました。
+    </para>
+    <para>
+     この問題はBo Pengによって報告・分析されました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-09-17 [1a975b539]
+    -->
+    <para>
+     <ulink url="https://www.pgpool.net/docs/latest/ja/html/example-cluster.html">8.2. Pgpool-II + Watchdog Setup Example</ulink> の "PostgreSQLスタンバイ設定" ドキュメントを更新しました。（Taiki Koshino）
+    </para>
+    <para>
+     オンラインリカバリなしでスタンバイを設定する場合、postgresql.auto.confに <varname>primary_conninfo</varname> を書き込まないよう注意を追加しました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/67">Follow primary command not fixing postgresql.auto.conf </ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-22 [5bd535792]
+    -->
+    <para>
+     watchdog_setupのマニュアルを修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     heartbeartがwatchdog_setupに設定されていないと誤記されていた箇所を修正しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-09-30 [3ddbc64f1]
+    -->
+    <para>
+     023.ssl_connectionをPostgreSQL 18に対応するよう修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     PostgreSQL 18でpsqlの \conninfo出力形式が大幅に変更されたため、
+     このテストが失敗していました。
+     PostgreSQLバージョンに応じてテストスクリプトを修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-29 [b4043e6c3]
+    -->
+    <para>
+     010.rewrite_timestampのRubyスクリプトを修正しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     RubyのFile.existsは新しいバージョンで非推奨のため、File.existに置き換えました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-29 [9c901e60a]
+    -->
+    <para>
+     034と075のタイムアウトを調整しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     034.promote_nodeと075.detach_primary_left_down_nodeのスクリプト終了タイムアウトを60秒から120秒に変更し、
+     誤エラーが発生する可能性を減らしました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-27 [42b177614]
+    -->
+    <para>
+     023.ssl_connectionにssl_ecdh_curveのテストを追加しました。（Tatsuo Ishii）
+    </para>
+    <para>
+     023.ssl_connectionはssl_ecdh_curveのテストをカバーしていなかったため、
+     不正なssl_ecdh_curveパラメータでフロントエンドとpgpoolの接続が失敗するか確認しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-5-8">
  <title>リリース 4.5.8</title>
  <note>
