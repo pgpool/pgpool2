@@ -1,6 +1,233 @@
 <!-- doc/src/sgml/release-4.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-3-17">
+ <title>Release 4.3.17</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2025-11-20</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-11-07 [4fabca331]
+    -->
+    <para>
+     Remove unnecessary <varname>application_name</varname> treatment. (Tatsuo Ishii)
+    </para>
+    <para>
+     A previous commit added a step to set <varname>application_name</varname> when reusing existing connections.
+     However, this is unnecessary because DISCARD ALL automatically resets <varname>application_name</varname>,
+     and <function>send_params()</function> already sends all necessary parameter status messages, including <varname>application_name</varname>, to the frontend.
+     Removing this redundant step also improves performance, particularly for backend nodes that are geographically distant.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/130">Severely degraded performance of pgPool in geo-distributed configurations</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-10-03 [b84553bf0]
+    -->
+    <para>
+     Prevent watchdog split-brain scenario in some corner cases. (Tatsuo Ishii)
+    </para>
+    <para>
+     Watchdog uses both beacon messages and heartbeat for communication.
+     If the heartbeat is not yet active, missing beacon messages
+     for over 30 seconds can cause a split-brain scenario,
+     where the old leader remains active while a new leader is elected.
+     This change prevents two leaders from existing simultaneously by revoking the old leader.
+     When a node detects that it has missed beacon messages from the leader more than twice,
+     the leader is set to LOST and a new leader election is triggered via set_state(WD_JOINING).
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-10-03 [ef8ccb9e7]
+    -->
+    <para>
+     Prevent FATAL error when non-existing prepared statement is given. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously, <function>Bind()</function> raised a FATAL error when a non-existing prepared statement was used, unlike PostgreSQL.
+     This change changes <function>Bind()</function> to check for the statement's existence and send an ERROR message to the frontend if it does not exist.
+     Note that no log is written, as logging this is not currently possible.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-24 [59a359eef]
+    -->
+    <para>
+     Fix <xref linkend="pg-enc"> not working if both -p and -P are provided. (Tatsuo Ishii)
+    </para>
+    <para>
+     The original report showed that running pg_enc -p -P prompted for a password and encryption key,
+     but failed if the key was not provided.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/7f18c30b.237.1997555ca11.Coremail.liujy%40highgo.com">pg_enc</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-18 [f20f7041c]
+    -->
+    <para>
+     Fix compiling issue on 32-bit environments. (Tatsuo Ishii)
+    </para>
+    <para>
+     On 32-bit systems, compiling src/parser/snprintf.c fails due to undefined functions <function>isnan()</function> and <function>isinf()</function>, which come from math.h.
+     This change includes math.h and also reorders the include files for clarity.
+     The file was originally imported from PostgreSQL, where math.h was already included.
+     This fix was provided via pull request: https://github.com/pgpool/pgpool2/pull/128
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250917.194736.353755422175293639.ishii%40postgresql.org">Compiling issues for 32-bit targets</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-10 [0a6868d40]
+    -->
+    <para>
+     Fix safer directory deletion in Bash in recovery_1st_stage.sample. (Taiki Koshino)
+    </para>
+    <para>
+     Quote variables in rm commands to avoid accidental deletion:
+     <command>rm -rf "${DEST_NODE_PGDATA}"</command>
+
+     If the variable is empty, rm could delete unexpected files or directories.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-09-05 [441f338ab]
+    -->
+    <para>
+     Fix the compilation error when building without the <option>--with-memcached</option> option. (Tatsuo Ishii)
+    </para>
+    <para>
+     A compiler error occurred when configuring without <option>--with-memcached</option>.
+     The issue arose because the compiler could not determine that ptr would only be freed when memcached is enabled.
+     To fix this, the relevant code block was wrapped with #ifdef USE_MEMCACHED.
+    </para>
+    <para>
+     Problem reported by Bo Peng.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-09-17 [1a975b539]
+    -->
+    <para>
+     Update doc about "Setting up PostgreSQL standby" in <ulink url="https://www.pgpool.net/docs/latest/ja/html/example-cluster.html">8.2. Pgpool-II + Watchdog Setup Example</ulink>. (Taiki Koshino)
+    </para>
+    <para>
+     Add a note that when setting up a standby without online recovery, do not write <varname>primary_conninfo</varname> to postgresql.auto.conf.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/67">Follow primary command not fixing postgresql.auto.conf</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-22 [5bd535792]
+    -->
+    <para>
+     Fix watchdog_setup manual. (Tatsuo Ishii)
+    </para>
+    <para>
+     It mistakenly stated that heartbeart is not setup in watchdog_setup.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-09-30 [3ddbc64f1]
+    -->
+    <para>
+     Adapt 023.ssl_connection to PostgreSQL 18. (Tatsuo Ishii)
+    </para>
+    <para>
+     PostgreSQL 18 heavily changed psql's \conninfo output format, which
+     made the test fail because the test relies on \conninfo. This change
+     makes the test script aware the PostgreSQL version to fix the issue.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-29 [b4043e6c3]
+    -->
+    <para>
+     Fix ruby script in 010.rewrite_timestamp. (Tatsuo Ishii)
+    </para>
+    <para>
+     The ruby script used "File.exists", which is said to be obsoleted in
+     newer version of Ruby.  Replace it with "File.exist".
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-29 [9c901e60a]
+    -->
+    <para>
+     Tweak timeout in 034 and 075 tests. (Tatsuo Ishii)
+    </para>
+    <para>
+     034.promote_node and 075.detach_primary_left_down_node set the timeout
+     60 seconds for finishing follow primary script.  It turns out that
+     these timeout values are not long enough, and sometimes caused false
+     errors. So make them from 60 seconds to 120 seconds.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-27 [42b177614]
+    -->
+    <para>
+     Add ssl_ecdh_curve test to 023.ssl_connection. (Tatsuo Ishii)
+    </para>
+    <para>
+     023.ssl_connection did not cover the test for ssl_ecdh_curve.  This
+     commit tests it using bad ssl_ecdh_curve parameter to see if connection
+     between frontend and pgpool fails.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-3-16">
  <title>Release 4.3.16</title>
  <note>
