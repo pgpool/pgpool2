@@ -64,4 +64,20 @@ if [ ! $? -eq 0 ];then
     ./shutdownall
     exit 1
 fi
+
+#
+# Test case for COPY OUT in extended query protocol mode segfaults.
+# since this creates temp table, prevent load balance
+echo "backend_weight1 = 0" >> etc/pgpool.conf
+echo "backend_weight2 = 0" >> etc/pgpool.conf
+# reload pgpool.conf and wait until the effect is apparent
+./pgpool_reload
+sleep 1
+# run test script
+$PGPROTO -d test -f ../pgproto-copy-out.data > copy-out-result 2>&1
+cmp ../copy-out-expected copy-out-result
+if [ ! $? -eq 0 ];then
+    ./shutdownall
+    exit 1
+fi
 ./shutdownall
