@@ -3847,9 +3847,10 @@ read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	/*
 	 * If we are in in streaming replication mode and we doing an extended
 	 * query, check the kind we just read.  If it's one of 'D' (data row), 'E'
-	 * (error), or 'N' (notice), and the head of the pending message queue was
-	 * 'execute', the message must not be pulled out so that next Command
-	 * Complete message from backend matches the execute message.
+	 * (error), 'N' (notice), 'H' (CopyOutResponse), 'd' (CopyData) or 'c'
+	 * (CopyDone) and the head of the pending message queue was 'execute', the
+	 * message must not be pulled out so that next Command Complete message
+	 * from backend matches the execute message.
 	 *
 	 * Also if it's 't' (parameter description) and the pulled message was
 	 * 'describe', the message must not be pulled out so that the row
@@ -3858,7 +3859,9 @@ read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	if (SL_MODE && pool_is_doing_extended_query_message() && msg)
 	{
 		if ((msg->type == POOL_EXECUTE &&
-			 (*decided_kind == 'D' || *decided_kind == 'E' || *decided_kind == 'N')) ||
+			 (*decided_kind == 'D' || *decided_kind == 'E' ||
+			  *decided_kind == 'N' || *decided_kind == 'H' ||
+			  *decided_kind == 'd' || *decided_kind == 'c')) ||
 			(msg->type == POOL_DESCRIBE && *decided_kind == 't'))
 		{
 			ereport(DEBUG5,
