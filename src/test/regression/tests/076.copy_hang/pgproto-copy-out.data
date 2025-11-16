@@ -1,0 +1,9 @@
+'Q'	"CREATE TEMP TABLE copy_in_test AS SELECT I FROM generate_series(1,10) AS i"
+'Y'
+'Q'	"SELECT * FROM copy_in_test"
+'Y'
+'P'	""	"COPY copy_in_test TO STDOUT"	0
+'B'	""	""	0	0	0
+'E'	""	0
+'S'
+'Y'
