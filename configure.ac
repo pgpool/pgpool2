@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([pgpool-II], [4.3.16], [pgpool-hackers@lists.postgresql.org], [pgpool-II])
+AC_INIT([pgpool-II], [4.3.17], [pgpool-hackers@lists.postgresql.org], [pgpool-II])
 
 dnl Checks for programs.
 AC_PROG_CC
