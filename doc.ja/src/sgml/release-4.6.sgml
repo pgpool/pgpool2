@@ -2,7 +2,7 @@
  <title>リリース 4.6.4</title>
  <note>
   <title>リリース日</title>
-  <simpara>2025-11-20</simpara>
+  <simpara>2025-11-25</simpara>
  </note>
 
  <sect2>
@@ -79,6 +79,23 @@
  <sect2>
   <title>不具合修正</title>
   <itemizedlist>
+   <listitem>
+    <!--
+    2025-11-16 [b113027dd]
+    -->
+    <para>
+     <command>CopyOut</command>でのセグメンテーションフォルトを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     拡張プロトコルで<command>COPY relname TO STDOUT</command>が実行された場合、<productname>Pgpool-II</productname>がセグフォルトを起こしていました。
+    </para>
+    <para>
+     この問題は<ulink url="https://github.com/tetesh">https://github.com/tetesh</ulink>によって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/133">datanymizer and pg-pool segmentation fault</ulink>
+    </para>
+   </listitem>
    <listitem>
     <!--
     2025-10-03 [b84553bf0]
