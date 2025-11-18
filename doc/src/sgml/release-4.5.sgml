@@ -2,7 +2,7 @@
  <title>Release 4.5.9</title>
  <note>
   <title>Release Date</title>
-  <simpara>2025-11-20</simpara>
+  <simpara>2025-11-25</simpara>
  </note>
 
  <sect2>
@@ -31,6 +31,24 @@
  <sect2>
   <title>Bug fixes</title>
   <itemizedlist>
+   <listitem>
+    <!--
+    2025-11-16 [b113027dd]
+    -->
+    <para>
+     Fix segfault with <command>CopyOut</command>. (Tatsuo Ishii)
+    </para>
+    <para>
+     When <command>COPY relname TO STDOUT</command> is executed in the extended query
+     protocol mode, pgpool segfaulted.
+    </para>
+    <para>
+     This problem is reported by <ulink url="https://github.com/tetesh">https://github.com/tetesh</ulink>.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/133">datanymizer and pg-pool segmentation fault</ulink>
+    </para>
+   </listitem>
    <listitem>
     <!--
     2025-10-03 [b84553bf0]
