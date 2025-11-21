@@ -102,10 +102,10 @@ Postgresql extensions libraries and sql files for pgpool-II.
 %prep
 %setup -q -n %{archive_name}
 %if %{pgsql_ver} >=94 && %{rhel} >= 7
-%patch 1 -p0
-%patch 2 -p0
+%patch1 -p0
+%patch2 -p0
 %endif
-%patch 3 -p0
+%patch3 -p0
 
 %build
 %configure --with-pgsql=%{pghome} \
