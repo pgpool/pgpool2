@@ -60,6 +60,8 @@ else
     echo "pgbench suceeded. test1 ok."
     r1=ok
 fi
+# give pgpool chance to complete the failover
+sleep 5
 ./shutdownall
 
 echo "=== test2: backend_weight2 = 0 and pgbench with -C option"
