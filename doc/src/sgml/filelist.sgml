@@ -53,6 +53,7 @@
 
 <!-- appendixes -->
 <!ENTITY release    SYSTEM "release.sgml">
+<!ENTITY release-4.7    SYSTEM "release-4.7.sgml">
 <!ENTITY release-4.6    SYSTEM "release-4.6.sgml">
 <!ENTITY release-4.5    SYSTEM "release-4.5.sgml">
 <!ENTITY release-4.4    SYSTEM "release-4.4.sgml">

@@ -1,0 +1,581 @@
+<sect1 id="release-4-7-0">
+ <title>Release 4.7.0</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2025-12-XX</simpara>
+ </note>
+
+ <sect2>
+  <title>Overview</title>
+  <para>
+   This release of <productname>Pgpool-II</productname> includes several enhancements,
+   such as the removal of the legacy Slony mode, strengthened security,
+   enhanced frontend/backend protocol compatibility, and improved operational
+   transparency.
+  </para>
+
+  <para>
+   Major enhancements are as follows:
+  </para>
+
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     Retire Slony mode.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Rename <varname>logdir</varname> parameter to <varname>work_dir</varname>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Add support for frontend/backend protocol version 3.2.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Enhance security for watchdog and heartbeat receiver.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Add new fields to <command>pcp_proc_info</command> and
+     <command>show pool_pools</command> to display client information,
+     and add <function>pgpool_adm_pcp_proc_info</function> extension function.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Make online recovery database configurable.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Import PostgreSQL 18's SQL parser.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2 id="migration-4-7-0">
+  <title>Migration to Version 4.7</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2025-10-29 [b402dbc09]
+    -->
+    <para>
+     Retire <literal>Slony</literal> mode. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously <productname>Pgpool-II</productname> accepted <literal>slony</literal>
+     mode as one of the <xref linkend="guc-backend-clustering-mode"> to support
+     <literal>Slony-I</literal>
+     (https://www.slony.info/). However the latest <literal>Slony-I</literal> was
+     released in 2022, nearly 3 years ago at this point. And we heard nothing from
+     users about retiring <literal>Slony</literal> mode. This suggests that there
+     would be no active <literal>Slony-I</literal> mode users.
+     So let's drop <literal>Slony-I</literal> support.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-May/009489.html">[pgpool-general: 9486] Retiring slony mode</ulink>
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250722.153130.1007226654125839063.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250722.153130.1007226654125839063.ishii%40postgresql.org</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-15 [579306dbc]
+    -->
+    <para>
+     Change <xref linkend="guc-log-pcp-processes"> default to <literal>off</literal>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously <varname>log_pcp_processes</varname> default was <literal>on</literal>,
+     and it could produce excessive log lines if admins use pcp commands frequently to
+     monitor pgpool status.  Also the log is kind of debugging message, thus it is
+     best to change its default value to <literal>off</literal>.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250815.111100.2261166502134199972.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250815.111100.2261166502134199972.ishii%40postgresql.org</ulink>
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-07-17 [3cc3d2d84]
+    2025-07-25 [a16b63b8d]
+    -->
+    <para>
+     Make online recovery database configurable. (Bo Peng)
+    </para>
+    <para>
+     A new configuration parameter <xref linkend="guc-recovery-database">
+     has been added to allow users to specify the database used for online recovery.
+     Previously, this value was hardcoded as <literal>template1</literal>. 
+     The default is now set to <literal>postgres</literal>.
+    </para>
+    <para>
+     For users migrating from versions earlier than 4.6, compatibility can be
+     maintained by setting <varname>recovery_database = 'template1'</varname>,
+     or by creating the necessary extension for online recovery in the
+     <literal>postgres</literal> database.
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-10-14 [b286ce29a]
+    2025-10-14 [25ad5e466]
+    -->
+    <para>
+     Rename <varname>logdir</varname> parameter to <xref linkend="guc-work-dir">. (Taiki Koshino)
+    </para>
+    <para>
+     Previously, the directory for storing <filename>pgpool_status</filename> and
+     lock files was specified by the <varname>logdir</varname> parameter.
+     However, since the name <varname>logdir</varname> was misleading, the parameter
+     has been renamed to <varname>work_dir</varname> for clarity.
+     The default value is <literal>/tmp</literal>, which is the same as the
+     previous parameter <varname>logdir</varname>.
+    </para>
+    <para>
+     For backward compatibility, the old <varname>logdir</varname> parameter
+     is still supported. If the old parameter <varname>logdir</varname> is used,
+     <productname>Pgpool-II</productname> will set its value to
+     <varname>work_dir</varname> and throw a warning message. 
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2025-10-03 [df2771637]
+    2025-10-05 [020ee7084]
+    -->
+    <para>
+     Import PostgreSQL 18 new parser. (Bo Peng)
+    </para>
+    <para>
+     Major changes of PostgreSQL 18 parser include:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Allow generated columns to be virtual
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Add OLD/NEW support to RETURNING in DML queries
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Addition of various constraints (e.g. WITHOUT OVERLAPS, ENFORCED / NOT ENFORCED)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       etc.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-22 [94b62a93c]
+    2025-09-01 [f15c8a302]
+    2025-09-01 [b9e7b4245]
+    -->
+    <para>
+     Restrict watchdog and heartbeat receiver to listen only on configured addresses. (Bo Peng)
+    </para>
+    <para>
+     Previously, both the watchdog and heartbeat receiver processes
+     listen on all interfaces.
+     For security reasons, they now listen only on the addresses
+     specified by <varname>hostname</varname> and <varname>heartbeat_hostname</varname>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-16 [dfffcddd6]
+    -->
+    <para>
+     Cleanup watchdog source code. (Tatsuo Ishii)
+    </para>
+    <para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Remove wd_is_upper_ok() from wd_utils.h because there's no actual
+      definition for it.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Make wd_get_ping_result() and wd_issue_ping_command() static. It's
+       only used in wd_ping.c.
+      </para>
+     </listitem>
+    </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-13 [a85b848cc]
+    -->
+    <para>
+     Emit warning if life check has not started yet. (Tatsuo Ishii)
+    </para>
+    <para>
+     Currently lifecheck emits a log only when life check becomes
+     ready. This is inconvenient for admins since they need to keep on
+     watching log file until life check is ready. This commit makes the
+     life check process to emit additional warnings periodically until life
+     check has started. The interval of the warnings is wd_interval * 10
+     seconds. However for the first time at lifecheck starting, no warning
+     is emitted since it is likely that lifecheck is not ready at that
+     point.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-07-09 [766e73811]
+    2025-07-15 [523b3d94d]
+    -->
+    <para>
+     Add support for frontend/backend protocol 3.2. (Tatsuo Ishii)
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Implement NegotiateProtocolVersion message.
+      </para>
+      <para>
+       Implementing the message is necessary when frontend requests the
+       protocol version 3.2 (i.e. PostgreSQL 18+ or compatible clients),
+       while backend still only supports 3.0 (i.e. backend is PostgreSQL 17
+       or before).
+      </para>
+      <para>
+     This commit handles the message so that the message is forwarded from
+     backend to frontend when there's no connection cache exists.
+      </para>
+      <para>
+       If connection cache exists, pgpool sends the message, which has been
+       saved at the time when the connection cache was created, to frontend.
+      </para>
+      <para>
+       Discussion: <ulink url="https://www.postgresql.org/message-id/20250708.112133.1324153277751075866.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250708.112133.1324153277751075866.ishii%40postgresql.org</ulink>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Implement protocol version 3.2 BackendKeyData and query cancel message.
+      </para>
+      <para>
+       Starting from PostgreSQL 18, frontend/backend protocol has been
+       changed to 3.2. In the changes the BackendKeyData and query cancel
+       message are modified to allow variable length cancel key.
+      </para>
+      <para>
+       This commit implements the changes and now we can connect to
+       PostgreSQL frontend and backend using 3.2 protocol.
+      </para>
+      <programlisting>
+Example session is:
+PGMAXPROTOCOLVERSION="3.2" psql -p 11000 test
+      </programlisting>
+      <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250714.155710.1706961744888449986.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250714.155710.1706961744888449986.ishii%40postgresql.org</ulink>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-24 [706ca859c]
+    2025-07-15 [0e80ac4e5]
+    2025-07-15 [f4cfd6188]
+    -->
+    <para>
+     Add <xref linkend="pgpool-adm-pcp-proc-info">. (Tatsuo Ishii)
+    </para>
+    <para>
+     This commit adds new pgpool_adm extension function:
+     pcp_proc_info. Also add new fields: client_host, client_port and SQL
+     statement to pcp_proc_info and "show pool_pools". With these additions
+     now it is possible to track the relationship among clients of pgpool,
+     pgpool itself and PostgreSQL.
+    </para>
+    <para>
+     Moreover the commit allows to know what commands (statements) are last
+     executed by using pcp_proc_info. Previously it was not possible unless
+     looking into the pgpool log.
+    </para>
+    <para>
+     lipcp.so version is bumped from 2.0.0 to 3.0.0.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-14 [9fc568f00]
+    -->
+    <para>
+     Enhance lifecheck log. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously when wd_lifecheck_method = 'query', life checking prints
+     SQL without application name if "%a" is specified in
+     log_line_prefix. This commit add application_name "lifecheck_ping" to
+     make the log looks better.  Since this changes user visible behavior,
+     I do not apply this to stable branches.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-June/004604.html">[pgpool-hackers: 4603] life check log is not nicea</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-05 [1a68c6eb0]
+    -->
+    <para>
+     Replace random() with pg_prng random function. (Martijn van Duren, Tatsuo Ishii)
+    </para>
+    <para>
+     Previously we used random() for choosing load balancing node. However
+     PostgreSQL has better random number generator: pg_prng.c. This commit
+     imports the file and use pg_prng_double() to generate random number in
+     range [0.0, 1.0). The seed is generated using pg_strong_random().
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004589.html">[pgpool-hackers: 4588] Shuffle random functions and use better random numbers</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-03 [cea80281d]
+    2025-06-04 [e058c9334]
+    -->
+    <para>
+     Retry bind on watchdog receive socket. (Tatsuo Ishii)
+    </para>
+    <para>
+     Occasionally 028.watchdog_enable_consensus_with_half_votes times out
+     due to failure on binding watchdog receive socket.  This commit tries
+     to mitigate the issue by retrying bind.  Currently the retry is
+     performed up to 5 times and each retry is with 1 second sleep.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-28 [ffd3a5224]
+    -->
+    <para>
+     Import likely/unlikely from PostgreSQL. (Tatsuo Ishii)
+    </para>
+    <para>
+     These macros are not only useful to enhance performance (if correctly
+     used) but make porting codes from PostgreSQL to pgpool easier since
+     the macros occasionally used in the code.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004600.html">[pgpool-hackers: 4599] Porting likely/unlikely</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-20 [7abdd48ec]
+    2025-05-20 [e14feea1d]
+    -->
+    <para>
+     Replace PostmasterRandom() with pg_strong_random(). (Tatsuo Ishii)
+    </para>
+    <para>
+     Our PostmasterRandmon() was imported from PostgreSQL long time ago (in
+     2016). In the same year PostgreSQL replaced PostmasterRandmon() with
+     pg_strong_random()(src/port/pg_strong_random.c). This commit follows
+     it.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004589.html">[pgpool-hackers: 4588] Shuffle random functions and use better random numbers</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-08 [5f7d06d87]
+    -->
+    <para>
+     Fall back to prompting for password if reading from <filename>.pcppass</filename> file fails. (Bo Peng)
+    </para>
+    <para>
+     If reading password from <filename>.pcppass</filename> file fails,
+     it should fall back to prompting the user for input,
+     similar to how PostgreSQL handles <filename>.pgpass</filename>.
+    </para>
+    <para>
+     This commit also changes the following messages to be displayed
+     without requiring the <option>-d</option> option:
+     <programlisting>
+WARNING: password file \"%s\" is not a plain file
+WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less
+     </programlisting>
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004590.html">[pgpool-hackers: 4589] If reading password from .pcppass file fails, try to read it from prompt.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-14 [bbe93d86b]
+    -->
+    <para>
+     Remove or downgrade inappropriate log messages at pgpool startup. (Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-02 [5c41d5338]
+    -->
+    <para>
+     Add major version information to the configuration file. (Bo Peng)
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-07-15 [2a236be3e]
+    -->
+    <para>
+     Fix documentation for <literal>enum</literal> parameters reported as <literal>strings</literal>. (Taiki Koshino)
+    </para>
+    <para>
+     Fix documentations for 6 parameters:
+     <programlisting>
+log_standby_delay
+log_backend_messages
+wd_lifecheck_method
+memqcache_method
+disable_load_balance_on_write
+backend_clustering_mode
+     </programlisting>
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-05-09 [174772d6c]
+    -->
+    <para>
+     Enhance query cache doc. (Tatsuo Ishii)
+    </para>
+    <para>
+     Pgpool refuses to cache a query calling functions returning
+     <literal>TIMESTAMP WITH TIMEZONE</literal>, <literal>TIME WITH TIMEZONE</literal>.
+     If there are multiple functions having same name and one of them returns
+     <literal>TIMESTAMP WITH TIMEZONE</literal>, <literal>TIME WITH TIMEZONE</literal>,
+     pgpool refuses to cache even if one of them does not
+     return the data types. So add a note on this along with workaround.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Test Tools</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-08-22 [534e04a0e]
+    2025-08-22 [384c17eab]
+    -->
+    <para>
+     Allow to specify VIP in <xref linkend="watchdog-setup">. (Tatsuo Ishii)
+    </para>
+    <para>
+     This commit allows to specify VIP parameter (<varname>delegate_ip</varname>)
+     in <command>watchdog_setup</command> using new option <option>-vip [ip]</option>.
+     If ip is omitted, <literal>127.0.0.1</literal> is assumed. Even if vip option
+     is specified, pgpool will not actually set the VIP to the system:
+     <xref linkend="guc-if-up-cmd">, <xref linkend="guc-if-down-cmd"> are
+     just set to echo command and do nothing except emit a log. This option
+     is intended to trace the action of <productname>Pgpool-II</productname>
+     regarding VIP handling.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250820.151646.1640218512808280876.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250820.151646.1640218512808280876.ishii%40postgresql.org</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-06-25 [04e09df17]
+    2025-06-27 [b76c6876d]
+    -->
+    <para>
+     Fix 038.pcp_commands regression test. (Tatsuo Ishii)
+    </para>
+    <para>
+     The result of the test showed local host IP. Although the IP can be
+     either IPv4 or IPv6, the test script hadn't considered it. To fix
+     this, now test.sh converts IPv4 and IPv6 IP to "localhost".
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-08 [e30bb2ead]
+    -->
+    <para>
+     Stabilize 029.cert_passphrase regression test. (Tatsuo Ishii)
+    </para>
+    <para>
+     When ssl_passphrase_command is not valid, the error message is
+     typically "bad decrypt" but it seems sometimes "wrong tag".
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
