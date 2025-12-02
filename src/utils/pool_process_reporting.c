@@ -1084,6 +1084,8 @@ get_config(int *nrows)
 
 	StrNCpy(status[i].name, "memqcache_stats_start_time", POOLCONFIG_MAXNAMELEN);
 	snprintf(status[i].value, POOLCONFIG_MAXVALLEN, "%s", ctime(&pool_get_memqcache_stats()->start_time));
+	/* remove a newline added by ctime() */
+	*(strchrnul(status[i].value, '\n')) = '\0';
 	StrNCpy(status[i].desc, "Start time of query cache stats", POOLCONFIG_MAXDESCLEN);
 	i++;
 
