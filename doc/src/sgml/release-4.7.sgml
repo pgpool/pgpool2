@@ -92,7 +92,7 @@
      Discussion: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-May/009489.html">[pgpool-general: 9486] Retiring slony mode</ulink>
     </para>
     <para>
-     Discussion: <ulink url="https://www.postgresql.org/message-id/20250722.153130.1007226654125839063.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250722.153130.1007226654125839063.ishii%40postgresql.org</ulink>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250722.153130.1007226654125839063.ishii%40postgresql.org">Re: [pgpool-general: 9486] Retiring slony mode</ulink>
     </para>
    </listitem>
 
@@ -110,7 +110,7 @@
      best to change its default value to <literal>off</literal>.
     </para>
     <para>
-     Discussion: <ulink url="https://www.postgresql.org/message-id/20250815.111100.2261166502134199972.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250815.111100.2261166502134199972.ishii%40postgresql.org</ulink>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250815.111100.2261166502134199972.ishii%40postgresql.org">Proposal: change log_pcp_processes default to off</ulink>
     </para>
    </listitem>
    <listitem>
@@ -288,7 +288,7 @@
        saved at the time when the connection cache was created, to frontend.
       </para>
       <para>
-       Discussion: <ulink url="https://www.postgresql.org/message-id/20250708.112133.1324153277751075866.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250708.112133.1324153277751075866.ishii%40postgresql.org</ulink>
+       Discussion: <ulink url="https://www.postgresql.org/message-id/20250708.112133.1324153277751075866.ishii%40postgresql.org">Feature: implement NegotiateProtocolVersion message</ulink>
       </para>
      </listitem>
 
@@ -310,7 +310,7 @@ Example session is:
 PGMAXPROTOCOLVERSION="3.2" psql -p 11000 test
       </programlisting>
       <para>
-     Discussion: <ulink url="https://www.postgresql.org/message-id/20250714.155710.1706961744888449986.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250714.155710.1706961744888449986.ishii%40postgresql.org</ulink>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250714.155710.1706961744888449986.ishii%40postgresql.org">Implement protocol 3.2 BackendKeyData and cancel request message</ulink>
       </para>
      </listitem>
     </itemizedlist>
@@ -540,7 +540,7 @@ backend_clustering_mode
      regarding VIP handling.
     </para>
     <para>
-     Discussion: <ulink url="https://www.postgresql.org/message-id/20250820.151646.1640218512808280876.ishii%40postgresql.org">https://www.postgresql.org/message-id/20250820.151646.1640218512808280876.ishii%40postgresql.org</ulink>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20250820.151646.1640218512808280876.ishii%40postgresql.org">Enhance watchdog_setup</ulink>
     </para>
    </listitem>
   </itemizedlist>
