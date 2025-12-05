@@ -132,7 +132,7 @@
     <tbody>
      <row>
       <entry>Pgpool-II Version</entry>
-      <entry>4.6.1</entry>
+      <entry>4.7.0</entry>
       <entry>-</entry>
      </row>
      <row>
@@ -276,14 +276,22 @@ exclude=pgpool*
   <para>
    Install <productname>Pgpool-II</productname> from
    <productname>Pgpool-II</productname> YUM repository.
-   To install the required libmemcached library for Pgpool-II,
-   you need to enable <literal>crb</literal> repository.
-   If you're using <literal>Rocky Linux 8</literal>,
-   use <literal>powertools</literal> repository instead of
-   <literal>crb</literal> repository.
+   To install <productname>Pgpool-II</productname> on Rocky Linux 10,
+   you need to enable <literal>epel</literal> repository and install libmemcached-awesome-devel to satisfy dependencies.
   </para>
   <programlisting>
-[all servers]# dnf install -y https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-9-x86_64/pgpool-II-release-4.6-1.noarch.rpm
+[all servers]# dnf install -y https://www.pgpool.net/yum/rpms/4.7/redhat/rhel-10-x86_64/pgpool-II-release-4.7-1.noarch.rpm
+[all servers]# dnf install -y epel-release
+[all servers]# dnf install -y libmemcached-awesome-devel
+[all servers]# dnf install -y pgpool-II-pg18-*
+  </programlisting>
+  <para>
+   If you're using <literal>Rocky Linux 9</literal>,
+   use <literal>crb</literal> repository insted of <literal>epel</literal>.
+   For <literal>Rocky Linux 8</literal>,
+   use <literal>powertools</literal> repository instead.
+  </para>
+  <programlisting>
 [all servers]# dnf install -y --enablerepo=crb pgpool-II-pg18-*
   </programlisting>
  </sect2>
@@ -1299,11 +1307,11 @@ Password for user pgpool:
     primary server (<literal>server1</literal>).
    </para>
    <programlisting>
-[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 1 -W
+[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 1
 Password:
 pcp_recovery_node -- Command Successful
 
-[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 2 -W
+[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 2
 Password:
 pcp_recovery_node -- Command Successful
    </programlisting>
@@ -1330,7 +1338,7 @@ Password for user pgpool
     Confirm the watchdog status by using <command>pcp_watchdog_info</command>. The <command>Pgpool-II</command> server which is started first runs as <literal>LEADER</literal>.
    </para>
    <programlisting>
-[any server]# pcp_watchdog_info -h 192.168.100.50 -p 9898 -U pgpool -W
+[any server]# pcp_watchdog_info -h 192.168.100.50 -p 9898 -U pgpool
 Password:
 3 3 YES server1:9999 Linux server1 server1
 
@@ -1352,7 +1360,7 @@ server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER # running as STA
    <programlisting>
 [root@server1 ~]# systemctl stop pgpool.service
 
-[root@server1 ~]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool -W
+[root@server1 ~]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool
 Password:
 3 3 YES server2:9999 Linux server2 server2
 
@@ -1368,7 +1376,7 @@ server3:9999 Linux server3 server3 9999 9000 7 STANDBY 0 MEMBER   # server3 is r
    <programlisting>
 [root@server1 ~]# systemctl start pgpool.service
 
-[root@server1 ~]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool -W
+[root@server1 ~]# pcp_watchdog_info -p 9898 -h 192.168.100.50 -U pgpool
 Password: 
 3 3 YES server2:9999 Linux server2 server2
 
@@ -1469,7 +1477,7 @@ reply_time       | 2023-11-10 17:17:23.886477+00
     as a standby.
    </para>
    <programlisting>
-[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 0 -W
+[any server]# pcp_recovery_node -h 192.168.100.50 -p 9898 -U pgpool -n 0
 Password: 
 pcp_recovery_node -- Command Successful
    </programlisting>
@@ -1480,11 +1488,11 @@ pcp_recovery_node -- Command Successful
    <programlisting>
 [any server]# psql -h 192.168.100.50 -p 9999 -U pgpool postgres -c "show pool_nodes"
 Password for user pgpool:
-node_id | hostname | port | status | lb_weight |  role   | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change  
+ node_id | hostname | port | status | pg_status | lb_weight |  role   | pg_role | select_cnt | load_balance_node | replication_delay | replication_state | replication_sync_state | last_status_change
 ---------+----------+------+--------+-----------+-----------+---------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
  0       | server1  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | true              | 0                 | streaming         | async                  | 2023-11-10 17:22:03
  1       | server2  | 5432 | up     | up        | 0.333333  | primary | primary | 0          | false             | 0                 |                   |                        | 2023-11-10 17:05:40
- 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | false             | 0                 | streaming         | async                  | 2023-11-10 17:05:51
+ 2       | server3  | 5432 | up     | up        | 0.333333  | standby | standby | 0          | falas             | 0                 | streaming         | async                  | 2023-11-10 17:05:51
 (3 rows)
    </programlisting>
   </sect3>

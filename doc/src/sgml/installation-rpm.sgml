@@ -120,7 +120,7 @@ exclude=pgpool*
   </para>
 
   <para>
-   The following commands assume that you are using Pgpool-II 4.6.x for PostgreSQL 18 on RHEL10.
+   The following commands assume that you are using Pgpool-II 4.7.x for PostgreSQL 18 on RHEL10.
    If you are using other versions, replace "pgXX" with your PostgreSQL version.
   </para>
   <para>
@@ -129,7 +129,15 @@ exclude=pgpool*
    For REHL9/8, see <ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">here</ulink>.
   </para>
   <programlisting>
-dnf install https://www.pgpool.net/yum/rpms/4.6/redhat/rhel-10-x86_64/pgpool-II-release-4.6-1.noarch.rpm
+dnf install https://www.pgpool.net/yum/rpms/4.7/redhat/rhel-10-x86_64/pgpool-II-release-4.7-1.noarch.rpm
+  </programlisting>
+  <para>
+   To install <productname>Pgpool-II</productname> on Rocky Linux 10, you need to enable the EPEL repository and install libmemcached-awesome-devel to satisfy dependencies.
+   Before installing <productname>Pgpool-II</productname>, run the following commands.
+  </para>
+  <programlisting>
+dnf install epel-release
+dnf install libmemcached-awesome-devel
   </programlisting>
   <para>
    Then, install <productname>Pgpool-II</productname>.
