@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2025	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -4541,7 +4541,7 @@ BackendFlagsShowFunc(int index)
 		if (*buffer == '\0')
 			snprintf(buffer, sizeof(buffer), "ALWAYS_PRIMARY");
 		else
-			snprintf(buffer+strlen(buffer), sizeof(buffer), "|ALWAYS_PRIMARY");
+			strncat(buffer, "|ALWAYS_PRIMARY", 16);
 	}
 	return buffer;
 }
