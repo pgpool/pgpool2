@@ -187,7 +187,7 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 				{
 					ereport(DEBUG1,
 							(errmsg("searching relcache"),
-							 errdetail("relcache for database:%s table:%s expired. now:%lld expiration time:%lld", dbname, table, (long long)now, (long long)relcache->cache[i].expire)));
+							 errdetail("relcache for database:%s table:%s expired. now:%lld expiration time:%lld", dbname, table, (long long) now, (long long) relcache->cache[i].expire)));
 
 					relcache->cache[i].refcnt = 0;
 					break;

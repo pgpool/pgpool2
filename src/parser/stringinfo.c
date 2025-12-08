@@ -49,7 +49,7 @@ initStringInfoInternal(StringInfo str, int initsize)
 static inline StringInfo
 makeStringInfoInternal(int initsize)
 {
-	StringInfo  res = (StringInfo) palloc(sizeof(StringInfoData));
+	StringInfo	res = (StringInfo) palloc(sizeof(StringInfoData));
 
 	initStringInfoInternal(res, initsize);
 	return res;

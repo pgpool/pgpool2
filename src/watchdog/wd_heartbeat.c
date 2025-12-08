@@ -851,7 +851,7 @@ packet_to_string_hb(WdHbPacket *pkt, char *str, int maxlen)
 	int			len;
 
 	len = snprintf(str, maxlen, "tv_sec=%lld tv_usec=%lld from=%s",
-				   (long long)pkt->send_time.tv_sec, (long long)pkt->send_time.tv_usec, pkt->from);
+				   (long long) pkt->send_time.tv_sec, (long long) pkt->send_time.tv_usec, pkt->from);
 
 	return len;
 }

@@ -305,7 +305,7 @@ pool_create_cp(void)
 				 errdetail("user: %s database: %s closetime: %lld",
 						   CONNECTION_SLOT(p, main_node_id)->sp->user,
 						   CONNECTION_SLOT(p, main_node_id)->sp->database,
-						   (long long)CONNECTION_SLOT(p, main_node_id)->closetime)));
+						   (long long) CONNECTION_SLOT(p, main_node_id)->closetime)));
 
 		if (CONNECTION_SLOT(p, main_node_id)->closetime < closetime)
 		{
@@ -366,7 +366,7 @@ pool_connection_pool_timer(POOL_CONNECTION_POOL *backend)
 
 	ereport(DEBUG1,
 			(errmsg("setting backend connection close timer"),
-			 errdetail("close time %lld", (long long)time(NULL))));
+			 errdetail("close time %lld", (long long) time(NULL))));
 
 	/* Set connection close time */
 	for (i = 0; i < NUM_BACKENDS; i++)
@@ -424,7 +424,7 @@ pool_backend_timer(void)
 	now = time(NULL);
 
 	ereport(DEBUG1,
-			(errmsg("backend timer handler called at %lld", (long long)now)));
+			(errmsg("backend timer handler called at %lld", (long long) now)));
 
 	for (i = 0; i < pool_config->max_pool; i++, p++)
 	{
@@ -443,7 +443,7 @@ pool_backend_timer(void)
 			ereport(DEBUG1,
 					(errmsg("backend timer handler called"),
 					 errdetail("expire time: %lld",
-							   (long long)(MAIN_CONNECTION(p)->closetime + pool_config->connection_life_time))));
+							   (long long) (MAIN_CONNECTION(p)->closetime + pool_config->connection_life_time))));
 
 			if (now >= (MAIN_CONNECTION(p)->closetime + pool_config->connection_life_time))
 			{

@@ -253,7 +253,8 @@ typedef struct
 	int			authentication_timeout; /* maximum time in seconds to complete
 										 * client authentication */
 	int			max_pool;		/* max # of connection pool per child */
-	char	   *work_dir;		/* directory to create pgpool_status and lock files */
+	char	   *work_dir;		/* directory to create pgpool_status and lock
+								 * files */
 	char	   *log_destination_str;	/* log destination: stderr and/or
 										 * syslog */
 	int			log_destination;	/* log destination */
@@ -663,8 +664,8 @@ typedef struct
 										 * signal (sec) */
 	WdHbIf		hb_ifs[WD_MAX_IF_NUM];	/* heartbeat interfaces of all
 										 * watchdog nodes */
-	WdHbIf		hb_local_if[WD_MAX_IF_NUM];     /* local heartbeat interfaces */
-	int			num_hb_local_if;                /* number of local interface */
+	WdHbIf		hb_local_if[WD_MAX_IF_NUM]; /* local heartbeat interfaces */
+	int			num_hb_local_if;	/* number of local interface */
 	WdHbIf		hb_dest_if[WD_MAX_IF_NUM];	/* heartbeat destination
 											 * interfaces */
 	int			num_hb_dest_if; /* number of destination interface */

@@ -2422,7 +2422,7 @@ _copyInferenceElem(const InferenceElem *from)
 static ReturningExpr *
 _copyReturningExpr(const ReturningExpr *from)
 {
-	 ReturningExpr *newnode = makeNode(ReturningExpr);
+	ReturningExpr *newnode = makeNode(ReturningExpr);
 
 	COPY_SCALAR_FIELD(retlevelsup);
 	COPY_SCALAR_FIELD(retold);
