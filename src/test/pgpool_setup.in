@@ -125,7 +125,7 @@ vstr=`$INITDB -V|awk '{print $3}'|sed 's/\./ /g'`
 #vstr="11.1"
 
 # check if alpha or beta
-echo $vstr|egrep "[a-z]" > /dev/null
+echo $vstr|grep -E "[a-z]" > /dev/null
 if [ $? = 0 ];then
     vstr=`echo $vstr|sed 's/\([0-9]*\).*/\1/'`
     major1=`echo $vstr|awk '{print $1}'`
