@@ -313,7 +313,7 @@ extern "C"
 /* pgpool-II extensions */
 json_value *json_get_value_for_key(json_value *source, const char *key);
 int			json_get_int_value_for_key(json_value *source, const char *key, int *value);
-int			json_get_llong_value_for_key(json_value * source, const char *key, long long *value);
+int			json_get_llong_value_for_key(json_value *source, const char *key, long long *value);
 char	   *json_get_string_value_for_key(json_value *source, const char *key);
 int			json_get_bool_value_for_key(json_value *source, const char *key, bool *value);
 

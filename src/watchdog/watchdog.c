@@ -7305,6 +7305,7 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode *wdNode, WDPacketDa
 					(errmsg("we have not received a beacon message from leader node \"%s\" and it has not replied to our info request",
 							WD_LEADER_NODE->nodeName),
 					 errdetail("re-initializing the cluster")));
+
 			/*
 			 * Starting to set LOST status to the leader node.  This needs to
 			 * be done because there could be two leader nodes.
@@ -7329,6 +7330,7 @@ watchdog_state_machine_standby(WD_EVENTS event, WatchdogNode *wdNode, WDPacketDa
 
 			node_lost_while_ipc_command(WD_LEADER_NODE);
 			set_cluster_leader_node(NULL);
+
 			/*
 			 * Finish setting LOST status to the leader node.
 			 */

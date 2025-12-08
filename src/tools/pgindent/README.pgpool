@@ -9,8 +9,18 @@ The steps to run pgindent are as follows:
 
 2. Or, if you want to generate typedefs.list from scratch, run find_typedes:
    cd pgpool2
+   autoreconf -fi
+   make clean
+   # find_typedef needs to refer to the latest object files
+   make
    src/tools/find_typedef src > src/tools/pgindent/typedefs.list
 
 3. Run pgindent by using run_pgindent.
    cd pgpool2/src
    tools/pgindent/run_pgindent
+
+4. Commit the change.
+
+5. Add an entry to .git-blame-ignore-revs.
+   (How to add an entry is described in the file).
+   

@@ -1,4 +1,4 @@
-ASN1_ITEM
+ATAlterConstraint
 A_ArrayExpr
 A_Const
 A_Expr
@@ -100,6 +100,7 @@ ColumnRef
 CommandDest
 CommentStmt
 CommonTableExpr
+CompareType
 CompositeTypeStmt
 ConfigBoolAssignFunc
 ConfigContext
@@ -182,9 +183,14 @@ DropTableSpaceStmt
 DropUserMappingStmt
 DropdbStmt
 EC_KEY
+ENGINE
+EVP_CIPHER
 EVP_CIPHER_CTX
+EVP_MD
 ErrorContextCallback
 ErrorData
+ErrorSaveContext
+ExecStatusType
 ExecuteStmt
 ExplainStmt
 Expr
@@ -274,6 +280,7 @@ JsonWrapper
 KeyAction
 KeyActions
 LDAP
+LDAPControl
 LDAPMessage
 LDAPURLDesc
 LOAD_BALANCE_STATUS
@@ -316,6 +323,7 @@ NotifyStmt
 NullIfExpr
 NullTest
 NullTestType
+OPENSSL_INIT_SETTINGS
 ObjectType
 ObjectWithArgs
 Oid
@@ -449,11 +457,14 @@ RenameStmt
 ReplicaIdentityStmt
 ResTarget
 ReturnStmt
+ReturningClause
+ReturningExpr
+ReturningOption
+ReturningOptionKind
 RoleSpec
 RoleSpecType
 RoleStmtType
 RowCompareExpr
-CompareType
 RowDesc
 RowExpr
 RowMarkClause
@@ -465,6 +476,8 @@ SQLValueFunction
 SQLValueFunctionOp
 SSL
 SSL_CTX
+SSL_METHOD
+SSL_verify_cb
 ScalarArrayOpExpr
 ScanKeywordHashFunc
 ScanKeywordList
@@ -477,12 +490,8 @@ SetOperation
 SetOperationStmt
 SetQuantifier
 SetToDefault
-SinglePartitionSpec
 Size
 SockAddr
-Sockbuf
-Sockbuf_IO
-Sockbuf_IO_Desc
 SocketConnection
 SortBy
 SortByDir
@@ -528,6 +537,7 @@ VacuumParams
 VacuumRelation
 VacuumStmt
 Var
+VarReturningType
 VarShowHook
 VariableSetKind
 VariableSetStmt
@@ -576,6 +586,7 @@ WindowFuncRunCondition
 WithCheckOption
 WithClause
 X509
+X509_NAME
 X509_STORE
 X509_STORE_CTX
 XmlExpr
@@ -586,6 +597,7 @@ YYSTYPE
 YY_BUFFER_STATE
 YY_CHAR
 _IO_lock_t
+__CONST_SOCKADDR_ARG
 __SOCKADDR_ARG
 __blkcnt_t
 __blksize_t
@@ -627,13 +639,12 @@ __uint16_t
 __uint32_t
 __uint64_t
 __uint8_t
+__useconds_t
 base_yy_extra_type
 ber_int_t
 ber_len_t
-ber_slen_t
 bitmapword
 bits32
-bool
 check_network_data
 config_group
 config_type
@@ -646,7 +657,6 @@ fe_scram_state
 fe_scram_state_enum
 flex_int16_t
 flex_uint8_t
-func_ptr
 gid_t
 hashkit_hash_fn
 hashkit_st
@@ -660,13 +670,13 @@ int64
 int64_t
 int8
 intptr_t
-jmp_buf
 json_object_entry
 json_settings
 json_state
 json_type
 json_uchar
 json_value
+key_t
 list_sort_comparator
 mb2wchar_with_len_converter
 mbchar_verifier
@@ -688,6 +698,7 @@ memcached_result_st
 memcached_return
 memcached_return_t
 memcached_server_distribution_t
+memcached_server_list_st
 memcached_server_st
 memcached_st
 memcached_string_st
@@ -696,6 +707,7 @@ memcached_trigger_key_fn
 mode_t
 packet_types
 pam_handle_t
+pem_password_cb
 pg_enc
 pg_enc2name
 pg_on_exit_callback
@@ -732,6 +744,7 @@ size_t
 socklen_t
 ssize_t
 time_t
+tree_walker_callback
 uid_t
 uint16
 uint16_t
@@ -751,5 +764,6 @@ yy_state_fast_t
 yy_state_t
 yy_state_type
 yyscan_t
+yysymbol_kind_t
 yytype_int16
 yytype_int8

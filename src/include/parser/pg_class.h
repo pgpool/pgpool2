@@ -230,7 +230,7 @@ MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
 	 (relkind) == RELKIND_TOASTVALUE || \
 	 (relkind) == RELKIND_MATVIEW)
 
-extern int errdetail_relkind_not_supported(char relkind);
+extern int	errdetail_relkind_not_supported(char relkind);
 
 #endif							/* NOT_USED_IN_PGPOOL */
 

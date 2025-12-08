@@ -1886,7 +1886,7 @@ static void
 _outReturningOption(StringInfo str, List *node)
 {
 	ListCell   *lc;
-	char        comma = 0;
+	char		comma = 0;
 
 	appendStringInfoString(str, "WITH (");
 

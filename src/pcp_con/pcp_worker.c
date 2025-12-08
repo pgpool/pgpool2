@@ -933,9 +933,9 @@ inform_node_info(PCP_CONNECTION *frontend, char *buf)
 
 			snprintf(standby_delay_by_time_str, sizeof(standby_delay_by_time_str), "%d", bi->standby_delay_by_time);
 
-			snprintf(standby_delay_str, sizeof(standby_delay_str), "%lld", (long long)bi->standby_delay);
+			snprintf(standby_delay_str, sizeof(standby_delay_str), "%lld", (long long) bi->standby_delay);
 
-			snprintf(status_changed_time_str, sizeof(status_changed_time_str), "%lld", (long long)bi->status_changed_time);
+			snprintf(status_changed_time_str, sizeof(status_changed_time_str), "%lld", (long long) bi->status_changed_time);
 
 			pcp_write(frontend, "i", 1);
 			wsize = htonl(sizeof(code) +
