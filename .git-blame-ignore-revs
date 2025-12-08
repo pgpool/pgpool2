@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+89288109a11bff5ea62f39355d2a6a7efc856b6a # 2025-12-08 16:43:12 +0900
+# Run pgindent.
+
 a48d72c1682294386fb21b4d17689ac4afde738b # 2025-07-18 15:39:40 +0900
 # Fix indentation.
 
