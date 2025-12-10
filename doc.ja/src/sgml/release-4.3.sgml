@@ -1,6 +1,71 @@
 <!-- doc/src/sgml/release-4.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-3-18">
+ <title>リリース 4.3.18</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2025-12-xx</simpara>
+ </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-12-08 [5bd10177c]
+    -->
+    <para>
+     pgpool_setupで非推奨の「egrep」の代わりに「grep -E」を使用するようにしました。(Bo Peng)
+    </para>
+    <para>
+     新しいGNUのgrepバージョンでの廃止警告を回避するために、「egrep」を「grep -E」に置き換えました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-12-08 [8deccc15e]
+    -->
+    <para>
+     show pool_statusのバッファオーバーフローエラーを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     SHOW POOL_STATUS、pgpool show、および pcp_pool_statusコマンドでバッファオーバーフローが発生する問題を修正しました。
+     問題の原因は、backend_flagがALWAYS_PRIMARYに設定されている場合に、pool_flag_to_str()関数がbackend_flagを文字列化する際に静的バッファの末尾を越えて書き込んでしまうことでした。
+    </para>
+    <para>
+     この問題はzam bakによって報告され、Bo Pengによってよって分析されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20251202.140205.427777414210613577.ishii%40postgresql.org">Re: "buffer overflow detected" when running SHOW POOL_STATUS</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-02 [c8865c703]
+    -->
+    <para>
+     「show pool_status」に表示されるmemqcache_stats_start_timeの出力を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     get_config()がctime()を使って時刻を文字列化していましたが、ctime()の戻り値の末尾には改行が含まれることを考慮していませんでした。
+     その結果、memqcache_stats_start_timeの行に余計な改行が入り、さらに次の行が空欄として表示されてしまう問題が発生していました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20251130.102712.131456481338876013.ishii%40postgresql.org">Re: "buffer overflow detected" when running SHOW POOL_STATUS</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-3-17">
  <title>リリース 4.3.17</title>
  <note>
