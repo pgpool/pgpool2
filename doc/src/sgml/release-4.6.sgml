@@ -1,3 +1,94 @@
+<sect1 id="release-4-6-5">
+ <title>Release 4.6.5</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2025-12-xx</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-12-08 [5bd10177c]
+    -->
+    <para>
+     Use "grep -E" instead of deprecated "egrep" in pgpool_setup. (Bo Peng)
+    </para>
+    <para>
+     Replace "egrep" with "grep -E" to avoid obsolescence warnings on newer GNU grep versions.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-12-08 [8deccc15e]
+    -->
+    <para>
+     Fix buffer overflow error in show pool_status. (Tatsuo Ishii)
+    </para>
+    <para>
+     "show pool_status", "pgpool show" and pcp_pool_status could cause a
+     buffer overflow error. If backend_flag is set to "ALWAYS_PRIMARY",
+     pool_flag_to_str(), which is responsible to produce printable format
+     of backend_flag, wrote data past to the end of static buffer.
+    </para>
+    <para>
+     Problem reported by zam bak and reviewed by Bo Peng.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20251202.140205.427777414210613577.ishii%40postgresql.org">Re: "buffer overflow detected" when running SHOW POOL_STATUS</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-02 [c8865c703]
+    -->
+    <para>
+     Fix memqcache_stats_start_time shown in "show pool_status". (Tatsuo Ishii)
+    </para>
+    <para>
+     get_config() uses ctime() to generate printable form of
+     memqcache_stats_start_time. But it did not take into account that
+     ctime() adds newline at the end of result. As a result, not only the
+     output of memqcache_stats_start_time was with unnecessary newline but
+     next row printed empty items.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20251130.102712.131456481338876013.ishii%40postgresql.org">Re: "buffer overflow detected" when running SHOW POOL_STATUS</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-11-25 [0c45a1e01]
+    -->
+    <para>
+     Test: stabilize 037.failover_session. (Tatsuo Ishii)
+    </para>
+    <para>
+     On some platform (in my case Rocky Linux 10 running on VitualBox)
+     fails to finish shutdownall after test1.  This could be caused by the
+     failover in the test to fail to restore the signal handler which
+     should accept shutdown signal from shutdownall. Adding "sleep 5"
+     before shutdownall seems to mitigate the problem.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-6-4">
  <title>Release 4.6.4</title>
  <note>
