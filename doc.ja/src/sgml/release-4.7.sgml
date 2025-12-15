@@ -1,0 +1,524 @@
+<sect1 id="release-4-7-0">
+ <title>リリース 4.7.0</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2025-12-23</simpara>
+ </note>
+
+ <sect2>
+  <title>概要</title>
+  <para>
+   このリリースでは、<productname>Pgpool-II</productname>に対して複数の機能強化を行いました。
+   主な改善点として、従来の<literal>Slony</literal>モードの廃止、セキュリティの強化、フロントエンド/バックエンドプロトコルの互換性向上、運用性の向上などが含まれます。
+  </para>
+
+  <para>
+   主な機能の改良は以下の通りです。
+  </para>
+
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     <literal>Slony</literal>モードの廃止
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <varname>logdir</varname>パラメータ名を<xref linkend="guc-work-dir">に変更
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     フロントエンド/バックエンドプロトコルバージョン3.2サポートの追加
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     watchdogとheartbeat receiverのセキュリティ強化
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     クライアント情報を表示するための<command>pcp_proc_info</command>および<command>show pool_pools</command>に新しいフィールドの追加と、<function>pgpool_adm_pcp_proc_info</function>拡張関数の追加
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     オンラインリカバリに使用するデータベースを指定できるrecovery_databaseパラメータの追加
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     PostgreSQL 18のSQLパーサの導入
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2 id="migration-4-7-0">
+  <title>バージョン4.7への移行</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2025-10-29 [b402dbc09]
+    -->
+    <para>
+     <literal>Slony</literal>モードを廃止しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     これまで、<productname>Pgpool-II</productname>は、<literal>slony</literal>モードを<xref linkend="guc-backend-clustering-mode">の1つとしてサポートしていました。
+     <literal>Slony-I</literal>
+     (https://www.slony.info/)。最新の<literal>Slony-I</literal> は2022 年にリリースされましたが、ユーザーから <literal>Slony</literal>モードの廃止について何の報告もありませんでした。
+     これは、<literal>Slony-I</literal>モードを積極的に利用するユーザーがいないことを示唆しています。
+     そこで、<literal>Slony-I</literal>のサポートを中止することにしました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-May/009489.html">[pgpool-general: 9486] Retiring slony mode</ulink>
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20250722.153130.1007226654125839063.ishii%40postgresql.org">Re: [pgpool-general: 9486] Retiring slony mode</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-15 [579306dbc]
+    -->
+    <para>
+     <xref linkend="guc-log-pcp-processes">パラメータのデフォルト値を<literal>off</literal>に変更しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前の<varname>log_pcp_processes</varname>のデフォルトは<literal>on</literal>でしたが、管理者が<productname>Pgpool-II</productname>の状態を監視するためにpcpコマンドを頻繁に使用すると、過剰なログ行が生成される可能性がありました。
+     また、このログは一種のデバッグメッセージであるため、デフォルト値を<literal>off</literal>に変更することをお勧めします。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20250815.111100.2261166502134199972.ishii%40postgresql.org">Proposal: change log_pcp_processes default to off</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-07-17 [3cc3d2d84]
+    2025-07-25 [a16b63b8d]
+    -->
+    <para>
+     オンラインリカバリに使用するデータベースの設定が可能になりました。 (Bo Peng)
+    </para>
+    <para>
+     新しい設定パラメータ<xref linkend="guc-recovery-database">が追加され、オンラインリカバリに使用するデータベースをユーザーが指定できるようになりました。
+     以前は、この値は<literal>template1</literal>としてハードコードされていました。現在のデフォルトは<literal>postgres</literal>に設定されています。
+    </para>
+    <para>
+     4.6より前のバージョンから移行するユーザーは、<xref linkend="guc-recovery-database">を<literal>template1</literal>に設定するか、<literal>postgres</literal>データベースにオンラインリカバリに必要な拡張機能を作成することで互換性を維持できます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-10-14 [b286ce29a]
+    2025-10-14 [25ad5e466]
+    -->
+    <para>
+     <varname>logdir</varname>を<xref linkend="guc-work-dir">に名称を変更しました。 (Taiki Koshino)
+    </para>
+    <para>
+     以前は、<filename>pgpool_status</filename>およびロックファイルを保存するディレクトリは、<varname>logdir</varname>パラメータで指定されていました。
+     しかし、<varname>logdir</varname>という名前は誤解を招く恐れがあったため、このパラメータは、わかりやすくするために<xref linkend="guc-work-dir">に変更されました。
+     デフォルト値は<literal>/tmp</literal>で、以前のパラメータ<varname>logdir</varname>と同じです。
+    </para>
+    <para>
+     互換性のため、古い <varname>logdir</varname>パラメータは引き続きサポートされています。
+     古いパラメータ<varname>logdir</varname>が使用されると、<productname>Pgpool-II</productname>はその値を<xref linkend="guc-work-dir">に設定し、警告メッセージを表示します。
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+
+   <listitem>
+    <!--
+    2025-10-03 [df2771637]
+    2025-10-05 [020ee7084]
+    -->
+    <para>
+     PostgreSQL 18の新しいパーサーをインポートしました。 (Bo Peng)
+    </para>
+    <para>
+     PostgreSQL 18パーサーの主な変更点は以下の通りです。
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       生成列を仮想列として使用可能
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       DMLクエリのRETURNINGにOLD/NEWのサポートを追加
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       各種制約の追加(例:WITHOUT OVERLAPS、ENFORCED/NOT ENFORCED)
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-22 [94b62a93c]
+    2025-09-01 [f15c8a302]
+    2025-09-01 [b9e7b4245]
+    -->
+    <para>
+     watchdogとheartbeat receiverが、設定されたアドレスのみを受け付けるように制限しました。(Bo Peng)
+    </para>
+    <para>
+     以前は、watchdogプロセスとheartbeat receiverプロセスはどちらもすべてのインターフェースを受け付けていました。
+     セキュリティ上の理由から、現在は<varname>hostname</varname>と<varname>heartbeat_hostname</varname>で指定されたアドレスのみを受け付けるようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-16 [dfffcddd6]
+    -->
+    <para>
+     watchdogのソースコードを整理しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       <function>wd_is_upper_ok()</function>は定義されていないため、<filename>wd_utils.h</filename>から削除しました。
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <function>wd_get_ping_result()</function>と<function>wd_issue_ping_command()</function>を静的関数にしました。これは<filename>wd_ping.c</filename>でのみ使用されます。
+      </para>
+     </listitem>
+    </itemizedlist>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-08-13 [a85b848cc]
+    -->
+    <para>
+     ライフチェックがまだ開始されていない場合、警告を出力するようになりました。(Tatsuo Ishii)
+    </para>
+    <para>
+     現在、ライフチェックは、ライフチェックの準備が整った場合にのみログを出力します。
+     管理者は、ライフチェックの準備が整うまでログファイルを監視し続ける必要があるため、不便です。このコミットにより、ライフチェックプロセスは、ライフチェックが開始されるまで定期的に追加の警告を出力するようになります。
+     警告の間隔は<xref linkend="guc-wd-interval"> × 10秒です。
+     ただし、ライフチェック開始時の初回は、その時点ではライフチェックの準備が整っていない可能性が高いため、警告は出力されません。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-07-09 [766e73811]
+    2025-07-15 [523b3d94d]
+    -->
+    <para>
+     フロントエンド/バックエンドプロトコル3.2のサポートを追加しました。(Tatsuo Ishii)
+    </para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       NegotiateProtocolVersionメッセージを実装しました。
+      </para>
+      <para>
+       フロントエンドがプロトコルバージョン3.2(PostgreSQL 18以降または互換クライアント)を要求し、バックエンドがまだ3.0(PostgreSQL 17以前)しかサポートしていない場合に、このメッセージを実装する必要があります。
+      </para>
+      <para>
+       このコミットは、接続キャッシュが存在しない場合に、バックエンドからフロントエンドへメッセージを転送するようにメッセージを処理します。
+      </para>
+      <para>
+       コネクションキャッシュが存在する場合、<productname>Pgpool-II</productname>はコネクションキャッシュの作成時に保存されたメッセージをフロントエンドに送信します。
+      </para>
+      <para>
+       ディスカッション: <ulink url="https://www.postgresql.org/message-id/20250708.112133.1324153277751075866.ishii%40postgresql.org">Feature: implement NegotiateProtocolVersion message</ulink>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       プロトコルバージョン3.2にBackendKeyDataとクエリキャンセルメッセージを実装しました。
+      </para>
+      <para>
+       PostgreSQL 18以降、フロントエンド/バックエンドプロトコルが3.2に変更されました。
+       この変更により、BackendKeyDataとクエリキャンセルメッセージが修正され、可変長のキャンセルキーが使用できるようになりました。
+      </para>
+      <para>
+       3.2プロトコルを使用してPostgreSQLのフロントエンドとバックエンドに接続できるようになりました。
+      </para>
+      <programlisting>
+セッション例:
+PGMAXPROTOCOLVERSION="3.2" psql -p 11000 test
+      </programlisting>
+      <para>
+       ディスカッション: <ulink url="https://www.postgresql.org/message-id/20250714.155710.1706961744888449986.ishii%40postgresql.org">Implement protocol 3.2 BackendKeyData and cancel request message</ulink>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-24 [706ca859c]
+    2025-07-15 [0e80ac4e5]
+    2025-07-15 [f4cfd6188]
+    -->
+    <para>
+     <xref linkend="pgpool-adm-pcp-proc-info">を追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <xref linkend="pgpool-adm-pcp-proc-info">を追加しました。
+     また、<xref linkend="pcp-proc-info">と<command>show pool_pools</command>に、client_host、client_port、SQLステートメントという新しいフィールドが追加しました。
+     これらの追加により、<productname>Pgpool-II</productname>のクライアント、<productname>Pgpool-II</productname>本体、そしてPostgreSQL間の関係を追跡できます。
+    </para>
+    <para>
+     pcp_proc_infoを使用して最後に実行されたコマンド（ステートメント）を確認できるようになりました。
+     以前は、<productname>Pgpool-II</productname>のログを確認しない限り、これは不可能でした。
+    </para>
+    <para>
+     lipcp.so のバージョンが 2.0.0 から 3.0.0 にアップグレードしました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-14 [9fc568f00]
+    -->
+    <para>
+     ライフチェックのログを強化しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     以前は、<xref linkend="guc-wd-lifecheck-method">が<literal>query</literal>の場合、<xref linkend="guc-log-line-prefix">に「%a」が指定されていると、死活監視はアプリケーション名なしでSQLを出力していました。
+     ログの見栄えを良くするために、<varname>application_name</varname>に<literal>lifecheck_ping</literal>を追加しました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-June/004604.html">[pgpool-hackers: 4603] life check log is not nicea</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-05 [1a68c6eb0]
+    -->
+    <para>
+     <function>random()</function>を<productname>pg_prng</productname>の<function>random</function>関数に置き換えました。 (Martijn van Duren, Tatsuo Ishii)
+    </para>
+    <para>
+     以前は、負荷分散ノードの選択に<function>random()</function>を使用していました。
+     しかし、<productname>PostgreSQL</productname>にはより優れた乱数生成器<filename>pg_prng.c</filename>があります。
+     このファイルをインポートするように変更し、<function>pg_prng_double()</function>を使用して[0.0, 1.0]の範囲の乱数を生成します。
+     シードは<function>pg_strong_random()</function>を使用して生成されます。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004589.html">[pgpool-hackers: 4588] Shuffle random functions and use better random numbers</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-03 [cea80281d]
+    2025-06-04 [e058c9334]
+    -->
+    <para>
+     watchdog受信ソケットのバインドを再試行するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     watchdog受信ソケットのバインドに失敗すると、028.watchdog_enable_consensus_with_half_votesがタイムアウトすることがありました。
+     バインドを再試行することでこの問題を軽減するようになりました。
+     現在、再試行は最大5回まで実行され、各再試行ごとに1秒間のスリープが行われます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-28 [ffd3a5224]
+    -->
+    <para>
+     PostgreSQLから<function>likely/unlikely()</function>を移植しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>likely/unlikely()</function>は正しく使用すれことでパフォーマンス向上に役立つだけでなく、コード内でマクロが時折使用されるため、<productname>PostgreSQL</productname>から<productname>Pgpool-II</productname>へのコードの移植が容易になります。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004600.html">[pgpool-hackers: 4599] Porting likely/unlikely</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-20 [7abdd48ec]
+    2025-05-20 [e14feea1d]
+    -->
+    <para>
+     <function>PostmasterRandmon()</function>を<function>pg_strong_random()</function>に置き換えました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>PostmasterRandmon()</function>はかなり以前(2016年)に<productname>PostgreSQL</productname>からインポートされました。
+     同年、<productname>PostgreSQL</productname>は<function>PostmasterRandmon()</function>を<function>pg_strong_random()</function>(src/port/pg_strong_random.c)に置き換えているためこちらに準拠しました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004589.html">[pgpool-hackers: 4588] Shuffle random functions and use better random numbers</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-08 [5f7d06d87]
+    -->
+    <para>
+     <filename>.pcppass</filename>ファイルからの読み取りに失敗した場合、パスワードの入力を求めるプロンプトにフォールバックするようになりました。(Bo Peng)
+    </para>
+    <para>
+     <filename>.pcppass</filename>ファイルからのパスワードの読み取りに失敗した場合、<productname>PostgreSQL</productname>が<filename>.pgpass</filename>を処理するのと同様に、ユーザーに入力を求めるプロンプトにフォールバックします。
+    </para>
+    <para>
+     以下のメッセージも変更され、<option>-d</option> オプションを必要とせずに表示されます。
+     <programlisting>
+WARNING: password file \"%s\" is not a plain file
+WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less
+     </programlisting>
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-hackers/2025-May/004590.html">[pgpool-hackers: 4589] If reading password from .pcppass file fails, try to read it from prompt.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-14 [bbe93d86b]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>の起動時に不適切なログメッセージを削除またはダウングレードするようになりました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-02 [5c41d5338]
+    -->
+    <para>
+     設定ファイルにメジャーバージョン情報を追加しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-07-15 [2a236be3e]
+    -->
+    <para>
+     文字列として扱われていた列挙型パラメータに関するドキュメントを修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     6つのパラメータのドキュメントを修正しました:
+     <programlisting>
+log_standby_delay
+log_backend_messages
+wd_lifecheck_method
+memqcache_method
+disable_load_balance_on_write
+backend_clustering_mode
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-05-09 [174772d6c]
+    -->
+    <para>
+     クエリキャッシュのドキュメントを改善しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>は、<literal>TIMESTAMP WITH TIMEZONE</literal>、<literal>TIME WITH TIMEZONE</literal> を返す関数を呼び出すクエリのキャッシュを拒否します。
+     同じ名前の関数が複数あり、そのうちの1つが<literal>TIMESTAMP WITH TIMEZONE</literal>、<literal>TIME WITH TIMEZONE</literal> を返す場合、<productname>Pgpool-II</productname> は、そのうちの1つがこれらのデータ型を返さなくてもキャッシュを拒否します。
+     そのため、この問題に関するメモと回避策を追加しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>テストツール修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-08-22 [534e04a0e]
+    2025-08-22 [384c17eab]
+    -->
+    <para>
+     <xref linkend="watchdog-setup">でVIPを指定できるようになりました。(Tatsuo Ishii)
+    </para>
+    <para>
+     新しいオプション<option>-vip [ip]</option>を使用して、<command>watchdog_setup</command>でVIPパラメータ(<varname>delegate_ip</varname>)を指定できるようになりました。
+     ipが省略された場合は、<literal>127.0.0.1</literal>が想定されます。
+     vip オプションが指定されていても、<productname>Pgpool-II</productname>は実際にはシステムにVIPを設定しません。
+     <xref linkend="guc-if-up-cmd">、<xref linkend="guc-if-down-cmd">は、単にechoコマンドに設定され、ログを出力する以外は何も行いません。
+     このオプションは、VIP処理に関する<productname>Pgpool-II</productname>の動作をトレースすることを目的としています。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20250820.151646.1640218512808280876.ishii%40postgresql.org">Enhance watchdog_setup</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2025-06-25 [04e09df17]
+    2025-06-27 [b76c6876d]
+    -->
+    <para>
+     038.pcp_commandsの回帰テストを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前はテスト結果にローカルホストのIPが表示されていました。
+     IPはIPv4またはIPv6のどちらでも構いませんが、テストスクリプトではこれを考慮していませんでした。
+     これを修正するため、<filename>test.sh</filename>はIPv4とIPv6のIPを<literal>localhost</literal>に変換するようになりました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-06-08 [e30bb2ead]
+    -->
+    <para>
+     029.cert_passphrase回帰テストを安定化しました。 (Tatsuo Ishii)
+    </para>
+    <para>
+     ssl_passphrase_commandが有効でない場合、エラーメッセージは通常「bad decrypt」ですが、「wrong tag」となる場合もあります。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
