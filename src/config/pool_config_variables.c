@@ -4551,25 +4551,8 @@ BackendDataDirShowFunc(int index)
 static const char *
 BackendFlagsShowFunc(int index)
 {
-	static char buffer[1024];
-
 	unsigned short flag = g_pool_config.backend_desc->backend_info[index].flag;
-
-	*buffer = '\0';
-
-	if (POOL_ALLOW_TO_FAILOVER(flag))
-		snprintf(buffer, sizeof(buffer), "ALLOW_TO_FAILOVER");
-	else if (POOL_DISALLOW_TO_FAILOVER(flag))
-		snprintf(buffer, sizeof(buffer), "DISALLOW_TO_FAILOVER");
-
-	if (POOL_ALWAYS_PRIMARY & flag)
-	{
-		if (*buffer == '\0')
-			snprintf(buffer, sizeof(buffer), "ALWAYS_PRIMARY");
-		else
-			strncat(buffer, "|ALWAYS_PRIMARY", 16);
-	}
-	return buffer;
+	return pool_flag_to_str(flag);
 }
 
 static const char *
