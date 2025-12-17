@@ -879,6 +879,14 @@ SimpleForwardToBackend(char kind, POOL_CONNECTION *frontend,
 
 				pool_write(CONNECTION(backend, i), &kind, 1);
 				pool_write_and_flush(CONNECTION(backend, i), &sendlen, sizeof(sendlen));
+				/* If sync message, emit log */
+				if (kind == 'S')
+				{
+					char	   *str = "Sync";
+
+					per_node_statement_log(backend, i, str);
+					per_node_statement_notice(backend, i, str);
+				}
 			}
 		}
 		return POOL_CONTINUE;
