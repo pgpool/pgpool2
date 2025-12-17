@@ -244,6 +244,8 @@ if [ a"$failed_node_id" = a"$old_primary_node_id" -o a"$old_primary_node_id" = a
 	echo $pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 	$pg_ctl -D $new_primary_db_cluster promote >>$log	# let standby take over
 	sleep 2
+	echo psql -p $new_main_port_number -c "CHECKPOINT" postgres
+	psql -p $new_main_port_number -c "CHECKPOINT" postgres
 fi
 date >> $log
 echo "failover script ended" >> $log
@@ -321,10 +323,12 @@ new_primary_db_cluster=${10}
 mydir=__MYDIR__
 log=$mydir/log/failover.log
 pg_ctl=__PGBIN__/pg_ctl
+pg_rewind=__PGBIN__/pg_rewind
 PCP_PORT=__PCPPORT__
 pgversion=__PGVERSION__
 export PCPPASSFILE=__PCPPASSFILE__
 PGPOOL_BIN=__PGPOOL_INSTALL_DIR__/bin
+PGSUPERUSER=__PGSUPERUSER__
 
 echo "follow primary script started for node: $node_id" >> $log
 date >> $log
@@ -340,6 +344,9 @@ then
     if [ $pgversion -ge 120 ];then
         sed -i "s/port=[0-9]*/port=$new_primary_port_number/" $db_cluster/myrecovery.conf
         sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/myrecovery.conf
+	# we need to restore WAL from old primay while running pg_rewind
+	cp $db_cluster/myrecovery.conf /tmp/myrecovery.rewind.conf
+        sed -i "/restore_command/s/data[0-9]/data$old_primary_node_id/" /tmp/myrecovery.rewind.conf
     else
 	# if recovery.conf is not found, rename recovery.done.
 	if [ ! -f $db_cluster/recovery.conf ];then
@@ -349,10 +356,25 @@ then
         sed -i "/restore_command/s/data[0-9]/`basename $new_primary_db_cluster`/" $db_cluster/recovery.conf
     fi
 
+    echo "stopping the target server" >> $log
+    $pg_ctl -w -m f -D $db_cluster stop >> $log 2>&1
+
+    # Make backup copy of postgresql.conf since pg_rewind/pg_basebackup unconditionally copies
+    # $main_db_cluster/postgresql.conf.
+    cp $db_cluster/postgresql.conf /tmp/
+    cp $db_cluster/myrecovery.conf /tmp/
+
+    # Run pg_rewind
+    echo "pg_rewind starts" >> $log
+    echo $pg_rewind -P -c --config-file=/tmp/myrecovery.rewind.conf -D $db_cluster --source-server="host=localhost port=$new_primary_port_number user=$PGSUPERUSER dbname=postgres" >> $log
+    $pg_rewind -P -c --config-file=/tmp/myrecovery.rewind.conf -D $db_cluster --source-server="host=localhost port=$new_primary_port_number user=$PGSUPERUSER dbname=postgres" >> $log 2>&1
+    cp /tmp/postgresql.conf $db_cluster/
+    cp /tmp/myrecovery.conf $db_cluster/
+
     touch $db_cluster/standby.signal
 
-    echo "restart the target server" >> $log
-    $pg_ctl -w -m f -D $db_cluster restart >> $log 2>&1
+    echo "start the target server" >> $log
+    $pg_ctl -w -m f -D $db_cluster start >> $log 2>&1
 
     $pg_ctl -D $db_cluster status >>$log 2>&1
     if [ $? != 0 ]
@@ -382,6 +404,7 @@ EOF
 	 -e "/__PCPPORT__/s/__PCPPORT__/$PCP_PORT/" \
 	 -e "/__PGVERSION__/s/__PGVERSION__/$PGVERSION/" \
 	 -e "/__PGPOOL_INSTALL_DIR__/s@__PGPOOL_INSTALL_DIR__@$PGPOOL_INSTALL_DIR@" \
+	 -e "/__PGSUPERUSER__/s/__PGSUPERUSER__/$WHOAMI/" \
 	$FOLLOW_PRIMARY_SCRIPT
 
 chmod 755 $FOLLOW_PRIMARY_SCRIPT
