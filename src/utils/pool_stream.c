@@ -3,7 +3,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2023	PgPool Global Development Group
+* Copyright (c) 2003-2025	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -549,20 +549,19 @@ pool_write(POOL_CONNECTION *cp, void *buf, int len)
 static int
 pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 {
-	int			sts;
-	int			wlen;
+	ssize_t		sts;
+	size_t		wlen;
 	int			offset;
 
-	wlen = len;
-
 	ereport(DEBUG5,
-			(errmsg("pool_write_flush: write size: %d", wlen)));
+			(errmsg("pool_write_flush: write size: %d", len)));
 
-	if (wlen == 0)
+	if (len <= 0)
 	{
 		return 0;
 	}
 
+	wlen = len;
 	offset = 0;
 
 	for (;;)
@@ -580,26 +579,25 @@ pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 
 		if (sts >= 0)
 		{
-			wlen -= sts;
-
-			if (wlen == 0)
+			if (wlen == sts)
 			{
 				/* write completed */
 				break;
 			}
 
-			else if (wlen < 0)
+			else if (wlen < sts)
 			{
 				ereport(WARNING,
-						(errmsg("pool_write_flush: invalid write size %d", sts)));
+						(errmsg("pool_write_flush: invalid write size %zd", sts)));
 				return -1;
 			}
 
 			else
 			{
+				wlen -= sts;
 				/* need to write remaining data */
 				ereport(DEBUG5,
-						(errmsg("pool_write_flush: write retry: %d", wlen)));
+						(errmsg("pool_write_flush: write retry: %zd", wlen)));
 
 				offset += sts;
 				continue;
@@ -620,11 +618,11 @@ pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 			if (cp->isbackend)
 				ereport(WARNING,
 						(errmsg("write on backend %d failed with error :\"%m\"", cp->db_node_id),
-						 errdetail("while trying to write data from offset: %d wlen: %d", offset, wlen)));
+						 errdetail("while trying to write data from offset: %d wlen: %zd", offset, wlen)));
 			else
 				ereport(DEBUG5,
 						(errmsg("write on frontend failed with error :\"%m\""),
-						 errdetail("while trying to write data from offset: %d wlen: %d", offset, wlen)));
+						 errdetail("while trying to write data from offset: %d wlen: %zd", offset, wlen)));
 			return -1;
 		}
 	}
@@ -639,14 +637,14 @@ pool_write_flush(POOL_CONNECTION *cp, void *buf, int len)
 int
 pool_flush_it(POOL_CONNECTION *cp)
 {
-	int			sts;
-	int			wlen;
+	ssize_t		sts;
+	size_t		wlen;
 	int			offset;
 
 	wlen = cp->wbufpo;
 
 	ereport(DEBUG5,
-			(errmsg("pool_flush_it: flush size: %d", wlen)));
+			(errmsg("pool_flush_it: flush size: %zd", wlen)));
 
 	if (wlen == 0)
 	{
@@ -670,27 +668,26 @@ pool_flush_it(POOL_CONNECTION *cp)
 
 		if (sts >= 0)
 		{
-			wlen -= sts;
-
-			if (wlen == 0)
+			if (wlen == sts)
 			{
 				/* write completed */
 				break;
 			}
 
-			else if (wlen < 0)
+			else if (wlen < sts)
 			{
 				ereport(WARNING,
-						(errmsg("pool_flush_it: invalid write size %d", sts)));
+						(errmsg("pool_flush_it: invalid write size %zd", sts)));
 				cp->wbufpo = 0;
 				return -1;
 			}
 
 			else
 			{
+				wlen -= sts;
 				/* need to write remaining data */
 				ereport(DEBUG5,
-						(errmsg("pool_flush_it: write retry: %d", wlen)));
+						(errmsg("pool_flush_it: write retry: %zd", wlen)));
 
 				offset += sts;
 				continue;
@@ -711,11 +708,11 @@ pool_flush_it(POOL_CONNECTION *cp)
 			if (cp->isbackend)
 				ereport(WARNING,
 						(errmsg("write on backend %d failed with error :\"%m\"", cp->db_node_id),
-						 errdetail("while trying to write data from offset: %d wlen: %d", offset, wlen)));
+						 errdetail("while trying to write data from offset: %d wlen: %zd", offset, wlen)));
 			else
 				ereport(DEBUG5,
 						(errmsg("write on frontend failed with error :\"%m\""),
-						 errdetail("while trying to write data from offset: %d wlen: %d", offset, wlen)));
+						 errdetail("while trying to write data from offset: %d wlen: %zd", offset, wlen)));
 			cp->wbufpo = 0;
 			return -1;
 		}
