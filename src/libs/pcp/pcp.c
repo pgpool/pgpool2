@@ -196,6 +196,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 				pcp_internal_error(pcpConn,
 								   "ERROR: failed to create INET domain socket with error \"%s\"",
 								   strerror(errno));
+				freeaddrinfo(res);
 				return pcpConn;
 			}
 
@@ -203,6 +204,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 						   (char *) &on, sizeof(on)) < 0)
 			{
 				close(fd);
+				freeaddrinfo(res);
 				pcp_internal_error(pcpConn,
 								   "ERROR: set socket option failed with error \"%s\"", strerror(errno));
 				pcpConn->connState = PCP_CONNECTION_BAD;
@@ -212,6 +214,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 			if (connect(fd, walk->ai_addr, walk->ai_addrlen) < 0)
 			{
 				close(fd);
+				freeaddrinfo(res);
 				pcp_internal_error(pcpConn,
 								   "ERROR: connection to host \"%s\" failed with error \"%s\"", hostname, strerror(errno));
 				pcpConn->connState = PCP_CONNECTION_BAD;
@@ -220,6 +223,7 @@ pcp_connect(char *hostname, int port, char *username, char *password, FILE *Pfde
 			break;				/* successfully connected */
 		}
 
+		freeaddrinfo(res);
 		/* no address available */
 		if (fd == -1)
 		{
