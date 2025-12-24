@@ -359,6 +359,10 @@ AC_ARG_WITH(openssl,
     [openssl=no])
 
 if test "$with_openssl" = yes || test "$with_openssl" = auto; then
+    # Minimum required OpenSSL version is 1.0.2
+    AC_DEFINE(OPENSSL_API_COMPAT, [0x10002000L],
+            [Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.])
+
     AC_CHECK_HEADERS(openssl/ssl.h,
         [AC_DEFINE([USE_SSL], 1,
             [Define to 1 to build with SSL support. (--with-openssl)])],
