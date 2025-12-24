@@ -404,6 +404,7 @@ autoreconf -fi
       disabled by default.
       -->
       <productname>Pgpool-II</productname>バイナリが<productname>OpenSSL</productname>サポート付で構築されます。
+      必要な<productname>OpenSSL</productname>の最小バージョンは1.0.2です。
       AES256暗号化を使ってパスワードを暗号化する場合もこのオプションが必要です。
       詳細は<xref linkend="auth-aes-encrypted-password">を参照してください。
       デフォルトでは<productname>OpenSSL</productname>サポートは無効です。
