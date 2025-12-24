@@ -30,12 +30,11 @@
 typedef enum NodeTag
 {
 	T_Invalid = 0,
-
-	/* pgpool Extension */
-				T_PgpoolVariableSetStmt,
-				T_PgpoolVariableShowStmt,
-				T_PgpoolQueryCacheStmt,
 #include "nodetags.h"
+	/* pgpool Extension */
+	T_PgpoolVariableSetStmt,
+	T_PgpoolVariableShowStmt,
+	T_PgpoolQueryCacheStmt,
 } NodeTag;
 
 /*
