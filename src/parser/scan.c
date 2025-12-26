@@ -1,4 +1,4 @@
-#line 2 "scan.c"
+#line 1 "scan.c"
 /*-------------------------------------------------------------------------
  *
  * scan.l
@@ -47,7 +47,7 @@
 #include "utils/palloc.h"
 #include "utils/elog.h"
 
-#line 51 "scan.c"
+#line 50 "scan.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1014,7 +1014,7 @@ static void check_escape_warning(core_yyscan_t yyscanner);
 extern int	core_yyget_column(yyscan_t yyscanner);
 extern void core_yyset_column(int column_no, yyscan_t yyscanner);
 
-#line 1018 "scan.c"
+#line 1017 "scan.c"
 #define YY_NO_INPUT 1
 /*
  * OK, here is a short description of lex/flex rules behavior.
@@ -1162,7 +1162,7 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  * Note that xcstart must appear before operator, as explained above!
  *  Also whitespace (comment) must appear before operator.
  */
-#line 1166 "scan.c"
+#line 1165 "scan.c"
 
 #define INITIAL 0
 #define xb 1
@@ -1458,7 +1458,7 @@ YY_DECL
 #line 425 "scan.l"
 
 
-#line 1462 "scan.c"
+#line 1461 "scan.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2396,7 +2396,7 @@ YY_RULE_SETUP
 #line 1058 "scan.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 2400 "scan.c"
+#line 2399 "scan.c"
 
 	case YY_END_OF_BUFFER:
 		{

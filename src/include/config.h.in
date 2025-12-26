@@ -280,6 +280,10 @@
    */
 #undef LT_OBJDIR
 
+/* Define to the OpenSSL API version in use. This avoids deprecation warnings
+   from newer OpenSSL versions. */
+#undef OPENSSL_API_COMPAT
+
 /* Name of package */
 #undef PACKAGE
 
