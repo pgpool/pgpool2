@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -977,6 +977,16 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&g_pool_config.sr_check_database,
 		"postgres",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"replication_delay_source_cmd", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
+			"External command to retrieve replication delay information.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.replication_delay_source_cmd,
+		"",
 		NULL, NULL, NULL, NULL
 	},
 
@@ -2331,6 +2341,17 @@ static struct config_int ConfigureNamesInt[] =
 		&g_pool_config.delay_threshold_by_time,
 		0,
 		0, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"replication_delay_source_timeout", CFGCXT_RELOAD, STREAMING_REPLICATION_CONFIG,
+			"Timeout for external replication delay command execution in seconds.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.replication_delay_source_timeout,
+		10,
+		1, 3600,
 		NULL, NULL, NULL
 	},
 

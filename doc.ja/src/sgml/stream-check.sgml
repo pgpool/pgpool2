@@ -462,6 +462,131 @@ GRANT pg_monitor TO sr_check_user;
    </listitem>
   </varlistentry>
 
+  <varlistentry id="guc-replication-delay-source-cmd" xreflabel="replication_delay_source_cmd">
+   <term><varname>replication_delay_source_cmd</varname> (<type>string</type>)
+    <indexterm>
+<!--
+     <primary><varname>replication_delay_source_cmd</varname> configuration parameter</primary>
+-->
+     <primary><varname>replication_delay_source_cmd</varname>設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
+    <para>
+<!--
+     Specifies an external command to retrieve replication delay information
+     for replica nodes.  When this parameter is set and not
+     empty, <productname>Pgpool-II</productname> uses the external command
+     instead of built-in database queries to obtain replication delays.  The
+     command is executed as the <productname>Pgpool-II</productname> process
+     user.
+-->
+     レプリカノードからレプリケーション遅延情報を読み取るための外部コマンドを指定します。
+     このパラメータが空文字以外に設定されていると、<productname>Pgpool-II</productname>はレプリケーション遅延取得するために、組み込みのデータベースへの問い合わせではなく、その外部コマンドを使います。
+     そのコマンドは、<productname>Pgpool-II</productname>のプロセスユーザとして実行されます。
+    </para>
+    <para>
+<!--
+     The command receives replica node identifiers as positional arguments,
+     with the primary node omitted. Each identifier is in the
+     format <literal>&lt;hostname&gt;:&lt;port&gt;</literal>, for
+     example <literal>server1:5432 server2:5432</literal>. The order matches
+     <productname>Pgpool-II</productname>'s backend order (excluding the
+     primary), allowing the script to correlate external metrics (such as from
+     AWS CloudWatch for Aurora) to the correct nodes.
+-->
+     そのコマンドはレプリカノードから、ノード識別子を位置引数として受け取りますが、プライマリーノードは省略されます。
+     各識別子は<literal>&lt;hostname&gt;:&lt;port&gt;</literal>の形式で、たとえば、<literal>server1:5432 server2:5432</literal>となります。
+     その順序は、<productname>Pgpool-II</productname>のバックエンドの順（プライマリを除く）と同じであり、（AWS CloudWatch for Auroraのような）外部メトリクスと関連付けることを可能にします。
+    </para>
+    <para>
+<!--
+     The command must write a single line to stdout containing one
+     whitespace-separated delay value per replica, in milliseconds, in the
+     same order as the arguments. The line can be terminated with or without a
+     new line character. The primary node's delay is implicitly zero and
+     should not be included in the output. Delay values can be integers or
+     floating-point numbers.
+-->
+     コマンドは、引数と同じ順に、一つの空白文字で区切られたレプリカごとの値を含む1行を標準出力に書き出さなければなりません。
+     行の終端は改行文字を伴っても、伴わなくても構いません。
+     プライマリノードの遅延は暗黙的に0とみなされ、出力に含まれるべきではありません。
+     遅延の値は、整数値でも浮動小数点値でも構いません。
+    </para>
+    <para>
+<!--
+     Special value: <literal>-1</literal> indicates a replica that is down but
+     not yet detected by <productname>Pgpool-II</productname>'s health
+     checks. <productname>Pgpool-II</productname> will log this condition but
+     rely on its own health-check logic to decide whether to trigger failover;
+     no failover is triggered solely by receiving <literal>-1</literal>.
+-->
+     特別な値<literal>-1</literal>は、<productname>Pgpool-II</productname>のヘルスチェックがまだ検出していないレプリカのダウンを表します。
+     <productname>Pgpool-II</productname>はこの状況をログに書き出しますが、これがフェイルオーバを引き起こすかどうかは自身のヘルスチェックのロジックに依存しており、単に<literal>-1</literal>を受け取っただけではフェイルオーバは起こりません。
+    </para>
+    <para>
+<!--
+     Example for a 3-node cluster (1 primary + 2 replicas): if the command
+     receives arguments
+     <literal>server1:5432 server2:5432</literal>, it should
+     output <literal>"25.5 100"</literal> to indicate the first replica has
+     25.5ms delay and the second has 100ms delay.
+-->
+     3ノードクラスタ(プライマリ一つ、レプリカ2つ)の例を考えます。コマンドが<literal>server1:5432 server2:5432</literal>の引数を受け取ると、<literal>"25.5 100"</literal>を出力し、その意味は最初のレプリカの遅延が25.5msで、２つ目が100msの遅延となります。
+    </para>
+    <para>
+<!--
+     Default is empty (use built-in replication delay queries).
+-->
+     デフォルトは空文字です（組み込みのレプリケーション遅延クエリを使用します）。
+    </para>
+    <para>
+<!--
+     This parameter can be changed by reloading the <productname>Pgpool-II</>
+     configurations.
+-->
+     このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry id="guc-replication-delay-source-timeout" xreflabel="replication_delay_source_timeout">
+   <term><varname>replication_delay_source_timeout</varname> (<type>integer</type>)
+    <indexterm>
+<!--
+     <primary><varname>replication_delay_source_timeout</varname> configuration parameter</primary>
+-->
+     <primary><varname>replication_delay_source_timeout</varname>設定パラメータ</primary>
+    </indexterm>
+   </term>
+   <listitem>
+    <para>
+<!--
+     Specifies the timeout in seconds for the external command specified by
+     <xref linkend="guc-replication-delay-source-cmd">.  If the command does
+      not finish within the timeout, <productname>Pgpool-II</productname> logs
+      an error and continues using the built-in method.
+-->
+     秒単位で<xref linkend="guc-replication-delay-source-cmd">で指定した外部コマンドのタイムアウトを指定します。
+     コマンドがこのタイムアウト以内に終了しない場合は、<productname>Pgpool-II</productname>はエラーをログします。
+    </para>
+    <para>
+<!--
+     Default is 10 seconds. Valid range is 1-3600 seconds.
+-->
+     デフォルトは10秒です。
+     有効な値の範囲は1-3600秒の範囲です。
+    </para>
+    <para>
+<!--
+     This parameter can be changed by reloading the <productname>Pgpool-II</>
+     configurations.
+-->
+     このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+    </para>
+   </listitem>
+  </varlistentry>
+
  </variablelist>
 
 </sect1>

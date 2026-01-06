@@ -1,0 +1,59 @@
+External Replication Delay Command Test
+========================================
+
+This test verifies the external command replication delay source feature.
+
+Test Coverage:
+- External command receives replica node identifiers only (primary omitted)
+- Instance identifiers in host:port format
+- Basic external command execution with integer and float millisecond values
+- Delay threshold functionality with external commands
+- Command execution as pgpool process user (no su wrapper)
+- Error handling for missing/invalid commands
+- Command execution failure scenarios
+- Command timeout handling with configurable timeout values
+- Input validation for invalid, negative (other than -1), and extremely large delay values
+- Handling of -1 for down nodes (logged but no immediate failover)
+- Wrong number of output values validation
+- Multiple -1 values (multiple down replicas)
+- Mixed scenarios (some replicas up, some down)
+- Output truncation detection
+
+Files:
+- test.sh: Main test script
+- test_parsing.sh: Unit test for parsing logic
+- test_validation.sh: Validation and edge case testing
+- README: This documentation
+
+Key Changes from Original Version:
+- Primary node is omitted from command arguments
+- Command receives only replica identifiers
+- Instance identifiers are in host:port format (not application_name)
+- Output format: one delay per replica (not per all nodes)
+- -1 value indicates down replica without triggering failover
+- Format example: "25 100" for 2 replicas (3-node cluster = 1 primary + 2 replicas)
+
+The test creates temporary command scripts that output delay values in the format:
+"replica1_delay replica2_delay ..."
+
+Where delays are in milliseconds and can be integer or floating-point values.
+Special value -1 indicates a replica that is down but not yet detected by pgpool.
+
+Test Environment:
+- Uses streaming replication mode with 3 nodes
+- Node 0 is primary (omitted from command arguments)
+- Nodes 1 and 2 are replicas (included in command arguments)
+- Configures sr_check_period = 1 second for faster testing
+- Tests various delay scenarios and threshold behaviors
+
+Expected Behavior:
+- External commands receive replica identifiers in host:port format
+- Primary node identifier is never passed to command
+- Command outputs one delay value per replica
+- -1 values are logged but don't trigger immediate failover
+- Delay values are parsed correctly (both int and float)
+- Threshold comparisons work properly
+- Error conditions are handled gracefully
+- Commands timeout appropriately based on configuration
+- Timeout errors provide helpful messages and hints
+- Tests are reliable with proper wait mechanisms instead of fixed sleeps

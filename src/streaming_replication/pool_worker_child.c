@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
@@ -76,6 +77,8 @@ static volatile sig_atomic_t restart_request = 0;
 static void establish_persistent_connection(void);
 static void discard_persistent_connection(void);
 static void check_replication_time_lag(void);
+static void check_replication_time_lag_with_cmd(void);
+static char *build_instance_identifier_for_node(int node_id);
 static void CheckReplicationTimeLagErrorCb(void *arg);
 static unsigned long long int text_to_lsn(char *text);
 static RETSIGTYPE my_signal_handler(int sig);
@@ -129,7 +132,7 @@ do_worker_child(void *params)
 	signal(SIGINT, my_signal_handler);
 	signal(SIGHUP, reload_config_handler);
 	signal(SIGQUIT, my_signal_handler);
-	signal(SIGCHLD, SIG_IGN);
+	signal(SIGCHLD, my_signal_handler);
 	signal(SIGUSR1, my_signal_handler);
 	signal(SIGUSR2, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
@@ -260,7 +263,16 @@ do_worker_child(void *params)
 					int			i;
 
 					/* Do replication time lag checking */
-					check_replication_time_lag();
+
+					/*
+					 * Use external command if replication_delay_source_cmd is
+					 * configured
+					 */
+					if (pool_config->replication_delay_source_cmd &&
+						strlen(pool_config->replication_delay_source_cmd) > 0)
+						check_replication_time_lag_with_cmd();
+					else
+						check_replication_time_lag();
 
 					/* Check node status */
 					node_status = verify_backend_node_status(slots);
@@ -659,6 +671,446 @@ check_replication_time_lag(void)
 	error_context_stack = callback.previous;
 }
 
+#define MAX_CMD_OUTPUT 4096
+#define MAX_REASONABLE_DELAY_MS 3600000.0	/* 1 hour in milliseconds */
+
+/*
+ * Check replication time lag using external command
+ *
+ * The external command receives only replica (standby) node identifiers as arguments,
+ * omitting the primary node. It returns delay values in milliseconds for each replica.
+ * A value of -1 indicates a node that is down but not yet detected by pgpool's health checks.
+ */
+static void
+check_replication_time_lag_with_cmd(void)
+{
+	char	   *command = NULL;
+	char	   *line;
+	char	   *token;
+	char	   *saveptr;
+	char	   *line_copy;
+	char	   *temp_token;
+	char	   *endptr;
+	char	   *ident;
+	const char *base_command;
+	double		delay_ms;
+	uint64		delay;
+	uint64		delay_threshold_by_time;
+	int			token_count = 0;
+	int			primary_node_id;
+	int			save_errno;
+	int			i;
+	size_t		total_len;
+	size_t		current_len;
+	BackendInfo *bkinfo;
+	ErrorContextCallback callback;
+	int			pipefd[2] = {-1, -1};
+	pid_t		pid = -1;
+	int			ret;
+	struct timeval timeout;
+	fd_set		readfds;
+	ssize_t		bytes_read;
+	int			status;
+	int			num_replicas;
+
+	if (NUM_BACKENDS <= 1)
+	{
+		/* If there's only one node, there's no point to do checking */
+		return;
+	}
+
+	if (REAL_PRIMARY_NODE_ID < 0)
+	{
+		/* No need to check if there's no primary */
+		return;
+	}
+
+	if (!VALID_BACKEND(REAL_PRIMARY_NODE_ID))
+	{
+		/* No need to check replication delay if primary is down */
+		return;
+	}
+
+	/* Capture primary node ID to avoid race conditions during execution */
+	primary_node_id = REAL_PRIMARY_NODE_ID;
+
+	if (!pool_config->replication_delay_source_cmd ||
+		strlen(pool_config->replication_delay_source_cmd) == 0)
+	{
+		ereport(WARNING,
+				(errmsg("replication_delay_source_cmd is not configured"),
+				 errhint("Set replication_delay_source_cmd to use external command mode")));
+		/* Fall back to builtin method */
+		check_replication_time_lag();
+		return;
+	}
+
+	/* Allocate buffer for command output */
+	line = palloc(MAX_CMD_OUTPUT);
+	memset(line, 0, MAX_CMD_OUTPUT);
+
+	/*
+	 * Register a error context callback to throw proper context message
+	 */
+	callback.callback = CheckReplicationTimeLagErrorCb;
+	callback.arg = NULL;
+	callback.previous = error_context_stack;
+	error_context_stack = &callback;
+
+	/* Execute command as current process user */
+	PG_TRY();
+	{
+		base_command = pool_config->replication_delay_source_cmd;
+		total_len = strlen(base_command) + 1;	/* +1 for NUL */
+
+		/* Build command with replica-only arguments (omit primary) */
+
+		/*
+		 * Calculate total command length including space-separated replica
+		 * identifiers
+		 */
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (i == primary_node_id)
+				continue;		/* Skip primary node */
+
+			ident = build_instance_identifier_for_node(i);
+
+			total_len += 1 /* space */ + strlen(ident);
+			pfree(ident);
+		}
+
+		command = palloc(total_len);
+		strlcpy(command, base_command, total_len);
+
+		/* Append replica identifiers */
+		current_len = strlen(command);
+
+		for (i = 0; i < NUM_BACKENDS; i++)
+		{
+			if (i == primary_node_id)
+				continue;		/* Skip primary node */
+
+			ident = build_instance_identifier_for_node(i);
+
+			/* Append space and identifier */
+			snprintf(command + current_len, total_len - current_len, " %s", ident);
+			current_len += strlen(command + current_len);
+
+			pfree(ident);
+		}
+
+		ereport(DEBUG1,
+				(errmsg("executing replication delay command: %s", command)));
+
+		if (pipe(pipefd) == -1)
+		{
+			ereport(ERROR,
+					(errmsg("pipe failed: %m")));
+		}
+
+		pid = fork();
+		if (pid == -1)
+		{
+			close(pipefd[0]);
+			close(pipefd[1]);
+			ereport(ERROR,
+					(errmsg("fork failed: %m")));
+		}
+
+		if (pid == 0)
+		{
+			/* Child process */
+			close(pipefd[0]);	/* Close read end */
+			if (dup2(pipefd[1], STDOUT_FILENO) == -1)
+			{
+				fprintf(stderr, "dup2 failed: %s\n", strerror(errno));
+				exit(1);
+			}
+			close(pipefd[1]);	/* Close write end (duplicated to stdout) */
+
+			/* Execute command using shell */
+			execl("/bin/sh", "sh", "-c", command, (char *) NULL);
+
+			/* If execl fails */
+			fprintf(stderr, "execl failed: %s\n", strerror(errno));
+			_exit(127);
+		}
+
+		/* Parent process */
+		close(pipefd[1]);		/* Close write end */
+		pipefd[1] = -1;
+
+		/* Set up timeout for select */
+		timeout.tv_sec = pool_config->replication_delay_source_timeout;
+		timeout.tv_usec = 0;
+
+		FD_ZERO(&readfds);
+		FD_SET(pipefd[0], &readfds);
+
+		/* Wait for output or timeout */
+		ret = select(pipefd[0] + 1, &readfds, NULL, NULL, &timeout);
+
+		if (ret == -1)
+		{
+			save_errno = errno;
+
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+			pid = -1;
+			close(pipefd[0]);
+			pipefd[0] = -1;
+			if (save_errno == EINTR)
+			{
+				/* Interrupted */
+				ereport(ERROR,
+						(errmsg("select interrupted during replication delay command execution")));
+			}
+			else
+			{
+				ereport(ERROR,
+						(errmsg("select failed: %m")));
+			}
+		}
+		else if (ret == 0)
+		{
+			/* Timeout */
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+			pid = -1;
+			close(pipefd[0]);
+			pipefd[0] = -1;
+			ereport(ERROR,
+					(errmsg("replication delay command timed out after %d seconds: %s",
+							pool_config->replication_delay_source_timeout, command),
+					 errhint("Consider increasing replication_delay_source_timeout or optimizing the command")));
+		}
+
+		/* Data is available */
+		bytes_read = read(pipefd[0], line, MAX_CMD_OUTPUT - 1);
+		close(pipefd[0]);
+		pipefd[0] = -1;
+
+		/* Wait for child to finish */
+		waitpid(pid, &status, 0);
+		pid = -1;
+
+		if (bytes_read < 0)
+		{
+			ereport(ERROR,
+					(errmsg("failed to read output from replication delay command: %s", command),
+					 errdetail("read failed: %m")));
+		}
+
+		/* Check exit status */
+		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+		{
+			ereport(ERROR,
+					(errmsg("replication delay command failed with exit code %d: %s",
+							WEXITSTATUS(status), command)));
+		}
+		else if (WIFSIGNALED(status))
+		{
+			ereport(ERROR,
+					(errmsg("replication delay command terminated by signal %d: %s",
+							WTERMSIG(status), command)));
+		}
+
+		/* Check if output was truncated */
+		if (bytes_read == MAX_CMD_OUTPUT - 1 && line[MAX_CMD_OUTPUT - 2] != '\n')
+		{
+			ereport(WARNING,
+					(errmsg("replication delay command output may have been truncated")));
+		}
+
+		/* Null-terminate the string */
+		line[bytes_read] = '\0';
+
+		pfree(command);
+		command = NULL;
+
+		/* Set primary node delay to 0 */
+		bkinfo = pool_get_node_info(primary_node_id);
+		bkinfo->standby_delay = 0;
+		bkinfo->standby_delay_by_time = true;
+
+		/* Count expected replicas */
+		num_replicas = NUM_BACKENDS - 1;	/* Total nodes minus primary */
+
+		/* Count tokens in output for validation */
+		line_copy = pstrdup(line);
+		temp_token = strtok(line_copy, " \t\n");
+
+		while (temp_token != NULL)
+		{
+			token_count++;
+			temp_token = strtok(NULL, " \t\n");
+		}
+		pfree(line_copy);
+
+		/* Validate output format */
+		if (token_count == 0)
+		{
+			ereport(WARNING,
+					(errmsg("replication delay command produced no output"),
+					 errhint("Command should output delay values separated by spaces, one per replica node")));
+		}
+		else if (token_count < num_replicas)
+		{
+			ereport(WARNING,
+					(errmsg("replication delay command returned %d values, expected %d (one per replica, excluding primary)",
+							token_count, num_replicas),
+					 errhint("Command should output one delay value per replica node. Missing values will be treated as 0.")));
+		}
+		else if (token_count > num_replicas)
+		{
+			ereport(WARNING,
+					(errmsg("replication delay command returned %d values, expected %d (one per replica, excluding primary)",
+							token_count, num_replicas),
+					 errhint("Command should output exactly one delay value per replica node. Extra values will be ignored.")));
+		}
+
+		/* Parse the output - one delay value per replica in order */
+		token = strtok_r(line, " \t\n", &saveptr);
+
+		for (i = 0; i < NUM_BACKENDS && token != NULL; i++)
+		{
+			if (i == primary_node_id)
+				continue;		/* Skip primary - it's not in the output */
+
+			if (!VALID_BACKEND(i))
+			{
+				/* Skip invalid backend but consume token */
+				token = strtok_r(NULL, " \t\n", &saveptr);
+				continue;
+			}
+
+			delay_ms = strtod(token, &endptr);
+
+			/* Validate the conversion */
+			if (*endptr != '\0')
+			{
+				ereport(WARNING,
+						(errmsg("invalid delay value '%s' for node %d, treating as 0",
+								token, i)));
+				delay_ms = 0;
+			}
+
+			bkinfo = pool_get_node_info(i);
+
+			/* Handle -1 for down nodes */
+			if (delay_ms == -1.0)
+			{
+				ereport(LOG,
+						(errmsg("node %d reported as down by external command (delay -1), relying on health check for failover decision",
+								i)));
+				/* Keep previous delay value, don't trigger failover */
+				token = strtok_r(NULL, " \t\n", &saveptr);
+				continue;
+			}
+
+			/* Validate delay value range */
+			if (delay_ms < 0)
+			{
+				ereport(WARNING,
+						(errmsg("negative delay value %.3f for node %d (other than -1), treating as 0",
+								delay_ms, i)));
+				delay_ms = 0;
+			}
+			else if (delay_ms > MAX_REASONABLE_DELAY_MS)
+			{
+				ereport(WARNING,
+						(errmsg("extremely large delay value %.3f for node %d",
+								delay_ms, i)));
+			}
+
+			/*
+			 * Convert delay from milliseconds to microseconds for internal
+			 * storage
+			 */
+			delay = (uint64) (delay_ms * 1000);
+			bkinfo->standby_delay = delay;
+			bkinfo->standby_delay_by_time = true;
+
+			/* Log delay if necessary */
+			delay_threshold_by_time = pool_config->delay_threshold_by_time * 1000;	/* threshold is in
+																					 * milliseconds, convert
+																					 * to microseconds */
+
+			if ((pool_config->log_standby_delay == LSD_ALWAYS && delay_ms > 0) ||
+				(pool_config->log_standby_delay == LSD_OVER_THRESHOLD &&
+				 bkinfo->standby_delay > delay_threshold_by_time))
+			{
+				ereport(LOG,
+						(errmsg("Replication of node: %d is behind %.3f second(s) from the primary server (node: %d) [external command]",
+								i, delay_ms / 1000, primary_node_id)));
+			}
+
+			token = strtok_r(NULL, " \t\n", &saveptr);
+		}
+
+	}
+	PG_CATCH();
+	{
+		/* Cleanup in case of error */
+		if (pid > 0)
+		{
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+		}
+		if (pipefd[0] != -1)
+			close(pipefd[0]);
+		if (pipefd[1] != -1)
+			close(pipefd[1]);
+
+		if (line)
+			pfree(line);
+		if (command)
+			pfree(command);
+		error_context_stack = callback.previous;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	/* Normal cleanup */
+	if (line)
+		pfree(line);
+
+	error_context_stack = callback.previous;
+}
+
+/*
+ * build_instance_identifier_for_node
+ *  Build an identifier string for a backend node for passing to external commands.
+ *  Format: "<hostname>:<port>"
+ */
+static char *
+build_instance_identifier_for_node(int node_id)
+{
+	BackendInfo *bi = pool_get_node_info(node_id);
+	const char *hostname;
+
+	if (!bi || bi->backend_hostname[0] == '\0' || bi->backend_port <= 0)
+	{
+		/* Fallback if hostname or port is not set */
+		return psprintf("unknown_node_%d", node_id);
+	}
+
+	hostname = bi->backend_hostname;
+
+	/* Validate hostname for security - check for shell metacharacters */
+	if (strpbrk(hostname, "$`\\|;&<>()[]{}\"\'\n\r\t") != NULL)
+	{
+		ereport(LOG,
+				(errmsg("hostname for node %d contains potentially dangerous characters: %s",
+						node_id, hostname),
+				 errhint("Hostnames with shell metacharacters may pose security risks when used with external commands. Consider using IP addresses or sanitized hostnames.")));
+	}
+
+	/* Use hostname:port format */
+	return psprintf("%s:%d", hostname, bi->backend_port);
+}
+
 static void
 CheckReplicationTimeLagErrorCb(void *arg)
 {
@@ -713,6 +1165,9 @@ static RETSIGTYPE my_signal_handler(int sig)
 			/* Failback or new node added */
 		case SIGUSR1:
 			restart_request = 1;
+			break;
+
+		case SIGCHLD:
 			break;
 
 		default:

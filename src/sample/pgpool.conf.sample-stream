@@ -519,6 +519,20 @@ backend_clustering_mode = streaming_replication
 
 #sr_check_database = 'postgres'
                                    # Database name for streaming replication check
+
+#replication_delay_source_cmd = ''
+                                   # External command to retrieve replication delay information
+                                   # If set, pgpool uses this command instead of built-in queries
+                                   # Command receives replica node identifiers (host:port) as arguments
+                                   # Primary node is omitted from arguments
+                                   # Command should output one delay value (in ms) per replica
+                                   # Use -1 to indicate a replica that is down but not yet detected
+                                   # Format: "25 100" for 2 replicas (e.g., 3-node cluster with 1 primary)
+                                   # Command runs as the pgpool process user
+#replication_delay_source_timeout = 10
+                                   # Timeout for external command execution in seconds
+                                   # Range: 1-3600 seconds (default: 10)
+
 #delay_threshold = 0
                                    # Threshold before not dispatching query to standby node
                                    # Unit is in bytes

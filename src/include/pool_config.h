@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -85,7 +85,6 @@ typedef enum LogStandbyDelayModes
 	LSD_OVER_THRESHOLD,
 	LSD_NONE
 } LogStandbyDelayModes;
-
 
 typedef enum MemCacheMethod
 {
@@ -364,6 +363,8 @@ typedef struct
 	char	   *sr_check_password;	/* password for sr_check_user */
 	char	   *sr_check_database;	/* PostgreSQL database name for streaming
 									 * replication check */
+	char	   *replication_delay_source_cmd;	/* external command for replication delay */
+	int			replication_delay_source_timeout;	/* timeout for external command in seconds */
 	char	   *failover_command;	/* execute command when failover happens */
 	char	   *follow_primary_command; /* execute command when failover is
 										 * ended */
