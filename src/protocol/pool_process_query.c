@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -3355,11 +3355,23 @@ read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		{
 			if (msg->type == POOL_SYNC)
 			{
+				StringInfoData buf;
+
 				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: sync pending message exists")));
-				session_context->query_context = NULL;
 				pool_unset_ignore_till_sync();
-				pool_unset_query_in_progress();
+				pool_pending_message_query_context_dest_set(msg, msg->query_context);
+				session_context->query_context = msg->query_context;
+				session_context->flush_pending = msg->flush_pending;
+				pool_set_query_in_progress();
+
+				/* emit debug log */
+				initStringInfo(&buf);
+				appendStringInfo(&buf, "read_kind_from_backend sync_map: ");
+				for (i = 0; i < NUM_BACKENDS; i++)
+					appendStringInfo(&buf, "%d ", pool_get_session_context(false)->sync_map[i]);
+				elog(DEBUG5, "%s", buf.data);
+				pfree(buf.data);
 			}
 			else
 			{

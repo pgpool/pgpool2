@@ -88,7 +88,6 @@ FE=> Sync
 <= BE DataRow
 <= BE NoticeResponse(S LOG C XX000 M CommandComplete message from backend 1 
 <= BE CommandComplete(SELECT 3)
-<= BE NoticeResponse(S LOG C XX000 M ReadyForQuery message from backend 0 
 <= BE NoticeResponse(S LOG C XX000 M ReadyForQuery message from backend 1 
 <= BE ReadyForQuery(I)
 FE=> Terminate

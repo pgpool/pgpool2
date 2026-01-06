@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -2117,4 +2117,42 @@ query_cache_disabled_tx(void)
 				(errmsg("query_cache_disabled_tx: session context is not initialized")));
 
 	return session_context->query_cache_disabled_tx;
+}
+
+/*
+ * clear sync map
+ */
+void
+clear_sync_map(POOL_SESSION_CONTEXT *session_context)
+{
+	memset(session_context->sync_map, 0, sizeof(session_context->sync_map));
+}
+
+/*
+ * get sync map
+ */
+bool
+get_sync_map(POOL_SESSION_CONTEXT *session_context, int node_id)
+{
+	return session_context->sync_map[node_id];
+}
+
+/*
+ * set sync map
+ */
+void
+set_sync_map(POOL_SESSION_CONTEXT *session_context, int node_id)
+{
+	elog(DEBUG5, "set sync map %d", node_id);
+	session_context->sync_map[node_id] = true;
+}
+
+/*
+ * unset sync map
+ */
+void
+unset_sync_map(POOL_SESSION_CONTEXT *session_context, int node_id)
+{
+	elog(DEBUG5, "unset sync map %d", node_id);
+	session_context->sync_map[node_id] = false;
 }

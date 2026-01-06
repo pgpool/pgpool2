@@ -20,6 +20,7 @@ do
     echo -n "creating test environment..."
     $PGPOOL_SETUP -m $mode || exit 1
     echo "done."
+    echo "log_min_messages = debug5" >> etc/pgpool.conf
     source ./bashrc.ports
     ./startall
     wait_for_pgpool_startup

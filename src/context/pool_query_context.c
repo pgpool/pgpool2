@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -63,7 +63,6 @@ static void where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *
 static void where_to_send_native_replication(POOL_QUERY_CONTEXT *query_context, char *query, Node *node);
 
 static char *remove_read_write(int len, const char *contents, int *rewritten_len);
-static void set_virtual_main_node(POOL_QUERY_CONTEXT *query_context);
 static void set_load_balance_info(POOL_QUERY_CONTEXT *query_context);
 
 static bool is_in_list(char *name, List *list);
@@ -404,22 +403,26 @@ pool_virtual_main_db_node_id(void)
 			 * Make sure that virtual_main_node_id is either primary node id
 			 * or load balance node id.  If not, it is likely that
 			 * virtual_main_node_id is not set up yet. Let's use the primary
-			 * node id. except for the special case where we need to send the
+			 * node id except for the special case where we need to send the
 			 * query to the node which is not primary nor the load balance
 			 * node. Currently there is only one special such case that is
 			 * handling of pg_terminate_backend() function, which may refer to
 			 * the backend connection that is neither hosted by the primary or
 			 * load balance node for current child process, but the query must
 			 * be forwarded to that node. Since only that backend node can
-			 * handle that pg_terminate_backend query
-			 *
+			 * handle that pg_terminate_backend query. Another exception is,
+			 * processing "Sync" message. We create a special query context
+			 * marked "sync_msg == true". If so, it is possible that the main
+			 * node id could not be either ordinarily main node (the first
+			 * alive node) nor the load balance node. So we check the flag.
 			 */
 
 			ereport(DEBUG5,
-					(errmsg("pool_virtual_main_db_node_id: virtual_main_node_id:%d load_balance_node_id:%d PRIMARY_NODE_ID:%d",
-							node_id, sc->load_balance_node_id, PRIMARY_NODE_ID)));
+					(errmsg("pool_virtual_main_db_node_id: virtual_main_node_id:%d load_balance_node_id:%d PRIMARY_NODE_ID:%d sync_msg:%d",
+							node_id, sc->load_balance_node_id, PRIMARY_NODE_ID, sc->query_context->sync_msg)));
 
-			if (node_id != sc->query_context->load_balance_node_id && node_id != PRIMARY_NODE_ID)
+			if (!sc->query_context->sync_msg && node_id != sc->query_context->load_balance_node_id &&
+				node_id != PRIMARY_NODE_ID)
 			{
 				/*
 				 * Only return the primary node id if we are not processing
@@ -825,6 +828,7 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 			stat_count_up(i, query_context->parse_tree);
 		}
 
+		set_sync_map(session_context, i);
 		send_extended_protocol_message(backend, i, kind, str_len, str);
 
 		if ((*kind == 'P' || *kind == 'E' || *kind == 'C') && STREAM)
@@ -1758,7 +1762,7 @@ pool_is_transaction_read_only(Node *node)
  * multiple sending requests are in the map, the first node id is set to the
  * virtual_main_node_id.
  */
-static void
+void
 set_virtual_main_node(POOL_QUERY_CONTEXT *query_context)
 {
 	int			i;

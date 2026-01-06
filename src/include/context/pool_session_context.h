@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -343,6 +343,10 @@ typedef struct
 	 */
 	bool		query_cache_disabled_tx;
 
+	/*
+	 * A map to send sync message. Each entry represents backend node.
+	 */
+	bool		sync_map[MAX_NUM_BACKENDS];
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);
@@ -437,5 +441,10 @@ extern bool query_cache_disabled(void);
 extern void set_query_cache_disabled_tx(void);
 extern void unset_query_cache_disabled_tx(void);
 extern bool query_cache_disabled_tx(void);
+
+extern void clear_sync_map(POOL_SESSION_CONTEXT *session_context);
+extern bool get_sync_map(POOL_SESSION_CONTEXT *session_context, int node_id);
+extern void set_sync_map(POOL_SESSION_CONTEXT *session_context, int node_id);
+extern void unset_sync_map(POOL_SESSION_CONTEXT *session_context, int node_id);
 
 #endif							/* POOL_SESSION_CONTEXT_H */

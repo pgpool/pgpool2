@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -113,6 +113,8 @@ static bool multi_statement_query(char *buf);
 static void check_prepare(List *parse_tree_list, int len, char *contents);
 
 static POOL_QUERY_CONTEXT *create_dummy_query_context(void);
+
+static void add_sync_pending_message(void);
 
 /*
  * This is the workhorse of processing the pg_terminate_backend function to
@@ -2489,6 +2491,19 @@ ReadyForQuery(POOL_CONNECTION *frontend,
 	 */
 	pool_ps_idle_display(backend);
 
+	clear_sync_map(session_context);	/* reset sync map */
+
+	/* destroy query context for sync message */
+	if (session_context->query_context && session_context->query_context->sync_msg)
+	{
+		MemoryContext memory_context = session_context->query_context->memory_context;
+
+		elog(DEBUG5, "destroy query context for sync message");
+		pfree(session_context->query_context);
+		MemoryContextDelete(memory_context);
+		session_context->query_context = NULL;
+	}
+
 	return POOL_CONTINUE;
 }
 
@@ -2991,11 +3006,14 @@ ProcessFrontendResponse(POOL_CONNECTION *frontend,
 
 			if (SL_MODE)
 			{
-				POOL_PENDING_MESSAGE *msg;
-
-				pool_unset_query_in_progress();
-				msg = pool_pending_message_create('S', 0, NULL);
-				pool_pending_message_add(msg);
+				/*
+				 * If we are doing extended query in streaming replication or
+				 * logical replication mode, add a sync pending message
+				 * reflecting sync_map so that we send the sync message to
+				 * only necessary backend.  Previously we sent to all backends
+				 * and it degrades the performance.
+				 */
+				add_sync_pending_message();
 			}
 			else if (!pool_is_query_in_progress())
 				pool_set_query_in_progress();
@@ -4580,7 +4598,6 @@ pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION *frontend,
 	{
 		char		kind;
 		int			len;
-		POOL_PENDING_MESSAGE *msg;
 		char	   *contents = NULL;
 
 		for (;;)
@@ -4592,8 +4609,11 @@ pool_discard_except_sync_and_ready_for_query(POOL_CONNECTION *frontend,
 				contents = pool_read2(frontend, len);
 			if (kind == 'S')
 			{
-				msg = pool_pending_message_create('S', 0, NULL);
-				pool_pending_message_add(msg);
+				/*
+				 * Sync message from frontend arrives. Add a sync pending
+				 * message and forward to backend.
+				 */
+				add_sync_pending_message();
 				SimpleForwardToBackend(kind, frontend, backend, len, contents);
 				break;
 			}
@@ -5285,4 +5305,78 @@ create_dummy_query_context(void)
 	MemoryContextSwitchTo(old_context);
 
 	return query_context;
+}
+
+/*
+ * Previously we forwarded sync messages to all backends.  This is not only a
+ * waste of CPU cycle, but degradation of performance because it adds round
+ * trip messages between pgpool and backend, which is not necessary to be sent
+ * a sync message at all if the backend received no query since the last
+ * ReadyForQuery. To fix this, we create a dummy query context which holds
+ * necessary destination backends using session_context->sync_map. The
+ * destinations are accumlation of backend node ids since the last
+ * ReadyForQuery. (upon receiving ReadyForQyery, sync_map is zero cleared.)
+ */
+static void
+add_sync_pending_message(void)
+{
+	POOL_PENDING_MESSAGE *msg;
+	POOL_SESSION_CONTEXT *session_context;
+	POOL_QUERY_CONTEXT *query_context;
+	StringInfoData buf;
+	int			i;
+
+	/*
+	 * This function should be called only when doing extended query in
+	 * streaming replication or logical replication mode.  If not, do nothing.
+	 */
+	if (!pool_is_doing_extended_query_message() || !SL_MODE)
+		return;
+
+	msg = pool_pending_message_create('S', 0, NULL);
+	session_context = pool_get_session_context(false);
+	query_context = pool_init_query_context();
+
+	/* mark this query context for sync messages */
+	query_context->sync_msg = true;
+
+	/*
+	 * Check if sync map is all false. (this could happen if sync message
+	 * arrives without any query being sent since last ReadyForQuery). If so,
+	 * we set all map members to true to avoid subsequent error in
+	 * VALID_BACKEND.
+	 */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (session_context->sync_map[i] == true)
+			break;
+	}
+	if (i == NUM_BACKENDS)
+		memset(session_context->sync_map, true, NUM_BACKENDS);
+
+	/* copy sync map to query context's where_to_send map */
+	memcpy(query_context->where_to_send, session_context->sync_map,
+		   sizeof(query_context->where_to_send));
+	/* set virtual main node id in the query context */
+	set_virtual_main_node(query_context);
+	/* copy query_context's where_to_send map to msg->node_ids */
+	pool_pending_message_dest_set(msg, query_context);
+	/* add to the pending message queue */
+	pool_pending_message_add(msg);
+
+	/*
+	 * Set query in progress and set the query context to session context.
+	 * This is necessary for subsequent SimpleForwardToBackend() to send the
+	 * sync message to proper backend .
+	 */
+	pool_set_query_in_progress();
+	session_context->query_context = query_context;
+
+	/* emit debug log */
+	initStringInfo(&buf);
+	appendStringInfo(&buf, "ProcessBackendResponse sync_map: ");
+	for (i = 0; i < NUM_BACKENDS; i++)
+		appendStringInfo(&buf, "%d ", pool_get_session_context(false)->sync_map[i]);
+	elog(DEBUG5, "%s", buf.data);
+	pfree(buf.data);
 }

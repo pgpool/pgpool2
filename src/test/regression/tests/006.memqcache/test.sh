@@ -34,6 +34,9 @@ do
 	echo "memory_cache_enabled = on" >> etc/pgpool.conf
 	echo "cache_safe_memqcache_table_list = 'cache_safe_v'" >> etc/pgpool.conf
 	echo "cache_unsafe_memqcache_table_list = 'cache_unsafe_t'" >> etc/pgpool.conf
+	echo "log_per_node_statement = on" >> etc/pgpool.conf
+	echo "log_client_messages = on" >> etc/pgpool.conf
+	echo "log_min_messages = debug5" >> etc/pgpool.conf
 
 	source ./bashrc.ports
 
@@ -538,6 +541,9 @@ $PGPOOL_SETUP -m s -n 2 || exit 1
 echo "done."
 
 echo "memory_cache_enabled = on" >> etc/pgpool.conf
+echo "log_per_node_statement = on" >> etc/pgpool.conf
+echo "log_client_messages = on" >> etc/pgpool.conf
+echo "log_min_messages = debug5" >> etc/pgpool.conf
 cd ..
 
 for i in 1 2 3 4 4 5 6 7
