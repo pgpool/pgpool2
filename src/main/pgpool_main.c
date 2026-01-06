@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -623,10 +623,8 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 
 	/* Fork health check process */
 	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-			health_check_pids[i] = worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
-	}
+		health_check_pids[i] =
+			worker_fork_a_child(PT_HEALTH_CHECK, do_health_check_child, &i);
 
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
