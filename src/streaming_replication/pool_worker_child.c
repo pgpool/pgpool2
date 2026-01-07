@@ -1032,10 +1032,11 @@ check_replication_time_lag_with_cmd(void)
 			bkinfo->standby_delay = delay;
 			bkinfo->standby_delay_by_time = true;
 
-			/* Log delay if necessary */
-			delay_threshold_by_time = pool_config->delay_threshold_by_time * 1000;	/* threshold is in
-																					 * milliseconds, convert
-																					 * to microseconds */
+			/*
+			 * Log delay if necessary. threshold is in milliseconds, convert
+			 * to microseconds.
+			 */
+			delay_threshold_by_time = pool_config->delay_threshold_by_time * 1000LL;
 
 			if ((pool_config->log_standby_delay == LSD_ALWAYS && delay_ms > 0) ||
 				(pool_config->log_standby_delay == LSD_OVER_THRESHOLD &&
@@ -1073,8 +1074,7 @@ check_replication_time_lag_with_cmd(void)
 	PG_END_TRY();
 
 	/* Normal cleanup */
-	if (line)
-		pfree(line);
+	pfree(line);
 
 	error_context_stack = callback.previous;
 }
