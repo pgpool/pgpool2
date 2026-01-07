@@ -960,6 +960,9 @@ create_inet_domain_sockets(const char *hostname, const int port)
 		n++;
 
 	sockfds = malloc(sizeof(int) * (n + 1));
+	if (sockfds == NULL)
+		ereport(FATAL,
+				(errmsg("failed to allocate memory for socket fds")));
 	n = 0;
 	for (walk = res; walk != NULL; walk = walk->ai_next)
 		sockfds[n++] = -1;
