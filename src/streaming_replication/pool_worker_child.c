@@ -692,7 +692,6 @@ check_replication_time_lag_with_cmd(void)
 	char	   *temp_token;
 	char	   *endptr;
 	char	   *ident;
-	const char *base_command;
 	double		delay_ms;
 	uint64		delay;
 	uint64		delay_threshold_by_time;
@@ -700,8 +699,6 @@ check_replication_time_lag_with_cmd(void)
 	int			primary_node_id;
 	int			save_errno;
 	int			i;
-	size_t		total_len;
-	size_t		current_len;
 	BackendInfo *bkinfo;
 	ErrorContextCallback callback;
 	int			pipefd[2] = {-1, -1};
@@ -712,6 +709,7 @@ check_replication_time_lag_with_cmd(void)
 	ssize_t		bytes_read;
 	int			status;
 	int			num_replicas;
+	StringInfoData strbuf;
 
 	if (NUM_BACKENDS <= 1)
 	{
@@ -760,46 +758,19 @@ check_replication_time_lag_with_cmd(void)
 	/* Execute command as current process user */
 	PG_TRY();
 	{
-		base_command = pool_config->replication_delay_source_cmd;
-		total_len = strlen(base_command) + 1;	/* +1 for NUL */
-
+		initStringInfo(&strbuf);
+		appendStringInfoString(&strbuf,
+							   pool_config->replication_delay_source_cmd);
 		/* Build command with replica-only arguments (omit primary) */
-
-		/*
-		 * Calculate total command length including space-separated replica
-		 * identifiers
-		 */
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			if (i == primary_node_id)
 				continue;		/* Skip primary node */
-
 			ident = build_instance_identifier_for_node(i);
-
-			total_len += 1 /* space */ + strlen(ident);
+			appendStringInfo(&strbuf, " %s", ident);
 			pfree(ident);
 		}
-
-		command = palloc(total_len);
-		strlcpy(command, base_command, total_len);
-
-		/* Append replica identifiers */
-		current_len = strlen(command);
-
-		for (i = 0; i < NUM_BACKENDS; i++)
-		{
-			if (i == primary_node_id)
-				continue;		/* Skip primary node */
-
-			ident = build_instance_identifier_for_node(i);
-
-			/* Append space and identifier */
-			snprintf(command + current_len, total_len - current_len, " %s", ident);
-			current_len += strlen(command + current_len);
-
-			pfree(ident);
-		}
-
+		command = strbuf.data;
 		ereport(DEBUG1,
 				(errmsg("executing replication delay command: %s", command)));
 
