@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1927,6 +1927,8 @@ do_SCRAM(POOL_CONNECTION *frontend, POOL_CONNECTION *backend, int protoMajor, in
 				 * The request contains the name (as assigned by IANA) of the
 				 * authentication mechanism.
 				 */
+				if (sasl_state)
+					pg_fe_scram_free(sasl_state);
 				sasl_state = pg_SASL_init(backend, payload, payload_len, username, storedPassword);
 				if (!sasl_state)
 				{
