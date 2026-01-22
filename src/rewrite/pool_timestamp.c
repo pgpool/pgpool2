@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1368,6 +1368,44 @@ makeTypeCastFromSvfOp(SQLValueFunctionOp op)
  *
  * Currently, the node type coverage extends to SelectStmt and everything
  * that could appear under it, but not other statement types.
+ */
+
+/*
+ * expression_tree_walker() is designed to support routines that traverse
+ * a tree in a read-only fashion (although it will also work for routines
+ * that modify nodes in-place but never add/delete/replace nodes).
+ * A walker routine should look like this:
+ *
+ * bool my_walker (Node *node, my_struct *context)
+ * {
+ *		if (node == NULL)
+ *			return false;
+ *		// check for nodes that special work is required for, eg:
+ *		if (IsA(node, Var))
+ *		{
+ *			... do special actions for Var nodes
+ *		}
+ *		else if (IsA(node, ...))
+ *		{
+ *			... do special actions for other node types
+ *		}
+ *		// for any node type not specially processed, do:
+ *		return expression_tree_walker(node, my_walker, context);
+ * }
+ *
+ * The "context" argument points to a struct that holds whatever context
+ * information the walker routine needs --- it can be used to return data
+ * gathered by the walker, too.  This argument is not touched by
+ * expression_tree_walker, but it is passed down to recursive sub-invocations
+ * of my_walker.  The tree walk is started from a setup routine that
+ * fills in the appropriate context struct, calls my_walker with the top-level
+ * node of the tree, and then examines the results.
+ *
+ * The walker routine should return "false" to continue the tree walk, or
+ * "true" to abort the walk and immediately return "true" to the top-level
+ * caller.  This can be used to short-circuit the traversal if the walker
+ * has found what it came for.  "false" is returned to the top-level caller
+ * iff no invocation of the walker returned "true".
  */
 bool
 raw_expression_tree_walker(Node *node,
