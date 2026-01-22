@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -406,7 +406,7 @@ function_call_walker(Node *node, void *context)
 				if (function_volatile_property(fname, FUNC_VOLATILE))
 				{
 					ctx->has_function_call = true;
-					return false;
+					return true;
 				}
 				return raw_expression_tree_walker(node, function_call_walker, context);
 			}
@@ -431,7 +431,7 @@ function_call_walker(Node *node, void *context)
 				 * found a writing function.
 				 */
 				ctx->has_function_call = true;
-				return false;
+				return true;
 			}
 
 			/*
@@ -444,7 +444,7 @@ function_call_walker(Node *node, void *context)
 				{
 					/* Found. */
 					ctx->has_function_call = true;
-					return false;
+					return true;
 				}
 			}
 		}
@@ -473,7 +473,7 @@ system_catalog_walker(Node *node, void *context)
 		if (is_system_catalog(rgv->relname))
 		{
 			ctx->has_system_catalog = true;
-			return false;
+			return true;
 		}
 	}
 	return raw_expression_tree_walker(node, system_catalog_walker, context);
@@ -500,7 +500,7 @@ temp_table_walker(Node *node, void *context)
 		if (is_temp_table(rgv->relname))
 		{
 			ctx->has_temp_table = true;
-			return false;
+			return true;
 		}
 	}
 	return raw_expression_tree_walker(node, temp_table_walker, context);
@@ -530,7 +530,7 @@ unlogged_table_walker(Node *node, void *context)
 		if (is_unlogged_table(relname))
 		{
 			ctx->has_unlogged_table = true;
-			return false;
+			return true;
 		}
 	}
 	return raw_expression_tree_walker(node, unlogged_table_walker, context);
@@ -560,7 +560,7 @@ view_walker(Node *node, void *context)
 		if (is_view(relname))
 		{
 			ctx->has_view = true;
-			return false;
+			return true;
 		}
 	}
 	return raw_expression_tree_walker(node, view_walker, context);
@@ -590,7 +590,7 @@ row_security_enabled_walker(Node *node, void *context)
 		if (row_security_enabled(relname))
 		{
 			ctx->row_security = true;
-			return false;
+			return true;
 		}
 	}
 	return raw_expression_tree_walker(node, row_security_enabled_walker, context);
