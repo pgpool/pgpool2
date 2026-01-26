@@ -1744,6 +1744,16 @@ backend_clustering_mode = raw
      </para>
 
      <para>
+      レプリケーション構成において、スタンバイ側が参照する<literal>primary_conninfo</literal>の<literal>host</literal>と、<productname>Pgpool-II</productname>がプライマリノードを識別する<varname>backend_hostname</varname>は同じ値を指定する必要があります。
+      たとえば、プライマリノードがbackend0（ホスト名<literal>host0</literal>）、スタンバイノードがbackend1で<varname>backend_application_name</varname>が<literal>server1</literal>の場合、backend1の<filename>postgresql.conf</filename>は次のように設定します。
+      <programlisting>
+primary_conninfo = 'host=host0 port=5432 user=postgres application_name=''server1'''
+      </programlisting>
+      この場合、backend0に対応する<varname>backend_hostname</varname>も<literal>host0</literal>に設定してください。
+      一致していない場合<productname>Pgpool-II</productname>がプライマリノードを識別できずストリーミングレプリケーションチェックなどがうまく動作しないことがあります。
+     </para>
+
+     <para>
       <!--
       Please note that the DB node which has id 0 has no special
       meaning if operated in streaming replication mode. Rather,

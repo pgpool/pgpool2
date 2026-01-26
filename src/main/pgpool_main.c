@@ -2699,7 +2699,9 @@ verify_backend_node_status(POOL_CONNECTION_POOL_SLOT **slots)
 						{
 							/* the standby does not connect to the primary */
 							ereport(LOG,
-									(errmsg("verify_backend_node_status: primary %d does not connect to standby %d", i, j)));
+									(errmsg("verify_backend_node_status: primary %d does not connect to standby %d", i, j),
+									 errdetail("pgpool.conf backend: (host=\"%s\" port=%d) does not match PostgreSQL primary_conninfo: (host=\"%s\" port=%s)",
+											   backend_info->backend_hostname, backend_info->backend_port, host, port)));
 						}
 					}
 				}
