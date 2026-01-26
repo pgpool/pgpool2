@@ -1284,6 +1284,25 @@ backend_clustering_mode = raw
      </para>
 
      <para>
+      In a replication configuration, the <literal>host</literal> specified in
+      <literal>primary_conninfo</literal> on the standby side must match the value of
+      <varname>backend_hostname</varname> that <productname>Pgpool-II</productname> uses
+      to identify the primary node.
+      For example, if the primary node is backend0 (with hostname <literal>host0</literal>)
+      and the standby node is backend1 with <varname>backend_application_name</varname>
+      set to <literal>server1</literal>, then the <filename>postgresql.conf</filename>
+      on backend1 should be configured as follows:
+      <programlisting>
+primary_conninfo = 'host=host0 port=5432 user=postgres application_name=''server1'''
+      </programlisting>
+      In this case, <varname>backend_hostname</varname> corresponding to backend0
+      should also be set to <literal>host0</literal>.
+      If these values do not match, <productname>Pgpool-II</productname> may fail to
+      identify the primary node correctly, and features such as streaming replication
+      checks may not work as expected.
+     </para>
+
+     <para>
       If you plan to use only
       one <productname>PostgreSQL</productname> server, specify
       it by backend_hostname0.
