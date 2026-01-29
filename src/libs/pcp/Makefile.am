@@ -1,8 +1,8 @@
 AM_CPPFLAGS = -D_GNU_SOURCE -DPOOL_PRIVATE -I @PGSQL_INCLUDE_DIR@
 
-lib_LTLIBRARIES = libpcp.la
-libpcp_la_LDFLAGS = -version-info 3:0:0
-dist_libpcp_la_SOURCES = pcp.c \
+lib_LTLIBRARIES = libpgpoolpcp.la
+libpgpoolpcp_la_LDFLAGS = -version-info 3:0:0
+dist_libpgpoolpcp_la_SOURCES = pcp.c \
 					../../utils/pool_path.c \
 					../../tools/fe_port.c \
 					../../tools/fe_memutils.c \
@@ -10,7 +10,7 @@ dist_libpcp_la_SOURCES = pcp.c \
 					../../utils/pool_health_check_stats.c \
 					../../utils/sprompt.c
 
-nodist_libpcp_la_SOURCES = pcp_stream.c \
+nodist_libpgpoolpcp_la_SOURCES = pcp_stream.c \
 					md5.c \
 					json.c
 
@@ -27,4 +27,4 @@ json.c: ../../../src/utils/json.c
 	rm -f $@ && ln -s $< .
 
 clean-local:
-	-rm -f $(nodist_libpcp_la_SOURCES)
+	-rm -f $(nodist_libpgpoolpcp_la_SOURCES)

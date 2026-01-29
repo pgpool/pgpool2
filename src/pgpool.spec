@@ -194,7 +194,7 @@ install -d %{buildroot}%{_sysconfdir}/sudoers.d
 install -m 0440 %{SOURCE6} %{buildroot}%{_sysconfdir}/sudoers.d/pgpool
 
 # nuke libtool archive and static lib
-rm -f %{buildroot}%{_libdir}/libpcp.{a,la}
+rm -f %{buildroot}%{_libdir}/libpgpoolpcp.{a,la}
 
 mkdir html
 mv doc/src/sgml/html html/en
@@ -284,7 +284,7 @@ fi
 %{_mandir}/man1/*.1.gz
 %{_datadir}/%{short_name}/insert_lock.sql
 %{_datadir}/%{short_name}/pgpool.pam
-%{_libdir}/libpcp.so.*
+%{_libdir}/libpgpoolpcp.so.*
 %if %{systemd_enabled}
 %attr(755,postgres,postgres) %dir %{_varrundir}
 %{_tmpfilesdir}/%{name}.conf
@@ -320,7 +320,7 @@ fi
 %{_includedir}/pcp.h
 %{_includedir}/pool_process_reporting.h
 %{_includedir}/pool_type.h
-%{_libdir}/libpcp.so
+%{_libdir}/libpgpoolpcp.so
 
 %files extensions
 %defattr(-,root,root,-)
