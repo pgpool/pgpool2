@@ -5112,9 +5112,12 @@ si_get_snapshot(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *
 }
 
 /*
- * Check if the transaction is in abort status. If so, we do nothing and just
- * return error message and ready for query message to frontend, then return
- * false to caller.
+ * Check if the transaction is in abort status ('E' status).  If not, do thing
+ * and return true. Otherwise, check if the transaction is already in failed
+ * status using pool_is_failed_transaction().  If so and the processing query
+ * is not a commit or rollback command, send a ready for query message to
+ * frontend along with "current transaction is aborted..."  message to let the
+ * client know the current transaction is in abort status.
  */
 static bool
 check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION *frontend,
@@ -5122,7 +5125,12 @@ check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION *fron
 {
 	int			len;
 
+	/* chekc if the transaction state is 'E'. If not, do nothing */
 	if (TSTATE(backend, MAIN_NODE_ID) != 'E')
+		return true;
+
+	/* If frontend is NULL, do nothing */
+	if (frontend == NULL)
 		return true;
 
 	/*
