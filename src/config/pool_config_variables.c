@@ -4861,12 +4861,14 @@ LogDirAssignMessage(ConfigContext scontext, char *newval, int elevel)
 		ereport(WARNING,
 				(errmsg("logdir is changed to work_dir"),
 				 errdetail("if logdir is specified, the value will be set to work_dir")));
-	if (g_pool_config.work_dir)
-		pfree(g_pool_config.work_dir);
-	if (newval)
+
+	if (newval != NULL && strlen(newval) != 0)
+	{
+		if (g_pool_config.work_dir)
+			pfree(g_pool_config.work_dir);
+
 		g_pool_config.work_dir = pstrdup(newval);
-	else
-		g_pool_config.work_dir = NULL;
+	}
 	return true;
 }
 
