@@ -750,6 +750,15 @@ backend_clustering_mode = streaming_replication
 #wd_port2 = 9000
 #pgpool_port2 = 9999
 
+#wd_listen_address = ''
+                                    # Host name which watchdog will listen on.
+                                    # If it is configured, it is used
+                                    # instead of the local node hostnameX.
+#wd_listen_port = 0
+                                    # Port number which watchdog will listen on.
+                                    # If it is configured, it is used
+                                    # instead of the local node wd_portX.
+
 #wd_priority = 1
                                     # priority of this watchdog in leader election
                                     # (change requires restart)
@@ -903,6 +912,15 @@ backend_clustering_mode = streaming_replication
 #heartbeat_hostname2 = ''
 #heartbeat_port2 = 9694
 #heartbeat_device2 = ''
+
+#wd_heartbeat_listen_addresses = ''
+                                    # Host name which heartbeat will listen on.
+                                    # If it is configured, it is used
+                                    # instead of the local node heartbeat_hostnameX.
+#wd_heartbeat_listen_port = 0
+                                    # Port number which heartbeat will listen on.
+                                    # If it is configured, it is used
+                                    # instead of the local node heartbeat_portX.
 
 #wd_heartbeat_keepalive = 2
                                     # Interval time of sending heartbeat signal (sec)

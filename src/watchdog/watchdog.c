@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1271,6 +1271,8 @@ watchdog_main(void)
 				ref_time;
 
 	volatile int fd;
+	char	   *listen_address;
+	int			listen_port = 0;
 	sigjmp_buf	local_sigjmp_buf;
 
 	pool_signal(SIGTERM, wd_child_exit);
@@ -1298,8 +1300,20 @@ watchdog_main(void)
 
 	/* initialize all the local structures for watchdog */
 	wd_cluster_initialize();
+
+	if (pool_config->wd_listen_address != NULL &&
+		strlen(pool_config->wd_listen_address) != 0)
+		listen_address = pool_config->wd_listen_address;
+	else
+		listen_address = g_cluster.localNode->hostname;
+
+	if (pool_config->wd_listen_port > 0)
+		listen_port = pool_config->wd_listen_port;
+	else
+		listen_port = g_cluster.localNode->wd_port;
+
 	/* create a server socket for incoming watchdog connections */
-	g_wd_recv_socks = wd_create_recv_socket(g_cluster.localNode->hostname, g_cluster.localNode->wd_port);
+	g_wd_recv_socks = wd_create_recv_socket(listen_address, listen_port);
 
 	/* open the command server */
 	g_cluster.command_server_sock = wd_create_command_server_socket();
