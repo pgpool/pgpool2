@@ -109,6 +109,27 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-wd-listen-address" xreflabel="wd_listen_address">
+    <term><varname>wd_listen_address</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>wd_listen_address</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the hostname or IP (IPv4 or IPv6) address which watchdog will listen on.
+      Default is <literal>''</literal> (empty). Specify only one address here.
+      If a value other than the default value is set,
+      the value of hostnameX of the local node will be ignored and a socket
+      that listens on the address specified in wd_listen_address will be created.
+      For <varname>wd_listen_address</varname>, specifying <literal>*</literal> will listen on all addresses.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-wd-port" xreflabel="wd_port">
     <term><varname>wd_portX</varname> (<type>integer</type>)
      <indexterm>
@@ -121,6 +142,26 @@
       process to listen for connections. Default is 9000.
       The number at the end of the parameter name is referred
       as "pgpool node id", and it starts from 0 (e.g. wd_port0).
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-listen-port" xreflabel="wd_listen_port">
+    <term><varname>wd_listen_port</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>wd_listen_port</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the port number which watchdog will listen on.
+      Default is 0. Specify only one address here.
+      If a value other than the default value is set,
+      the value of wd_portX of the local node will be ignored and a socket
+      that listens on the port specified in wd_listen_port will be created.
      </para>
      <para>
       This parameter can only be set at server start.
@@ -1134,6 +1175,30 @@ pgpool_port2 = 9999
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-wd-heartbeat-listen-addresses" xreflabel="wd_heartbeat_listen_addresses">
+    <term><varname>wd_heartbeat_listen_addresses</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>wd_heartbeat_listen_addresses</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the <acronym>IP (IPv4 or IPv6)</acronym> address or <acronym>hostname</acronym>
+	    which heartbeat process will listen on.
+      Default is <literal>''</literal> (empty).
+	    You can specify multiple <acronym>IP</acronym> address or <acronym>hostname</acronym>
+      by separating them using semicolon (;).
+      If a value other than the default value is set,
+      the value of heartbeat_hostnameX of the local node will be ignored and a socket
+      that listens on the address specified in wd_heartbeat_listen_addresses will be created.
+      For <varname>wd_heartbeat_listen_addresses</varname>, specifying <literal>*</literal> will listen on all addresses.
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-heartbeat-port" xreflabel="heartbeat_port">
     <term><varname>heartbeat_portX</varname> (<type>integer</type>)
      <indexterm>
@@ -1150,6 +1215,26 @@ pgpool_port2 = 9999
      <para>
       <varname>heartbeat_portX</varname> is only applicable if the
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
+     </para>
+     <para>
+      This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-heartbeat-listen-port" xreflabel="wd_heartbeat_listen_port">
+    <term><varname>wd_heartbeat_listen_port</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>wd_heartbeat_listen_port</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the port number which heartbeat process will listen on.
+      Specify only one port number here. Default is 0.
+      If a value other than the default value is set,
+      the value of heartbeat_portX of the local node will be ignored and a socket
+      that listens on the port specified in wd_heartbeat_listen_port will be created.
      </para>
      <para>
       This parameter can only be set at server start.

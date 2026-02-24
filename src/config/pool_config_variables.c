@@ -1241,6 +1241,26 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"wd_listen_address", CFGCXT_INIT, WATCHDOG_CONFIG,
+			"hostname(s) or IP address which watchdog will listen on.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.wd_listen_address,
+		"",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
+		{"wd_heartbeat_listen_addresses", CFGCXT_INIT, WATCHDOG_LIFECHECK,
+			"hostname(s) or IP address(es) which heartbeat will listen on.",
+			CONFIG_VAR_TYPE_STRING, false, 0
+		},
+		&g_pool_config.wd_heartbeat_listen_addresses,
+		"",
+		NULL, NULL, NULL, NULL
+	},
+
+	{
 		{"ssl_cert", CFGCXT_INIT, SSL_CONFIG,
 			"SSL public certificate file.",
 			CONFIG_VAR_TYPE_STRING, false, 0
@@ -2214,6 +2234,28 @@ static struct config_int ConfigureNamesInt[] =
 		&g_pool_config.wd_heartbeat_deadtime,
 		30,
 		1, INT_MAX,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"wd_listen_port", CFGCXT_INIT, WATCHDOG_CONFIG,
+			"tcp/IP port number which watchdog will listen on.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.wd_listen_port,
+		0,
+		1024, 65535,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"wd_heartbeat_listen_port", CFGCXT_INIT, WATCHDOG_LIFECHECK,
+			"tcp/IP port number which heartbeat will listen on.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.wd_heartbeat_listen_port,
+		0,
+		0, INT_MAX,
 		NULL, NULL, NULL
 	},
 
@@ -5403,7 +5445,16 @@ SetHBDestIfFunc(int elevel)
 		{
 			WdHbIf	   *hbNodeInfo = &g_pool_config.hb_ifs[i];
 
-			addrs = get_list_from_string(hbNodeInfo->addr, ";", &n_addr);
+			/*
+			 * For the local pgpool node, use wd_heartbeat_listen_addresses if
+			 * it is configured; otherwise use heartbeat_hostname.
+			 */
+			if (g_pool_config.wd_heartbeat_listen_addresses != NULL &&
+				strlen(g_pool_config.wd_heartbeat_listen_addresses) != 0 &&
+				i == g_pool_config.pgpool_node_id)
+				addrs = get_list_from_string(g_pool_config.wd_heartbeat_listen_addresses, ";", &n_addr);
+			else
+				addrs = get_list_from_string(hbNodeInfo->addr, ";", &n_addr);
 			if_names = get_list_from_string(hbNodeInfo->if_name, ";", &n_if_name);
 
 			if (!addrs || n_addr < 0)
@@ -5433,7 +5484,16 @@ SetHBDestIfFunc(int elevel)
 					for (k = 0; k < g_pool_config.wd_nodes.num_wd - 1; k++)
 					{
 						strlcpy(g_pool_config.hb_local_if[local_if_idx].addr, addrs[j], WD_MAX_HOST_NAMELEN - 1);
-						g_pool_config.hb_local_if[local_if_idx].dest_port = hbNodeInfo->dest_port;
+
+						/*
+						 * For the local pgpool node, use
+						 * wd_heartbeat_listen_port if it is configured;
+						 * otherwise use heartbeat_port.
+						 */
+						if (g_pool_config.wd_heartbeat_listen_port > 0)
+							g_pool_config.hb_local_if[local_if_idx].dest_port = g_pool_config.wd_heartbeat_listen_port;
+						else
+							g_pool_config.hb_local_if[local_if_idx].dest_port = hbNodeInfo->dest_port;
 
 						if (n_if_name > j)
 							strlcpy(g_pool_config.hb_local_if[local_if_idx].if_name, if_names[j], WD_MAX_IF_NAME_LEN - 1);

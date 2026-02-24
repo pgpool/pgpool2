@@ -136,6 +136,41 @@
       <!--
       This parameter can only be set at server start.
       -->
+      このパラメータは、サーバ起動時にのみ設定できます。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-listen-address" xreflabel="wd_listen_address">
+    <term><varname>wd_listen_address</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>wd_listen_address</varname> configuration parameter</primary>
+      -->
+      <primary><varname>wd_listen_address</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the hostname or IP (IPv4 or IPv6) address which watchdog will listen on.
+      Default is <literal>''</literal> (empty). Specify only one address here.
+      If a value other than the default value is set,
+      the value of hostnameX of the local node will be ignored and a socket
+      that listens on the address specified in wd_listen_address will be created.
+      For <varname>wd_listen_address</varname>, specifying <literal>*</literal> will listen on all addresses.
+      -->
+      watchdogがLISTENするソケットのホスト名またはIPアドレス（IPv4 あるいは IPv6）を指定します。
+      デフォルトは<literal>''</literal>（空文字）です。
+      1つのみを指定してください。
+      デフォルト値以外が設定されている場合自ノードのhostnameXの値は無視されwd_listen_addressで指定したアドレスでLISTENするソケットが作成されます。
+      <varname>wd_listen_address</varname>についても<literal>*</literal>を指定することで全アドレスをLISTENします。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータは、サーバ起動時にのみ設定できます。
      </para>
     </listitem>
    </varlistentry>
@@ -160,6 +195,37 @@
       watchdogが接続を受け付けるために監視するポート番号です。
       デフォルト値は9000です。
       パラメータ名の最後にある数字は「pgpool ノードID」で、0から始まります(たとえばwd_port0)。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータは、サーバ起動時にのみ設定できます。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-listen-port" xreflabel="wd_listen_port">
+    <term><varname>wd_listen_port</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>wd_listen_port</varname> configuration parameter</primary>
+      -->
+      <primary><varname>wd_listen_port</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the port number which watchdog will listen on.
+      Default is 0. Specify only one address here.
+      If a value other than the default value is set,
+      the value of wd_portX of the local node will be ignored and a socket
+      that listens on the port specified in wd_listen_port will be created.
+      -->
+      watchdogがLISTENするためのソケットのポートを指定するパラメータです。
+      デフォルト値は0です。
+      デフォルト値以外の設定があれば自ノードのwd_portXの値は無視され、wd_listen_portで指定したポートでLISTENするソケットが作成されます。
      </para>
      <para>
       <!--
@@ -1608,6 +1674,43 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry id="guc-wd-heartbeat-listen-addresses" xreflabel="wd-heartbeat_listen_addresses">
+    <term><varname>wd_heartbeat_listen_addresses</varname> (<type>string</type>)
+     <indexterm>
+      <!--
+      <primary><varname>wd_heartbeat_listen_addresses</varname> configuration parameter</primary>
+      -->
+      <primary><varname>wd_heartbeat_listen_addresses</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the <acronym>IP (IPv4 or IPv6)</acronym> address or <acronym>hostname</acronym>
+	which heartbeat process will listen on.
+      Default is <literal>''</literal> (empty).
+	You can specify multiple <acronym>IP</acronym> address or <acronym>hostname</acronym>
+      by separating them using semicolon (;).
+      If a value other than the default value is set,
+      the value of heartbeat_hostnameX of the local node will be ignored and a socket
+      that listens on the address specified in wd_heartbeat_listen_addresses will be created.
+      For <varname>wd_heartbeat_listen_addresses</varname>, specifying <literal>*</literal> will listen on all addresses.
+      -->
+      ハートビート信号を受信するための<acronym>IP</acronym>アドレス（IPv4 あるいは IPv6）、または<acronym>ホスト名</acronym>を指定します。
+      デフォルトは<literal>''</literal>（空文字）です。
+      ハートビート信号を LISTEN する複数のソケットのアドレスをセミコロン(;)で区切って指定することができます。
+      デフォルト値以外を設定している場合、自ノードのheartbeat_hostnameXの設定値は無視され、wd_heartbeat_listen_addressesで指定したアドレスでLISTENするソケットが作成されます。
+      <varname>wd_heartbeat_listen_addresses</varname>についても<literal>*</literal>を指定することで全アドレスをLISTENします。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータは、サーバ起動時にのみ設定できます。
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="guc-heartbeat-port" xreflabel="heartbeat_port">
     <term><varname>heartbeat_portX</varname> (<type>integer</type>)
      <indexterm>
@@ -1635,6 +1738,38 @@
       <xref linkend="guc-wd-lifecheck-method"> is set to <literal>'heartbeat'</literal>
       -->
       <varname>heartbeat_portX</varname>は、<xref linkend="guc-wd-lifecheck-method"> が <literal>'heartbeat'</literal>に設定されている場合のみ有効です。
+     </para>
+     <para>
+      <!--
+      This parameter can only be set at server start.
+      -->
+      このパラメータは、サーバ起動時にのみ設定できます。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-wd-heartbeat-listen-port" xreflabel="wd_heartbeat_listen_port">
+    <term><varname>wd_heartbeat_listen_port</varname> (<type>integer</type>)
+     <indexterm>
+      <!--
+      <primary><varname>wd_heartbeat_listen_port</varname> configuration parameter</primary>
+      -->
+      <primary><varname>wd_heartbeat_listen_port</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <!--
+      Specifies the port number which heartbeat process will listen on.
+      Specify only one port number here. Default is 0.
+      If a value other than the default value is set,
+      the value of heartbeat_portX of the local node will be ignored and a socket
+      that listens on the port specified in wd_heartbeat_listen_port will be created.
+      -->
+      ハートビート信号を受信するためのUDPポート番号を指定します。
+      1つのみを指定してください。
+      デフォルトは0です。
+      デフォルト値以外の設定があれば自ノードのheartbeat_portXの値は無視され、wd_heartbeat_listen_portで指定したポートでLISTENするソケットが作成されます。
      </para>
      <para>
       <!--
