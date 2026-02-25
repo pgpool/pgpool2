@@ -1,3 +1,218 @@
+<sect1 id="release-4-6-6">
+ <title>Release 4.6.6</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2026-02-26</simpara>
+ </note>
+
+ <sect2>
+  <title>Changes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-01-29 [118f61932]
+    -->
+    <para>
+     Allow parallel <command>make</command>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously a parallel <command>make</command> failed with:
+     <programlisting>
+In file included from parser.c:27:
+../../src/include/parser/gramparse.h:33:10: fatal error: gram.h: No such file or directory
+33 | #include "gram.h"
+     </programlisting>
+    </para>
+    <para>
+     Patch is created by anthonyroussel and reviewed by Tatsuo Ishii.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/pull/146">Fix parallel build</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-26 [d638018ce]
+    -->
+    <para>
+     Add detail log about mismatch between <xref linkend="guc-backend-hostname"> and <varname>primary_conninfo</varname> host. (Taiki Koshino)
+    </para>
+    <para>
+     If the <xref linkend="guc-backend-hostname"> set in <filename>pgpool.conf</filename> does not match
+     the host setting in <productname>PostgreSQL</productname>'s <varname>primary_conninfo</varname>,
+     the following log message will be output.
+     <programlisting>
+sr_check_worker pid 25099: DETAIL: pgpool.conf backend_hostname: "pgpool0" does not match PostgreSQL primary_conninfo host: "pgpool_logtest"
+     </programlisting>
+    </para>
+   </listitem>
+   <listitem>
+    <!--
+    2025-12-24 [ef33aca38]
+    -->
+    <para>
+     Explicitly stat supported minimum OpenSSL version. (Tatsuo Ishii)
+    </para>
+    <para>
+     That can be done in configure.ac by using
+     <programlisting>
+AC_DEFINE(OPENSSL_API_COMPAT, [0x10002000L],
+          [Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.])
+     </programlisting>
+
+     The supported minimum version is 1.0.2, which is identical to
+     <productname>PostgreSQL</productname> at this point.  (Actually the AC_DEFINE is brought in from
+     <productname>PostgreSQL</productname>).  Also this could avoid OpenSSL deprecation warnings if
+     your installed OpenSSL is new, like 3.0.
+     Moreover, add mention to installation document that required minimum
+     version of OpenSSL is 1.0.2.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-01-31 [55ee45801]
+    -->
+    <para>
+     Fix oversight in <function>check_transaction_state_and_abort()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     The function does not take the case when frontend is NULL into account.
+    </para>
+    <para>
+     Problem pointed out by Coverity.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-22 [c0f2cb883]
+    -->
+    <para>
+     Fix <function>walker()</function> functions to return earlier. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously <function>walker()</function> functions returned false once it found target
+     objects.  But it is possible to short-circuit the traverse and it
+     should have been.
+
+     Also import comments from <productname>PostgreSQL</productname> to clarify walker function
+     design.
+    </para>
+    <para>
+     Problem reported by liujinyang-highgo and reviewed by Tatsuo Ishii.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/143">Improper handling in the function view_walker().</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-09 [7b00d24de]
+    -->
+    <para>
+     Fix memory leak in <literal>scram-sha-256</literal> authentication. (Tatsuo Ishii)
+    </para>
+    <para>
+     Problem pointed out by Coverity.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-07 [81e8d3ec6]
+    -->
+    <para>
+     Fix to check the return value of <function>malloc()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     <function>create_inet_domain_sockets()</function> forgot to check the return value of
+     <function>malloc()</function> while allocating memory for socket fds.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-06 [2218b5e56]
+    -->
+    <para>
+     Fix health check process to not start. (Tatsuo Ishii)
+    </para>
+    <para>
+     Previously <function>pgpool_main()</function> did not start a health check process if the
+     backend node is down.  This prevented auto_failback from working.
+     Pgpool reads status from <varname>pool_status</varname> file when <option>-D</option> option is not
+     present.  If the status recorded in the file is "down", pgpool will
+     not start health check process for the node.  Since auto_failback is
+     invoked from health check process, this means that auto_failback does
+     not work for the backend node.
+
+     Fix is, unconditionally start health check process.
+    </para>
+    <para>
+     Problem reported by Meng Feilong and reviewed by Tatsuo Ishii.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/140">Nodes in the down state cannot failback </ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-24 [9acb78c01]
+    -->
+    <para>
+     Fix duplicate NodeTag enum in nodes.h. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fixed the duplication between NodeTag definitions in nodes.h imported from <productname>PostgreSQL</productname> and Pgpool-II's own definitions.
+    </para>
+    <para>
+     Problem reported and diagnosed by liujinyang-highgo and reviewed by Tastuo Ishii.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/138">an issue about NodeTag definition.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-23 [77096f651]
+    -->
+    <para>
+     Fix resource leak in <function>pcp_connect()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     The function did not call <function>freeaddrinfo()</function> in some places.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-23 [515d5fe85]
+    -->
+    <para>
+     Fix possible integer overflow. (Tatsuo Ishii)
+    </para>
+    <para>
+     In <function>pool_write_flush()</function> and <function>pool_flus_it()</function> <function>write(2)</function> is used. <function>write(2)</function>
+     returns ssize_t and in the code there are some places where the return
+     value was assigned to an int variable. As a result it was possible
+     that the return value was evaluated to negative value, which led to an
+     error.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-6-5">
  <title>Release 4.6.5</title>
  <note>
