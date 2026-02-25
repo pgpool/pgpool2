@@ -1,3 +1,253 @@
+<sect1 id="release-4-7-1">
+ <title>リリース 4.7.1</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2026-02-26</simpara>
+ </note>
+
+ <sect2>
+  <title>変更点</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-02-24 [7bfc5e989]
+    -->
+    <para>
+     watchdog/heartbeatプロセスがLISTENするアドレスとポートを指定できるパラメータを追加しました。(Taiki Koshino)
+    </para>
+    <para>
+     <xref linkend="guc-wd-listen-address">と<xref linkend="guc-wd-listen-port">を指定することによって、watchdogは指定したアドレスとポートのみでLISTENするようになります。
+     heartbeatプロセスについても<xref linkend="guc-wd-heartbeat-listen-addresses">と<xref linkend="guc-wd-heartbeat-listen-port">でLISTENするアドレスとポートを指定できます。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BYo7zOYmqLwcf_uoFUFn65jpySUU-QAseKn7rzr_zAmLA%40mail.gmail.com">Re: Pgpool-II 4.7.0 released.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-29 [118f61932]
+    -->
+    <para>
+     並列で<command>make</command>を実行できるようになりました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前、<command>make</command>の並列実行は以下のように失敗していました。
+     <programlisting>
+In file included from parser.c:27:
+../../src/include/parser/gramparse.h:33:10: fatal error: gram.h: No such file or directory
+33 | #include "gram.h"
+     </programlisting>
+    </para>
+    <para>
+     anthonyrousselによってパッチが作成され、Tatsuo Ishiiによってレビューされました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/pull/146">Fix parallel build</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-26 [d638018ce]
+    -->
+    <para>
+     <xref linkend="guc-backend-hostname">と<varname>primary_conninfo</varname>のホストが不一致であることを詳細にログに出力するようになりました。(Taiki Koshino)
+    </para>
+    <para>
+     <filename>pgpool.conf</filename>に設定されている<xref linkend="guc-backend-hostname">と<productname>PostgreSQL</productname>の<varname>primary_conninfo</varname>のホスト設定が一致しない場合以下のようなログが出力されます。
+     <programlisting>
+sr_check_worker pid 25099: DETAIL: pgpool.conf backend_hostname: "pgpool0" does not match PostgreSQL primary_conninfo host: "pgpool_logtest"
+     </programlisting>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-24 [ef33aca38]
+    -->
+    <para>
+     サポートされている最小のOpenSSLバージョンを明記しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     こちらは以下を使用したconfigure.acによって実現しています。
+     <programlisting>
+AC_DEFINE(OPENSSL_API_COMPAT, [0x10002000L],
+          [Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.])
+     </programlisting>
+
+     サポートされている最小バージョンは1.0.2で、これは現時点では<productname>PostgreSQL</productname>と同じです（実際にはAC_DEFINEは<productname>PostgreSQL</productname>から導入されています）。
+     また、インストールされているOpenSSLが3.0などの新しいバージョンである場合、OpenSSLの非推奨警告を回避できる可能性があります。
+     さらに、インストールドキュメントに、必要なOpenSSLの最小バージョンは1.0.2であることを記載しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-29 [940f9e848]
+    -->
+    <para>
+     RHELのPCPライブラリとのコンフリクトを回避するためにlibpcpをlibpgpoolpcpに名前を変更しました。(Bo Peng)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>から提供されているlibpcp.soライブラリはRHELのlibpcp.soライブラリとコンフリクトします。
+     コンフリクトを回避するために<productname>Pgpool-II</productname>のlibpcpライブラリ名ををlibpgpoolpcpに変更しました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/142">Installing pgpool-II fails due to naming conflict with RHEL provided library</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-02-12 [170c2dc65]
+    -->
+    <para>
+     <varname>logdir</varname>と<xref linkend="guc-work-dir">の両方が設定されていないときに起動に失敗する問題を修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     この問題はLuca Ferrariによって報告され、Taiki Koshinoによってレビューされました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/144">work_dir and/or logdir not set to default on 4.7 ?</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-31 [55ee45801]
+    -->
+    <para>
+     <function>check_transaction_state_and_abort()</function>の考慮不足を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     この関数はフロントエンドがNULLアカウントであるケースを考慮していませんでした。
+    </para>
+    <para>
+     この問題はCoverityによって発見されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-22 [c0f2cb883]
+    -->
+    <para>
+     <function>walker()</function>が早めに結果を返すように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前、<function>walker()</function>は対象オブジェクトを見つけたときにfalseを返していましたが、
+     trueを返すようにし処理をショートカットするようにしました。
+
+     また<function>waker()</function>の設計意図が分かりやすいように<productname>PostgreSQL</productname>のコメントを移植しました。
+    </para>
+    <para>
+     この問題はliujinyang-highgoによって報告され、Tatsuo Ishiiによってレビューされました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/143">Improper handling in the function view_walker().</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-09 [7b00d24de]
+    -->
+    <para>
+     <literal>scram-sha-256</literal>認証でのメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     この問題はCoverityによって発見されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-07 [81e8d3ec6]
+    -->
+    <para>
+     <function>malloc()</function>の返り値チェックを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>create_inet_domain_sockets()</function>はソケットのファイルディスクリプタ用メモリを割り当てている間に<function>malloc()</function>が返す値のチェックをしていませんでした。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-01-06 [2218b5e56]
+    -->
+    <para>
+     ヘルスチェックが開始しない問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     以前、<productname>Pgpool-II</productname>はバックエンドノードがダウンしている場合ヘルスチェックを開始しませんでした。
+     これは自動フェイルバックを阻害します。
+     Pgpoolは<option>-D</option>を指定していない場合<filename>pool_status</filename>を読み込みます。
+     もしpgpool_statusにダウンと記載されている場合はpgpoolはヘルスチェックを開始しませんでした。
+     自動フェイルバックはヘルスチェックから引き起こされるため、ヘルスチェックが起動しないと自動フェイルバックも実行されずバックエンドノードが復帰できませんでした。
+     この修正によりノードの状態にかかわらずヘルスチェックが起動するようになりました。
+    </para>
+    <para>
+     この問題はMeng Feilongによって報告され、Tatsuo Ishiiによってレビューされました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/140">Nodes in the down state cannot failback </ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-24 [9acb78c01]
+    -->
+    <para>
+     nodes.hに定義されているenum型のNodeTag値の重複を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <productname>PostgreSQL</productname>から取り込んだnodes.hのNodeTag定義とPgpool-II独自の定義で起きていた重複を解消しました。
+    </para>
+    <para>
+     この問題はliujinyang-highgoによって報告・検討され、Tatsuo Ishiiによってレビューされました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/138">an issue about NodeTag definition.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-23 [77096f651]
+    -->
+    <para>
+     <function>pcp_connect</function>でのメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     この関数は複数個所で<function>freeaddrinfo()</function>を呼び出していませんでした。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2025-12-23 [515d5fe85]
+    -->
+    <para>
+     integer型のオーバーフローが起きる可能性がある問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>pool_write_flush()</function>と<function>pool_flus_it()</function>では<function>write(2)</function>が使用されています。
+     <function>write(2)</function>はssize_tを返しますが、コード内には戻り値がint変数に代入されている箇所がいくつかありました。
+     その結果、戻り値が負の値として評価され、エラーが発生する可能性がありました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-7-0">
  <title>リリース 4.7.0</title>
  <note>
