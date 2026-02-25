@@ -2172,9 +2172,28 @@ ProcessNegotiateProtocol(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			p = pool_read2(CONNECTION(cp, i), len);
 			if (!forwardMsg)
 			{
+				int32	num_unsupported;
+				StringInfoData	buf;
 				pool_write_and_flush(frontend, p, len); /* forward rest of
 														 * message */
 				forwardMsg = true;
+
+				/* debug out unsuported messages */
+				memcpy(&num_unsupported, p, sizeof(int32));
+				num_unsupported = ntohl(num_unsupported);
+				p += sizeof(int32);
+				if (num_unsupported > 0)
+				{
+					initStringInfo(&buf);
+					for (int i = 0; i < num_unsupported; i++)
+					{
+						appendStringInfoString(&buf, p);
+						appendStringInfoChar(&buf, ' ');
+						p += strlen(p) + 1;
+					}
+					elog(DEBUG1, "unsupported options: %s", buf.data);
+					pfree(buf.data);
+				}
 			}
 			/* save negatiate protocol version */
 			sp = CONNECTION_SLOT(cp, i);
