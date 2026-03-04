@@ -627,7 +627,8 @@
       white spaces against the user's intention.
       -->
       onに設定すると、負荷分散の際にSQL文行頭の空白を無視します(全角スペースは無視されません)。
-      これは、DBI/DBD:Pgのように、ユーザの意図に反してに空白を追加するようなAPIを使っているときに有用です。
+      これは、DBI/DBD:Pgのように、ユーザの意図に反して空白を追加するようなAPIを使っているときに有用です。
+      デフォルトはonです。
      </para>
      <para>
       <!--
@@ -1279,6 +1280,7 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
       You can also use <xref linkend="SQL-PGPOOL-SET"> command to alter the value of
       this parameter for a current session.
       -->
+      デフォルトはoffです。
       このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
       現在のセッションでのパラメータ値は、<xref linkend="SQL-PGPOOL-SET">コマンドで変更することもできます。
      </para>

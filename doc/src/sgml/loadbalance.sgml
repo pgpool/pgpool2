@@ -492,6 +492,7 @@
       white spaces at the beginning of SQL queries in load balancing.
       It is useful if used with APIs like DBI/DBD:Pg which adds
       white spaces against the user's intention.
+      The default is on.
      </para>
      <para>
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
@@ -948,6 +949,7 @@ app_name_redirect_preference_list = 'psql:primary,myapp1:1(0.3),myapp2:standby'
       on the query could effectively prevent the query from being
       load balanced or cached (pre <productname>Pgpool-II</productname>
       <emphasis>V3.4</emphasis> behavior).
+      The default is off.
      </para>
      <para>
       This parameter can be changed by reloading the <productname>Pgpool-II</> configurations.
