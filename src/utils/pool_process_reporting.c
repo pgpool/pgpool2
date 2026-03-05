@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1697,13 +1697,13 @@ get_pools(int *nrows)
 				StrNCpy(pools[lines].client_port, pi->client_port, NI_MAXSERV);
 
 				/*
-				 * If this the statement was sent to backend id report the
+				 * If a statement was sent to this backend id, report the
 				 * statement.
 				 */
 				if (is_pi_set(pi->node_ids, backend_id))
 				{
 					StrNCpy(pools[lines].statement, pi->statement, MAXSTMTLEN);
-					elog(LOG, "pi->node_ids[0]:%ld pi->node_ids[1]:%ld",
+					elog(DEBUG5, "pi->node_ids[0]:%ld pi->node_ids[1]:%ld",
 						 pi->node_ids[0], pi->node_ids[1]);
 				}
 				lines++;
