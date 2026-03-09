@@ -4,8 +4,8 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2025	PgPool Global Development Group
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2026	PgPool Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * Permission to use, copy, modify, and distribute this software and
@@ -708,6 +708,15 @@ extern int	get_next_main_node(void);
 extern bool pool_acquire_follow_primary_lock(bool block, bool remote_reques);
 extern void pool_release_follow_primary_lock(bool remote_reques);
 extern void pool_signal_logrotate(void);
+
+/*
+ * Close listening sockets
+ * following defines are for "kind" param.
+ */
+#define POOL_CLOSE_PGPOOL_LISTENING_SOCKS	0x01	/* pgpool sockets */
+#define POOL_CLOSE_PCP_LISTENING_SOCKS		0x02	/* pcp sockets */
+extern void close_listening_sockets(int kind);
+
 
 /* strlcpy.c */
 #ifndef HAVE_STRLCPY
