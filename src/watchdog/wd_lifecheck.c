@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -356,6 +356,10 @@ fork_lifecheck_child(void)
 	{
 		on_exit_reset();
 		SetProcessGlobalVariables(PT_LIFECHECK);
+
+		/* close pgpool/pcp listening sockets */
+		close_listening_sockets(POOL_CLOSE_PGPOOL_LISTENING_SOCKS |
+								POOL_CLOSE_PCP_LISTENING_SOCKS);
 
 		/* call lifecheck child main */
 		POOL_SETMASK(&UnBlockSig);

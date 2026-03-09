@@ -809,6 +809,9 @@ pcp_fork_a_child(int *fds, char *pcp_conf_file)
 		on_exit_reset();
 		SetProcessGlobalVariables(PT_PCP);
 
+		/* close pgpool listening sockets */
+		close_listening_sockets(POOL_CLOSE_PGPOOL_LISTENING_SOCKS);
+
 		close(pipe_fds[0]);
 		close(pipe_fds[1]);
 
@@ -856,6 +859,9 @@ fork_a_child(int *fds, int id)
 
 		SetProcessGlobalVariables(PT_CHILD);
 
+		/* close pcp listening sockets */
+		close_listening_sockets(POOL_CLOSE_PCP_LISTENING_SOCKS);
+
 		/* call child main */
 		POOL_SETMASK(&UnBlockSig);
 		health_check_timer_expired = 0;
@@ -902,6 +908,14 @@ worker_fork_a_child(ProcessType type, void (*func) (), void *params)
 		}
 
 		SetProcessGlobalVariables(type);
+
+		/*
+		 * Close pgpool listening sockets and pcp listening sockets if they
+		 * are already setup. They are not ncessary for woker process (health
+		 * check and streaming replication check process).
+		 */
+		close_listening_sockets(POOL_CLOSE_PGPOOL_LISTENING_SOCKS |
+								POOL_CLOSE_PCP_LISTENING_SOCKS);
 
 		ereport(LOG,
 				(errmsg("process started")));
@@ -5170,4 +5184,26 @@ select_victim_processes(int *process_info_idxs, int count)
 				break;
 		}
 	return selected_count;
+}
+
+/*
+ * Close all listening sockets
+ *
+ * kind bitmap specifies which listening sockets to be closed.
+ */
+void
+close_listening_sockets(int kind)
+{
+	int			i;
+
+	if (kind & POOL_CLOSE_PGPOOL_LISTENING_SOCKS && fds != NULL)
+	{
+		for (i = 0; fds[i] > 0; i++)
+			close(fds[i]);
+	}
+	if (kind & POOL_CLOSE_PCP_LISTENING_SOCKS && pcp_fds != NULL)
+	{
+		for (i = 0; pcp_fds[i] > 0; i++)
+			close(pcp_fds[i]);
+	}
 }
