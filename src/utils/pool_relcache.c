@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -118,7 +118,10 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	void		*result;
 	ErrorContextCallback callback;
     pool_sigset_t oldmask;
-	bool locked;
+	/*
+	 * True if locked has been already acquired by others.
+	 */
+	bool		locked_by_others;
 	int			query_cache_not_found = 1;
 	char		*query_cache_data = NULL;
 	size_t		query_cache_len;
@@ -206,10 +209,10 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 		}
 	}
 
-	/* Not in cache. Check the system catalog */
+	/*
+	 * Not in cache. Form a query to check the system catalog.
+	 */
 	snprintf(query, sizeof(query), relcache->sql, table);
-
-	per_node_statement_log(backend, node_id, query);
 
 	/*
 	 * Register a error context callback to throw proper context message
@@ -219,14 +222,15 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 	callback.previous = error_context_stack;
 	error_context_stack = &callback;
 
-	locked = pool_is_shmem_lock();
+	locked_by_others = pool_is_shmem_lock();
+
 	/*
 	 * if enable_shared_relcache is true, search query cache.
 	 */
     if (pool_config->enable_shared_relcache)
 	{
 		/* if shmem is not locked by this process, get the lock */
-		if (!locked)
+		if (!locked_by_others)
 		{
 			POOL_SETMASK2(&BlockSig, &oldmask);
 			pool_shmem_lock(POOL_MEMQ_SHARED_LOCK);
@@ -252,6 +256,8 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 				errdetail("query:%s", query)));
 
 		do_query(CONNECTION(backend, node_id), query, &res, MAJOR(backend));
+		per_node_statement_log(backend, node_id, query);
+
 		/* Register cache */
 		result = (*relcache->register_func) (res);
 		/* save local catalog cache in query cache */
@@ -271,6 +277,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 			 */
 			pool_shmem_unlock();
 			pool_shmem_lock(POOL_MEMQ_EXCLUSIVE_LOCK);
+			locked_by_others = false;
 			pool_catalog_commit_cache(backend, query, query_cache_data, query_cache_len);
 		}
 	}
@@ -285,7 +292,7 @@ pool_search_relcache(POOL_RELCACHE * relcache, POOL_CONNECTION_POOL * backend, c
 		result = (*relcache->register_func) (res);
 	}
 	/* if shmem is locked by this function, unlock it */
-	if (pool_config->enable_shared_relcache && !locked)
+	if (pool_config->enable_shared_relcache && !locked_by_others)
 	{
 		pool_shmem_unlock();
 		POOL_SETMASK(&oldmask);
