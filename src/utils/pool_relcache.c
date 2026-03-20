@@ -205,6 +205,7 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 					(errmsg("hit local relation cache"),
 					 errdetail("query:%s", relcache->sql)));
 
+			/* data found in local cache */
 			return relcache->cache[i].data;
 		}
 	}
@@ -225,9 +226,11 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 	locked_by_others = pool_is_shmem_lock();
 
 	/*
-	 * if enable_shared_relcache is true, search query cache.
+	 * if enable_shared_relcache is true and cach is not session local ,
+	 * search query cache.
 	 */
-	if (pool_config->enable_shared_relcache)
+	if (!relcache->cache_is_session_local &&
+		pool_config->enable_shared_relcache)
 	{
 		/* if shmem is not locked by this process, get the lock */
 		if (!locked_by_others)
@@ -248,7 +251,8 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 		}
 		PG_END_TRY();
 	}
-	/* If not in query cache or not used, send query for backend. */
+
+	/* target data was not found in neither local nor shared query cache */
 	if (query_cache_not_found)
 	{
 		ereport(DEBUG1,
@@ -260,8 +264,10 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 
 		/* Register cache */
 		result = (*relcache->register_func) (res);
-		/* save local catalog cache in query cache */
-		if (pool_config->enable_shared_relcache)
+
+		/* save local catalog cache in shared query cache */
+		if (!relcache->cache_is_session_local &&
+			pool_config->enable_shared_relcache)
 		{
 			query_cache_data = relation_cache_to_query_cache(res, &query_cache_len);
 
@@ -282,7 +288,7 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 			pool_catalog_commit_cache(backend, query, query_cache_data, query_cache_len);
 		}
 	}
-	else
+	else	/* hit shared relation cache */
 	{
 		ereport(DEBUG1,
 				(errmsg("hit query cache"),
@@ -293,7 +299,8 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 		result = (*relcache->register_func) (res);
 	}
 	/* if shmem is locked by this function, unlock it */
-	if (pool_config->enable_shared_relcache && !locked_by_others)
+	if (!relcache->cache_is_session_local &&
+		pool_config->enable_shared_relcache && !locked_by_others)
 	{
 		pool_shmem_unlock();
 		POOL_SETMASK(&oldmask);
