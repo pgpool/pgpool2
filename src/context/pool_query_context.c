@@ -2131,12 +2131,15 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT * query_context, char *query, Node
 					 * load balance node which is lowest delayed,
 					 * false then send to the primary.
 					 */
-					if (STREAM && check_replication_delay(session_context->load_balance_node_id))
+					if (check_replication_delay(session_context->load_balance_node_id))
 					{
 						ereport(DEBUG1,
 								(errmsg("could not load balance because of too much replication delay"),
 								 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
+						/*
+						 * If prefer_lower_delay_standby is on, choose lower delay standby.
+						 */
 						if (pool_config->prefer_lower_delay_standby)
 						{
 							int new_load_balancing_node = select_load_balancing_node();
@@ -2145,12 +2148,17 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT * query_context, char *query, Node
 							session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
 							pool_set_node_to_be_sent(query_context, session_context->query_context->load_balance_node_id);
 						}
-						else
+						else	/* delay is too much. prefer to send to primary */
 						{
 							pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 						}
 					}
-					else
+
+					/*
+					 * Not streaming replication mode, or delay_threshold is 0
+					 * or replication delay is small enough.
+					 */
+					else	
 					{
 						session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
 						pool_set_node_to_be_sent(query_context,
