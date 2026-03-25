@@ -1940,6 +1940,9 @@ add_object_into_temp_write_list(Node *node, void *context)
 
 /*
  * dml adaptive.
+ *
+ * Collect/discard information for disable_load_balance_on_write =
+ * dml_adaptive case.
  */
 static void
 dml_adaptive(Node *node, char *query)
@@ -1996,10 +1999,19 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node 
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION_POOL *backend;
 
+	/*
+	 * From syntactically analysis decide the statement to be sent to the
+	 * primary, the standby or either or both.
+	 */
 	dest = send_to_where(node);
+
 	session_context = pool_get_session_context(false);
 	backend = session_context->backend;
 
+	/* 
+	 * Collect/discard information for disable_load_balance_on_write =
+	 * dml_adaptive case.
+	 */
 	dml_adaptive(node, query);
 
 	ereport(DEBUG1,
