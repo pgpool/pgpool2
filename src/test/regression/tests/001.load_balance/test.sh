@@ -231,8 +231,16 @@ EOF
 	    $PSQL $PSQLOPTS < ../sql/7.sql > result8 2>&1
 	    check_result 8
 	fi
-	./shutdownall
 
+# -------------------------------------------------------------------------------
+# interaction between persistent table and temporary table
+# -------------------------------------------------------------------------------
+	if [ $mode = 's' ];then	
+	    $PSQL $PSQLOPTS < ../sql/9.sql > result9 2>&1
+	    check_result 9
+	fi
+
+	./shutdownall
 	cd ..
 done
 
