@@ -1037,7 +1037,7 @@ send_to_where(Node *node)
 	else if (IsA(node, VariableSetStmt))
 	{
 		ListCell   *list_item;
-		bool		ret = POOL_BOTH;
+		POOL_DEST	ret = POOL_BOTH;
 
 		/*
 		 * SET transaction_read_only TO off
@@ -1060,7 +1060,7 @@ send_to_where(Node *node)
 							ret = POOL_PRIMARY;
 						break;
 					case T_Integer:
-						if (v->val.ival.ival)
+						if (!v->val.ival.ival)
 							ret = POOL_PRIMARY;
 					default:
 						break;
