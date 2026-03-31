@@ -1434,7 +1434,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 		else if (IsA(node, VariableSetStmt))
 		{
 			ListCell   *list_item;
-			bool		ret = POOL_BOTH;
+			POOL_DEST	ret = POOL_BOTH;
 
 			/*
 			 * SET transaction_read_only TO off
@@ -1457,7 +1457,7 @@ static POOL_DEST send_to_where(Node *node, char *query)
 								ret = POOL_PRIMARY;
 							break;
 						case T_Integer:
-							if (v->val.val.ival)
+							if (!v->val.val.ival)
 								ret = POOL_PRIMARY;
 						default:
 							break;
