@@ -5,7 +5,9 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2021	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2026, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -965,12 +967,14 @@ load_dh_file(char *filename)
 		ereport(WARNING,
 				(errmsg("invalid DH parameters: %s",
 						SSLerrmessage(ERR_get_error()))));
+		DH_free(dh);
 		return NULL;
 	}
 	if (codes & DH_CHECK_P_NOT_PRIME)
 	{
 		ereport(WARNING,
 				(errmsg("invalid DH parameters: p is not prime")));
+		DH_free(dh);
 		return NULL;
 	}
 	if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
@@ -978,6 +982,7 @@ load_dh_file(char *filename)
 	{
 		ereport(WARNING,
 				(errmsg("invalid DH parameters: neither suitable generator or safe prime")));
+		DH_free(dh);
 		return NULL;
 	}
 
