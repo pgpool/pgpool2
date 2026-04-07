@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1290,6 +1290,12 @@ pool_extract_table_oids(Node *node, int **oidsp)
 			}
 		}
 		return num_oids;
+	}
+	else if (IsA(node, MergeStmt))
+	{
+		MergeStmt  *stmt = (MergeStmt *) node;
+
+		table = make_table_name_from_rangevar(stmt->relation);
 	}
 	else if (IsA(node, ExplainStmt))
 	{
