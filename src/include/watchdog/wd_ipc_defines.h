@@ -124,7 +124,7 @@ typedef enum WDValueDataType
 /* Use to inform node new node status by lifecheck */
 #define WD_LIFECHECK_NODE_STATUS_DEAD 	1
 #define WD_LIFECHECK_NODE_STATUS_ALIVE	2
-#define WD_LIFECHECK_NODE_LIFECHECK_STARTED	3
+
 
 
 #endif

@@ -425,13 +425,6 @@ parse_watchdog_node_info_from_wd_node_json(json_value *source)
 				 errdetail("unable to find state")));
 	}
 
-	if (json_get_bool_value_for_key(source, "LifecheckStarted", &wdNodeInfo->lifecheck_started))
-	{
-		ereport(ERROR,
-				(errmsg("invalid json data"),
-				 errdetail("unable to find lifecheckStarted")));
-	}
-
 	return wdNodeInfo;
 
 }

@@ -517,7 +517,6 @@ get_watchdog_node_info_json(WatchdogNode *wdNode, char *authkey)
 	jw_put_int(jNode, "QuorumStatus", wdNode->quorum_status);
 	jw_put_int(jNode, "AliveNodeCount", wdNode->standby_nodes_count);
 	jw_put_bool(jNode, "Escalated", wdNode->escalated == 0 ? false : true);
-	jw_put_bool(jNode, "LifecheckStarted", wdNode->lifecheck_started);
 
 	if (authkey)
 		jw_put_string(jNode, "authkey", authkey);
@@ -590,8 +589,7 @@ get_watchdog_node_from_json(char *json_data, int data_len, char **authkey)
 		goto ERROR_EXIT;
 	if (json_get_int_value_for_key(root, "PgpoolNodeId", &wdNode->pgpool_node_id))
 		goto ERROR_EXIT;
-	if (json_get_bool_value_for_key(root, "LifecheckStarted", &wdNode->lifecheck_started))
-		goto ERROR_EXIT;
+
 
 	ptr = json_get_string_value_for_key(root, "NodeName");
 	if (ptr == NULL)
