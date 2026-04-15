@@ -48,7 +48,6 @@ typedef struct PCPWDNodeInfo
 	int			wd_priority;	/* node priority in leader election */
 	int			pgpool_port;	/* pgpool port */
 	char		delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
-	bool		lifecheck_started; /* True if lifecheck has started */
 	int			id;
 }			PCPWDNodeInfo;
 

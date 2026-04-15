@@ -107,7 +107,7 @@ static int	is_wd_lifecheck_ready(void);
 static int	wd_lifecheck(void);
 static int	wd_ping_pgpool(LifeCheckNode *node, char *password);
 static pid_t fork_lifecheck_child(void);
-static bool inform_node_status(LifeCheckNode *node, char *message);
+
 
 LifeCheckCluster *gslifeCheckCluster = NULL;	/* lives in shared memory */
 
@@ -452,9 +452,6 @@ lifecheck_main(void)
 
 	ereport(LOG,
 			(errmsg("watchdog: lifecheck started")));
-	LifeCheckNode *node = &gslifeCheckCluster->lifeCheckNodes[0];
-	node->nodeState = NODE_LIFECHECK_STARTED;
-	inform_node_status(node, "lifecheck started");
 
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
@@ -549,11 +546,6 @@ inform_node_status(LifeCheckNode *node, char *message)
 	{
 		new_status = "NODE ALIVE";
 		node_status = WD_LIFECHECK_NODE_STATUS_ALIVE;
-	}
-	else if (node->nodeState == NODE_LIFECHECK_STARTED)
-	{
-		new_status = "NODE LIFECHECK STARTED";
-		node_status = WD_LIFECHECK_NODE_LIFECHECK_STARTED;
 	}
 	else
 		return false;
