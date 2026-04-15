@@ -78,9 +78,9 @@ $ pcp_watchdog_info -h localhost -p 9898 -U postgres
 Password: 
 3 3 YES server1:9999 Linux server1.localdomain server1
 
-server1:9999 Linux server1.localdomain server1 9999 9000 4 LEADER 0 MEMBER
-server2:9999 Linux server2.localdomain server2 9999 9000 7 STANDBY 0 MEMBER
-server3:9999 Linux server3.localdomain server3 9999 9000 7 STANDBY 0 MEMBER
+server1:9999 Linux server1.localdomain server1 9999 9000 4 LEADER 0 MEMBER YES
+server2:9999 Linux server2.localdomain server2 9999 9000 7 STANDBY 0 MEMBER YES
+server3:9999 Linux server3.localdomain server3 9999 9000 7 STANDBY 0 MEMBER YES
    </programlisting>
   </para>
   <para>
@@ -105,6 +105,7 @@ server3:9999 Linux server3.localdomain server3 9999 9000 7 STANDBY 0 MEMBER
     6. current node state name
     7. current cluster membership status
     8. current cluster membership status name
+    9. Lifecheck start status
    </literallayout>
   </para>
   <para>
@@ -134,6 +135,7 @@ Node priority     : 1
 Status            : 4
 Status Name       : LEADER
 Membership Status : MEMBER
+Lifecheck Started : YES
 
 Node Name         : server2:9999 Linux server2.localdomain
 Host Name         : server2
@@ -144,6 +146,7 @@ Node priority     : 1
 Status            : 7
 Status Name       : STANDBY
 Membership Status : MEMBER
+Lifecheck Started : YES
 
 Node Name         : server3:9999 Linux server3.localdomain
 Host Name         : server3
@@ -154,6 +157,7 @@ Node priority     : 1
 Status            : 7
 Status Name       : STANDBY
 Membership Status : MEMBER
+Lifecheck Started : YES
   </programlisting>
  </refsect1>
 
