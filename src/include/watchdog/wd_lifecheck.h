@@ -33,8 +33,7 @@ typedef enum NodeState
 {
 	NODE_EMPTY,
 	NODE_DEAD,
-	NODE_ALIVE,
-	NODE_LIFECHECK_STARTED
+	NODE_ALIVE
 } NodeStates;
 
 typedef struct LifeCheckNode

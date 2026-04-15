@@ -206,8 +206,6 @@ typedef struct WatchdogNode
 									 * initiated by remote */
 	SocketConnection client_socket; /* socket connections for this node
 									 * initiated by local */
-	bool		lifecheck_started;		/* True means lifecheck is started,
-										 * false means lifecheck is not started */
 } WatchdogNode;
 
 /*

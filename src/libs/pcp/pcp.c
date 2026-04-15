@@ -1772,12 +1772,6 @@ process_watchdog_info_response(PCPConnInfo * pcpConn, char *buf, int len)
 				goto INVALID_RESPONSE;
 			}
 
-			if (json_get_bool_value_for_key(nodeInfoValue, "LifecheckStarted", &wdNodeInfo->lifecheck_started))
-			{
-				json_value_free(root);
-				goto INVALID_RESPONSE;
-			}
-
 		}
 		json_value_free(root);
 
