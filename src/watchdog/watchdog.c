@@ -2486,6 +2486,17 @@ fire_node_status_event(int nodeID, int nodeStatus)
 		else
 			watchdog_state_machine(WD_EVENT_REMOTE_NODE_FOUND, wdNode, NULL, NULL);
 	}
+	else if (nodeStatus == WD_LIFECHECK_NODE_LIFECHECK_STARTED)
+	{
+		ereport(LOG,
+				(errmsg("processing node status changed to LIFECHECK STARTED event for node ID:%d", nodeID)));
+
+		if (wdNode == g_cluster.localNode)
+		{
+			wdNode->lifecheck_started = true;
+			send_message_of_type(NULL, WD_INFO_MESSAGE, NULL);
+		}
+	}
 	else
 		ereport(LOG,
 				(errmsg("failed to process node status change event"),
@@ -3856,6 +3867,7 @@ add_nodeinfo_to_json(JsonNode *jNode, WatchdogNode *node)
 	jw_put_int(jNode, "WdPort", nodeIfNull_int(wd_port, 0));
 	jw_put_int(jNode, "PgpoolPort", nodeIfNull_int(pgpool_port, 0));
 	jw_put_int(jNode, "Priority", nodeIfNull_int(wd_priority, 0));
+	jw_put_int(jNode, "LifecheckStarted", nodeIfNull_int(lifecheck_started, 0));
 
 	jw_end_element(jNode);
 
@@ -4510,6 +4522,7 @@ standard_packet_processor(WatchdogNode *wdNode, WDPacketData *pkt)
 				wdNode->escalated = tempNode->escalated;
 				wdNode->standby_nodes_count = tempNode->standby_nodes_count;
 				wdNode->quorum_status = tempNode->quorum_status;
+				wdNode->lifecheck_started = tempNode->lifecheck_started;
 
 				print_watchdog_node_info(wdNode);
 
