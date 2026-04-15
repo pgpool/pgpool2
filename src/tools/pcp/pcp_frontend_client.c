@@ -835,7 +835,8 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 			printf("Node priority     : %d\n", watchdog_info->wd_priority);
 			printf("Status            : %d\n", watchdog_info->state);
 			printf("Status Name       : %s\n", watchdog_info->stateName);
-			printf("Membership Status : %s\n\n", watchdog_info->membership_status_string);
+			printf("Membership Status : %s\n", watchdog_info->membership_status_string);
+			printf("Lifecheck Started : %s\n\n", watchdog_info->lifecheck_started ? "YES" : "NO");
 		}
 	}
 	else
@@ -851,7 +852,7 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 		{
 			PCPWDNodeInfo *watchdog_info = &cluster->nodeList[i];
 
-			printf("%s %s %d %d %d %s %d %s\n",
+			printf("%s %s %d %d %d %s %d %s %s\n",
 				   watchdog_info->nodeName,
 				   watchdog_info->hostName,
 				   watchdog_info->pgpool_port,
@@ -859,7 +860,8 @@ output_watchdog_info_result(PCPResultInfo * pcpResInfo, bool verbose)
 				   watchdog_info->state,
 				   watchdog_info->stateName,
 				   watchdog_info->membership_status,
-				   watchdog_info->membership_status_string);
+				   watchdog_info->membership_status_string,
+				   watchdog_info->lifecheck_started ? "YES": "NO");
 		}
 	}
 }

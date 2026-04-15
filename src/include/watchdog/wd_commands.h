@@ -42,6 +42,8 @@ typedef struct WDNodeInfo
 	int			wd_priority;	/* node priority */
 	char		delegate_ip[WD_MAX_HOST_NAMELEN];	/* delegate IP */
 	int			id;
+	bool		lifecheck_started /* True means lifecheck is started,
+								   * false means lifecheck is not started */;
 } WDNodeInfo;
 
 typedef struct WDGenericData
