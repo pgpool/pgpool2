@@ -61,6 +61,7 @@
 #include "watchdog/wd_lifecheck.h"
 #include "watchdog/watchdog.h"
 #include "pcp/pcp_worker.h"
+#include "utils/pool_ssl.h"
 #include <grp.h>
 
 /*
@@ -3488,6 +3489,23 @@ reload_config(void)
 	MemoryContextSwitchTo(oldContext);
 	if (pool_config->enable_pool_hba)
 		load_hba(hba_file);
+
+#ifdef USE_SSL
+
+	/*
+	 * If SSL is enabled, re-initialize the SSL context so that new
+	 * connections pick up rotated certificates without requiring a restart.
+	 * SSL_ServerSide_init() is safe to call repeatedly: it frees and replaces
+	 * the existing SSL_CTX only on success, leaving the old context intact on
+	 * failure.
+	 */
+	if (pool_config->ssl)
+	{
+		ereport(LOG,
+				(errmsg("reload SSL certificates.")));
+		SSL_ServerSide_init();
+	}
+#endif							/* USE_SSL */
 
 	kill_all_children(SIGHUP);
 }

@@ -705,7 +705,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"ssl_prefer_server_ciphers", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_prefer_server_ciphers", CFGCXT_RELOAD, SSL_CONFIG,
 			"Use server's SSL cipher preferences, rather than the client's",
 			CONFIG_VAR_TYPE_BOOL, false, 0
 		},
@@ -1271,7 +1271,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_cert", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_cert", CFGCXT_RELOAD, SSL_CONFIG,
 			"SSL public certificate file.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1281,7 +1281,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_key", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_key", CFGCXT_RELOAD, SSL_CONFIG,
 			"SSL private key file.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1291,7 +1291,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_ca_cert", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_ca_cert", CFGCXT_RELOAD, SSL_CONFIG,
 			"Single PEM format file containing CA root certificate(s).",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1301,7 +1301,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_ca_cert_dir", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_ca_cert_dir", CFGCXT_RELOAD, SSL_CONFIG,
 			"Directory containing CA root certificate(s).",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1311,7 +1311,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_crl_file", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_crl_file", CFGCXT_RELOAD, SSL_CONFIG,
 			"SSL certificate revocation list file",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1321,7 +1321,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_ciphers", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_ciphers", CFGCXT_RELOAD, SSL_CONFIG,
 			"Allowed SSL ciphers.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1331,7 +1331,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_ecdh_curve", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_ecdh_curve", CFGCXT_RELOAD, SSL_CONFIG,
 			"The curve to use in ECDH key exchange.",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1341,7 +1341,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_dh_params_file", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_dh_params_file", CFGCXT_RELOAD, SSL_CONFIG,
 			"Path to the Diffie-Hellman parameters contained file",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -1351,7 +1351,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_passphrase_command", CFGCXT_INIT, SSL_CONFIG,
+		{"ssl_passphrase_command", CFGCXT_RELOAD, SSL_CONFIG,
 			"Path to the Diffie-Hellman parameters contained file",
 			CONFIG_VAR_TYPE_STRING, false, 0
 		},
@@ -4615,6 +4615,7 @@ static const char *
 BackendFlagsShowFunc(int index)
 {
 	unsigned short flag = g_pool_config.backend_desc->backend_info[index].flag;
+
 	return pool_flag_to_str(flag);
 }
 

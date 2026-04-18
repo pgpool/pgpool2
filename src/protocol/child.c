@@ -1796,6 +1796,18 @@ check_config_reload(void)
 		if (strcmp("", pool_config->pool_passwd))
 			pool_reopen_passwd_file();
 
+#ifdef USE_SSL
+
+		/*
+		 * Re-initialize the frontend SSL context so this child process serves
+		 * new connections with any rotated certificates without a restart.
+		 * In-flight TLS sessions are unaffected; they hold a direct reference
+		 * to the old SSL object.
+		 */
+		if (pool_config->ssl)
+			SSL_ServerSide_init();
+#endif							/* USE_SSL */
+
 		got_sighup = 0;
 	}
 }

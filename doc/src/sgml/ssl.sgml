@@ -55,7 +55,11 @@
       <acronym>SSL</acronym> will be disabled for incoming frontend connections.
      </para>
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -76,7 +80,11 @@
      </para>
 
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -98,7 +106,11 @@
      </para>
 
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -124,7 +136,11 @@
       <xref linkend="guc-ssl-ca-cert">.
      </para>
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -144,7 +160,11 @@
      </para>
 
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -172,7 +192,11 @@
       the value is chosen.
      </para>
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -190,7 +214,11 @@
       The default value is false.
      </para>
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -218,7 +246,11 @@
       are usable in <acronym>TLS</acronym> though.
      </para>
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -239,7 +271,11 @@
       DH parameters file with the command <command>openssl -out dhparams.pem 2048</command>.
      </para>
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>
@@ -269,7 +305,11 @@
       It is up to the user to make sure the chosen mechanism is adequately secure.
      </para>
      <para>
-      This parameter can only be set at server start.
+      This parameter can be changed by reloading
+      the <productname>Pgpool-II</> configurations.  However, if the
+      new parameter is not valid, the old value will be retained until
+      <productname>Pgpool-II</> is restarted, even if the new
+      parameter is displayed in "pgpool show".
      </para>
     </listitem>
    </varlistentry>

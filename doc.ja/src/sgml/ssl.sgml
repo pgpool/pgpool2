@@ -84,10 +84,9 @@
       設定がない場合は、フロントエンドとの接続で<acronym>SSL</acronym>が使用されなくなります。 
      </para>
      <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -117,10 +116,9 @@
      </para>
 
      <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -149,10 +147,9 @@
      </para>
 
      <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -192,10 +189,9 @@
       このオプションが設定されていない場合においても、<xref linkend="guc-ssl-ca-cert">オプションが設定されている場合には検証が行われます。
      </para>
      <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -214,7 +210,9 @@
      </para>
 
      <para>
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -239,10 +237,9 @@
       この値が選ばれた理由については、<productname>PostgreSQL</productname>のマニュアルをご覧ください。
      </para>
      <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -264,10 +261,9 @@
       デフォルト値はoffです。
      </para>
      <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -308,10 +304,9 @@
       ただし、<acronym>TLS</acronym>ではこのすべてが利用できるわけではありません。
      </para>
      <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -338,10 +333,9 @@
       <command>openssl dhparam -out dhparams.pem 2048</command>を使って、独自のDHパラメータファイルを作ることができます。
      </para>
      <para>
-      <!--
-      This parameter can only be set at server start.
-      -->
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
@@ -370,7 +364,9 @@
       選択された仕組みが適切にセキュアかどうかを確認するのはユーザ次第です。
      </para>
      <para>
-      このパラメータはサーバ起動時にのみ設定可能です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+      ただし、新しいパラメータが不正な場合、<productname>Pgpool-II</>を再起動するまで以前の値が維持されますが、
+      "pgpool show"で表示されるのは新しいパラメータです。
      </para>
     </listitem>
    </varlistentry>
