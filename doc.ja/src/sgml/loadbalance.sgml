@@ -1530,6 +1530,13 @@ app_name_redirect_preference_list &gt; database_redirect_preference_list &gt; us
      このパラメータが<varname>dml_adaptive</varname>に設定されると、<productname>Pgpool-II</productname>は明示的なトランザクション内のWRITE文に含まれる個々のテーブルを追跡し、テーブルが同じトランザクション内で事前に変更されている場合には後続のREADクエリを負荷分散しません。
      テーブルが依存する関数、トリガ、ビューは<xref linkend="guc-dml-adaptive-object-relationship-list">で設定できます。
      </para>
+
+     <para>
+      このパラメータが<varname>dml_adaptive_global</varname>に設定されると、<productname>Pgpool-II</productname>は<varname>dml_adaptive</varname>のように振る舞いますが(トランザクション単位の書き込み追跡)、更に共有メモリを使って、最近書き込みがあったテーブルの追跡をデータベースクラスタ中の全セッションについて行います。
+      テーブルがあるセッションで書き込まれると、すべてのセッションでのそのテーブルからの後続の読み込は、TTL(計測されたレプリケーションの遅延に基づきます)が期限切れになるまでプライマリに転送されます。
+      これにより、書き込み後、古いデータの読み取りが、セッションが異なる場合でも防止されます。
+      共有メモリを使った追跡の挙動を制御する配下のパラメータについては<xref linkend="runtime-config-table-mutation-map">をご覧ください。
+     </para>
     </listitem>
    </varlistentry>
 
@@ -1655,5 +1662,272 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
     </listitem>
    </varlistentry>
   </variablelist>
+ </sect2>
+
+ <sect2 id="runtime-config-table-mutation-map">
+  <title>テーブル変更追跡設定</title>
+  <para>
+   これらのパラメータは、テーブル変更追跡機能を設定します。
+   テーブル変更追跡機能は、<xref linkend="guc-disable-load-balance-on-write">を<literal>dml_adaptive_global</literal>にすることで有効になります。
+   この機能は直近のテーブルへの書き込みを追跡し、レプリケーションの遅延がある状況下で、古いデータをレプリカノードから読んでしまうことを防止します。
+  </para>
+  <para>
+   テーブルが変更されると(INSERT/UPDATE/DELETE)、そのテーブルにはTTL期間(<literal>replication_delay * track_table_mutation_ttl_factor</literal>)「古い」印が付きます。
+   古いテーブルへのすべてのSELECTクエリは、レプリカではなくプライマリノードに転送されます。
+   これにより、read-after-write一貫性が保証されます。
+  </para>
+  <para>
+   この機能には、時刻ベースのレプリケーション遅延監視が必要です。
+   これは、<xref linkend="guc-replication-delay-source-cmd">(外部コマンドモード)、あるいは<xref linkend="guc-delay-threshold-by-time">(PostgreSQL 10以降の<literal>pg_stat_replication.replay_lag</literal>を使用します)を設定することで利用可能になります。
+   どちらも設定されていなければ、TTLはデフォルトである最小値(100ミリ秒)のままとなり、実際のレプリケーション遅延に基づいて更新されることがありません。
+   これにより、最適ではないルーティングが採用されるかもしれません。
+  </para>
+
+  <warning>
+   <para>
+    <literal>dml_adaptive_global</literal>を有効にすると、共有メモリがより多く使用されます。
+    デフォルトの設定では、この機能によっておおよそ80 KBの共有メモリが使用されます。
+    <literal>track_table_mutation_table_size * 40 bytes</literal>
+    (default: 2048 * 40 = ~80 KB).
+   </para>
+  </warning>
+
+  <variablelist>
+
+   <varlistentry id="guc-track-table-mutation-ttl-factor" xreflabel="track_table_mutation_ttl_factor">
+    <term><varname>track_table_mutation_ttl_factor</varname> (<type>floating point</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_ttl_factor</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      TTLを計算する際の乗数です。
+      TTLは以下となります。
+      <literal>TTL = replication_delay * track_table_mutation_ttl_factor</literal>。
+      高い値を設定すると安全マージンが増えますが、レプリケーションの使用が制限されます。
+     </para>
+     <para>
+      有効な範囲は1.0-100.0です。
+      デフォルトは<literal>5.0</literal>です。
+      このパラメータは<productname>Pgpool-II</>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-track-table-mutation-max-staleness" xreflabel="track_table_mutation_max_staleness">
+    <term><varname>track_table_mutation_max_staleness</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_max_staleness</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      単一のテーブルエントリが継続的にプライマリにクエリを送信されるミリ秒単位の最長の期間です。
+      この期間は、最初にテーブルが古いとマークされたときから計測されます。
+      この制限値に到達すると、そのエントリは直近で書き込みがあったかどうかに関わらず期限切れとなります。
+      期限切れになった後に再度テーブルへの書き込みがあると、新しい追跡エントリが作られます。
+     </para>
+     <para>
+      このパラメータは、セッションをまたがるテーブル更新の追跡のインパクトを制限します。
+      テーブルが頻繁にループの中で書き込まれるとしても、他のセッションの負荷分散に対する影響は、この期間に限定されます。
+      もともと書き込みが頻繁なテーブルでは、強いられた期限切れと次のテーブルへの再マーク付の間の期限はごくわずかです(典型的にはミリ秒)。
+     </para>
+     <para>
+      0にするとこの制限が無効になります(実システムではおすすめしない設定です)。
+      有効な設定範囲は0-3600000ミリ秒です。
+      デフォルトは<literal>60000</literal>(60秒)です。
+      このパラメータは<productname>Pgpool-II</productname>の設定を再読み込みすることで変更可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-track-table-mutation-cold-start-duration" xreflabel="track_table_mutation_cold_start_duration">
+    <term><varname>track_table_mutation_cold_start_duration</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_cold_start_duration</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      子プロセスが起動した後に、すべてのクエリをプライマリに転送する期間をミリ秒単位で設定します。
+      テーブル更新追跡が直近の書き込み履歴によって設定されるまでの間に新しい接続が古いデータを読むのを防止します。
+     </para>
+     <para>
+      watchdogが有効な場合、ローカルノードがリーダーになると、<productname>Pgpool-II</productname>は、リーダーの変更後古いデータの読み込みを避けるために、グローバルなコールドスタートを開始します。
+     </para>
+     <para>
+      有効な値は64-65536です。
+      デフォルトは<literal>1024</literal>です。
+      このパラメータはサーバの起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-track-table-mutation-table-buckets" xreflabel="track_table_mutation_table_buckets">
+    <term><varname>track_table_mutation_table_buckets</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_table_buckets</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      テーブル更新追跡ハッシュテーブルのためのハッシュバケットの数です。
+      大きな値を設定するとハッシュの衝突を減らすことができるので、ルックアップ性能を改善できます。
+     </para>
+     <para>
+      有効な範囲は64-65536です。デフォルトは<literal>1024</literal>です。
+      このパラメータはサーバの起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-track-table-mutation-table-size" xreflabel="track_table_mutation_table_size">
+    <term><varname>track_table_mutation_table_size</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_table_size</varname>設定パラメータ</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      テーブル変更追跡機能で同時に追跡できるテーブル数の最大値です。
+      いっぱいになると、単純な立ち退き戦略により、最も古いエントリが立ち退きます。
+     </para>
+     <para>
+      有効な範囲は128-131072です。
+      デフォルトは<literal>2048</literal>です。
+      エントリごとに約40バイトを消費します。
+      このパラメータはサーバの起動時にのみ設定可能です。
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+  <sect3 id="runtime-config-track-table-mutation-example">
+   <title>テーブル変更追跡の設定例</title>
+   <para>
+    レプリケーション遅延の監視を使ってテーブル変更追跡を有効にします。
+   <programlisting>
+# Enable dml_adaptive_global mode (includes track table mutation)
+disable_load_balance_on_write = 'dml_adaptive_global'
+track_table_mutation_ttl_factor = 5.0
+track_table_mutation_max_staleness = 60000
+track_table_mutation_cold_start_duration = 2000
+
+# Option A: Use external command for replication delay
+replication_delay_source_cmd = '/path/to/get-replication-delay.sh'
+replication_delay_source_timeout = 10
+
+# Option B: Use pg_stat_replication replay_lag (PG 10+)
+# delay_threshold_by_time = 1000
+
+# Adjust table map size based on workload
+track_table_mutation_table_size = 4096
+   </programlisting>
+   </para>
+   <para>
+    上記の設定で必要とする共有メモリはテーブルマップのために約160 KBです。
+    デフォルトの設定(テーブル数2048)では約80 KBとなります。
+   </para>
+  </sect3>
+
+  <sect3 id="runtime-config-track-table-mutation-limitations">
+   <title>制限事項</title>
+   <para>
+    テーブル変更追跡機能には以下の制限事項があります。
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>PREPARE</literal>文は追跡されません。
+      prepare文の実行にデータ変更が含まれていても、テーブル変更は記録されません。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      データが古いことのチェックでは、SELECTクエリあたり、最大128のテーブルが追跡されます。
+      この制限は、クエリキャッシュサブシステムと共通です(<literal>POOL_MAX_SELECT_OIDS</literal>)。
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    使用するアプリケーションがprepared文を使っており、read-after-write一貫性を要求する場合は、明示的なトランザクションによるルーティングか、<literal>/*NO LOAD BALANCE*/</literal>コメント指令を影響のあるクエリに使用することを考慮してください。
+   </para>
+   <para>
+    次の文<emphasis>が</emphasis>追跡され、テーブルが古いとマークされます。
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>INSERT</literal>, <literal>UPDATE</literal>, <literal>DELETE</literal>文(<literal>RETURNING</literal>句を伴う文も含む)。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>TRUNCATE</literal>文(複数のテーブルも含む)。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>MERGE</literal>文(PostgreSQL 15以降)。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      データ変更を伴う<literal>WITH</literal>句 (<literal>INSERT</literal>, <literal>UPDATE</literal>, <literal>DELETE</literal>を伴う共通テーブル式)。
+      例：<literal>WITH deleted AS (DELETE FROM t1 RETURNING *) SELECT * FROM deleted</literal>は、正しく<literal>t1</literal>が古いとマークします。
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    <emphasis>トランザクションのロールバック時の振る舞い:</emphasis>
+    明示的なトランザクション内では、トランザクションがコミットされたときにのみテーブルは古いとマークされます。
+    トランザクションがロールバックされると、テーブルはマークされません。
+    レプリカにデータ変更が起きないからです。
+    これにより、ロールバックされたトランザクションが不必要に負荷分散を阻止することを防ぎます。
+    自動コミットの文(明示的なトランザクションの外側)は、テーブルはコマンドの実行完了時に直ちにマークされます。
+   </para>
+   <para>
+    <emphasis>セッションをまたがる影響と安全性の限界:</emphasis>
+    <literal>dml_adaptive</literal>(書き込みを発行したセッションにのみ影響を与えます)とは異なり、<literal>dml_adaptive_global</literal>は同じデータベースの同じテーブルを読んでいるすべてのセッションに影響を与えます。
+    次に述べる安全機構がセッションをまたがる影響を制限します。
+   </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      <emphasis>古さの上限:</emphasis>
+      <xref linkend="guc-track-table-mutation-max-staleness">パラメータ(デフォルト60秒)は単一のテーブルエントリが継続的にプライマリへのルーティングを強いられるかの制限を設けます。
+      継続した書き込み下においても、そのエントリはこの期間がすぎると期限切れになり、そのエントリは後続のコミットされた書き込みのみによって更新されます。 
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <emphasis>データベース隔離:</emphasis>
+      テーブルの古さ追跡はデータベースOIDの範囲内です。
+      あるデータベースへの書き込みは他のデータベースに接続したセッションの負荷分散の判定に決して影響を与えません。
+      テナントが別々のデータベースを使用するマルチテナントの設定では、あるテナントの書き込みは他のテナントのクエリのルーティングに影響を与えることができません。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <emphasis>コミットされた書き込みのみ:</emphasis>
+      コミットされたトランザクションだけがテーブルに古いとマークを付けます。
+      ロールバックされたトランザクションは共有の追跡状態に影響を与えません。
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <emphasis>テーブルマップサイズの制約:</emphasis>
+      共有メモリのテーブルマップには固定の最大サイズがあります(<xref linkend="guc-track-table-mutation-table-size">)。
+      最大でもこの数のテーブルが同時に古いマークをつけます。
+      これにより、自然にこの機能の上限が設けられます。
+     </para>
+    </listitem>
+   </itemizedlist>
+
+  </sect3>
+
  </sect2>
 </sect1>

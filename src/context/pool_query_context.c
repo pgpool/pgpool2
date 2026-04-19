@@ -29,6 +29,7 @@
 #include "utils/statistics.h"
 #include "utils/pool_select_walker.h"
 #include "utils/pool_stream.h"
+#include "utils/pool_track_table_mutation.h"
 #include "context/pool_session_context.h"
 #include "context/pool_query_context.h"
 #include "parser/nodes.h"
@@ -71,6 +72,8 @@ static bool add_object_into_temp_write_list(Node *node, void *context);
 static void dml_adaptive(Node *node, char *query);
 static char *get_associated_object_from_dml_adaptive_relations
 			(char *left_token, DBObjectTypes object_type);
+static void where_to_send_dml_adaptive_global(POOL_QUERY_CONTEXT *query_context,
+											  char *query, Node *node, POOL_DEST dest);
 
 /*
  * Create and initialize per query session context
@@ -88,13 +91,13 @@ pool_init_query_context(void)
 	 * Parent the query context under the session memory context rather than
 	 * the per-iteration QueryContext.  A query context is referenced from the
 	 * session scoped sent message list and pending message list.  These lists
-	 * outlive the QueryContext, which do_child() resets between the iterations
-	 * of its query processing loop (for instance when pool_process_query()
-	 * returns after a backend node was shut down).  If the query context lived
-	 * in QueryContext, such a reset would free it while the message lists
-	 * still reference it, resulting in a use-after-free.  When there is no
-	 * session context (e.g. internal queries issued before a session exists),
-	 * fall back to QueryContext.
+	 * outlive the QueryContext, which do_child() resets between the
+	 * iterations of its query processing loop (for instance when
+	 * pool_process_query() returns after a backend node was shut down).  If
+	 * the query context lived in QueryContext, such a reset would free it
+	 * while the message lists still reference it, resulting in a
+	 * use-after-free.  When there is no session context (e.g. internal
+	 * queries issued before a session exists), fall back to QueryContext.
 	 */
 	session_context = pool_get_session_context(true);
 	parent = session_context ? session_context->memory_context : QueryContext;
@@ -1848,20 +1851,25 @@ is_in_list(char *name, List *list)
 static bool
 is_select_object_in_temp_write_list(Node *node, void *context)
 {
-	if (node == NULL || pool_config->disable_load_balance_on_write != DLBOW_DML_ADAPTIVE)
+	if (node == NULL ||
+		!DLBOW_IS_DML_ADAPTIVE(pool_config->disable_load_balance_on_write))
 		return false;
 
 	if (IsA(node, RangeVar))
 	{
 		RangeVar   *rgv = (RangeVar *) node;
-		POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
+		POOL_SESSION_CONTEXT *session_context;
 
-		if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && session_context->is_in_transaction)
+		session_context = pool_get_session_context(false);
+
+		if (session_context->is_in_transaction)
 		{
 			ereport(DEBUG1,
-					(errmsg("is_select_object_in_temp_write_list: \"%s\", found relation \"%s\"", (char *) context, rgv->relname)));
+					(errmsg("is_select_object_in_temp_write_list: \"%s\", found relation \"%s\"",
+							(char *) context, rgv->relname)));
 
-			return is_in_list(rgv->relname, session_context->transaction_temp_write_list);
+			return is_in_list(rgv->relname,
+							  session_context->transaction_temp_write_list);
 		}
 	}
 
@@ -1900,7 +1908,14 @@ static char *get_associated_object_from_dml_adaptive_relations
 void
 check_object_relationship_list(char *name, bool is_func_name)
 {
-	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && pool_config->parsed_dml_adaptive_object_relationship_list)
+	bool		is_adaptive;
+
+	is_adaptive =
+		(pool_config->disable_load_balance_on_write ==
+		 DLBOW_DML_ADAPTIVE);
+
+	if (is_adaptive &&
+		pool_config->parsed_dml_adaptive_object_relationship_list)
 	{
 		POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
 
@@ -1967,7 +1982,7 @@ add_object_into_temp_write_list(Node *node, void *context)
 static void
 dml_adaptive(Node *node, char *query)
 {
-	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE)
+	if (DLBOW_IS_DML_ADAPTIVE(pool_config->disable_load_balance_on_write))
 	{
 		/* Set/Unset transaction status flags */
 		if (IsA(node, TransactionStmt))
@@ -1981,17 +1996,45 @@ dml_adaptive(Node *node, char *query)
 
 				if (session_context->transaction_temp_write_list != NIL)
 					list_free_deep(session_context->transaction_temp_write_list);
-
 				session_context->transaction_temp_write_list = NIL;
+
+				if (session_context->transaction_temp_write_oid_list != NIL)
+					list_free(session_context->transaction_temp_write_oid_list);
+				session_context->transaction_temp_write_oid_list = NIL;
+				session_context->transaction_temp_write_dboid = 0;
 			}
 			else if (is_commit_or_rollback_query(node))
 			{
 				session_context->is_in_transaction = false;
 
+				/* The name list is only used during the transaction. */
 				if (session_context->transaction_temp_write_list != NIL)
 					list_free_deep(session_context->transaction_temp_write_list);
-
 				session_context->transaction_temp_write_list = NIL;
+
+				/*
+				 * For dml_adaptive_global the resolved write OIDs must be
+				 * flushed to shared memory only after the backend confirms
+				 * the COMMIT succeeded.  This code runs while routing the
+				 * COMMIT, before it is sent to the backend, so the COMMIT may
+				 * still fail (e.g. a deferred constraint violation), rolling
+				 * back the writes -- which must then not be recorded.  We
+				 * therefore keep transaction_temp_write_oid_list intact on
+				 * COMMIT and let handle_query_context() flush it on success
+				 * (a failed COMMIT leaves it to be discarded by the next
+				 * BEGIN).
+				 *
+				 * In every other case (plain dml_adaptive, or ROLLBACK)
+				 * discard it now.
+				 */
+				if (!(pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE_GLOBAL &&
+					  is_commit_query(node)))
+				{
+					if (session_context->transaction_temp_write_oid_list != NIL)
+						list_free(session_context->transaction_temp_write_oid_list);
+					session_context->transaction_temp_write_oid_list = NIL;
+					session_context->transaction_temp_write_dboid = 0;
+				}
 			}
 
 			MemoryContextSwitchTo(old_context);
@@ -2003,8 +2046,160 @@ dml_adaptive(Node *node, char *query)
 		 * temp write list.
 		 */
 		if (!is_select_query(node, query))
+		{
 			add_object_into_temp_write_list(node, query);
 
+			/*
+			 * For dml_adaptive_global, resolve the OIDs of the tables
+			 * actually written by this statement now, while we are routing it
+			 * and the backend connection is idle so do_query (used by the
+			 * relcache lookups) is safe.  The OIDs are marked in shared
+			 * memory only after the backend confirms success, in
+			 * handle_query_context(); resolving them there would issue
+			 * do_query into the in-flight statement/COMMIT response and hang
+			 * the session.
+			 */
+			if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE_GLOBAL)
+			{
+				POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
+				MemoryContext old_context = MemoryContextSwitchTo(session_context->memory_context);
+				int		   *oids;
+				int			num_oids;
+				int			i;
+
+				/*
+				 * Outside an explicit transaction each statement stands
+				 * alone: discard any OIDs left over from a previous (e.g.
+				 * failed) autocommit statement so they are not marked by this
+				 * one. Inside a transaction we accumulate until COMMIT.
+				 */
+				if (!session_context->is_in_transaction)
+				{
+					if (session_context->transaction_temp_write_oid_list != NIL)
+						list_free(session_context->transaction_temp_write_oid_list);
+					session_context->transaction_temp_write_oid_list = NIL;
+					session_context->transaction_temp_write_dboid = 0;
+				}
+
+				num_oids = pool_extract_table_oids(node, &oids);
+				for (i = 0; i < num_oids; i++)
+				{
+					if (oids[i] > 0)
+						session_context->transaction_temp_write_oid_list =
+							list_append_unique_int(session_context->transaction_temp_write_oid_list, oids[i]);
+				}
+
+				if (session_context->transaction_temp_write_oid_list != NIL &&
+					session_context->transaction_temp_write_dboid <= 0)
+					session_context->transaction_temp_write_dboid =
+						pool_track_table_mutation_get_database_oid();
+
+				MemoryContextSwitchTo(old_context);
+			}
+		}
+
+	}
+}
+
+/*
+ * Decide the backend node for a load-balanceable SELECT when
+ * disable_load_balance_on_write = dml_adaptive_global.  If the child is in its
+ * cold start window, the database OID cannot be resolved, or any table used by
+ * the SELECT was recently written (tracked in shared memory), the query is
+ * routed to the primary to avoid a stale read.  Otherwise the usual load
+ * balancing logic (statement level load balancing and replication delay
+ * handling) is applied.  Factored out of where_to_send_main_replica() to keep
+ * that function readable.
+ */
+static void
+where_to_send_dml_adaptive_global(POOL_QUERY_CONTEXT *query_context,
+								  char *query, Node *node, POOL_DEST dest)
+{
+	POOL_SESSION_CONTEXT *session_context = pool_get_session_context(false);
+	POOL_QUERY_CONTEXT *qctx = session_context->query_context;
+	bool		force_primary = false;
+	int			lb_node;
+
+	if (pool_track_table_mutation_in_cold_start())
+	{
+		ereport(DEBUG1,
+				(errmsg("could not load balance because of track table mutation cold start"),
+				 errdetail("destination = PRIMARY for query= \"%s\"", query)));
+		force_primary = true;
+	}
+	else
+	{
+		SelectContext ctx;
+		int			dboid;
+		int			num_oids;
+		int			i;
+
+		memset(&ctx, 0, sizeof(ctx));
+		num_oids = pool_extract_table_oids_from_select_stmt(node, &ctx);
+		if (num_oids > 0)
+		{
+			dboid = pool_track_table_mutation_get_database_oid();
+
+			if (dboid <= 0)
+			{
+				ereport(DEBUG1,
+						(errmsg("could not load balance because database oid was unavailable"),
+						 errdetail("destination = PRIMARY for query= \"%s\"", query)));
+				force_primary = true;
+			}
+			else
+			{
+				for (i = 0; i < num_oids; i++)
+				{
+					if (pool_track_table_mutation_table_is_stale(ctx.table_oids[i], dboid))
+					{
+						ereport(DEBUG1,
+								(errmsg("could not load balance because table \"%s\" was recently written", ctx.table_names[i]),
+								 errdetail("destination = PRIMARY for query= \"%s\"", query)));
+						force_primary = true;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	if (force_primary)
+	{
+		pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+		return;
+	}
+
+	if (pool_config->statement_level_load_balance)
+		session_context->load_balance_node_id = select_load_balancing_node();
+
+	/*
+	 * If replication delay is too much, and prefer_lower_delay_standby is
+	 * true then elect the lowest-delayed node, otherwise send to primary.
+	 */
+	lb_node = session_context->load_balance_node_id;
+	if (STREAM && check_replication_delay(lb_node))
+	{
+		ereport(DEBUG1,
+				(errmsg("could not load balance because of too much replication delay"),
+				 errdetail("destination = %d for query= \"%s\"", dest, query)));
+
+		if (pool_config->prefer_lower_delay_standby)
+		{
+			lb_node = select_load_balancing_node();
+			session_context->load_balance_node_id = lb_node;
+			qctx->load_balance_node_id = lb_node;
+			pool_set_node_to_be_sent(query_context, lb_node);
+		}
+		else
+		{
+			pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+		}
+	}
+	else
+	{
+		qctx->load_balance_node_id = session_context->load_balance_node_id;
+		pool_set_node_to_be_sent(query_context, qctx->load_balance_node_id);
 	}
 }
 
@@ -2028,7 +2223,7 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node 
 	session_context = pool_get_session_context(false);
 	backend = session_context->backend;
 
-	/* 
+	/*
 	 * Collect/discard information for disable_load_balance_on_write =
 	 * dml_adaptive case.
 	 */
@@ -2042,6 +2237,20 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node 
 	if (dest == POOL_PRIMARY)
 	{
 		pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
+
+		/*
+		 * Resolve table and database OIDs now to populate relcache. This
+		 * avoids potential hangs in CommandComplete where we shouldn't be
+		 * running new queries against the backend.
+		 */
+		if (pool_config->disable_load_balance_on_write ==
+			DLBOW_DML_ADAPTIVE_GLOBAL)
+		{
+			int		   *oids;
+
+			pool_extract_table_oids(node, &oids);
+			pool_track_table_mutation_get_database_oid();
+		}
 	}
 	/* Should be sent to both primary and standby? */
 	else if (dest == POOL_BOTH)
@@ -2169,6 +2378,17 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node 
 				{
 					pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 				}
+
+				/*
+				 * Check track table mutation for recently written tables.  If
+				 * in cold start or any table was recently written, route to
+				 * primary to avoid stale reads.
+				 */
+				else if (pool_config->disable_load_balance_on_write ==
+						 DLBOW_DML_ADAPTIVE_GLOBAL)
+				{
+					where_to_send_dml_adaptive_global(query_context, query, node, dest);
+				}
 				else
 				{
 					if (pool_config->statement_level_load_balance)
@@ -2189,7 +2409,8 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node 
 								 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
 						/*
-						 * If prefer_lower_delay_standby is on, choose lower delay standby.
+						 * If prefer_lower_delay_standby is on, choose lower
+						 * delay standby.
 						 */
 						if (pool_config->prefer_lower_delay_standby)
 						{
@@ -2199,7 +2420,8 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node 
 							session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
 							pool_set_node_to_be_sent(query_context, session_context->query_context->load_balance_node_id);
 						}
-						else	/* delay is too much. prefer to send to primary */
+						else	/* delay is too much. prefer to send to
+								 * primary */
 						{
 							pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 						}
@@ -2209,7 +2431,7 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node 
 					 * Not streaming replication mode, or delay_threshold is 0
 					 * or replication delay is small enough.
 					 */
-					else	
+					else
 					{
 						session_context->query_context->load_balance_node_id = session_context->load_balance_node_id;
 						pool_set_node_to_be_sent(query_context,

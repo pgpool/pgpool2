@@ -35,6 +35,7 @@ pgpool_SOURCES = main/main.c \
 	rewrite/pool_timestamp.c \
 	rewrite/pool_lobj.c \
 	utils/pool_select_walker.c \
+	utils/pool_track_table_mutation.c \
 	utils/strlcpy.c \
 	utils/psprintf.c \
 	utils/pool_params.c \

@@ -57,6 +57,7 @@
 #include "auth/pool_passwd.h"
 #include "auth/pool_hba.h"
 #include "query_cache/pool_memqcache.h"
+#include "utils/pool_track_table_mutation.h"
 #include "watchdog/wd_internal_commands.h"
 #include "watchdog/wd_lifecheck.h"
 #include "watchdog/watchdog.h"
@@ -1570,11 +1571,14 @@ sigusr1_interrupt_processor(void)
 
 	if (user1SignalSlot->signalFlags[SIG_WATCHDOG_STATE_CHANGED])
 	{
+		WD_STATES	wd_state;
+
 		ereport(LOG,
 				(errmsg("Pgpool-II parent process received watchdog state change signal from watchdog")));
 
 		user1SignalSlot->signalFlags[SIG_WATCHDOG_STATE_CHANGED] = false;
-		if (wd_internal_get_watchdog_local_node_state() == WD_STANDBY)
+		wd_state = wd_internal_get_watchdog_local_node_state();
+		if (wd_state == WD_STANDBY)
 		{
 			ereport(LOG,
 					(errmsg("we have joined the watchdog cluster as STANDBY node"),
@@ -1587,6 +1591,12 @@ sigusr1_interrupt_processor(void)
 			 * would lead to forever stuck in the the locked state
 			 */
 			pool_release_follow_primary_lock(true);
+		}
+		else if (wd_state == WD_COORDINATOR &&
+				 pool_config->disable_load_balance_on_write ==
+				 DLBOW_DML_ADAPTIVE_GLOBAL)
+		{
+			pool_track_table_mutation_trigger_global_cold_start();
 		}
 	}
 	if (user1SignalSlot->signalFlags[SIG_FAILOVER_INTERRUPT])
@@ -3153,6 +3163,16 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 		elog(DEBUG1, "watchdog: %zu bytes requested for shared memory", MAXALIGN(wd_ipc_get_shared_mem_size()));
 	}
 
+	if (pool_config->disable_load_balance_on_write ==
+		DLBOW_DML_ADAPTIVE_GLOBAL)
+	{
+		size += MAXALIGN(pool_track_table_mutation_shmem_size());
+		elog(DEBUG1,
+			 "track_table_mutation: %zu bytes requested"
+			 " for shared memory",
+			 MAXALIGN(pool_track_table_mutation_shmem_size()));
+	}
+
 	initialize_shared_memory_main_segment(size);
 
 	/* Move the backend descriptors to shared memory */
@@ -3271,6 +3291,13 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 
 	/* initialize pcp worker child pids */
 	memset(Req_info->pcp_worker_pids, 0, sizeof(Req_info->pcp_worker_pids));
+
+	/* Initialize track table mutation for recently written tables */
+	if (pool_config->disable_load_balance_on_write ==
+		DLBOW_DML_ADAPTIVE_GLOBAL)
+	{
+		pool_track_table_mutation_init();
+	}
 }
 
 /*

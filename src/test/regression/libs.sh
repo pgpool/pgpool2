@@ -42,6 +42,8 @@ function wait_for_failover_done {
 function clean_all {
 	pgrep pgpool | xargs kill -9 > /dev/null 2>&1
 	pgrep postgres | xargs kill -9 > /dev/null 2>&1
+	# Clean up leaked SysV IPC resources left behind by kill -9
+	ipcrm --all 2>/dev/null || true
 	rm -f $PGSOCKET_DIR/.s.PGSQL.*
 	netstat -t -p 2>/dev/null|grep pgpool
 }

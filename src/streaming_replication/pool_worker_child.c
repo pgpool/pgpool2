@@ -58,6 +58,7 @@
 #include "utils/pool_ip.h"
 #include "utils/ps_status.h"
 #include "utils/pool_stream.h"
+#include "utils/pool_track_table_mutation.h"
 
 #include "context/pool_process_context.h"
 #include "context/pool_session_context.h"
@@ -419,6 +420,7 @@ check_replication_time_lag(void)
 	BackendInfo *bkinfo;
 	uint64		lag;
 	uint64		delay_threshold_by_time;
+	uint64		max_delay_us = 0;
 	ErrorContextCallback callback;
 	int			active_standby_node;
 	bool		replication_delay_by_time;
@@ -643,6 +645,10 @@ check_replication_time_lag(void)
 													 * seconds to micro
 													 * seconds */
 
+				/* Track max delay for mutation TTL */
+				if (lag > max_delay_us)
+					max_delay_us = lag;
+
 				/* Log delay if necessary */
 				if ((pool_config->log_standby_delay == LSD_ALWAYS && lag > 0) ||
 					(pool_config->log_standby_delay == LSD_OVER_THRESHOLD &&
@@ -667,6 +673,13 @@ check_replication_time_lag(void)
 			}
 		}
 	}
+
+	/*
+	 * Update track table mutation TTL from the max observed time-based
+	 * replication delay.
+	 */
+	if (replication_delay_by_time && max_delay_us > 0)
+		pool_track_table_mutation_update_ttl(max_delay_us);
 
 	error_context_stack = callback.previous;
 }
@@ -695,6 +708,7 @@ check_replication_time_lag_with_cmd(void)
 	double		delay_ms;
 	uint64		delay;
 	uint64		delay_threshold_by_time;
+	uint64		max_delay_us = 0;	/* Track max delay for mutation map */
 	int			token_count = 0;
 	int			primary_node_id;
 	int			save_errno;
@@ -1003,6 +1017,10 @@ check_replication_time_lag_with_cmd(void)
 			bkinfo->standby_delay = delay;
 			bkinfo->standby_delay_by_time = true;
 
+			/* Track maximum delay for table mutation map TTL calculation */
+			if (delay > max_delay_us)
+				max_delay_us = delay;
+
 			/*
 			 * Log delay if necessary. threshold is in milliseconds, convert
 			 * to microseconds.
@@ -1020,6 +1038,12 @@ check_replication_time_lag_with_cmd(void)
 
 			token = strtok_r(NULL, " \t\n", &saveptr);
 		}
+
+		/* Update table mutation TTL based on max observed delay */
+		if (pool_config->disable_load_balance_on_write ==
+			DLBOW_DML_ADAPTIVE_GLOBAL &&
+			max_delay_us > 0)
+			pool_track_table_mutation_update_ttl(max_delay_us);
 
 	}
 	PG_CATCH();

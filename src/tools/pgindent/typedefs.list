@@ -519,6 +519,10 @@ TableLikeClause
 TableSampleClause
 TargetEntry
 TokenizedLine
+TrackTableMutationEntry
+TrackTableMutationHashTable
+TrackTableMutationShmem
+TrackTableMutationState
 TransactionId
 TransactionStmt
 TransactionStmtKind

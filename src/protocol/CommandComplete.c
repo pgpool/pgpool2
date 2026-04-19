@@ -38,6 +38,8 @@
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "utils/pool_stream.h"
+#include "utils/pool_track_table_mutation.h"
+#include "query_cache/pool_memqcache.h"
 
 static int	extract_ntuples(char *message);
 static POOL_STATUS handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, char *packet, int packetlen, bool command_complete);
@@ -303,6 +305,53 @@ handle_query_context(POOL_CONNECTION_POOL *backend)
 	session_context = pool_get_session_context(false);
 
 	node = session_context->query_context->parse_tree;
+
+	/*
+	 * Track table writes for the dml_adaptive_global feature.  Only
+	 * meaningful in streaming replication mode (MAIN_REPLICA).
+	 *
+	 * The OIDs of the tables written (and their database OID) were resolved
+	 * by dml_adaptive() at DML routing time, while the backend connection was
+	 * idle, and stashed in transaction_temp_write_oid_list.  We mark them in
+	 * shared memory only now, once the backend has confirmed the statement or
+	 * transaction succeeded -- a failed autocommit statement, or a failed /
+	 * rolled-back COMMIT, produces an ErrorResponse and never reaches
+	 * CommandComplete, and a ROLLBACK clears the list while routing, so in
+	 * all those cases the writes are correctly not recorded.
+	 *
+	 * We reach this point with is_in_transaction == false both for an
+	 * autocommit statement and for a COMMIT (dml_adaptive() clears the flag
+	 * while routing the COMMIT, and keeps the OID list intact for the COMMIT
+	 * only).  An in-transaction DML still has the flag set here and is
+	 * correctly skipped, its writes deferred to the COMMIT.
+	 *
+	 * Crucially this path does NO backend I/O: resolving OIDs here via
+	 * do_query would inject a query while the statement/COMMIT response is
+	 * still being read from the backend, desyncing the protocol and hanging
+	 * the session.  That is why resolution happens at routing time instead.
+	 */
+	if (pool_config->disable_load_balance_on_write ==
+		DLBOW_DML_ADAPTIVE_GLOBAL &&
+		MAIN_REPLICA &&
+		node != NULL &&
+		!session_context->is_in_transaction &&
+		session_context->transaction_temp_write_oid_list != NIL)
+	{
+		int			dboid = session_context->transaction_temp_write_dboid;
+
+		if (dboid > 0)
+		{
+			foreach_oid(toid, session_context->transaction_temp_write_oid_list)
+			{
+				if (toid > 0)
+					pool_track_table_mutation_mark_table_written(toid, dboid);
+			}
+		}
+
+		list_free(session_context->transaction_temp_write_oid_list);
+		session_context->transaction_temp_write_oid_list = NIL;
+		session_context->transaction_temp_write_dboid = 0;
+	}
 
 	if (IsA(node, PrepareStmt))
 	{

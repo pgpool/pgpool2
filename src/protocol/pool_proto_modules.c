@@ -1478,7 +1478,9 @@ Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_where_to_send(query_context, query_context->original_query,
 						   query_context->parse_tree);
 
-		if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && strlen(name) != 0)
+		if (DLBOW_IS_DML_ADAPTIVE(
+								  pool_config->disable_load_balance_on_write)
+			&& strlen(name) != 0)
 			pool_setall_node_to_be_sent(query_context);
 
 		if (REPLICATION)
@@ -1822,7 +1824,7 @@ Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 			return POOL_END;
 	}
 
-	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE &&
+	if (DLBOW_IS_DML_ADAPTIVE(pool_config->disable_load_balance_on_write) &&
 		TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T')
 	{
 		pool_where_to_send(query_context, query_context->original_query,

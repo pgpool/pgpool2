@@ -1110,6 +1110,26 @@ app_name_redirect_preference_list &gt; database_redirect_preference_list &gt; us
 		Dependent functions, triggers, and views on the tables can be configured
 		using <xref linkend="guc-dml-adaptive-object-relationship-list">
      </para>
+
+     <para>
+      If this parameter is set to <varname>dml_adaptive_global</varname>,
+      <productname>Pgpool-II</> behaves like <varname>dml_adaptive</varname>
+      (per-transaction write tracking) and additionally uses shared memory to
+      track recently written tables across all sessions cluster-wide. When a
+      table is written in any session, subsequent reads of that table from any
+      session are routed to primary until a TTL (based on measured replication
+      delay) expires.  This prevents stale reads after writes even across
+      different connections.
+      See <xref linkend="runtime-config-table-mutation-map"> for the
+      sub-parameters that control the shared-memory tracking behavior.
+      </para>
+      <para>
+       Note, however, you cannot
+       use <xref linkend="guc-dml-adaptive-object-relationship-list"> to track
+       dependency among table and other objects
+       if <xref linkend="guc-disable-load-balance-on-write"> is set
+       to <varname>dml_adaptive_global</varname>.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -1195,4 +1215,311 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
 
   </variablelist>
  </sect2>
+
+ <sect2 id="runtime-config-table-mutation-map">
+  <title>Table Mutation Tracking Configuration</title>
+
+  <para>
+   These parameters configure the track table mutation feature, which is
+   activated by setting
+   <xref linkend="guc-disable-load-balance-on-write">
+   to <literal>dml_adaptive_global</literal>.  The feature tracks recently
+   written tables to prevent stale reads from replica nodes during replication
+   lag.
+  </para>
+
+  <para>
+   When a table is modified (INSERT/UPDATE/DELETE), it is marked as "stale"
+   for a TTL period (<literal>replication_delay *
+   track_table_mutation_ttl_factor</literal>). Any SELECT queries on stale
+   tables are routed to the primary node instead of replicas, ensuring
+   read-after-write consistency.
+  </para>
+
+  <para>
+   This feature requires time-based replication delay monitoring. This can be
+   provided by either <xref linkend="guc-replication-delay-source-cmd">
+   (external command mode) or by
+   setting <xref linkend="guc-delay-threshold-by-time"> (which
+   uses <literal>pg_stat_replication.replay_lag</literal> from PostgreSQL
+   10+). If neither is configured, the TTL remains at its default minimum
+   value (100 milliseconds) and is never updated based on actual replication
+   delay, which may result in suboptimal routing decisions.
+  </para>
+
+  <warning>
+   <para>
+    Enabling <literal>dml_adaptive_global</literal> increases shared memory
+    consumption. With default settings, the feature requires approximately 80
+    KB of shared memory for table tracking:
+    <literal>track_table_mutation_table_size * 40 bytes</literal>
+    (default: 2048 * 40 = ~80 KB).
+   </para>
+  </warning>
+
+  <variablelist>
+
+   <varlistentry id="guc-track-table-mutation-ttl-factor" xreflabel="track_table_mutation_ttl_factor">
+    <term><varname>track_table_mutation_ttl_factor</varname> (<type>floating point</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_ttl_factor</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Multiplier for calculating the TTL: <literal>TTL = replication_delay *
+      track_table_mutation_ttl_factor</literal>.  Higher values provide more
+      safety margin but may reduce read replica utilization.
+     </para>
+     <para>
+      Valid range: 1.0-100.0. Default is <literal>5.0</literal>.  This
+      parameter can be changed by reloading the <productname>Pgpool-II</>
+      configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-track-table-mutation-max-staleness" xreflabel="track_table_mutation_max_staleness">
+    <term><varname>track_table_mutation_max_staleness</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_max_staleness</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Maximum duration in milliseconds that a single table entry can
+      continuously force queries to primary, measured from when the table was
+      first marked stale. When this cap is reached, the entry is expired
+      regardless of recent writes. If the table is written to again after
+      expiry, a fresh tracking entry is created.
+     </para>
+     <para>
+      This parameter bounds the cross-session impact of table mutation
+      tracking. Even if a table is written to in a tight loop, its effect on
+      other sessions' load balancing is limited to this duration. For
+      legitimately busy tables, the gap between forced expiry and the next
+      write re-marking the table is negligible (typically milliseconds).
+     </para>
+     <para>
+      Set to 0 to disable the cap (not recommended for production).  Valid
+      range: 0-3600000 ms. Default is <literal>60000</literal> (60 seconds).
+      This parameter can be changed by reloading the <productname>Pgpool-II</>
+      configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-track-table-mutation-cold-start-duration" xreflabel="track_table_mutation_cold_start_duration">
+    <term><varname>track_table_mutation_cold_start_duration</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_cold_start_duration</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Duration in milliseconds to route all queries to primary after a child
+      process starts.  This prevents stale reads when a new connection is
+      established before the track table mutation is populated with recent
+      write history.
+     </para>
+     <para>
+      When watchdog is enabled and the local node becomes the leader,
+      <productname>Pgpool-II</productname> also triggers a global cold start
+      for this duration to avoid stale reads after leadership changes.
+     </para>
+     <para>
+      Valid range: 0-60000 ms. Default is <literal>2000</literal> (2 seconds).
+      Set to 0 to disable cold start behavior.  This parameter can be changed
+      by reloading the <productname>Pgpool-II</> configurations.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-track-table-mutation-table-buckets" xreflabel="track_table_mutation_table_buckets">
+    <term><varname>track_table_mutation_table_buckets</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_table_buckets</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Number of hash buckets for the track table mutation hash table.  Higher
+      values reduce hash collisions and improve lookup performance.
+     </para>
+     <para>
+      Valid range: 64-65536. Default is <literal>1024</literal>.  This
+      parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="guc-track-table-mutation-table-size" xreflabel="track_table_mutation_table_size">
+    <term><varname>track_table_mutation_table_size</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>track_table_mutation_table_size</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Maximum number of tables that can be tracked simultaneously in the track
+      table mutation.  When full, oldest entries are evicted using a simple
+      eviction strategy.
+     </para>
+     <para>
+      Valid range: 128-131072. Default is <literal>2048</literal>.  Memory
+      usage: approximately 40 bytes per entry.  This parameter can only be set
+      at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+  <sect3 id="runtime-config-track-table-mutation-example">
+   <title>Track Table Mutation Configuration Example</title>
+   <para>
+    To enable track table mutation with replication delay monitoring:
+   </para>
+   <programlisting>
+# Enable dml_adaptive_global mode (includes track table mutation)
+disable_load_balance_on_write = 'dml_adaptive_global'
+track_table_mutation_ttl_factor = 5.0
+track_table_mutation_max_staleness = 60000
+track_table_mutation_cold_start_duration = 2000
+
+# Option A: Use external command for replication delay
+replication_delay_source_cmd = '/path/to/get-replication-delay.sh'
+replication_delay_source_timeout = 10
+
+# Option B: Use pg_stat_replication replay_lag (PG 10+)
+# delay_threshold_by_time = 1000
+
+# Adjust table map size based on workload
+track_table_mutation_table_size = 4096
+   </programlisting>
+   <para>
+    Shared memory required for above configuration: approximately 160 KB for
+    the table map.  Default configuration (2048 tables) requires approximately
+    80 KB.
+   </para>
+  </sect3>
+
+  <sect3 id="runtime-config-track-table-mutation-limitations">
+   <title>Limitations</title>
+   <para>
+    The track table mutation feature has the following limitations:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>PREPARE</literal> statements are not tracked. When a prepared
+      statement containing data modification is executed, the table mutation
+      is not recorded.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A maximum of 128 tables can be tracked per SELECT query for staleness
+      checking.  This limit is shared with the query cache subsystem
+      (<literal>POOL_MAX_SELECT_OIDS</literal>).
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    If your application uses prepared statements and requires read-after-write
+    consistency, consider using explicit transaction routing or
+    the <literal>/*NO LOAD BALANCE*/</literal> comment directive for affected
+    queries.
+   </para>
+   <para>
+    The following statement types <emphasis>are</emphasis> tracked and will
+    mark tables as stale:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>INSERT</literal>, <literal>UPDATE</literal>, <literal>DELETE</literal>
+      statements (including those with <literal>RETURNING</literal> clauses).
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>TRUNCATE</literal> statements (including multiple tables).
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>MERGE</literal> statements (PostgreSQL 15+).
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>WITH</literal> clauses containing data modifications (Common
+      Table Expressions
+      with <literal>INSERT</literal>, <literal>UPDATE</literal>,
+      or <literal>DELETE</literal>).  For example, <literal>WITH deleted AS
+      (DELETE FROM t1 RETURNING *) SELECT * FROM deleted</literal> will
+      properly mark table <literal>t1</literal> as stale.
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    <emphasis>Transaction Rollback Behavior:</emphasis> Within explicit
+    transactions, tables are only marked as stale in shared memory when the
+    transaction is committed. If the transaction is rolled back, no tables are
+    marked, since no actual data modification occurred on replicas. This
+    prevents rolled-back transactions from unnecessarily disabling load
+    balancing. For autocommit statements (outside explicit transactions),
+    tables are marked immediately upon command completion.
+   </para>
+
+   <para>
+    <emphasis>Cross-Session Impact and Safety Bounds:</emphasis>
+    Unlike <literal>dml_adaptive</literal> (which only affects the session
+    that issued the write),
+    <literal>dml_adaptive_global</literal> affects all sessions reading the
+    same table in the same database.  The following safety mechanisms bound
+    this cross-session impact:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <emphasis>Maximum staleness cap:</emphasis>
+      The <xref linkend="guc-track-table-mutation-max-staleness"> parameter
+      (default: 60 seconds) limits how long any single table entry can
+      continuously force primary routing. Even under sustained writes, the
+      entry expires after this period and is only renewed by subsequent
+      committed writes.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <emphasis>Database isolation:</emphasis> Table staleness tracking is
+      scoped by database OID. Writes in one database never affect load
+      balancing decisions for sessions connected to a different database.  In
+      multi-tenant deployments where tenants use separate databases, one
+      tenant's write activity cannot influence another tenant's query routing.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <emphasis>Committed writes only:</emphasis> Only committed transactions
+      mark tables as stale.  Rolled-back transactions have no effect on the
+      shared tracking state.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <emphasis>Bounded table map size:</emphasis> The shared memory table map
+      has a fixed maximum size
+      (<xref linkend="guc-track-table-mutation-table-size">). At most this
+      many tables can be marked stale simultaneously, providing a natural
+      ceiling on the feature's impact.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </sect3>
+
+ </sect2>
+
 </sect1>

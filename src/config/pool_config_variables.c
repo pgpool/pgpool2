@@ -290,6 +290,7 @@ static const struct config_enum_entry disable_load_balance_on_write_options[] = 
 	{"trans_transaction", DLBOW_TRANS_TRANSACTION, false},
 	{"always", DLBOW_ALWAYS, false},
 	{"dml_adaptive", DLBOW_DML_ADAPTIVE, false},
+	{"dml_adaptive_global", DLBOW_DML_ADAPTIVE_GLOBAL, false},
 	{NULL, 0, false}
 };
 
@@ -1777,6 +1778,19 @@ static struct config_int_array ConfigureNamesIntArray[] =
 
 static struct config_double ConfigureNamesDouble[] =
 {
+	{
+		{"track_table_mutation_ttl_factor",
+			CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
+			"TTL multiplier for track table mutation "
+			"(TTL = replication_delay * factor)",
+			CONFIG_VAR_TYPE_DOUBLE, false, 0
+		},
+		&g_pool_config.track_table_mutation_ttl_factor,
+		5.0,					/* boot value: 5x replication delay */
+		1.0, 100.0,				/* min, max */
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	EMPTY_CONFIG_DOUBLE
 };
@@ -2394,6 +2408,57 @@ static struct config_int ConfigureNamesInt[] =
 		&g_pool_config.replication_delay_source_timeout,
 		10,
 		1, 3600,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"track_table_mutation_max_staleness",
+			CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
+			"Maximum duration in milliseconds that a "
+			"table can be marked stale from its first "
+			"write. 0 disables the cap.",
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_MS
+		},
+		&g_pool_config.track_table_mutation_max_staleness,
+		60000,					/* 60 seconds */
+		0, 3600000,				/* 0 to 1 hour */
+		NULL, NULL, NULL
+	},
+
+	{
+		{"track_table_mutation_cold_start_duration",
+			CFGCXT_RELOAD, LOAD_BALANCE_CONFIG,
+			"Duration in milliseconds to force queries "
+			"to primary after child process starts.",
+			CONFIG_VAR_TYPE_INT, false, GUC_UNIT_MS
+		},
+		&g_pool_config.track_table_mutation_cold_start_duration,
+		2000,					/* 2 seconds */
+		0, 60000,				/* 0 to 60 seconds */
+		NULL, NULL, NULL
+	},
+
+	{
+		{"track_table_mutation_table_buckets",
+			CFGCXT_INIT, LOAD_BALANCE_CONFIG,
+			"Number of hash buckets for track table mutation.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.track_table_mutation_table_buckets,
+		1024,
+		64, 65536,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"track_table_mutation_table_size",
+			CFGCXT_INIT, LOAD_BALANCE_CONFIG,
+			"Maximum number of entries in track table mutation.",
+			CONFIG_VAR_TYPE_INT, false, 0
+		},
+		&g_pool_config.track_table_mutation_table_size,
+		2048,
+		128, 131072,
 		NULL, NULL, NULL
 	},
 

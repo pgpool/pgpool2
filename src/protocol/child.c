@@ -57,6 +57,7 @@
 #include "utils/elog.h"
 #include "utils/ps_status.h"
 #include "utils/timestamp.h"
+#include "utils/pool_track_table_mutation.h"
 
 #include "context/pool_process_context.h"
 #include "context/pool_session_context.h"
@@ -212,6 +213,13 @@ do_child(int *fds)
 
 	/* Initialize per process context */
 	pool_init_process_context();
+
+	/* Initialize track table mutation child state for cold start tracking */
+	if (pool_config->disable_load_balance_on_write ==
+		DLBOW_DML_ADAPTIVE_GLOBAL)
+	{
+		pool_track_table_mutation_child_init();
+	}
 
 	/* initialize connection pool */
 	if (pool_init_cp())

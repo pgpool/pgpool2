@@ -223,7 +223,7 @@ typedef struct
 	 * query is issued in an explicit transaction, and is turned off when the
 	 * transaction is closed. Of course turned off when new transaction
 	 * starts. This flag is referenced by query cache.
-	*/
+	 */
 	bool		really_writing_transaction;
 
 	/* If true, error occurred in this transaction */
@@ -328,6 +328,19 @@ typedef struct
 	 */
 	List	   *transaction_temp_write_list;
 
+	/*
+	 * For disable_load_balance_on_write = dml_adaptive_global: the table OIDs
+	 * written in the current explicit transaction, plus the database OID they
+	 * belong to.  Both are resolved at DML routing time (when the backend
+	 * connection is idle and do_query is safe) and consumed on COMMIT by
+	 * handle_query_context() to mark the tables as written in shared memory.
+	 * Resolving here -- rather than at COMMIT -- avoids issuing do_query
+	 * while the COMMIT response is still in flight, which would desync the
+	 * protocol and hang the session.
+	 */
+	List	   *transaction_temp_write_oid_list;
+	int			transaction_temp_write_dboid;
+
 #ifdef NOT_USED
 	/* Preferred "main" node id. Only used for SimpleForwardToFrontend. */
 	int			preferred_main_node_id;
@@ -370,8 +383,7 @@ typedef struct
 	bool		sync_map[MAX_NUM_BACKENDS];
 
 	/*
-	 * Backend node id map do_query sent to, without sending a sync
-	 * message.
+	 * Backend node id map do_query sent to, without sending a sync message.
 	 */
 	bool		pending_sync_map[MAX_NUM_BACKENDS];
 } POOL_SESSION_CONTEXT;

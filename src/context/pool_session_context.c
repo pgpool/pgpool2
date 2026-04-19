@@ -536,20 +536,26 @@ dump_sent_message(char *caller, POOL_SENT_MESSAGE *m)
 static void
 dml_adaptive_init(void)
 {
-	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE)
+	if (DLBOW_IS_DML_ADAPTIVE(pool_config->disable_load_balance_on_write))
 	{
 		session_context->is_in_transaction = false;
 		session_context->transaction_temp_write_list = NIL;
+		session_context->transaction_temp_write_oid_list = NIL;
+		session_context->transaction_temp_write_dboid = 0;
 	}
 }
 
 static void
 dml_adaptive_destroy(void)
 {
-	if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && session_context)
+	if (DLBOW_IS_DML_ADAPTIVE(
+							  pool_config->disable_load_balance_on_write) &&
+		session_context)
 	{
 		if (session_context->transaction_temp_write_list != NIL)
 			list_free_deep(session_context->transaction_temp_write_list);
+		if (session_context->transaction_temp_write_oid_list != NIL)
+			list_free(session_context->transaction_temp_write_oid_list);
 	}
 }
 
@@ -748,10 +754,13 @@ void
 pool_set_writing_transaction(void)
 {
 	/*
-	 * If disable_transaction_on_write is 'off' or 'dml_adaptive', then never
-	 * turn on writing transaction flag.
+	 * If disable_load_balance_on_write is 'off' or 'dml_adaptive' or
+	 * 'dml_adaptive_global', then never turn on writing transaction flag.
 	 */
-	if (pool_config->disable_load_balance_on_write != DLBOW_OFF && pool_config->disable_load_balance_on_write != DLBOW_DML_ADAPTIVE)
+	if (pool_config->disable_load_balance_on_write !=
+		DLBOW_OFF &&
+		!DLBOW_IS_DML_ADAPTIVE(
+							   pool_config->disable_load_balance_on_write))
 	{
 		pool_get_session_context(false)->writing_transaction = true;
 		ereport(DEBUG5,

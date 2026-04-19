@@ -478,6 +478,14 @@ backend_clustering_mode = streaming_replication
                                    #     modified within the current explicit transaction will
                                    #     not be load balanced until the end of the transaction.
                                    #
+                                   # dml_adaptive_global:
+                                   #     Superset of dml_adaptive. In addition to per-transaction
+                                   #     tracking, uses shared memory to track recently written
+                                   #     tables across all sessions. Reads from recently written
+                                   #     tables are routed to primary until a TTL (based on
+                                   #     replication delay) expires. Requires additional shared
+                                   #     memory. See track_table_mutation_* parameters below.
+                                   #
                                    # always:
                                    #     if a write query is issued, read queries will
                                    #     not be load balanced until the session ends.
@@ -498,6 +506,43 @@ backend_clustering_mode = streaming_replication
 
 #statement_level_load_balance = off
                                    # Enables statement level load balancing
+
+# - Track Table Mutation (used by dml_adaptive_global) -
+                                   # WARNING: dml_adaptive_global increases shared memory usage
+                                   # Default settings require ~80 KB shared memory for table tracking
+
+#track_table_mutation_ttl_factor = 5.0
+                                   # TTL multiplier: TTL = replication_delay * factor
+                                   # Higher values provide more safety margin
+                                   # Range: 1.0-100.0 (default: 5.0)
+                                   # (change requires reload)
+
+#track_table_mutation_max_staleness = 60000
+                                   # Maximum duration (ms) a table can be marked stale
+                                   # from its first write. Bounds cross-session impact:
+                                   # even under continuous writes, staleness expires
+                                   # after this period and is only renewed by new writes.
+                                   # 0 disables the cap. Range: 0-3600000 (default: 60000 = 60s)
+                                   # (change requires reload)
+
+#track_table_mutation_cold_start_duration = 2000
+                                   # Duration in milliseconds to route all queries to primary
+                                   # after child process starts (cold start period)
+                                   # Range: 0-60000 ms (default: 2000 ms = 2 seconds)
+                                   # Set to 0 to disable cold start behavior
+                                   # (change requires reload)
+
+#track_table_mutation_table_buckets = 1024
+                                   # Number of hash buckets for track table mutation
+                                   # Higher values reduce hash collisions
+                                   # Range: 64-65536 (default: 1024)
+                                   # (change requires restart)
+
+#track_table_mutation_table_size = 2048
+                                   # Maximum number of tables to track simultaneously
+                                   # Range: 128-131072 (default: 2048)
+                                   # (change requires restart)
+
 
 #------------------------------------------------------------------------------
 # STREAMING REPLICATION MODE

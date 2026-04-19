@@ -105,8 +105,12 @@ typedef enum DLBOW_OPTION
 	DLBOW_TRANSACTION,
 	DLBOW_TRANS_TRANSACTION,
 	DLBOW_ALWAYS,
-	DLBOW_DML_ADAPTIVE
+	DLBOW_DML_ADAPTIVE,
+	DLBOW_DML_ADAPTIVE_GLOBAL
 } DLBOW_OPTION;
+
+#define DLBOW_IS_DML_ADAPTIVE(opt) \
+	((opt) == DLBOW_DML_ADAPTIVE || (opt) == DLBOW_DML_ADAPTIVE_GLOBAL)
 
 typedef enum RELQTARGET_OPTION
 {
@@ -363,8 +367,22 @@ typedef struct
 	char	   *sr_check_password;	/* password for sr_check_user */
 	char	   *sr_check_database;	/* PostgreSQL database name for streaming
 									 * replication check */
-	char	   *replication_delay_source_cmd;	/* external command for replication delay */
-	int			replication_delay_source_timeout;	/* timeout for external command in seconds */
+	char	   *replication_delay_source_cmd;	/* external command for
+												 * replication delay */
+	int			replication_delay_source_timeout;	/* timeout for external
+													 * command in seconds */
+
+	/* Track table mutation configuration */
+	double		track_table_mutation_ttl_factor;	/* TTL multiplier for
+													 * replication delay */
+	int			track_table_mutation_max_staleness; /* max staleness duration
+													 * ms */
+	int			track_table_mutation_cold_start_duration;	/* cold start duration
+															 * ms */
+	int			track_table_mutation_table_buckets; /* hash buckets for table
+													 * map */
+	int			track_table_mutation_table_size;	/* max table map entries */
+
 	char	   *failover_command;	/* execute command when failover happens */
 	char	   *follow_primary_command; /* execute command when failover is
 										 * ended */
