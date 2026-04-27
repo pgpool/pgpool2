@@ -426,6 +426,13 @@ typedef struct
 	int			count;			/* request node ids count */
 }			POOL_REQUEST_NODE;
 
+/*
+ * Maximum number of pcp worker child process.  * Since pcp worker process is
+ * forked whenever failover/failback request is made, it should be equal to
+ * MAX_REQUEST_QUEUE_SIZE + some room. 10 is an arbitrary number.
+*/
+#define	MAX_PCP_WORKER_PIDS		MAX_REQUEST_QUEUE_SIZE + 10
+
 typedef struct
 {
 	POOL_REQUEST_NODE request[MAX_REQUEST_QUEUE_SIZE];
@@ -452,6 +459,13 @@ typedef struct
 	bool		follow_primary_lock_held_remotely; /* true when lock is held by
 													watchdog coordinator*/
 	bool		follow_primary_ongoing;	/* true if follow primary command is ongoing */
+	bool		query_cache_invalidate_request;	/* true if pcp_invalidate_query_cache requested */
+
+	/*
+	 * pcp worker child pids. This is inherited to new pcp main process to
+	 * track pcp worker child when new pcp worker child starts.
+	 */
+	pid_t		pcp_worker_pids[MAX_PCP_WORKER_PIDS];
 }			POOL_REQUEST_INFO;
 
 /* description of row. corresponding to RowDescription message */
