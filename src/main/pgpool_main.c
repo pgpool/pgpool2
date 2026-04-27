@@ -3190,6 +3190,8 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 		wd_ipc_initialize_data();
 	}
 
+	/* initialize pcp worker child pids */
+	memset(Req_info->pcp_worker_pids, 0, sizeof(Req_info->pcp_worker_pids));
 }
 /*
 * Read the status file
