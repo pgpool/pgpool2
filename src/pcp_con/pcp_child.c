@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -152,6 +152,22 @@ pcp_main(int *fds)
 	}
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
+
+	/*
+	 * Restore pcp woker child pids from shmem
+	 */
+	for (int i = 0; i < MAX_PCP_WORKER_PIDS; i++)
+	{
+		pid_t		pid = Req_info->pcp_worker_pids[i];
+
+		if (pid != 0)
+			pcp_worker_children = lappend_int(pcp_worker_children, (int) pid);
+	}
+
+	/*
+	 * Unblock signals
+	 */
+	POOL_SETMASK(&UnBlockSig);
 
 	ereport(DEBUG1,
 			(errmsg("I am PCP child with pid:%d", getpid())));
@@ -303,13 +319,28 @@ start_pcp_command_processor_process(int port, int *fds)
 	}
 	else						/* parent */
 	{
+		int			i;
+
 		ereport(LOG,
 				(errmsg("forked new pcp worker, pid=%d socket=%d",
 						(int) pid, (int) port)));
+
 		/* close the port in parent process. It is only consumed by child */
 		close(port);
 		/* Add it to the list */
 		pcp_worker_children = lappend_int(pcp_worker_children, (int) pid);
+		/* save it to shmem */
+		for (i = 0; i < MAX_PCP_WORKER_PIDS; i++)
+		{
+			if (Req_info->pcp_worker_pids[i] == 0)
+			{
+				Req_info->pcp_worker_pids[i] = pid;
+				break;
+			}
+		}
+		if (i == MAX_PCP_WORKER_PIDS)
+			ereport(WARNING,
+					(errmsg("no empty slot in pcp worker table")));
 	}
 }
 
@@ -380,6 +411,17 @@ reaper(void)
 				(errmsg("going to remove pid: %d from pid list having %d elements", pid, list_length(pcp_worker_children))));
 		/* remove the pid of process from the list */
 		pcp_worker_children = list_delete_int(pcp_worker_children, pid);
+
+		/* remove the pid from shmem */
+		for (int i = 0; i < MAX_PCP_WORKER_PIDS; i++)
+		{
+			if (Req_info->pcp_worker_pids[i] == pid)
+			{
+				Req_info->pcp_worker_pids[i] = 0;
+				break;
+			}
+		}
+
 		ereport(DEBUG2,
 				(errmsg("new list have %d elements", list_length(pcp_worker_children))));
 	}
