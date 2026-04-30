@@ -347,6 +347,12 @@ typedef struct
 	 * A map to send sync message. Each entry represents backend node.
 	 */
 	bool		sync_map[MAX_NUM_BACKENDS];
+
+	/*
+	 * Backend node id map do_query sent to, without sending a sync
+	 * message.
+	 */
+	bool		pending_sync_map[MAX_NUM_BACKENDS];
 } POOL_SESSION_CONTEXT;
 
 extern void pool_init_session_context(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend);

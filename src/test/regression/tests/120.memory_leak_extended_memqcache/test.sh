@@ -32,6 +32,8 @@ do
 	# enable query cache
 	echo "memory_cache_enabled = on" >> etc/pgpool.conf
 
+	# load balance node is 1
+	echo "backend_weight0 = 0" >> etc/pgpool.conf
 	# start pgpool-II
 	./startall
 

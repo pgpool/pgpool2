@@ -2117,7 +2117,11 @@ do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int
 		if (backend->tstate == 'T')
 			pool_write(backend, "S", 1);	/* send "sync" message */
 		else
+		{
 			pool_write(backend, "H", 1);	/* send "flush" message */
+			/* remember that we sent queries but did not send sync message */
+			pool_get_session_context(true)->pending_sync_map[backend->db_node_id] = true;
+		}
 		len = htonl(sizeof(len));
 		pool_write_and_flush(backend, &len, sizeof(len));
 	}

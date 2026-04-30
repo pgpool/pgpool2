@@ -5362,6 +5362,21 @@ add_sync_pending_message(void)
 	if (i == NUM_BACKENDS)
 		memset(session_context->sync_map, true, NUM_BACKENDS);
 
+	/*
+	 * Check if do_query sent queries but have not send sync message yet.  If
+	 * so, set the node id to sync_map so that a sync message is sent to the
+	 * node.  Otherwise, the transaction keeps open, which cause subsequent
+	 * queries might fail: i.e. DISCARD ALL in reset_query_list.
+	 */
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (session_context->pending_sync_map[i])
+		{
+			session_context->sync_map[i] = true;
+			session_context->pending_sync_map[i] = false;
+		}
+	}
+
 	/* copy sync map to query context's where_to_send map */
 	memcpy(query_context->where_to_send, session_context->sync_map,
 		   sizeof(query_context->where_to_send));
