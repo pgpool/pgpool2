@@ -265,7 +265,7 @@
      <para>
       Specifies the name of the file containing Diffie-Hellman parameters
       used for so-called ephemeral DH family of SSL ciphers. The default is
-      empty. In which case compiled-in default DH parameters used. Using
+      empty. If empty or specified file is not correct one, compiled-in default DH parameters used. Using
       Custom DH parameters reduces the exposure if an attacker manages to
       crack the well-known compiled-in DH parameters. You can create your own
       DH parameters file with the command <command>openssl -out dhparams.pem 2048</command>.

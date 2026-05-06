@@ -319,16 +319,9 @@
     </term>
     <listitem>
      <para>
-      <!--
-      Specifies the name of the file containing Diffie-Hellman parameters
-      used for so-called ephemeral DH family of SSl ciphers. The default is
-      empty. In which case compiled-in default DH parameters used. Using
-      Custom DH parameters reduces the exposure if an attacker manages to
-      crack the well-known compiled-in DH parameters. You can create your own
-      DH parameters file with the command <command>openssl -out dhparams.pem 2048</command>.
-      -->
       いわゆる短命DH系SSL暗号で使用するディフィー・ヘルマンパラメータを格納するファイル名を指定します。
-      デフォルトは空で、この場合はコンパイル時に決められたデフォルトのDHパラメータが使用されます。
+      デフォルトは空です。
+      ファイル名が空、あるいは不正なファイルである場合には、コンパイル時に決められたデフォルトのDHパラメータが使用されます。
       攻撃者が、よく知られたコンパイル時設定のDHパラメータを解読しようとしている場合には、カスタムDHパラメータを使うことでその危険性を低減できます。
       <command>openssl dhparam -out dhparams.pem 2048</command>を使って、独自のDHパラメータファイルを作ることができます。
      </para>
