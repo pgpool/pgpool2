@@ -44,3 +44,25 @@ SELECT 1;
 
 END;
 COMMIT
+CREATE TEMP TABLE t (id int UNIQUE);
+CREATE TABLE
+INSERT INTO t VALUES (1);
+INSERT 0 1
+BEGIN;
+BEGIN
+SAVEPOINT sp1;
+SAVEPOINT
+INSERT INTO t VALUES (1);
+ERROR:  duplicate key value violates unique constraint "t_id_key"
+DETAIL:  Key (id)=(1) already exists.
+;
+ROLLBACK TO SAVEPOINT sp1;
+ROLLBACK
+SELECT 'recovered' AS status;
+  status   
+-----------
+ recovered
+(1 row)
+
+ROLLBACK;
+ROLLBACK
