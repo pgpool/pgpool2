@@ -209,6 +209,9 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	bool		error;
 	bool		use_minimal;
 
+	/* true if query is empty, white spaces or comments only */
+	bool		is_empty_query = false;
+
 /*
  * If query string is shorter than this, we do not run
  * multi_statement_query() to avoid its overhead.
@@ -346,6 +349,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 			 * [Pgpool-general] Confused about JDBC and load balancing
 			 */
 			parse_tree_list = get_dummy_read_query_tree();
+			is_empty_query = true;
 		}
 		else
 		{
@@ -399,10 +403,11 @@ SimpleQuery(POOL_CONNECTION * frontend,
 
 		/*
 		 * Check if the transaction is in abort status. If so, we do nothing
-		 * and just return an error message to frontend, execpt for
-		 * transaction COMMIT or ROLLBACK (TO) command.
+		 * and just return an error message to frontend, except for empty
+		 * queries, transaction COMMIT or ROLLBACK (TO) command.
 		 */
-		if (check_transaction_state_and_abort(contents, node, frontend, backend) == false)
+		if (!is_empty_query &&
+			!check_transaction_state_and_abort(contents, node, frontend, backend))
 		{
 			pool_ps_idle_display(backend);
 			pool_query_context_destroy(query_context);
@@ -4441,7 +4446,8 @@ flatten_set_variable_args(const char *name, List *args)
 }
 
 #ifdef NOT_USED
-/* Called when sync message is received.
+/*
+ * Called when sync message is received.
  * Wait till ready for query received.
  */
 static void
@@ -5023,24 +5029,17 @@ si_get_snapshot(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, Node
 }
 
 /*
- * Check if the transaction is in abort status ('E' status).  If not, do thing
- * and return true. Otherwise, check if the transaction is already in failed
- * status using pool_is_failed_transaction().  If so and the processing query
- * is not a commit or rollback command, send a ready for query message to
- * frontend along with "current transaction is aborted..."  message to let the
- * client know the current transaction is in abort status.
+ * Check if the transaction is already in failed status using
+ * pool_is_failed_transaction().  If so and the processing query is not a
+ * commit or rollback command, send a ready for query message to frontend
+ * along with "current transaction is aborted..."  message to let the client
+ * know the current transaction is in abort status.
  */
 static bool
 check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION * frontend,
 								  POOL_CONNECTION_POOL * backend)
 {
-	int		len;
-
-	/* chekc if the transaction state is 'E'. If not, do nothing */
-	if (TSTATE(backend, MAIN_NODE_ID) != 'E')
-		return true;
-
-	/* If frontend is NULL, do nothing */
+	/* If frontend is NULL (reset query case), do nothing */
 	if (frontend == NULL)
 		return true;
 
@@ -5051,6 +5050,7 @@ check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION * fro
 	if (pool_is_failed_transaction() && !is_commit_or_rollback_query(node))
 	{
 		StringInfoData buf;
+		int			len;
 
 		initStringInfo(&buf);
 		appendStringInfo(&buf, "statement: %s", query);
