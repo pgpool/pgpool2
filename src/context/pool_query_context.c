@@ -2032,13 +2032,11 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT * query_context, char *query, Node
 			 * transaction isolation level is not SERIALIZABLE) we might
 			 * be able to load balance.
 			 */
-
 			ereport(DEBUG1,
-					(errmsg("checking load balance preconditions. TSTATE:%c writing_transaction:%d failed_transaction:%d isolation:%d",
+					(errmsg("checking load balance preconditions. TSTATE:%c writing_transaction:%d failed_transaction:%d",
 							TSTATE(backend, PRIMARY_NODE_ID),
 							pool_is_writing_transaction(),
-							pool_is_failed_transaction(),
-							pool_get_transaction_isolation()),
+							pool_is_failed_transaction()),
 					 errdetail("destination = %d for query= \"%s\"", dest, query)));
 
 			if (TSTATE(backend, PRIMARY_NODE_ID) == 'I' ||
@@ -2280,11 +2278,10 @@ where_to_send_native_replication(POOL_QUERY_CONTEXT * query_context, char *query
 				  !pool_is_failed_transaction() &&
 				  pool_get_transaction_isolation() != POOL_SERIALIZABLE))
 		{
-			elog(DEBUG1, "load balance TSTATE: %c pool_is_writing_transaction: %d pool_is_failed_transaction: %d pool_get_transaction_isolation: %d",
+			elog(DEBUG1, "load balance TSTATE: %c pool_is_writing_transaction: %d pool_is_failed_transaction: %d",
 				 TSTATE(backend, MAIN_NODE_ID),
 				 pool_is_writing_transaction(),
-				 pool_is_failed_transaction(),
-				 pool_get_transaction_isolation());
+				 pool_is_failed_transaction());
 			set_load_balance_info(query_context);
 		}
 		else
