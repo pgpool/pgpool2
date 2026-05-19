@@ -3696,6 +3696,27 @@ sync_backend_from_watchdog(void)
 					Req_info->primary_node_id, backendStatus->nodeName),
                 errdetail("keeping the current primary")));
 		}
+		else if (Req_info->primary_node_id >= 0 &&
+				 backendStatus->primary_node_id == -2)
+		{
+			/*
+			 * Leader watchdog is still initialising and has not yet run
+			 * find_primary_node_repeatedly(); its primary_node_id is still
+			 * the initial sentinel -2. Do not overwrite our locally-determined
+			 * primary with the leader's stale initial state.
+			 *
+			 * Without this guard, a simultaneous restart of all pgpool nodes
+			 * leaves every STANDBY watchdog with primary_node_id = -2 forever:
+			 * sync_backend_from_watchdog() is only re-invoked on
+			 * SIG_BACKEND_SYNC_REQUIRED (raised from WD_FAILOVER_END), so
+			 * there is no normal path that resyncs once the leader's own
+			 * find_primary_node_repeatedly() completes.
+			 */
+			ereport(LOG,
+					(errmsg("primary node on leader watchdog node \"%s\" is still in the initial state",
+							backendStatus->nodeName),
+					 errdetail("keeping the locally-detected primary node:%d", Req_info->primary_node_id)));
+		}
 		else
 		{
 			Req_info->primary_node_id = backendStatus->primary_node_id;
