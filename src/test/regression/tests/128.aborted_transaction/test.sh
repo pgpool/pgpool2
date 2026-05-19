@@ -39,6 +39,16 @@ aaa;
 ROLLBACK TO s1;
 SELECT 1;
 END;
+-- empty query case
+CREATE TEMP TABLE t (id int UNIQUE);
+INSERT INTO t VALUES (1);
+BEGIN;
+SAVEPOINT sp1;
+INSERT INTO t VALUES (1);   -- 23505 from PG
+;                            -- empty/no-op probe (what driver active? sends)
+ROLLBACK TO SAVEPOINT sp1;
+SELECT 'recovered' AS status;
+ROLLBACK;
 EOF
 
 if cmp ../expected.txt results.txt >/dev/null
@@ -50,5 +60,6 @@ else
     ./shutdownall
     exit 1
 fi
+
 ./shutdownall
 exit 0
