@@ -1,3 +1,288 @@
+<sect1 id="release-4-6-7">
+ <title>Release 4.6.7</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2026-05-22</simpara>
+ </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-05-21 [a70e6e82e]
+    -->
+    <para>
+     Fix <xref linkend="guc-primary-routing-query-pattern-list"> retains old values after reload (Taiki Koshino)
+    </para>
+    <para>
+     Previously, old regex patterns remained after reload and new entries were appended.
+     This affected <xref linkend="guc-primary-routing-query-pattern-list">,
+     <xref linkend="guc-write-function-list">,
+     <xref linkend="guc-read-only-function-list">,
+     <xref linkend="guc-cache-safe-memqcache-table-list">, and
+     <xref linkend="guc-cache-unsafe-memqcache-table-list">.
+
+     The fix clears existing regex arrays before applying new configuration values.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/151">primary_routing_query_pattern_list is appended instead of overwritten on reload</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-19 [89de41c0d]
+    -->
+    <para>
+     Keep local primary_node_id when leader watchdog reports the initial -2 sentinel. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix a watchdog synchronization issue after simultaneous restart of all pgpool nodes,
+     where standby nodes could overwrite a valid primary_node_id with the initial -2 sentinel
+     value and remain stuck in an uninitialized state indefinitely. Fix is, keep the local
+     primary_node_id when the leader reports the initial -2 sentinel.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij and Claude Code.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BZmBoLs3Mz%3DG-Bdm4JJG%2BfH1NpHfR3qVJVwW4eBKWwStQ%40mail.gmail.com">Primary node detection race at clean startup</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-19 [87e033615]
+    -->
+    <para>
+     Fix to not call <function>pool_get_transaction_isolation()</function> in <function>elog(DEBUG)</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix a FATAL error in aborted transactions caused by DEBUG logging in
+     <function>where_to_send_main_replica()</function> and <function>where_to_send_native_replication()</function>.
+     The DEBUG logging called <function>pool_get_transaction_isolation()</function>, which internally executed queries
+     via <function>do_query()</function> and could raise a FATAL error in aborted transactions. Fix is, remove the calls from DEBUG logging.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-19 [62cd61602]
+    -->
+    <para>
+     Fix empty query case in aborted transaction. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix empty queries in aborted transactions incorrectly raising errors.
+     Empty queries should be allowed in aborted transactions,
+     but a previous commit caused <function>check_transaction_state_and_abort()</function> to reject them.
+     Fix is, detect empty queries in <function>SimpleQuery()</function> and bypass the check.
+    </para>
+    <para>
+     Problem reported by Ronaldo Raivil.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/161">pgpool >= 4.3.2 synthesizes 25P02 on driver health-check probes inside aborted savepoints, breaking ORMs that need to call ROLLBACK TO SAVEPOINT</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-06 [969b454e4]
+    -->
+    <para>
+     Fix description about <varname>ssl_dh_params_file</varname>. (Tatsuo Ishii)
+    </para>
+    <para>
+     It actually falls back to compiled-in default not only when the
+     parameter is empty (the default), but when specified parameter is
+     incorrect one.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-27 [855faebb0]
+    -->
+    <para>
+     Fix PCP main process to remember child pids upon restarting. (Tatsuo Ishii)
+    </para>
+    <para>
+     Upon failover/failback, pgpool main process sends a signal to PCP main
+     process to request restarting, and PCP main restarts. Problem is, when
+     PCP main restarts, it forgets the list of pids of its child PCP worker
+     process.
+
+     As a result, commands such as <command>pcp_promote_node</command> could hang indefinitely.
+     Fix is, store PCP worker PIDs in shared memory so they survive PCP main restart.
+    </para>
+    <para>
+     Problem reported by Taiki Koshino.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260425.223051.1207744844622514060.ishii%40postgresql.org">Problem with pcp process</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-07 [5eb8fcbc3]
+    -->
+    <para>
+     Fix query cache to invalidate cache when <command>MERGE</command> statement is used. (Tatsuo Ishii)
+    </para>
+    <para>
+     <command>MERGE</command> was introduced in <productname>PostgreSQL</productname> 15
+     and <productname>Pgpool-II</productname> 4.4 imported <productname>PostgreSQL</productname> 15's parser.
+     However, there was an oversight in query cache sub module:
+     <command>MERGE</command> statement did not trigger invalidation of query cache.
+    </para>
+    <para>
+     Problem reported by Nadav Shatz.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260407.090802.1335576118037412011.ishii%40postgresql.org">Re: Proposal: Recent mutated table tracking in memory</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-06 [0316f828c]
+    -->
+    <para>
+     Fix memory leak in a SSL module. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix a memory leak in <function>load_dh_file()</function> when invalid DH parameters are supplied.
+     The function failed to free memory returned by <function>PEM_read_DHparams()</function>.
+     Also update the copyright notice in the same file to retain the original <productname>PostgreSQL</productname> copyright.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260403.091842.102589579921239540.ishii%40postgresql.org">Memory leak in SSL module</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-31 [51ffc75b2]
+    -->
+    <para>
+     Fix incorrect routing of <command>SET transaction_read_only = 0</command>. (Bo Peng)
+    </para>
+    <para>
+     Fix incorrect routing of <command>SET transaction_read_only = 0</command> to standby node, which caused query errors.
+     Also replace incorrect bool ret = POOL_BOTH with the proper enum type.
+    </para>
+    <para>
+     Problem reported by liujinyang-highgo.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/155">set command 'set transaction_read_only = 0;' routed to standby node and execute failed.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-25 [4a522dda0]
+    -->
+    <para>
+     Remove unnecessary check STREAM in where_to_send_main_replica(). (Tatsuo Ishii)
+    </para>
+    <para>
+     The check is already done in check_replication_delay().
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-20 [39a433adf]
+    -->
+    <para>
+     Fix session local relation cache case bug. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix incorrect handling of session local relation cache in <function>pool_search_relcache()</function>.
+     Temporary table information could be incorrectly registered in shared relation cache, causing subsequent queries
+     to use stale cache entries and potentially route queries incorrectly.
+     Fix is, avoid registering temp table information in shared relation cache for session local cache entries.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/154">query temp table is routed to standby node.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-19 [a804cc786]
+    -->
+    <para>
+     Fix lock release leak in <function>pool_search_relcache()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix a lock release leak in <function>pool_search_relcache()</function>.
+     During shared relation cache updates, the lock state was not reset correctly after reacquiring an exclusive lock,
+     which could leave the shared memory lock held. Also rename confusing variable <varname>locked</varname> to <varname>locked_by_others</varname>
+     and fix unnecessary <varname>per_node_statement_log</varname> output.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260317.182615.1046517700474336117.ishii%40postgresql.org">Lock release leak in pool_search_relcache</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-09 [552c40db7]
+    -->
+    <para>
+     Close listening sockets before forking. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix inherited unnecessary listening sockets in forked child processes.
+     Previously, subprocesses such as pcp_main, health check,
+     and lifecheck processes inherited pgpool and/or PCP listening sockets they did not use,
+     which could prevent subsequent pgpool startup from binding ports correctly.
+     Fix is, close unnecessary listening sockets after forking using <function>close_listening_sockets()</function>.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260302.100028.1346768433787074248.ishii%40postgresql.org">Close listening socokets before forking</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-03-04 [47835089c]
+    -->
+    <para>
+     Doc: fix <varname>ignore_leading_white_space</varname> and <varname>allow_sql_comments</varname> docs. (Tatsuo Ishii)
+    </para>
+    <para>
+     They lacked a description on the default values.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-03-25 [84e850ad0]
+    -->
+    <para>
+     Test: addition to 001.load_balance test for previous commit. (Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-6-6">
  <title>Release 4.6.6</title>
  <note>

@@ -1,3 +1,271 @@
+<sect1 id="release-4-6-7">
+ <title>リリース 4.6.7</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2026-05-22</simpara>
+ </note>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-05-21 [a70e6e82e]
+    -->
+    <para>
+     リロード後に<xref linkend="guc-primary-routing-query-pattern-list">の値が残ってしまう問題を修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     以前は、リロード後も古い正規表現パターンが残っており、新しいエントリが追加されていました。
+     これは、<xref linkend="guc-primary-routing-query-pattern-list">、<xref linkend="guc-write-function-list">、<xref linkend="guc-read-only-function-list">、<xref linkend="guc-cache-safe-memqcache-table-list">、および<xref linkend="guc-cache-unsafe-memqcache-table-list">に影響していました。
+
+     今回の修正で新しい設定値を適用する前に、既存の正規表現配列をクリアするようにしました。
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/151">primary_routing_query_pattern_list is appended instead of overwritten on reload</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-19 [89de41c0d]
+    -->
+    <para>
+     watchdogのリーダーノードが初期値-2を報告した場合にローカルのprimary_node_idを維持するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     すべてのpgpoolノードを同時に再起動した際に、スタンバイノードが有効なprimary_node_idを初期値-2値で上書きし、未初期化状態のままになる問題を修正しました。
+     この修正により、リーダーが初期値-2を報告した場合はローカルのprimary_node_idを維持するようになりました。
+    </para>
+    <para>
+     この問題はEmond PapegaaijとClaude Codeによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BZmBoLs3Mz%3DG-Bdm4JJG%2BfH1NpHfR3qVJVwW4eBKWwStQ%40mail.gmail.com">Primary node detection race at clean startup</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-19 [87e033615]
+    -->
+    <para>
+     <function>elog(DEBUG)</function>内で<function>pool_get_transaction_isolation()</function>を呼び出さないように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>where_to_send_main_replica()</function>および<function>where_to_send_native_replication()</function>のDEBUGログ出力が原因で、アボート状態のトランザクションでFATALエラーが発生する問題を修正しました。
+     DEBUGログ内で呼び出していた<function>pool_get_transaction_isolation()</function>が、内部で<function>do_query()</function>を実行していたことが原因です。
+     この修正によりDEBUGログからこれらの呼び出しを削除しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-19 [62cd61602]
+    -->
+    <para>
+     アボート状態のトランザクションでの空クエリ処理を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     アボート状態のトランザクションで空クエリが誤ってエラーになる問題を修正しました。
+     空クエリはアボート状態のトランザクションでも許可されるべきですが、以前のコミットにより<function>check_transaction_state_and_abort()</function>が空クエリを拒否していました。
+     この修正により、<function>SimpleQuery()</function>で空クエリを検出し、チェックを通さないようにしました。
+    </para>
+    <para>
+     この問題はRonaldo Raivilによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/161">pgpool ≥ 4.3.2 synthesizes 25P02 on driver health-check probes inside aborted savepoints, breaking ORMs that need to call ROLLBACK TO SAVEPOINT</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-06 [969b454e4]
+    -->
+    <para>
+     <varname>ssl_dh_params_file</varname>の説明を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     パラメータが空の場合だけでなく、不正なパラメータが指定された場合も、組み込みのデフォルト値にフォールバックするようになっていました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-27 [855faebb0]
+    -->
+    <para>
+     PCPのメインプロセスが再起動時に子プロセスのPIDを保持するように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     フェイルオーバー/フェイルバック時にPCPのメインプロセスが再起動すると、子PCPワーカープロセスのPID一覧を失ってしまう問題を修正しました。
+
+     その結果、<command>pcp_promote_node</command>などのコマンドが無限にハングする可能性がありました。
+     この修正により、PCPワーカープロセスのPIDを共有メモリに保持し、PCPのメインプロセス再起動後も利用できるようにしました。
+    </para>
+    <para>
+     この問題はTaiki Koshinoによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260425.223051.1207744844622514060.ishii%40postgresql.org">Problem with pcp process</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-07 [5eb8fcbc3]
+    -->
+    <para>
+     <command>MERGE</command>文使用時にクエリキャッシュを無効化するように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <command>MERGE</command>は<productname>PostgreSQL</productname> 15で導入され、<productname>Pgpool-II</productname> 4.4では<productname>PostgreSQL</productname> 15のパーサを取り込んでいました。
+     しかしクエリキャッシュサブモジュールに考慮漏れがあり、<command>MERGE</command>文実行時にクエリキャッシュが無効化されていませんでした。
+    </para>
+    <para>
+     この問題はNadav Shatzによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260407.090802.1335576118037412011.ishii%40postgresql.org">Re: Proposal: Recent mutated table tracking in memory</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-06 [0316f828c]
+    -->
+    <para>
+     SSLモジュールでのメモリリークを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     不正なDHパラメータが指定された場合に、<function>load_dh_file()</function>でメモリリークが発生する問題を修正しました。
+     この関数は<function>PEM_read_DHparams()</function>が返したメモリを解放していませんでした。
+
+     また同じファイル内のコピーライト表示を修正し、元の<productname>PostgreSQL</productname>のコピーライトを保持するようにしました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260403.091842.102589579921239540.ishii%40postgresql.org">Memory leak in SSL module</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-31 [51ffc75b2]
+    -->
+    <para>
+     <command>SET transaction_read_only = 0</command>の誤ったルーティングを修正しました。(Bo Peng)
+    </para>
+    <para>
+     <command>SET transaction_read_only = 0</command>がstandbyノードに誤って送られ、クエリエラーが発生する問題を修正しました。
+     また、不適切なbool型の<varname>ret = POOL_BOTH</varname>を適切なenum型に修正しました。
+    </para>
+    <para>
+     この問題はliujinyang-highgoによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/155">set command ‘set transaction_read_only = 0;‘ routed to standby node and execute failed.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-25 [4a522dda0]
+    -->
+    <para>
+     <function>where_to_send_main_replica()</function>の不要なSTREAMチェックを削除しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     このチェックは既に<function>check_replication_delay()</function>で行われています。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-20 [39a433adf]
+    -->
+    <para>
+     セッションローカルのリレーションのキャッシュの処理を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>pool_search_relcache()</function>において、セッションローカルのリレーションのキャッシュが誤って共有リレーションのキャッシュに登録される問題を修正しました。
+     一時テーブル情報が共有リレーションのキャッシュに登録されることで、後続クエリが古いキャッシュ情報を使用し、クエリが誤ったノードにルーティングされる可能性がありました。
+     この修正により、セッションローカルのキャッシュの一時テーブル情報は共有リレーションのキャッシュに登録しないようにしました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/154">query temp table is routed to standby node.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-19 [a804cc786]
+    -->
+    <para>
+     <function>pool_search_relcache()</function>のロック解放漏れを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     共有リレーションのキャッシュ更新時に、排他ロックを再取得した後のロック状態が正しく更新されず、共有メモリのロックが解放されない可能性がありました。
+     また、分かりづらい変数名<varname>locked</varname>を<varname>locked_by_others</varname>に変更し、不要な<varname>per_node_statement_log</varname>出力も修正しました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260317.182615.1046517700474336117.ishii%40postgresql.org">Lock release leak in pool_search_relcache</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-09 [552c40db7]
+    -->
+    <para>
+     フォーク前に不要なリッスン中のソケットを閉じるようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     フォークされた子プロセスが不要なpgpoolおよびPCPがリッスン中のソケットを継承してしまう問題を修正しました。
+     以前はpcpのメインプロセス、ヘルスチェックプロセス、ライフチェックプロセスなどが使用しないリッスン中のソケットを保持していました。
+     その結果、次回pgpool起動時にポートのバインドに失敗する可能性がありました。
+     この修正により、<function>close_listening_sockets()</function>を使用して、
+     フォーク後に不要なリッスン中のソケットを閉じるようにしました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260302.100028.1346768433787074248.ishii%40postgresql.org">Close listening socokets before forking</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-03-04 [47835089c]
+    -->
+    <para>
+     <varname>ignore_leading_white_space</varname>および<varname>allow_sql_comments</varname>のドキュメントを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     デフォルト値の説明が不足していました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-03-25 [84e850ad0]
+    -->
+    <para>
+     以前のコミットに対する001.load_balanceテストを追加しました。(Tatsuo Ishii)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-6-6">
  <title>リリース 4.6.6</title>
  <note>
