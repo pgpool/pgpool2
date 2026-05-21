@@ -1,6 +1,183 @@
 <!-- doc/src/sgml/release-4.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+<sect1 id="release-4-3-20">
+ <title>Release 4.3.20</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2026-05-22</simpara>
+ </note>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-05-21 [a70e6e82e]
+    -->
+    <para>
+     Fix <xref linkend="guc-primary-routing-query-pattern-list"> retains old values after reload (Taiki Koshino)
+    </para>
+    <para>
+     Previously, old regex patterns remained after reload and new entries were appended.
+     This affected <xref linkend="guc-primary-routing-query-pattern-list">,
+     <xref linkend="guc-write-function-list">,
+     <xref linkend="guc-read-only-function-list">,
+     <xref linkend="guc-cache-safe-memqcache-table-list">, and
+     <xref linkend="guc-cache-unsafe-memqcache-table-list">.
+
+     The fix clears existing regex arrays before applying new configuration values.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/151">primary_routing_query_pattern_list is appended instead of overwritten on reload</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-19 [fff3614c1]
+    -->
+    <para>
+     Keep local primary_node_id when leader watchdog reports the initial -2 sentinel. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix a watchdog synchronization issue after simultaneous restart of all pgpool nodes,
+     where standby nodes could overwrite a valid primary_node_id with the initial -2 sentinel
+     value and remain stuck in an uninitialized state indefinitely. Fix is, keep the local
+     primary_node_id when the leader reports the initial -2 sentinel.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij and Claude Code.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BZmBoLs3Mz%3DG-Bdm4JJG%2BfH1NpHfR3qVJVwW4eBKWwStQ%40mail.gmail.com">Primary node detection race at clean startup</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-19 [6c5abed3b]
+    -->
+    <para>
+     Fix empty query case in aborted transaction. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix empty queries in aborted transactions incorrectly raising errors.
+     Empty queries should be allowed in aborted transactions,
+     but a previous commit caused <function>check_transaction_state_and_abort()</function> to reject them.
+     Fix is, detect empty queries in <function>SimpleQuery()</function> and bypass the check.
+    </para>
+    <para>
+     Problem reported by Ronaldo Raivil.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/161">pgpool >= 4.3.2 synthesizes 25P02 on driver health-check probes inside aborted savepoints, breaking ORMs that need to call ROLLBACK TO SAVEPOINT</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-05-06 [a4a33bfe9]
+    -->
+    <para>
+     Fix description about <varname>ssl_dh_params_file</varname>. (Tatsuo Ishii)
+    </para>
+    <para>
+     It actually falls back to compiled-in default not only when the
+     parameter is empty (the default), but when specified parameter is
+     incorrect one.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-27 [b34d56db0]
+    -->
+    <para>
+     Fix PCP main process to remember child pids upon restarting. (Tatsuo Ishii)
+    </para>
+    <para>
+     Upon failover/failback, pgpool main process sends a signal to PCP main
+     process to request restarting, and PCP main restarts. Problem is, when
+     PCP main restarts, it forgets the list of pids of its child PCP worker
+     process.
+
+     As a result, commands such as <command>pcp_promote_node</command> could hang indefinitely.
+     Fix is, store PCP worker PIDs in shared memory so they survive PCP main restart.
+    </para>
+    <para>
+     Problem reported by Taiki Koshino.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260425.223051.1207744844622514060.ishii%40postgresql.org">Problem with pcp process</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-09 [cb7413bd4]
+    -->
+    <para>
+     Fix version mismatch: regenerate configure for 4.3.19. (Bo Peng)
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-04-06 [a8035af0a]
+    -->
+    <para>
+     Fix memory leak in a SSL module. (Tatsuo Ishii)
+    </para>
+    <para>
+     Fix a memory leak in <function>load_dh_file()</function> when invalid DH parameters are supplied.
+     The function failed to free memory returned by <function>PEM_read_DHparams()</function>.
+     Also update the copyright notice in the same file to retain the original <productname>PostgreSQL</productname> copyright.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260403.091842.102589579921239540.ishii%40postgresql.org">Memory leak in SSL module</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-03-31 [9b61828d9]
+    -->
+    <para>
+     Fix incorrect routing of <command>SET transaction_read_only = 0</command>. (Bo Peng)
+    </para>
+    <para>
+     Fix incorrect routing of <command>SET transaction_read_only = 0</command> to standby node, which caused query errors.
+     Also replace incorrect bool ret = POOL_BOTH with the proper enum type.
+    </para>
+    <para>
+     Problem reported by liujinyang-highgo.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/155">set command 'set transaction_read_only = 0;' routed to standby node and execute failed.</ulink>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-03-04 [e102cefd7]
+    -->
+    <para>
+     Doc: fix <varname>ignore_leading_white_space</varname> and <varname>allow_sql_comments</varname> docs. (Tatsuo Ishii)
+    </para>
+    <para>
+     They lacked a description on the default values.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-3-19">
  <title>Release 4.3.19</title>
  <note>
