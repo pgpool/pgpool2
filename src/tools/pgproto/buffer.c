@@ -93,13 +93,23 @@ buffer_read_string(char *buf, char **bufp)
 
 	do
 	{
-		/* skip '\' */
-		if (*buf == '\\')
+		/* check "\n" */
+		if ((buf + 2) >= (str + len) && *buf == '\\' && *(buf + 1) == 'n')
 		{
-			buf++;
+			*p++ = '\n';
+			buf += 2;
 		}
 
-		*p++ = *buf++;
+		else
+		{
+			/* skip '\' */
+			if (*buf == '\\')
+			{
+				buf++;
+			}
+
+			*p++ = *buf++;
+		}
 	} while (*buf && *buf != '\n' && *buf != '\t');
 
 	if (p == str || *(p - 1) != '"')

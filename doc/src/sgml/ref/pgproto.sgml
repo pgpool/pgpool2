@@ -160,6 +160,17 @@ Pgpool-II documentation
    </programlisting>
   </para>
   <para>
+   You can insert a new line by using "\n" if you want to use some
+   commands like COPY.  Below is an example.
+   <programlisting>
+    'Q'	"COPY t1 FROM STDIN"
+    'd'	"1\n"
+    'd'	"2\n"
+    'c'
+    'Y'
+   </programlisting>
+  </para>
+  <para>
    Here is an example input file:
    <programlisting>
     #
@@ -233,7 +244,7 @@ Pgpool-II documentation
     #
     'Q'	"COPY t1 FROM STDIN"
     # CopyData
-    'd'	"abc"
+    'd'	"abc\n"
     # CopyDone
     'c'
     'Y'
@@ -248,7 +259,7 @@ Pgpool-II documentation
     #
     'Q'	"COPY t1 FROM STDIN"
     # CopyData
-    'd'	"abc"
+    'd'	"abc\n"
     # CopyFail
     'f'	"pgproto copy fail test"
     'Y'
