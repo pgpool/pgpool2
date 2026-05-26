@@ -105,7 +105,7 @@ static char* getParsedToken(char *token, DBObjectTypes *object_type);
 static bool check_redirect_node_spec(char *node_spec);
 static char **get_list_from_string(const char *str, const char *delimi, int *n);
 static char **get_list_from_string_regex_delim(const char *str, const char *delimi, int *n);
-static void clear_regex_pattern(RegPattern **patterns, int *count, int *size);
+
 
 /*show functions */
 static const char *IntValueShowFunc(int value);
@@ -4052,32 +4052,8 @@ setConfigOptionVar(struct config_generic *record, const char *name, int index_va
 
 					if (conf->compute_regex)
 					{
+						/* TODO clear the old regex array please */
 						int			i;
-
-						/* Clear old regex array for this pattern type before adding */
-						if (conf->gen.name)
-						{
-							if (strcmp(conf->gen.name, "write_function_list") == 0 ||
-								strcmp(conf->gen.name, "read_only_function_list") == 0)
-							{
-								clear_regex_pattern(&pool_config->lists_patterns,
-													&pool_config->pattc,
-													&pool_config->current_pattern_size);
-							}
-							else if (strcmp(conf->gen.name, "cache_safe_memqcache_table_list") == 0 ||
-									 strcmp(conf->gen.name, "cache_unsafe_memqcache_table_list") == 0)
-							{
-								clear_regex_pattern(&pool_config->lists_memqcache_table_patterns,
-													&pool_config->memqcache_table_pattc,
-													&pool_config->current_memqcache_table_pattern_size);
-							}
-							else if (strcmp(conf->gen.name, "primary_routing_query_pattern_list") == 0)
-							{
-								clear_regex_pattern(&pool_config->lists_query_patterns,
-													&pool_config->query_pattc,
-													&pool_config->current_query_pattern_size);
-							}
-						}
 
 						for (i = 0; i < *conf->list_elements_count; i++)
 						{
@@ -5120,46 +5096,6 @@ getParsedToken(char *token, DBObjectTypes *object_type)
 	}
 	*object_type = OBJECT_TYPE_RELATION;
 	return pstrdup(token);
-}
-
-/*
- * Release all resources associated with regex patterns.
- * the function frees all compiled regex objects and
- * corresponding pattern strings stored in patterns.
- * We also free the pattern array itself and reset
- * count and size to zero.
- *
- * patterns is the regex pattern array.
- * count is the number of valid entries in patterns.
- * size is the allocated size of patterns array.
- */
-static void
-clear_regex_pattern(RegPattern **patterns, int *count, int *size)
-{
-	if (patterns == NULL)
-	{
-#ifndef POOL_PRIVATE
-		elog(FATAL, "invalid patterns state");
-#else
-		return;
-#endif
-	}
-
-	if (*patterns)
-	{
-		for (int i = 0; i < *count; i++)
-		{
-			if ((*patterns)[i].pattern)
-				pfree((*patterns)[i].pattern);
-			regfree(&(*patterns)[i].regexv);
-		}
-
-		pfree(*patterns);
-	}
-
-	*patterns = NULL;
-	*count = 0;
-	*size = 0;
 }
 
 static bool
