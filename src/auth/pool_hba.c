@@ -1927,7 +1927,7 @@ tokenize_inc_file(List *tokens,
 		/* relative path is relative to dir of calling file */
 		inc_fullname = (char *) palloc(strlen(outer_filename) + 1 +
 									   strlen(inc_filename) + 1);
-		strcpy(inc_fullname, outer_filename);
+		snprintf(inc_fullname, strlen(outer_filename) + 1, "%s", outer_filename);
 		get_parent_directory(inc_fullname);
 		join_path_components(inc_fullname, inc_fullname, inc_filename);
 		canonicalize_path(inc_fullname);
@@ -2650,6 +2650,29 @@ InitializeLDAPConnection(POOL_CONNECTION *frontend, LDAP **ldap)
  * occurrences of the placeholder "$username" replaced with "user_name".
  */
 static char *
+escape_ldap_value(const char *str)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+	for (; *str; str++)
+	{
+		switch (*str)
+		{
+			case '*':
+			case '(':
+			case ')':
+			case '\\':
+				appendStringInfo(&buf, "\\%02x", (unsigned char) *str);
+				break;
+			default:
+				appendStringInfoChar(&buf, *str);
+		}
+	}
+	return buf.data;
+}
+
+static char *
 FormatSearchFilter(const char *pattern, const char *user_name)
 {
 	StringInfoData output;
@@ -2797,12 +2820,17 @@ CheckLDAPAuth(POOL_CONNECTION *frontend)
 		}
 
 		/* Build a custom filter or a single attribute filter? */
-		if (frontend->pool_hba->ldapsearchfilter)
-			filter = FormatSearchFilter(frontend->pool_hba->ldapsearchfilter, frontend->username);
-		else if (frontend->pool_hba->ldapsearchattribute)
-			filter = psprintf("(%s=%s)", frontend->pool_hba->ldapsearchattribute, frontend->username);
-		else
-			filter = psprintf("(uid=%s)", frontend->username);
+		{
+			char	   *escaped_username = escape_ldap_value(frontend->username);
+
+			if (frontend->pool_hba->ldapsearchfilter)
+				filter = FormatSearchFilter(frontend->pool_hba->ldapsearchfilter, escaped_username);
+			else if (frontend->pool_hba->ldapsearchattribute)
+				filter = psprintf("(%s=%s)", frontend->pool_hba->ldapsearchattribute, escaped_username);
+			else
+				filter = psprintf("(uid=%s)", escaped_username);
+			pfree(escaped_username);
+		}
 
 		r = ldap_search_s(ldap,
 						  frontend->pool_hba->ldapbasedn,
