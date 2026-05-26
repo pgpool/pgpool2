@@ -228,7 +228,17 @@ Pgpool-II documentation
     WHERE a = 1"
    </programlisting>
   </para>
-
+  <para>
+   COPYコマンドのように、データに改行を含めたい場合は、"\n"を行の最後に置くことができます。
+   例を示します。
+   <programlisting>
+    'Q'	"COPY t1 FROM STDIN"
+    'd'	"1\n"
+    'd'	"2\n"
+    'c'
+    'Y'
+   </programlisting>
+  </para>
   <para>
    <!--
    Here is an example input file:
@@ -312,7 +322,7 @@ Pgpool-II documentation
     #
     'Q'	"COPY t1 FROM STDIN"
     # CopyData
-    'd'	"abc"
+    'd'	"abc\n"
     # CopyDone
     'c'
     'Y'
@@ -327,7 +337,7 @@ Pgpool-II documentation
     #
     'Q'	"COPY t1 FROM STDIN"
     # CopyData
-    'd'	"abc"
+    'd'	"abc\n"
     # CopyFail
     'f'	"pgproto copy fail test"
     'Y'
