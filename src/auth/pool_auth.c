@@ -2148,6 +2148,7 @@ ProcessNegotiateProtocol(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 	int32		protov;
 	bool		forwardMsg = false;
 	int			i;
+	char	   *savep;
 
 	elog(DEBUG1, "Forwarding NegotiateProtocol message to frontend");
 	pool_write(frontend, "v", 1);	/* forward message kind */
@@ -2172,11 +2173,13 @@ ProcessNegotiateProtocol(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			p = pool_read2(CONNECTION(cp, i), len);
 			if (!forwardMsg)
 			{
-				int32	num_unsupported;
-				StringInfoData	buf;
+				int32		num_unsupported;
+				StringInfoData buf;
+
 				pool_write_and_flush(frontend, p, len); /* forward rest of
 														 * message */
 				forwardMsg = true;
+				savep = p;
 
 				/* debug out unsuported messages */
 				memcpy(&num_unsupported, p, sizeof(int32));
@@ -2215,7 +2218,7 @@ ProcessNegotiateProtocol(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			np += sizeof(savelen);
 			memcpy(np, &protov, sizeof(protov));
 			np += sizeof(protov);
-			memcpy(np, p, len);
+			memcpy(np, savep, len);
 		}
 	}
 }
