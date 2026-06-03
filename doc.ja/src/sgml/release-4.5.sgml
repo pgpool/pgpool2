@@ -5,7 +5,7 @@
  <title>リリース 4.5.12</title>
  <note>
   <title>リリース日</title>
-  <simpara>2026-05-22</simpara>
+  <simpara>2026-06-04</simpara>
  </note>
 
  <sect2>
@@ -13,19 +13,14 @@
   <itemizedlist>
    <listitem>
     <!--
-    2026-05-21 [a70e6e82e]
+    2026-05-26 [dc3193fbd]
     -->
     <para>
-     リロード後に<xref linkend="guc-primary-routing-query-pattern-list">の値が残ってしまう問題を修正しました。(Taiki Koshino)
+     <literal>pgproto</literal>で改行データを扱えるようにしました。(Tatsuo Ishii)
     </para>
     <para>
-     以前は、リロード後も古い正規表現パターンが残っており、新しいエントリが追加されていました。
-     これは、<xref linkend="guc-primary-routing-query-pattern-list">、<xref linkend="guc-write-function-list">、<xref linkend="guc-read-only-function-list">、<xref linkend="guc-cache-safe-memqcache-table-list">、および<xref linkend="guc-cache-unsafe-memqcache-table-list">に影響していました。
-
-     今回の修正で新しい設定値を適用する前に、既存の正規表現配列をクリアするようにしました。
-    </para>
-    <para>
-     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/151">primary_routing_query_pattern_list is appended instead of overwritten on reload</ulink>
+     現在は<literal>\n</literal>が改行として認識されます。
+     これは<command>COPY</command>に必要な修正です。
     </para>
    </listitem>
 
