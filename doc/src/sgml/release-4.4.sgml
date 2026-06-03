@@ -5,7 +5,7 @@
  <title>Release 4.4.17</title>
  <note>
   <title>Release Date</title>
-  <simpara>2026-05-22</simpara>
+  <simpara>2026-06-04</simpara>
  </note>
 
  <sect2>
@@ -13,23 +13,13 @@
   <itemizedlist>
    <listitem>
     <!--
-    2026-05-21 [a70e6e82e]
+    2026-05-26 [4eb1fe84a]
     -->
     <para>
-     Fix <xref linkend="guc-primary-routing-query-pattern-list"> retains old values after reload (Taiki Koshino)
+     Allow <literal>pgproto</literal> to accept new line data. (Tatsuo Ishii)
     </para>
     <para>
-     Previously, old regex patterns remained after reload and new entries were appended.
-     This affected <xref linkend="guc-primary-routing-query-pattern-list">,
-     <xref linkend="guc-write-function-list">,
-     <xref linkend="guc-read-only-function-list">,
-     <xref linkend="guc-cache-safe-memqcache-table-list">, and
-     <xref linkend="guc-cache-unsafe-memqcache-table-list">.
-
-     The fix clears existing regex arrays before applying new configuration values.
-    </para>
-    <para>
-     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/151">primary_routing_query_pattern_list is appended instead of overwritten on reload</ulink>
+     Now <literal>"\n"</literal> is recognized as a new line. This is necessary for <command>COPY</command> command.
     </para>
    </listitem>
 
