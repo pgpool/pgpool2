@@ -20,11 +20,24 @@ function del_details_from_error
     cat|sed -e '/ErrorResponse/s/ F .*//' -e '/NoticeResponse/s/ F .*$//'
 }
 
-for mode in s r n
+# s_dlbw* are tests for streaming replication mode + disable_load_balance_on_write
+for mode in s r n \
+	      s_dlbw_trans_transaction \
+	      s_dlbw_dml_adaptive \
+	      s_dlbw_always
 do
+	echo "======== testing mode: $mode ========="
 	rm -fr $TESTDIR
 	mkdir $TESTDIR
 	cd $TESTDIR
+
+	if [[ $mode =~ (s_dlbw_*) ]];then
+	    opt=`echo $mode|sed s"/s_dlbw_//"`
+	    echo $opt
+	    mode="s"
+	else
+	    opt=""
+	fi
 
 # create test environment
 	echo -n "creating test environment..."
@@ -34,6 +47,10 @@ do
 	echo "memory_cache_enabled = on" >> etc/pgpool.conf
 	echo "cache_safe_memqcache_table_list = 'cache_safe_v'" >> etc/pgpool.conf
 	echo "cache_unsafe_memqcache_table_list = 'cache_unsafe_t'" >> etc/pgpool.conf
+	if [ "$opt" != "" ];then
+	    echo "disable_load_balance_on_write = $opt" >> etc/pgpool.conf
+	    echo "set disable_load_balance_on_write = $opt"
+	fi
 
 	source ./bashrc.ports
 
