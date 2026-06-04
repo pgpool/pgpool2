@@ -125,6 +125,7 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 
 	/* We don't have a write query in this transaction yet */
 	pool_unset_writing_transaction();
+	pool_unset_really_writing_transaction();
 
 	/* Error doesn't occur in this transaction yet */
 	pool_unset_failed_transaction();
@@ -731,6 +732,12 @@ pool_unset_writing_transaction(void)
 	}
 }
 
+void
+pool_unset_really_writing_transaction(void)
+{
+	pool_get_session_context(false)->really_writing_transaction = false;
+}
+
 /*
  * We have a write query in this transaction.
  */
@@ -749,6 +756,12 @@ pool_set_writing_transaction(void)
 	}
 }
 
+void
+pool_set_really_writing_transaction(void)
+{
+	pool_get_session_context(false)->really_writing_transaction = true;
+}
+
 /*
  * Do we have a write query in this transaction?
  */
@@ -756,6 +769,15 @@ bool
 pool_is_writing_transaction(void)
 {
 	return pool_get_session_context(false)->writing_transaction;
+}
+
+/*
+ * Do we really have a write query in this transaction?
+ */
+bool
+pool_is_really_writing_transaction(void)
+{
+	return pool_get_session_context(false)->really_writing_transaction;
 }
 
 /*

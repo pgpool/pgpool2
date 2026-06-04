@@ -198,8 +198,22 @@ typedef struct
 	/* If true, the command in progress has finished successfully. */
 	bool		command_success;
 
-	/* If true, write query has been appeared in this transaction */
+	/*
+	 * If true, write query has been appeared in this transaction.  Note that
+	 * the flag may not be turned off even if a transaction is started or
+	 * committed if disable_load_balance_on_write is other than "transaction".
+	 * Also if disable_load_balance_on_write is "dml_adaptive", the flag is
+	 * never be turned on.
+	 */
 	bool		writing_transaction;
+
+	/*
+	 * Unlike "writing_transaction", this flag is turned on whenever writing
+	 * query is issued in an explicit transaction, and is turned off when the
+	 * transaction is closed. Of course turned off when new transaction
+	 * starts. This flag is referenced by query cache.
+	*/
+	bool		really_writing_transaction;
 
 	/* If true, error occurred in this transaction */
 	bool		failed_transaction;
@@ -352,8 +366,11 @@ extern void pool_set_sent_message_state(POOL_SENT_MESSAGE * message);
 extern void pool_zap_query_context_in_sent_messages(POOL_QUERY_CONTEXT *query_context);
 extern POOL_SENT_MESSAGE * pool_get_sent_message_by_query_context(POOL_QUERY_CONTEXT * query_context);
 extern void pool_unset_writing_transaction(void);
+extern void pool_unset_really_writing_transaction(void);
 extern void pool_set_writing_transaction(void);
+extern void pool_set_really_writing_transaction(void);
 extern bool pool_is_writing_transaction(void);
+extern bool pool_is_really_writing_transaction(void);
 extern void pool_unset_failed_transaction(void);
 extern void pool_set_failed_transaction(void);
 extern bool pool_is_failed_transaction(void);
