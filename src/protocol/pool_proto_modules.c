@@ -268,7 +268,7 @@ SimpleQuery(POOL_CONNECTION * frontend,
 	 * Also query cache is disabled, we should not fetch from query cache.
 	 */
 	if (pool_config->memory_cache_enabled && is_likely_select &&
-		!pool_is_writing_transaction() &&
+		!pool_is_really_writing_transaction() &&
 		TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E' &&
 		!query_cache_disabled())
 	{
@@ -1018,7 +1018,7 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	 * message has 0 row argument, we maybe able to use cache.
 	 * If partial_fetch is true, cannot use cache.
 	 */
-	if (pool_config->memory_cache_enabled && !pool_is_writing_transaction() &&
+	if (pool_config->memory_cache_enabled && !pool_is_really_writing_transaction() &&
 		(TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != 'E')
 		&& pool_is_likely_select(query) && !query_cache_disabled() &&
 		(query_context->atEnd || num_rows == 0) &&
@@ -1262,6 +1262,8 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 				if (!pool_is_transaction_read_only(node))
 				{
 					pool_set_writing_transaction();
+					if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T')
+						pool_set_really_writing_transaction();
 				}
 			}
 		}
@@ -4656,7 +4658,7 @@ pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 	{
 		if (pool_config->disable_load_balance_on_write != DLBOW_TRANS_TRANSACTION)
 			pool_unset_writing_transaction();
-
+		pool_unset_really_writing_transaction();
 		pool_unset_failed_transaction();
 		pool_unset_transaction_isolation();
 	}
@@ -4670,7 +4672,7 @@ pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 	{
 		if (pool_config->disable_load_balance_on_write != DLBOW_TRANS_TRANSACTION)
 			pool_unset_writing_transaction();
-
+		pool_unset_really_writing_transaction();
 		pool_unset_failed_transaction();
 		pool_unset_transaction_isolation();
 	}
@@ -4715,6 +4717,13 @@ pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backe
 						(errmsg("not SET TRANSACTION READ ONLY")));
 
 				pool_set_writing_transaction();
+
+				/*
+				 * In case in transaction, we need to
+				 * really_writing_transaction so that query cache is disabled.
+				 */
+				if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) == 'T')
+					pool_set_really_writing_transaction();
 			}
 		}
 

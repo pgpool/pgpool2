@@ -4151,6 +4151,7 @@ start_internal_transaction(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * ba
 				/* Mark that we started new transaction */
 				INTERNAL_TRANSACTION_STARTED(backend, i) = true;
 				pool_unset_writing_transaction();
+				pool_unset_really_writing_transaction();
 			}
 		}
 	}
