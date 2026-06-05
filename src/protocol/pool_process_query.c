@@ -3382,9 +3382,9 @@ read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		read_kind_from_one_backend(frontend, backend, (char *) &kind, MAIN_NODE_ID);
 
 		/*
-		 * If we received a notification message in native replication mode,
-		 * other backends will not receive the message. So we should skip
-		 * other nodes otherwise we will hang in pool_read.
+		 * If we received a notification message in streaming replication
+		 * mode, other backends will not receive the message. So we should
+		 * skip other nodes. Otherwise we will hang in pool_read.
 		 */
 		if (kind == 'A')
 		{
