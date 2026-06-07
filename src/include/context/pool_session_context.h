@@ -299,6 +299,13 @@ typedef struct
 	bool		suspend_reading_from_frontend;
 
 	/*
+	 * Do not read messages from frontend until COP-IN response ('G') received
+	 * from backend. Used in extended protocol + streaming replication.  This
+	 * flag is set when execute COPY FROM STDIN.
+	 */
+	bool		suspend_reading_from_frontend_copy_in;
+
+	/*
 	 * Temp tables list
 	 */
 	List	   *temp_tables;
@@ -411,6 +418,10 @@ extern int	pool_get_minor_version(void);
 extern bool pool_is_suspend_reading_from_frontend(void);
 extern void pool_set_suspend_reading_from_frontend(void);
 extern void pool_unset_suspend_reading_from_frontend(void);
+
+extern bool pool_is_suspend_reading_from_frontend_copy_in(void);
+extern void pool_set_suspend_reading_from_frontend_copy_in(void);
+extern void pool_unset_suspend_reading_from_frontend_copy_in(void);
 
 extern void pool_temp_tables_init(void);
 extern void pool_temp_tables_destroy(void);
