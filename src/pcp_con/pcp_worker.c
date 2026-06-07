@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2022	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -883,6 +883,8 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 			char		role_str[10];
 			char		standby_delay_str[20];
 			char		status_changed_time_str[20];
+			char		repl_state[NAMEDATALEN];
+			char		repl_sync_state[NAMEDATALEN];
 			char		code[] = "NodeInfo";
 			BackendInfo *bi = NULL;
 			SERVER_ROLE role;
@@ -896,6 +898,16 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 				ereport(ERROR,
 						(errmsg("informing node info failed"),
 						errdetail("invalid node ID")));
+
+			/*
+			 * Snapshot the replication state strings, which the sr-check
+			 * worker rewrites lock-free in shared memory.  They are used for
+			 * both the packet length (wsize) and the payload below; reading
+			 * them live twice could make the length disagree with the bytes
+			 * written and desync the PCP stream, hanging the client.
+			 */
+			strlcpy(repl_state, bi->replication_state, sizeof(repl_state));
+			strlcpy(repl_sync_state, bi->replication_sync_state, sizeof(repl_sync_state));
 
 			snprintf(port_str, sizeof(port_str), "%d", bi->backend_port);
 			snprintf(status, sizeof(status), "%d", bi->backend_status);
@@ -933,8 +945,8 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 						  strlen(role_str) + 1 +
 						  strlen(nodes[i].pg_role) + 1 +
 						  strlen(standby_delay_str) + 1 +
-						  strlen(bi->replication_state) + 1 +
-						  strlen(bi->replication_sync_state) + 1 +
+						  strlen(repl_state) + 1 +
+						  strlen(repl_sync_state) + 1 +
 						  strlen(status_changed_time_str) + 1 +
 						  sizeof(int));
 			pcp_write(frontend, &wsize, sizeof(int));
@@ -948,8 +960,8 @@ inform_node_info(PCP_CONNECTION * frontend, char *buf)
 			pcp_write(frontend, role_str, strlen(role_str) + 1);
 			pcp_write(frontend, nodes[i].pg_role, strlen(nodes[i].pg_role) + 1);
 			pcp_write(frontend, standby_delay_str, strlen(standby_delay_str) + 1);
-			pcp_write(frontend, bi->replication_state, strlen(bi->replication_state) + 1);
-			pcp_write(frontend, bi->replication_sync_state, strlen(bi->replication_sync_state) + 1);
+			pcp_write(frontend, repl_state, strlen(repl_state) + 1);
+			pcp_write(frontend, repl_sync_state, strlen(repl_sync_state) + 1);
 			pcp_write(frontend, status_changed_time_str, strlen(status_changed_time_str) + 1);
 			do_pcp_flush(frontend);
 		}
