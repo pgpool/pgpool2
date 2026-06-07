@@ -3101,7 +3101,8 @@ static bool
 is_cache_empty(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend)
 {
 	/* Are we suspending reading from frontend? */
-	if (!pool_is_suspend_reading_from_frontend())
+	if (!pool_is_suspend_reading_from_frontend() &&
+		!pool_is_suspend_reading_from_frontend_copy_in())
 	{
 		/*
 		 * If SSL is enabled, we need to check SSL internal buffer is empty or not
@@ -3818,10 +3819,10 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 	/*
 	 * If we are in in streaming replication mode and we doing an extended
 	 * query, check the kind we just read.  If it's one of 'D' (data row), 'E'
-	 * (error), 'N' (notice), 'H' (CopyOutResponse), 'd' (CopyData) or 'c'
-	 * (CopyDone) and the head of the pending message queue was 'execute', the
-	 * message must not be pulled out so that next Command Complete message
-	 * from backend matches the execute message.
+	 * (error), 'N' (notice), 'G' (CopyInResponse), 'H' (CopyOutResponse), 'd'
+	 * (CopyData) or 'c' (CopyDone) and the head of the pending message queue
+	 * was 'execute', the message must not be pulled out so that next Command
+	 * Complete message from backend matches the execute message.
 	 *
 	 * Also if it's 't' (parameter description) and the pulled message was
 	 * 'describe', the message must not be pulled out so that the row
@@ -3831,7 +3832,8 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 	{
 		if ((msg->type == POOL_EXECUTE &&
 			 (*decided_kind == 'D' || *decided_kind == 'E' ||
-			  *decided_kind == 'N' || *decided_kind == 'H' ||
+			  *decided_kind == 'N' ||
+			  *decided_kind == 'G' || *decided_kind == 'H' ||
 			  *decided_kind == 'd' || *decided_kind == 'c')) ||
 			(msg->type == POOL_DESCRIBE && *decided_kind == 't'))
 		{

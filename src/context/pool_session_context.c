@@ -142,6 +142,9 @@ pool_init_session_context(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * bac
 	/* Unset suspend reading from frontend flag */
 	pool_unset_suspend_reading_from_frontend();
 
+	/* Unset suspend reading from frontend (copy in) flag */
+	pool_unset_suspend_reading_from_frontend_copy_in();
+
 	/*
 	 * Reset flag to indicate difference in number of affected tuples in
 	 * UPDATE/DELETE.
@@ -1785,6 +1788,33 @@ void
 pool_unset_suspend_reading_from_frontend(void)
 {
 	session_context->suspend_reading_from_frontend = false;
+}
+
+/*
+ * Is suspend_reading_from_frontend_copy_in flag set?
+ */
+bool
+pool_is_suspend_reading_from_frontend_copy_in(void)
+{
+	return session_context->suspend_reading_from_frontend_copy_in;
+}
+
+/*
+ * Set suspend_reading_from_frontend_copy_in flag.
+ */
+void
+pool_set_suspend_reading_from_frontend_copy_in(void)
+{
+	session_context->suspend_reading_from_frontend_copy_in = true;
+}
+
+/*
+ * Unset suspend_reading_from_frontend_copy_in flag.
+ */
+void
+pool_unset_suspend_reading_from_frontend_copy_in(void)
+{
+	session_context->suspend_reading_from_frontend_copy_in = false;
 }
 
 /*-----------------------------------------------------------------------
