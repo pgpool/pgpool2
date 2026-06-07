@@ -116,6 +116,8 @@ static POOL_QUERY_CONTEXT *create_dummy_query_context(void);
 
 static void add_sync_pending_message(void);
 
+static void handle_copy_in(POOL_QUERY_CONTEXT *query_context);
+
 /*
  * This is the workhorse of processing the pg_terminate_backend function to
  * make sure that the use of function should not trigger the backend node failover.
@@ -1281,6 +1283,14 @@ Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 				}
 			}
 		}
+		/*
+		 * If the query was COPY FROM STDIN, set
+		 * suspend_reading_from_frontend_copy_in flag so that we do not
+		 * forward CopyData to backend until COPY-IN response comes from
+		 * backend.
+		 */
+		handle_copy_in(query_context);
+
 		pool_unset_query_in_progress();
 	}
 
@@ -1746,6 +1756,7 @@ Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		pool_set_ignore_till_sync();
 		pool_unset_query_in_progress();
 		pool_unset_suspend_reading_from_frontend();
+		pool_unset_suspend_reading_from_frontend_copy_in();
 		if (SL_MODE)
 			pool_discard_except_sync_and_ready_for_query(frontend, backend);
 
@@ -2877,7 +2888,8 @@ ProcessFrontendResponse(POOL_CONNECTION *frontend,
 		return POOL_CONTINUE;
 
 	/* Are we suspending reading from frontend? */
-	if (pool_is_suspend_reading_from_frontend())
+	if (pool_is_suspend_reading_from_frontend() ||
+		pool_is_suspend_reading_from_frontend_copy_in())
 		return POOL_CONTINUE;
 
 	pool_read(frontend, &fkind, 1);
@@ -3189,6 +3201,7 @@ ProcessBackendResponse(POOL_CONNECTION *frontend,
 						(errmsg("processing backend response"),
 						 errdetail("Ready For Query received")));
 				pool_unset_suspend_reading_from_frontend();
+				pool_unset_suspend_reading_from_frontend_copy_in();
 				status = ReadyForQuery(frontend, backend, true, true);
 #ifdef DEBUG
 				extern bool stop_now;
@@ -3505,6 +3518,8 @@ CopyDataRows(POOL_CONNECTION *frontend,
 				char		kind;
 				char	   *contents = NULL;
 
+				pool_unset_suspend_reading_from_frontend_copy_in();
+
 				pool_read(frontend, &kind, 1);
 
 				ereport(DEBUG5,
@@ -3623,6 +3638,17 @@ CopyDataRows(POOL_CONNECTION *frontend,
 	 */
 	if (copyin)
 	{
+		/*
+		 * If we are in extended query protocol, unset query in progress so
+		 * that pool_process_query() main loop read a message from frontend.
+		 * If it's a sync message, it will be forwarded to backend and it
+		 * responds with CommandComplete and ReadyforQuery.
+		 */
+		if (pool_is_doing_extended_query_message())
+		{
+			pool_unset_query_in_progress();
+			return POOL_CONTINUE;
+		}
 		for (i = 0; i < NUM_BACKENDS; i++)
 		{
 			if (VALID_BACKEND(i))
@@ -5411,4 +5437,35 @@ add_sync_pending_message(void)
 		appendStringInfo(&buf, "%d ", pool_get_session_context(false)->sync_map[i]);
 	elog(DEBUG5, "%s", buf.data);
 	pfree(buf.data);
+}
+
+/*
+ * Process "COPY IN" in extended query protocol
+ *
+ * If query is "COPY FROM STDIN", set suspend_reading_from_frontend_copy_in
+ * flag. We want to accept CopyDataRaw from frontend after receiving COPY-IN
+ * response from backend.
+ *
+ * This function should be called in streaming replication mode.
+ */
+static void
+handle_copy_in(POOL_QUERY_CONTEXT *query_context)
+{
+	Node		*node = query_context->parse_tree;
+	CopyStmt	*cst;
+
+	if (!node)
+		return;
+	if (!IsA(node, CopyStmt))
+		return;
+
+	cst = (CopyStmt *) node;
+	if (!cst->is_from || cst->filename != NULL)
+		return;
+
+	/*
+	 * Ok, the query is COPY FROM STDIN.
+	 * Set suspend_reading_from_frontend_copy_in flag,
+	 */
+	pool_set_suspend_reading_from_frontend_copy_in();
 }

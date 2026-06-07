@@ -1,0 +1,31 @@
+FE=> Query (query="CREATE TEMP TABLE copy_in_test AS SELECT I FROM generate_series(1,10) AS i")
+<= BE CommandComplete(SELECT 10)
+<= BE ReadyForQuery(I)
+FE=> Query (query="SELECT * FROM copy_in_test")
+<= BE RowDescription
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE DataRow
+<= BE CommandComplete(SELECT 10)
+<= BE ReadyForQuery(I)
+FE=> Parse(stmt="", query="COPY copy_in_test FROM STDIN")
+FE=> Bind(stmt="", portal="")
+FE=> Execute(portal="")
+FE=> CopyData (copy data="1
+")
+FE=> CopyData (copy data="2
+")
+FE=> CopyDone
+FE=> Sync
+<= BE ParseComplete
+<= BE BindComplete
+<= BE CopyInResponse
+<= BE CommandComplete(COPY 2)
+<= BE ReadyForQuery(I)

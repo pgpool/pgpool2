@@ -1,0 +1,15 @@
+#
+# Test for COPY IN in extended query protocol
+#
+'Q'	"CREATE TEMP TABLE copy_in_test AS SELECT I FROM generate_series(1,10) AS i"
+'Y'
+'Q'	"SELECT * FROM copy_in_test"
+'Y'
+'P'	""	"COPY copy_in_test FROM STDIN"	0
+'B'	""	""	0	0	0
+'E'	""	0
+'d'	"1\n"
+'d'	"2\n"
+'c'
+'S'
+'Y'
