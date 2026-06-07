@@ -80,4 +80,13 @@ if [ ! $? -eq 0 ];then
     ./shutdownall
     exit 1
 fi
+
+#
+# Test case for COPY IN in extended query protocol mode.
+$PGPROTO -d test -f ../pgproto-copy-in.data > copy-in-result 2>&1
+cmp ../copy-in-expected copy-in-result
+if [ ! $? -eq 0 ];then
+    ./shutdownall
+    exit 1
+fi
 ./shutdownall
