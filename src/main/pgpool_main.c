@@ -171,6 +171,7 @@ static void kill_all_children(int sig);
 static pid_t fork_follow_child(int old_main_node, int new_primary, int old_primary);
 static int	read_status_file(bool discard_status);
 static RETSIGTYPE exit_handler(int sig);
+static void do_shutdown(int sig);
 static RETSIGTYPE reap_handler(int sig);
 static RETSIGTYPE sigusr1_handler(int sig);
 static void sigusr1_interrupt_processor(void);
@@ -253,6 +254,12 @@ volatile sig_atomic_t reload_config_request = 0;
 static volatile sig_atomic_t sigusr1_request = 0;
 static volatile sig_atomic_t sigchld_request = 0;
 static volatile sig_atomic_t wakeup_request = 0;
+static volatile sig_atomic_t main_exit_request = 0;	/* set by exit_handler;
+												 * carries the captured signal
+												 * number (SIGTERM/INT/QUIT)
+												 * so the main loop can
+												 * perform the (non-async-safe)
+												 * shutdown work itself. */
 
 static int	pipe_fds[2];		/* for delivering signals */
 
@@ -707,6 +714,13 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			POOL_SETMASK(&UnBlockSig);
 			r = pool_pause(&t);
 			POOL_SETMASK(&BlockSig);
+
+			/*
+			 * If a SIGTERM/SIGINT/SIGQUIT was queued by exit_handler,
+			 * service it immediately rather than waiting another tick.
+			 */
+			if (main_exit_request)
+				do_shutdown(main_exit_request);
 
 			if (pool_config->process_management == PM_DYNAMIC)
 				service_child_processes();
@@ -1290,12 +1304,87 @@ terminate_all_childrens(int sig)
 
 
 /*
- * Pgpool main process exit handler
+ * Pgpool main process exit handler.
+ *
+ * This handler runs in async-signal context: it MUST only call
+ * async-signal-safe primitives (POSIX 2024 2.4.3).  ereport(),
+ * pool_semaphore_lock(), MemoryContext operations, blocking waitpid()
+ * and exit(3) (atexit chain + stdio flush) are all unsafe here.  In a
+ * previous version this body did the full shutdown inline, which could
+ * deadlock or corrupt heap state when SIGTERM/SIGINT/SIGQUIT arrived
+ * while PT_MAIN was inside ereport(), palloc(), or another semop.
+ *
+ * The handler now only records the requested signal number into a
+ * sig_atomic_t flag and writes one byte to the self-pipe so the main
+ * loop's select() returns.  The actual shutdown is performed
+ * synchronously by do_shutdown() from the main loop, where calling
+ * non-async-safe code is permitted.
+ *
+ * If the same signal is delivered to a forked child that has not yet
+ * reset this handler, fall through to proc_exit() unchanged.
  */
 static RETSIGTYPE exit_handler(int sig)
 {
-	int		   *walk;
 	int			save_errno = errno;
+
+	/*
+	 * this could happen in a child process if a signal has been sent before
+	 * resetting signal handler.  proc_exit() ultimately reduces to _exit()
+	 * for non-PT_MAIN processes; calling it from a handler in a child that
+	 * hasn't yet rewired its own handlers is the historical behaviour.
+	 */
+	if (getpid() != mypid)
+	{
+		proc_exit(0);
+		errno = save_errno;
+		return;
+	}
+
+	if (sig != SIGTERM && sig != SIGINT && sig != SIGQUIT)
+	{
+		errno = save_errno;
+		return;
+	}
+
+	/*
+	 * Record the signal for the main loop.  Repeated signals coalesce; the
+	 * first one wins, which matches the previous "exiting" guard.
+	 */
+	if (main_exit_request == 0)
+		main_exit_request = sig;
+
+	/* Wake up the main loop if the self-pipe is set up. */
+	if (pipe_fds[1])
+	{
+		/*
+		 * write() is async-signal-safe.  We deliberately ignore the
+		 * return value: if the pipe is full the main loop will pick the
+		 * flag up on its next select() wake-up anyway.
+		 *
+		 * We do not use "(void) write()" here because it warns "warning:
+		 * ignoring return value of write declared with attribute
+		 * warn_unused_result [-Wunused-result] on gcc -O2 -Wall and some
+		 * platforms enabling _FORTIFY_SOURCE.
+		 */
+		ssize_t		w = write(pipe_fds[1], "\0", 1);
+
+		(void) w;
+	}
+
+	errno = save_errno;
+}
+
+/*
+ * Synchronous shutdown body, invoked from the PT_MAIN main loop when
+ * main_exit_request has been set by exit_handler().  All the work that used
+ * to live inside the signal handler (ereport, pool_semaphore_lock,
+ * waitpid, kill of child group, exit(3)) lives here, in normal context
+ * where it is safe.
+ */
+static void
+do_shutdown(int sig)
+{
+	int		   *walk;
 
 	ereport(LOG,
 			(errmsg("exit handler called (signal: %d)", sig)));
@@ -1303,35 +1392,16 @@ static RETSIGTYPE exit_handler(int sig)
 	POOL_SETMASK(&AuthBlockSig);
 
 	/*
-	 * this could happen in a child process if a signal has been sent before
-	 * resetting signal handler
-	 */
-	if (getpid() != mypid)
-	{
-		POOL_SETMASK(&UnBlockSig);
-		proc_exit(0);
-	}
-
-	if (sig != SIGTERM && sig != SIGINT && sig != SIGQUIT)
-	{
-		POOL_SETMASK(&UnBlockSig);
-		errno = save_errno;
-		return;
-	}
-
-	/*
-	 * Check if another exit handler instance is already running.  It is
-	 * possible that exit_handler is interrupted in the middle by other
-	 * signal.
+	 * Check if another exit handler instance is already running.  Since the
+	 * shutdown now runs serially from the main loop this is mostly a
+	 * belt-and-braces guard, but cheap and harmless to keep.
 	 */
 	if (exiting)
 	{
 		POOL_SETMASK(&UnBlockSig);
-		errno = save_errno;
 		return;
 	}
 
-	/* Check to make sure that other exit handler is not running */
 	pool_semaphore_lock(MAIN_EXIT_HANDLER_SEM);
 	if (exiting == 0)
 	{
@@ -1344,7 +1414,6 @@ static RETSIGTYPE exit_handler(int sig)
 		ereport(LOG,
 				(errmsg("exit handler (signal: %d) called. but exit handler is already in progress", sig)));
 		POOL_SETMASK(&UnBlockSig);
-		errno = save_errno;
 		return;
 	}
 
@@ -5030,6 +5099,16 @@ void
 check_requests(void)
 {
 	sigset_t	sig;
+
+	/*
+	 * Shutdown request?  exit_handler() set main_exit_request to the captured
+	 * signal number; perform the actual (non-async-safe) shutdown here, in
+	 * normal context.  do_shutdown() does not return.
+	 */
+	if (main_exit_request)
+	{
+		do_shutdown(main_exit_request);
+	}
 
 	/*
 	 * Waking child request?
