@@ -79,14 +79,34 @@ static char *get_associated_object_from_dml_adaptive_relations
 POOL_QUERY_CONTEXT *
 pool_init_query_context(void)
 {
-	MemoryContext memory_context = AllocSetContextCreate(QueryContext,
-														 "QueryContextMemoryContext",
-														 ALLOCSET_SMALL_MINSIZE,
-														 ALLOCSET_SMALL_INITSIZE,
-														 ALLOCSET_SMALL_MAXSIZE);
-
-	MemoryContext oldcontext = MemoryContextSwitchTo(memory_context);
+	POOL_SESSION_CONTEXT *session_context;
+	MemoryContext parent;
+	MemoryContext memory_context;
+	MemoryContext oldcontext;
 	POOL_QUERY_CONTEXT *qc;
+
+	/*
+	 * Parent the query context under the session memory context rather than
+	 * the per-iteration QueryContext.  A query context is referenced from the
+	 * session scoped sent message list and pending message list.  These lists
+	 * outlive the QueryContext, which do_child() resets between the iterations
+	 * of its query processing loop (for instance when pool_process_query()
+	 * returns after a backend node was shut down).  If the query context lived
+	 * in QueryContext, such a reset would free it while the message lists
+	 * still reference it, resulting in a use-after-free.  When there is no
+	 * session context (e.g. internal queries issued before a session exists),
+	 * fall back to QueryContext.
+	 */
+	session_context = pool_get_session_context(true);
+	parent = session_context ? session_context->memory_context : QueryContext;
+
+	memory_context = AllocSetContextCreate(parent,
+										   "QueryContextMemoryContext",
+										   ALLOCSET_SMALL_MINSIZE,
+										   ALLOCSET_SMALL_INITSIZE,
+										   ALLOCSET_SMALL_MAXSIZE);
+
+	oldcontext = MemoryContextSwitchTo(memory_context);
 
 	qc = palloc0(sizeof(*qc));
 	qc->memory_context = memory_context;
