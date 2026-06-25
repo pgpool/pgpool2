@@ -151,7 +151,7 @@ exclude=pgpool*
    Here we install <productname>Pgpool-II</productname> using
    <ulink url="https://www.pgpool.net/yum">Pgpool-II official YUM repository</ulink>.
    -->
-   ここでは<ulink url="https://www.pgpool.net/yum"><productname>Pgpool-II</productname>の公式YUMレポジトリ</ulink>を使用してPgpool-IIをインストールします。
+   ここでは<ulink url="https://www.pgpool.net/yum/"><productname>Pgpool-II</productname>の公式YUMレポジトリ</ulink>を使用してPgpool-IIをインストールします。
   </para>
   <para>
    <!--
@@ -165,10 +165,10 @@ exclude=pgpool*
    <!--
    First, install the repository corresponding to your <productname>Pgpool-II</productname>
    version and distribution.
-   For REHL7/9, see <ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">here</ulink>.
+   For REHL9/10, see <ulink url="https://pgpool.net/download/yum/">here</ulink>.
    -->
    まず、Pgpool-IIバージョンとディストリビューションに対応するレポジトリをインストールします。
-   REHL7/9の場合は、<ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">こちら</ulink>を参照してください。
+   REHL9/10の場合は、<ulink url="https://pgpool.net/download/yum/">こちら</ulink>を参照してください。
   </para>
   <programlisting>
 dnf install https://www.pgpool.net/yum/rpms/4.3/redhat/rhel-8-x86_64/pgpool-II-release-4.3-2.noarch.rpm
