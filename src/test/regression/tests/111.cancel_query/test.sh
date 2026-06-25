@@ -23,8 +23,7 @@ export PGPORT=$PGPOOL_PORT
 
 # start pgpool-II
 ./startall
-
-sleep 1
+wait_for_pgpool_startup
 
 # executing long running query
 $PSQL -c "select pg_sleep(10000);" test &
