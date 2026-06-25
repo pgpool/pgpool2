@@ -116,7 +116,7 @@ exclude=pgpool*
   <title>Installing RPM</title>
   <para>
    Here we install <productname>Pgpool-II</productname> using
-   <ulink url="https://www.pgpool.net/yum">Pgpool-II official YUM repository</ulink>.
+   <ulink url="https://www.pgpool.net/yum/">Pgpool-II official YUM repository</ulink>.
   </para>
 
   <para>
@@ -126,7 +126,7 @@ exclude=pgpool*
   <para>
    First, install the repository corresponding to your <productname>Pgpool-II</productname>
    version and distribution.
-   For REHL7/9, see <ulink url="https://www.pgpool.net/mediawiki/index.php/Yum_Repository">here</ulink>.
+   For REHL9/10, see <ulink url="https://pgpool.net/download/yum/">here</ulink>.
   </para>
   <programlisting>
 dnf install https://www.pgpool.net/yum/rpms/4.5/redhat/rhel-8-x86_64/pgpool-II-release-4.5-1.noarch.rpm
