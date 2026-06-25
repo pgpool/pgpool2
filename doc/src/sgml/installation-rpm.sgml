@@ -116,7 +116,7 @@ exclude=pgpool*
   <title>Installing RPM</title>
   <para>
    Here we install <productname>Pgpool-II</productname> using
-   <ulink url="https://www.pgpool.net/yum">Pgpool-II official YUM repository</ulink>.
+   <ulink url="https://www.pgpool.net/yum/">Pgpool-II official YUM repository</ulink>.
   </para>
 
   <para>
