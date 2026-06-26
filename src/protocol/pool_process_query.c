@@ -3534,6 +3534,10 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 				if (major == PROTO_MAJOR_V3)
 				{
 					pool_read(CONNECTION(backend, i), &len, sizeof(len));
+					if (ntohl(len) < sizeof(len))
+						ereport(ERROR,
+								(errmsg("read_kind_from_backend: ErrorResponse length %u is below the %zu-byte minimum",
+										ntohl(len), sizeof(len))));
 					unread_len = sizeof(len);
 					unread_p = palloc(ntohl(len));
 					memcpy(unread_p, &len, sizeof(len));
