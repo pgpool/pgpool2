@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -1035,6 +1035,26 @@ new_connection(POOL_CONNECTION_POOL *p)
 
 	if (active_backend_count > 0)
 	{
+		/*
+		 * A concurrent failover may have changed backend status while we were
+		 * creating connections, leaving my_main_node_id pointing at a node we
+		 * skipped (its slot is NULL). Re-point it at a node we did connect to
+		 * so that MAIN_CONNECTION() never dereferences a NULL slot (e.g. in
+		 * pool_do_auth()).
+		 */
+		if (my_main_node_id < 0 || my_main_node_id >= NUM_BACKENDS ||
+			p->slots[my_main_node_id] == NULL)
+		{
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				if (p->slots[i] != NULL)
+				{
+					my_main_node_id = i;
+					break;
+				}
+			}
+		}
+
 		return p;
 	}
 

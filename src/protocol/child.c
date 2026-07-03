@@ -1470,12 +1470,26 @@ pool_initialize_private_backend_status(void)
 
 	for (i = 0; i < MAX_NUM_BACKENDS; i++)
 	{
-		private_backend_status[i] = BACKEND_INFO(i).backend_status;
+		private_backend_status[i] =
+			*(volatile BACKEND_STATUS *) &BACKEND_INFO(i).backend_status;
 		/* my_backend_status is referred to by VALID_BACKEND macro. */
 		my_backend_status[i] = &private_backend_status[i];
 	}
 
-	my_main_node_id = REAL_MAIN_NODE_ID;
+	my_main_node_id = *(volatile int *) &REAL_MAIN_NODE_ID;
+
+	/*
+	 * REAL_MAIN_NODE_ID and the per-node status are read from shared memory
+	 * non-atomically, so a concurrent failover can leave my_main_node_id
+	 * pointing at a node we just captured as down. Re-point it at the first
+	 * node that is up in our private snapshot; otherwise MAIN_CONNECTION()
+	 * would dereference a connection slot that is never created for a down
+	 * node.
+	 */
+	if (my_main_node_id < 0 || my_main_node_id >= NUM_BACKENDS ||
+		(private_backend_status[my_main_node_id] != CON_UP &&
+		 private_backend_status[my_main_node_id] != CON_CONNECT_WAIT))
+		my_main_node_id = get_next_main_node();
 }
 
 static void
