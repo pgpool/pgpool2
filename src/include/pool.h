@@ -345,7 +345,7 @@ extern int	pool_get_major_version(void);
 extern bool pool_is_node_to_be_sent_in_current_query(int node_id);
 extern int	pool_virtual_main_db_node_id(void);
 
-extern BACKEND_STATUS *my_backend_status[];
+extern volatile BACKEND_STATUS *my_backend_status[];
 extern int	my_main_node_id;
 
 #define VALID_BACKEND(backend_id) \
