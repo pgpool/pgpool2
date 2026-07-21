@@ -271,7 +271,9 @@ static pid_t pgpool_logger_pid = 0; /* pid for pgpool_logger process */
 static pid_t wd_lifecheck_pid = 0;	/* pid for child process handling watchdog
 									 * lifecheck */
 
-BACKEND_STATUS *my_backend_status[MAX_NUM_BACKENDS];	/* Backend status buffer */
+/* Backend status buffer */
+volatile BACKEND_STATUS *my_backend_status[MAX_NUM_BACKENDS];
+
 int			my_main_node_id;	/* Main node id buffer */
 
 /*
@@ -3190,7 +3192,8 @@ initialize_shared_mem_objects(bool clear_memcache_oidmaps)
 
 	for (i = 0; i < MAX_NUM_BACKENDS; i++)
 	{
-		my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
+		my_backend_status[i] =
+			(volatile BACKEND_STATUS *) &(BACKEND_INFO(i).backend_status);
 	}
 
 	/* initialize Req_info */
@@ -3728,7 +3731,8 @@ sync_backend_from_watchdog(void)
 			{
 				BACKEND_INFO(i).backend_status = CON_DOWN;
 				pool_set_backend_status_changed_time(i);
-				my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
+				my_backend_status[i] =
+					(volatile BACKEND_STATUS *) &(BACKEND_INFO(i).backend_status);
 				reload_master_node_id = true;
 				node_status_was_changed_to_down = true;
 				ereport(LOG,
@@ -3747,7 +3751,8 @@ sync_backend_from_watchdog(void)
 
 				BACKEND_INFO(i).backend_status = CON_CONNECT_WAIT;
 				pool_set_backend_status_changed_time(i);
-				my_backend_status[i] = &(BACKEND_INFO(i).backend_status);
+				my_backend_status[i] =
+					(volatile BACKEND_STATUS *) &(BACKEND_INFO(i).backend_status);
 				reload_master_node_id = true;
 
 				ereport(LOG,
