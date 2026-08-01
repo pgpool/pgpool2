@@ -1946,6 +1946,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 	int			num_close_complete;
 	int			state;
 	bool		data_pushed;
+	bool		sent_sync = false;	/* true if we sent a Sync (not Flush) */
 
 	data_pushed = false;
 
@@ -2095,17 +2096,14 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 		pool_write(backend, prepared_name, pname_len);
 
 		/*
-		 * Send sync or flush message. If we are in an explicit transaction,
-		 * sending "sync" is safe because it will not break unnamed portal.
-		 * Also this is desirable because if no user queries are sent after
-		 * do_query(), COMMIT command could cause statement time out, because
-		 * flush message does not clear the alarm for statement time out which
-		 * has been set when do_query() issues query.
+		 * Send Sync message. If we are in an explicit transaction, sending
+		 * "sync" is safe because it will not break user's unnamed portal.  If
+		 * we are not in an explicit transaction, sending a sync message
+		 * closes an unnamed portal.  But next user's bind message will create
+		 * the unnamed portal anyway.
 		 */
-		if (backend->tstate == 'T')
-			pool_write(backend, "S", 1);	/* send "sync" message */
-		else
-			pool_write(backend, "H", 1);	/* send "flush" message */
+		pool_write(backend, "S", 1);	/* send "sync" message */
+		sent_sync = true;
 		len = htonl(sizeof(len));
 		pool_write_and_flush(backend, &len, sizeof(len));
 	}
@@ -2216,7 +2214,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 					return;
 
 				/* If "sync" message was issued, 'Z' is expected. */
-				if (doing_extended && backend->tstate == 'T')
+				if (doing_extended && sent_sync)
 					state |= COMMAND_COMPLETE_RECEIVED;
 				break;
 
@@ -2228,7 +2226,7 @@ do_query(POOL_CONNECTION * backend, char *query, POOL_SELECT_RESULT * *result, i
 				 * If "sync" message was issued, 'Z' is expected, else we are
 				 * done with 'C'.
 				 */
-				if (!doing_extended || backend->tstate != 'T')
+				if (!doing_extended || !sent_sync)
 					state |= COMMAND_COMPLETE_RECEIVED;
 
 				/*
