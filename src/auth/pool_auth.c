@@ -81,6 +81,8 @@ static void authenticate_frontend_clear_text(POOL_CONNECTION *frontend);
 static bool get_auth_password(POOL_CONNECTION *backend, POOL_CONNECTION *frontend, int reauth,
 							  char **password, PasswordType *passwordType);
 static void ProcessNegotiateProtocol(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp);
+static void forward_message_to_frontend(char kind, POOL_CONNECTION *frontend,
+										POOL_CONNECTION_POOL *backend);
 
 /*
  * Do authentication. Assuming the only caller is
@@ -665,34 +667,20 @@ read_kind:
 								 errdetail("BACKEND NOTICE: \"%s\"", message)));
 						pfree(message);
 					}
-					/* process notice message */
-					if (SimpleForwardToFrontend(kind, frontend, cp))
-						ereport(ERROR,
-								(errmsg("authentication failed"),
-								 errdetail("failed to forward message to frontend")));
-					pool_flush(frontend);
+					/* forward the notice message to frontend */
+					forward_message_to_frontend(kind, frontend, cp);
 					break;
 
-					/* process error message */
 				case 'E':
-
 					if (pool_extract_error_message(false, MAIN(cp), protoMajor, true, &message) == 1)
 					{
 						ereport(LOG,
 								(errmsg("backend throws an error message"),
 								 errdetail("%s", message)));
-					}
-
-					SimpleForwardToFrontend(kind, frontend, cp);
-
-					pool_flush(frontend);
-
-					ereport(ERROR,
-							(errmsg("authentication failed, backend node replied with an error"),
-							 errdetail("SERVER ERROR:\"%s\"", message ? message : "could not extract backend message")));
-
-					if (message)
 						pfree(message);
+					}
+					/* forward the error message to frontend */
+					forward_message_to_frontend(kind, frontend, cp);
 					break;
 
 				default:
@@ -2218,4 +2206,64 @@ ProcessNegotiateProtocol(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *cp)
 			memcpy(np, p, len);
 		}
 	}
+}
+
+/*
+ * forward_message_frontend
+ *
+ * Simple version of SimpleForwardToFrontend. Just forward backend message to
+ * frontend.
+ */
+static void
+forward_message_to_frontend(char kind, POOL_CONNECTION *frontend,
+							POOL_CONNECTION_POOL *backend)
+{
+	uint32			len,
+		len1 = 0;
+	char	   *p = NULL;
+	char	   *p1 = NULL;
+	int			sendlen;
+	int			i;
+
+	pool_read(MAIN(backend), &len, sizeof(len));
+
+	len = ntohl(len);
+	if (len < 4)
+		elog(ERROR, "unable to forward message to frontend due to too short message length");
+	len -= 4;
+	len1 = len;
+
+	p = pool_read2(MAIN(backend), len);
+	if (p == NULL)
+		elog(ERROR, "unable to forward message to frontend due to reading from backend failure");
+	p1 = palloc(len);
+	memcpy(p1, p, len);
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (VALID_BACKEND(i) && !IS_MAIN_NODE_ID(i))
+		{
+			pool_read(CONNECTION(backend, i), &len, sizeof(len));
+
+			len = ntohl(len);
+			if (len < 4)
+				elog(ERROR, "unable to forward message to frontend due to too short message length");
+			len -= 4;
+			p = pool_read2(CONNECTION(backend, i), len);
+			if (p == NULL)
+				elog(ERROR, "unable to forward message to frontend due to reading from backend failure");
+			if (len != len1)
+			{
+				elog(DEBUG1, "length does not match between backends. main(%d) %d th backend(%d) kind:(%c)",
+					 len, i, len1, kind);
+			}
+		}
+	}
+
+	/* forward message to frontend */
+	pool_write(frontend, &kind, 1);
+	sendlen = htonl(len1 + 4);
+	pool_write(frontend, &sendlen, sizeof(sendlen));
+	pool_write_and_flush(frontend, p1, len1);
+	pfree(p1);
 }
