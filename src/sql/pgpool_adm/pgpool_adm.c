@@ -3,7 +3,7 @@
  * pgpool_adm.c
  *
  *
- * Copyright (c) 2002-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2026, PostgreSQL Global Development Group
  *
  * Author: Jehan-Guillaume (ioguix) de Rorthais <jgdr@dalibo.com>
  *
@@ -683,6 +683,9 @@ _pcp_health_check_stats(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupledesc, an++, "last_skip_health_check", TIMESTAMPOID, -1, 0);
 	TupleDescInitEntry(tupledesc, an++, "last_failed_health_check", TIMESTAMPOID, -1, 0);
 
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 190000)
+		TupleDescFinalize(tupledesc);
+#endif
 	tupledesc = BlessTupleDesc(tupledesc);
 
 	stats = (POOL_HEALTH_CHECK_STATS *) pcp_get_binary_data(pcpResInfo, 0);
@@ -848,6 +851,11 @@ _pcp_proc_info(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, an++, "client_port", TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, an++, "statement", TEXTOID, -1, 0);
 
+#if defined(PG_VERSION_NUM) && (PG_VERSION_NUM >= 190000)
+		TupleDescFinalize(tupdesc);
+#endif
+		tupdesc = BlessTupleDesc(tupdesc);
+
 		/*
 		 * Generate attribute metadata needed later to produce tuples from raw
 		 * C strings
@@ -923,6 +931,7 @@ _pcp_proc_info(PG_FUNCTION_ARGS)
 	else
 	{
 		/* do when there is no more left */
+		pcp_disconnect(pcpConnInfo);
 		pcp_free_connection(pcpConnInfo);
 		SRF_RETURN_DONE(funcctx);
 	}
