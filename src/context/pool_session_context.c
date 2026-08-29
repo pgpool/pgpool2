@@ -1918,8 +1918,8 @@ pool_temp_tables_delete(char * tablename, POOL_TEMP_TABLE_STATE state)
 		ereport(ERROR,
 				(errmsg("pool_temp_tables_delete: session context is not initialized")));
 
-	ereport(LOG,
-			(errmsg("pool_temp_tables_delete: table: %s state: %d", tablename, state)));
+	elog(DEBUG5, "pool_temp_tables_delete: table: %s state: %d",
+		 tablename, state);
 
 	old_context = MemoryContextSwitchTo(session_context->memory_context);
 
