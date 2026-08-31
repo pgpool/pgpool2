@@ -2020,7 +2020,8 @@ get_health_check_stats(int *nrows)
 
 		/* status last changed */
 		t = bi->status_changed_time;
-		ereport(LOG,(errmsg("status_changed_time %ld", t)));
+		ereport(DEBUG5,
+				(errmsg_internal("status_changed_time %lld", (long long) t)));
 		strftime(stats[i].last_status_change, POOLCONFIG_MAXDATELEN, "%F %T", localtime(&t));
 
 		snprintf(stats[i].total_count, POOLCONFIG_MAXLONGCOUNTLEN, UINT64_FORMAT, health_check_stats[i].total_count);
