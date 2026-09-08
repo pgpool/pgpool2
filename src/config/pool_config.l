@@ -487,6 +487,9 @@ bool pool_get_config(const char *config_file, ConfigContext context)
 	if (res == false || head_p == NULL)
 		return false;
 
+	/* Reset parameters removed from the configuration file during reload. */
+	if (context == CFGCXT_RELOAD)
+		reset_removed_parameters(head_p, context);
 	res = set_config_options(head_p, context, PGC_S_FILE, elevel);
 	FreeConfigVariables(head_p);
 	return res;
