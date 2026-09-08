@@ -75,6 +75,8 @@ static int	num_all_parameters = 0;
 static void initialize_variables_with_default(struct config_generic *gconf);
 static bool config_enum_lookup_by_name(struct config_enum *record, const char *value, int *retval);
 
+static bool parameter_exists(ConfigVariable *head, const char *name);
+void reset_removed_parameters(ConfigVariable *head, ConfigContext context);
 static void build_variable_groups(void);
 static void build_config_variables(void);
 static void initialize_config_gen(struct config_generic *gen);
@@ -3022,6 +3024,136 @@ initialize_variables_with_default(struct config_generic *gconf)
 				break;
 			}
 
+	}
+}
+
+/*
+ * Check if a configuration parameter with the given name exists in the
+ * provided linked list.
+ *
+ * head is the pointer to the head of the configuration variable list.
+ * name is the name of the parameter to search for.
+ *
+ * Returns true if the parameter is found, false otherwise.
+ */
+static bool
+parameter_exists(ConfigVariable *head, const char *name)
+{
+	ConfigVariable *item;
+
+	for (item = head; item; item = item->next)
+	{
+		if (strcmp(item->name, name) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Reset reloadable parameters removed from pgpool.conf.
+ *
+ * Only values previously loaded from pgpool.conf are reset. For dynamic
+ * arrays, the optional index-free value and explicitly indexed values are
+ * checked separately.
+ *
+ * head: Parsed parameters from the current pgpool.conf.
+ * context: Configuration context used to reset the parameters.
+ */
+void
+reset_removed_parameters(ConfigVariable *head, ConfigContext context)
+{
+	int i;
+
+	for (i = 0; i < num_all_parameters; i++)
+	{
+		struct config_generic *gconf = all_parameters[i];
+
+		/* Skip startup-only parameters. */
+		switch (gconf->context)
+		{
+			case CFGCXT_RELOAD:
+			case CFGCXT_PCP:
+			case CFGCXT_SESSION:
+				break;
+
+			case CFGCXT_BOOT:
+			case CFGCXT_INIT:
+				continue;
+		}
+
+		/*
+		 * For dynamic arrays, handle the optional index-free
+		 * value and each explicitly indexed value separately.
+		 */
+		if (gconf->dynamic_array_var)
+		{
+			int j;
+
+			/*
+			 * Reset the index-free value if it is supported,
+			 * absent from the current file, and was
+			 * previously loaded from pgpool.conf.
+			 */
+			if (gconf->flags & ARRAY_VAR_ALLOW_NO_INDEX &&
+				!parameter_exists(head, gconf->name))
+			{
+				struct config_generic *idx_free;
+
+				idx_free = get_index_free_record_if_any(gconf);
+
+				if (idx_free && idx_free->sources[0] == PGC_S_FILE)
+				{
+					setConfigOption(gconf->name, NULL,
+									context, PGC_S_DEFAULT, DEBUG1);
+				}
+			}
+
+			/* Reset each indexed value. */
+			for (j = 0; j < gconf->max_elements; j++)
+			{
+				char namebuf[POOLMAXPATHLEN];
+
+				snprintf(namebuf, sizeof(namebuf),
+						 "%s%d", gconf->name, j);
+
+				if (parameter_exists(head, namebuf))
+					continue;
+
+				/*
+				 * Only reset values that were explicitly
+				 * loaded from the previous pgpool.conf.
+				 */
+				if (gconf->sources[j] != PGC_S_FILE)
+					continue;
+
+				setConfigOption(namebuf, NULL,
+								context, PGC_S_DEFAULT, DEBUG1);
+			}
+		}
+		else
+		{
+			/*
+			 * The scalar parameter is still present
+			 * in pgpool.conf.
+			 */
+			if (parameter_exists(head, gconf->name))
+				continue;
+
+			/*
+			 * Only reset a value that was loaded from
+			 * the previous pgpool.conf.
+			 */
+			if (gconf->sources[0] != PGC_S_FILE)
+				continue;
+
+			/*
+			 * Reset the removed scalar parameter to
+			 * its default value.
+			 */
+			setConfigOption(gconf->name, NULL,
+							context, PGC_S_DEFAULT, DEBUG1);
+		}
 	}
 }
 

@@ -340,7 +340,7 @@ extern bool set_one_config_option(const char *name, const char *value,
 extern bool set_config_options(ConfigVariable *head_p,
 				   ConfigContext context, GucSource source, int elevel);
 
-
+extern void reset_removed_parameters(ConfigVariable *head, ConfigContext context);
 #ifndef POOL_PRIVATE
 extern bool report_config_variable(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, const char *var_name);
 extern bool report_all_variables(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
