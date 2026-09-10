@@ -97,7 +97,7 @@ STRING          \'([^'\n]|\\.)*\'
 
 \n              Lineno++; return POOL_EOL;
 [ \t\r]+        /* eat whitespace */
-#.*$            /* eat comment */
+#.*             /* eat comment */
 
 {KEY}           return POOL_KEY;
 {STRING}        return POOL_STRING;
