@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2018	Tatsuo Ishii
- * Copyright (c) 2018-2022	PgPool Global Development Group
+ * Copyright (c) 2018-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -286,7 +286,7 @@ read_and_process(FILE *fd, PGconn *conn)
 			 * line
 			 */
 			len = strlen(p);
-			if (p[len - 2] != '\\' || p[len - 1] != '\n')
+			if (len < 2 || p[len - 2] != '\\' || p[len - 1] != '\n')
 			{
 				break;
 			}
