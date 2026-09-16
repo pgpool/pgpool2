@@ -115,7 +115,10 @@ pid_t	   *g_hb_receiver_pid = NULL;	/* Array of heart beat receiver child
 										 * pids */
 pid_t	   *g_hb_sender_pid = NULL; /* Array of heart beat sender child pids */
 static volatile sig_atomic_t sigchld_request = 0;
+static volatile sig_atomic_t lifecheck_exit_request = 0;
+static volatile sig_atomic_t lifecheck_exit_signal = 0;
 
+static void process_lifecheck_exit_request(void);
 
 /*
  * handle SIGCHLD
@@ -289,8 +292,26 @@ lifecheck_kill_all_children(int sig)
 static RETSIGTYPE
 lifecheck_exit_handler(int sig)
 {
+	int			save_errno = errno;
+
+	/*
+	 * Flag-only handler. The lifecheck main loop will observe
+	 * lifecheck_exit_request and run the actual shutdown sequence
+	 * (forwarding the signal, reaping children, freeing memory and
+	 * exiting). pfree(), wait(), ereport() and exit(3) are not
+	 * async-signal-safe and must not run from signal context.
+	 */
+	lifecheck_exit_signal = sig;
+	lifecheck_exit_request = 1;
+	errno = save_errno;
+}
+
+static void
+process_lifecheck_exit_request(void)
+{
 	pid_t		wpid;
 	bool		child_killed;
+	int			sig = lifecheck_exit_signal;
 
 	POOL_SETMASK(&AuthBlockSig);
 	ereport(DEBUG1,
@@ -423,6 +444,14 @@ lifecheck_main(void)
 	 */
 	for (i = 0; i < LIFECHECK_GETNODE_WAIT_SEC_COUNT; i++)
 	{
+		/*
+		 * The signal handler only records the shutdown request,
+		 * so process it here while the lifecheck is still
+		 * being initialized.
+		 */
+		if (lifecheck_exit_request)
+			process_lifecheck_exit_request();
+
 		if (fetch_watchdog_nodes_data() == true)
 			break;
 		sleep(1);
@@ -439,6 +468,13 @@ lifecheck_main(void)
 	/* wait until ready to go */
 	while (WD_OK != is_wd_lifecheck_ready())
 	{
+		/*
+		 * Process shutdown requests received before
+		 * entering the main loop.
+		 */
+		if (lifecheck_exit_request)
+			process_lifecheck_exit_request();
+
 		/*
 		 * For the first time we do not emit warning since it is likely the
 		 * life check is not ready.
@@ -476,12 +512,26 @@ lifecheck_main(void)
 		MemoryContextSwitchTo(ProcessLoopContext);
 		MemoryContextResetAndDeleteChildren(ProcessLoopContext);
 
+		/*
+		 * Process a pending shutdown request recorded
+		 * by the signal handler.
+		 */
+		if (lifecheck_exit_request)
+			process_lifecheck_exit_request();
+
 		if (sigchld_request)
 			reaper();
 
 		/* pgpool life check */
 		wd_lifecheck();
 		sleep(pool_config->wd_interval);
+
+		/*
+		 * Process a pending shutdown request recorded
+		 * by the signal handler.
+		 */
+		if (lifecheck_exit_request)
+			process_lifecheck_exit_request();
 	}
 
 	return 0;
