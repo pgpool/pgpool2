@@ -304,6 +304,11 @@ handle_query_context(POOL_CONNECTION_POOL *backend)
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
+	/* parse tree does not exist (this should not happen) */
+	if (session_context->query_context == NULL ||
+		session_context->query_context->parse_tree == NULL)
+		return;
+
 	node = session_context->query_context->parse_tree;
 
 	/*
@@ -333,7 +338,6 @@ handle_query_context(POOL_CONNECTION_POOL *backend)
 	if (pool_config->disable_load_balance_on_write ==
 		DLBOW_DML_ADAPTIVE_GLOBAL &&
 		MAIN_REPLICA &&
-		node != NULL &&
 		!session_context->is_in_transaction &&
 		session_context->transaction_temp_write_oid_list != NIL)
 	{
