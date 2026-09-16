@@ -74,6 +74,9 @@ static volatile sig_atomic_t pcp_got_sighup = 0;
 static volatile sig_atomic_t pcp_restart_request = 0;
 List	   *pcp_worker_children = NULL;
 static volatile sig_atomic_t sigchld_request = 0;
+static volatile sig_atomic_t pcp_exit_request = 0;
+static volatile sig_atomic_t pcp_exit_request_sig = 0;
+static volatile sig_atomic_t pcp_wakeup_request = 0;
 
 static RETSIGTYPE pcp_exit_handler(int sig);
 static RETSIGTYPE wakeup_handler_parent(int sig);
@@ -86,6 +89,7 @@ static void start_pcp_command_processor_process(int port, int *fds);
 static void pcp_child_will_die(int code, Datum arg);
 static void pcp_kill_all_children(int sig);
 static void reaper(void);
+static void process_pcp_exit_request(void);
 static bool pcp_unix_fds_not_isset(int *fds, int num_pcp_fds, fd_set* opt);
 
 
@@ -95,10 +99,21 @@ static bool pcp_unix_fds_not_isset(int *fds, int num_pcp_fds, fd_set* opt);
 		{ \
 			reaper(); \
 		} \
+		if (pcp_wakeup_request) \
+		{ \
+			pcp_wakeup_request = 0; \
+			pcp_kill_all_children(SIGUSR2); \
+		} \
+		if (pcp_exit_request) \
+		{ \
+			process_pcp_exit_request(); \
+		} \
 		if (pcp_restart_request) \
 		{ \
 			ereport(LOG,(errmsg("restart request received in pcp child process"))); \
-			pcp_exit_handler(SIGTERM); \
+			pcp_exit_request = 1; \
+			pcp_exit_request_sig = SIGTERM; \
+			process_pcp_exit_request(); \
 		} \
     } while (0)
 
@@ -443,13 +458,46 @@ reaper(void)
 	}
 }
 
+/*
+ * Async-signal-safe exit handler: just record the request and the
+ * triggering signal number. The pcp_worker_children list is mutated by
+ * non-handler code (lappend_int, list_delete_int) without blocking these
+ * signals, so traversal must happen at a safe point in the main loop via
+ * process_pcp_exit_request().
+ */
 static RETSIGTYPE
 pcp_exit_handler(int sig)
 {
+	pcp_exit_request_sig = sig;
+	pcp_exit_request = 1;
+}
+
+/*
+ * Wakeup signal handler for pcp parent process. Async-signal-safe: just
+ * record the request; the main loop forwards SIGUSR2 to workers at a safe
+ * point where the pcp_worker_children list is not being mutated.
+ */
+static RETSIGTYPE
+wakeup_handler_parent(int sig)
+{
+	pcp_wakeup_request = 1;
+}
+
+/*
+ * Process a pending exit request set by pcp_exit_handler(). Runs in the
+ * main loop, where it is safe to walk pcp_worker_children.
+ */
+static void
+process_pcp_exit_request(void)
+{
+	int			sig;
 	pid_t		wpid;
 	ListCell   *lc;
 
 	POOL_SETMASK(&AuthBlockSig);
+
+	sig = pcp_exit_request_sig;
+	pcp_exit_request = 0;
 
 	pcp_kill_all_children(sig);
 
@@ -476,14 +524,6 @@ pcp_exit_handler(int sig)
 	pcp_worker_children = NULL;
 
 	exit(0);
-}
-
-/* Wakeup signal handler for pcp parent process */
-static RETSIGTYPE
-wakeup_handler_parent(int sig)
-{
-	/* forward wakeup signal to all children */
-	pcp_kill_all_children(SIGUSR2);
 }
 
 static RETSIGTYPE
