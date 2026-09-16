@@ -558,12 +558,16 @@ pool_fetch_cache(POOL_CONNECTION_POOL *backend, const char *query, char **buf, s
 
 /*
  * encode key.
- * create cache key as md5(username + query string + database name)
+ * create cache key as md5(username + NUL + query string + NUL + database name + NUL).
+ * NUL separators prevent collisions between fields whose concatenations
+ * coincide (e.g. user="ab"+db="cd" vs user="a"+db="bcd"), which would
+ * otherwise let one authenticated user read another user's cached results.
  */
 static char *
 encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 {
 	char	   *strkey;
+	char	   *p;
 	int			u_length;
 	int			d_length;
 	int			q_length;
@@ -581,13 +585,26 @@ encode_key(const char *s, char *buf, POOL_CONNECTION_POOL *backend)
 			(errmsg("memcache encode key"),
 			 errdetail("query: \"%s\"", s)));
 
-	length = u_length + d_length + q_length + 1;
+	length = u_length + 1 + q_length + 1 + d_length + 1;
 
 	strkey = (char *) palloc(sizeof(char) * length);
 
-	snprintf(strkey, length, "%s%s%s", backend->info->user, s, backend->info->database);
+	p = strkey;
+	memcpy(p, backend->info->user, u_length);
+	p += u_length;
+	*p++ = '\0';
+	memcpy(p, s, q_length);
+	p += q_length;
+	*p++ = '\0';
+	memcpy(p, backend->info->database, d_length);
+	p += d_length;
+	*p = '\0';
 
-	pool_md5_hash(strkey, strlen(strkey), buf);
+	/*
+	 * Hash the full delimited buffer (length - 1 so the final NUL is
+	 * excluded).
+	 */
+	pool_md5_hash(strkey, length - 1, buf);
 	ereport(DEBUG1,
 			(errmsg("memcache encode key"),
 			 errdetail("`%s' -> `%s'", strkey, buf)));
