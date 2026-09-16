@@ -4770,7 +4770,7 @@ inject_cached_message(POOL_CONNECTION *backend, char *qcache, int qcachelen)
 		pool_push(backend, &kind, sizeof(kind));
 		pool_read(backend, &len, sizeof(len));
 		pool_push(backend, &len, sizeof(len));
-		if ((ntohl(len) - sizeof(len)) > 0)
+		if (ntohl(len) > (uint32) sizeof(len))
 		{
 			buf = pool_read2(backend, ntohl(len) - sizeof(len));
 			pool_push(backend, buf, ntohl(len) - sizeof(len));
