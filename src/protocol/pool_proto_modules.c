@@ -1583,7 +1583,11 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 				pool_set_query_in_progress();
 		}
 
-		if (is_strict_query(query_context->parse_tree))
+		/*
+		 * As in Bind(), start an internal transaction only in replication
+		 * mode. In raw mode it would not be closed by ReadyForQuery().
+		 */
+		if (REPLICATION && is_strict_query(query_context->parse_tree))
 		{
 			start_internal_transaction(frontend, backend, query_context->parse_tree);
 			allow_close_transaction = 1;
