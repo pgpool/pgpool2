@@ -3831,6 +3831,12 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 	 * Also if it's 't' (parameter description) and the pulled message was
 	 * 'describe', the message must not be pulled out so that the row
 	 * description message from backend matches the describe message.
+	 *
+	 * If an ErrorResponse is returned while processing Sync, the Sync
+	 * pending message must also be left in the queue.  This can happen when
+	 * a deferred constraint check fails while committing an implicit
+	 * transaction.  ErrorResponse processing uses the pending Sync message
+	 * to determine that Sync has already been received from the frontend.
 	 */
 	if (SL_MODE && pool_is_doing_extended_query_message() && msg)
 	{
@@ -3839,7 +3845,8 @@ read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backen
 			  *decided_kind == 'N' ||
 			  *decided_kind == 'G' || *decided_kind == 'H' ||
 			  *decided_kind == 'd' || *decided_kind == 'c')) ||
-			(msg->type == POOL_DESCRIBE && *decided_kind == 't'))
+			(msg->type == POOL_DESCRIBE && *decided_kind == 't') ||
+			(msg->type == POOL_SYNC && *decided_kind == 'E'))
 		{
 			ereport(DEBUG5,
 					(errmsg("read_kind_from_backend: pending message was left")));
