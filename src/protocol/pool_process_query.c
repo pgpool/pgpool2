@@ -3364,6 +3364,15 @@ read_kind_from_backend(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 
 				ereport(DEBUG5,
 						(errmsg("read_kind_from_backend: sync pending message exists")));
+
+				/*
+				 * Responses from the node that received Sync have now been
+				 * consumed.  Send the deferred Sync to the primary before
+				 * collecting ReadyForQuery from all participating backends.
+				 */
+				if (pool_has_pipeline_state(
+						POOL_PIPELINE_PRIMARY_SYNC_DEFERRED))
+					forward_deferred_sync_to_primary(backend);
 				pool_unset_ignore_till_sync();
 				pool_pending_message_query_context_dest_set(msg, msg->query_context);
 				session_context->query_context = msg->query_context;
