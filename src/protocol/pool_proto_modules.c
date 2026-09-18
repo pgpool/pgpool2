@@ -3072,6 +3072,7 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 			POOL_QUERY_CONTEXT *query_context;
 			char	   *query;
 			Node	   *node;
+			bool		defer_primary_sync;
 
 		case 'X':				/* Terminate */
 			if (contents)
@@ -3129,7 +3130,6 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 			break;
 
 		case 'S':				/* Sync */
-			bool		defer_primary_sync;
 			if (pool_config->log_client_messages)
 				ereport(LOG,
 						(errmsg("Sync message from frontend.")));
