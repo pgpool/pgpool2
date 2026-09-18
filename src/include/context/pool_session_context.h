@@ -125,6 +125,10 @@ typedef enum
 	POOL_SYNC
 }			POOL_MESSAGE_TYPE;
 
+#define POOL_PIPELINE_PRIMARY_EXECUTED		(1U << 0)
+#define POOL_PIPELINE_STANDBY_EXECUTED		(1U << 1)
+#define POOL_PIPELINE_PRIMARY_SYNC_DEFERRED	(1U << 2)
+
 typedef struct
 {
 	POOL_MESSAGE_TYPE type;
@@ -190,6 +194,25 @@ typedef struct
 
 	/* If true, we are doing extended query message */
 	bool		doing_extended_query_message;
+
+	/*
+	 * If true, an extended-query message has been received from the frontend
+	 * and the terminating frontend Sync message has not been received yet.
+	 */
+	bool		waiting_for_frontend_sync;
+
+	/*
+	 * True if a non-SELECT was executed in the current pipeline since
+	 * the previous frontend Sync.
+	 * This is used only in streaming replication mode.
+	 */
+	bool		pipeline_write_executed;
+
+	/*
+	 * Backend participation and deferred Sync state for the current
+	 * pipeline.
+	 */
+	unsigned char pipeline_state;
 
 	/*
 	 * If true, we have rewritten where_to_send map in the current query
@@ -368,6 +391,15 @@ extern void pool_unset_skip_reading_from_backends(void);
 extern bool pool_is_doing_extended_query_message(void);
 extern void pool_set_doing_extended_query_message(void);
 extern void pool_unset_doing_extended_query_message(void);
+extern bool pool_is_waiting_for_frontend_sync(void);
+extern void pool_set_waiting_for_frontend_sync(void);
+extern void pool_unset_waiting_for_frontend_sync(void);
+extern bool pool_is_pipeline_write_executed(void);
+extern void pool_set_pipeline_write_executed(void);
+extern void pool_unset_pipeline_write_executed(void);
+extern void pool_set_pipeline_state(unsigned char state);
+extern void pool_unset_pipeline_state(unsigned char state);
+extern bool pool_has_pipeline_state(unsigned char state);
 extern bool pool_is_ignore_till_sync(void);
 extern void pool_set_ignore_till_sync(void);
 extern void pool_unset_ignore_till_sync(void);
