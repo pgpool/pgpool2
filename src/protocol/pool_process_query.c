@@ -1813,7 +1813,7 @@ do_error_execute_command(POOL_CONNECTION_POOL * backend, int node_id, int major)
 
 				}
 				memcpy(p, string, len);
-				p += sizeof(len);
+				p += len;
 			}
 		}
 		else
@@ -1834,7 +1834,7 @@ do_error_execute_command(POOL_CONNECTION_POOL * backend, int node_id, int major)
 							 errdetail("not enough space in buffer")));
 				}
 				memcpy(p, string, len);
-				p += sizeof(len);
+				p += len;
 			}
 		}
 	} while (kind != 'E');
