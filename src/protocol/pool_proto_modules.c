@@ -1229,6 +1229,27 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 			pool_extended_send_and_wait(query_context, "E", len, contents, -1, MAIN_NODE_ID, true);
 		}
 
+		/*
+		 * In streaming replication mode, remember whether Execute was sent
+		 * to the primary or a standby in the current pipeline.
+		 */
+		if (pool_is_waiting_for_frontend_sync())
+		{
+			int			i;
+
+			for (i = 0; i < NUM_BACKENDS; i++)
+			{
+				if (!VALID_BACKEND(i) ||
+					!pool_is_node_to_be_sent(query_context, i))
+					continue;
+
+				if (i == PRIMARY_NODE_ID)
+					pool_set_pipeline_state(POOL_PIPELINE_PRIMARY_EXECUTED);
+				else
+					pool_set_pipeline_state(POOL_PIPELINE_STANDBY_EXECUTED);
+			}
+		}
+
 		/* Add pending message */
 		pmsg = pool_pending_message_create('E', len, contents);
 		pool_pending_message_dest_set(pmsg, query_context);
@@ -1280,6 +1301,15 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		pool_unset_query_in_progress();
 	}
 
+	/*
+	 * Remember a non-SELECT executed in the current pipeline so that a
+	 * subsequent SELECT can be sent to every backend.
+	 */
+	if (REPLICATION &&
+		pool_is_waiting_for_frontend_sync() &&
+		!is_select_query(node, query))
+		pool_set_pipeline_write_executed();
+
 	return POOL_CONTINUE;
 }
 
@@ -1302,9 +1332,18 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	POOL_QUERY_CONTEXT *query_context;
 
 	bool		error;
+	bool		is_waiting_for_frontend_sync;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
+
+	/*
+	 * Save whether this Parse belongs to an extended-query cycle that was
+	 * already started by a preceding frontend message.  Mark the cycle as
+	 * started before processing this Parse.
+	 */
+	is_waiting_for_frontend_sync = pool_is_waiting_for_frontend_sync();
+	pool_set_waiting_for_frontend_sync();
 
 	/* Create query context */
 	query_context = pool_init_query_context();
@@ -1464,6 +1503,18 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		pool_where_to_send(query_context, query_context->original_query,
 						   query_context->parse_tree);
 
+		/*
+		 * Native replication and snapshot isolation process backend replies
+		 * synchronously.  Once a non-SELECT has executed in this pipeline,
+		 * send a following SELECT to every backend so that an error aborts the
+		 * implicit transaction on every node.
+		 */
+		if (REPLICATION &&
+			pool_is_pipeline_write_executed() &&
+			is_select_query(query_context->parse_tree,
+							query_context->original_query))
+			pool_setall_node_to_be_sent(query_context);
+
 		if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE && strlen(name) != 0)
 			pool_setall_node_to_be_sent(query_context);
 
@@ -1531,7 +1582,8 @@ Parse(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	{
 		char		kind;
 
-		if (TSTATE(backend, MAIN_NODE_ID) != 'T')
+		if (!is_waiting_for_frontend_sync &&
+			TSTATE(backend, MAIN_NODE_ID) != 'T')
 		{
 			int			i;
 
@@ -2157,6 +2209,64 @@ FunctionCall3(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 }
 
 /*
+ * Send Sync to all valid backends except the primary.
+ *
+ * The primary may contain an uncommitted command from the current implicit
+ * transaction. Its Sync is deferred until the result from the standby is
+ * known.
+ */
+static POOL_STATUS
+forward_sync_except_primary(POOL_CONNECTION_POOL *backend)
+{
+	char		kind = 'S';
+	int			sendlen;
+	int			i;
+
+	sendlen = htonl(sizeof(int));
+
+	for (i = 0; i < NUM_BACKENDS; i++)
+	{
+		if (!VALID_BACKEND(i) || i == PRIMARY_NODE_ID)
+			continue;
+
+		pool_write(CONNECTION(backend, i), &kind, sizeof(kind));
+		pool_write_and_flush(CONNECTION(backend, i),
+							 &sendlen, sizeof(sendlen));
+	}
+
+	return POOL_CONTINUE;
+}
+
+/*
+ * Send a previously deferred frontend Sync to the primary.
+ */
+void
+forward_deferred_sync_to_primary(POOL_CONNECTION_POOL *backend)
+{
+	char		kind = 'S';
+	int			sendlen;
+
+	if (!pool_has_pipeline_state(POOL_PIPELINE_PRIMARY_SYNC_DEFERRED))
+		return;
+
+	sendlen = htonl(sizeof(int));
+
+	if (VALID_BACKEND(PRIMARY_NODE_ID))
+	{
+		ereport(DEBUG1,
+				(errmsg("sending deferred Sync to primary node %d",
+						PRIMARY_NODE_ID)));
+
+		pool_write(CONNECTION(backend, PRIMARY_NODE_ID),
+				   &kind, sizeof(kind));
+		pool_write_and_flush(CONNECTION(backend, PRIMARY_NODE_ID),
+							 &sendlen, sizeof(sendlen));
+	}
+
+	pool_unset_pipeline_state(POOL_PIPELINE_PRIMARY_SYNC_DEFERRED);
+}
+
+/*
  * Process ReadyForQuery('Z') message.
  * If send_ready is true, send 'Z' message to frontend.
  * If cache_commit is true, commit or discard query cache according to
@@ -2307,7 +2417,10 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 	 * transaction.
 	 */
 	/* if (pool_is_query_in_progress() && allow_close_transaction) */
-	if (REPLICATION && allow_close_transaction)
+	if (REPLICATION &&
+		(allow_close_transaction ||
+		 (pool_config->backend_clustering_mode == CM_SNAPSHOT_ISOLATION &&
+		  pool_is_pipeline_write_executed())))
 	{
 		bool internal_transaction_started = INTERNAL_TRANSACTION_STARTED(backend, MAIN_NODE_ID);
 
@@ -2415,7 +2528,22 @@ ReadyForQuery(POOL_CONNECTION * frontend,
 			pool_write(frontend, &state, 1);
 		}
 		pool_flush(frontend);
+
+		/*
+		 * Clear the non-SELECT execution state recorded for the
+		 * completed pipeline.
+		 */
+		pool_unset_pipeline_write_executed();
 	}
+
+	/*
+	 * Clear the backend execution state recorded for the completed
+	 * pipeline in streaming replication mode.
+	 */
+	if (SL_MODE)
+		pool_unset_pipeline_state(POOL_PIPELINE_PRIMARY_EXECUTED |
+								  POOL_PIPELINE_STANDBY_EXECUTED);
+
 
 	if (pool_is_query_in_progress())
 	{
@@ -2744,8 +2872,16 @@ ErrorResponse3(POOL_CONNECTION * frontend,
 	if (ret != POOL_CONTINUE)
 		return ret;
 
-	if (!SL_MODE)
+	if (!SL_MODE || pool_has_pipeline_state(POOL_PIPELINE_PRIMARY_EXECUTED))
 		raise_intentional_error_if_need(backend);
+
+	/*
+	 * If the error came from a standby, raise_intentional_error_if_need()
+	 * has now placed the primary in the aborted state. Send the deferred
+	 * Sync so that the primary rolls back the implicit transaction.
+	 */
+	if (pool_has_pipeline_state(POOL_PIPELINE_PRIMARY_SYNC_DEFERRED))
+		forward_deferred_sync_to_primary(backend);
 
 	return POOL_CONTINUE;
 }
@@ -2962,6 +3098,7 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 		case 'E':				/* Execute */
 			allow_close_transaction = 1;
 			pool_set_doing_extended_query_message();
+			pool_set_waiting_for_frontend_sync();
 			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
 				pool_set_query_in_progress();
 			status = Execute(frontend, backend, len, contents);
@@ -2975,11 +3112,13 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 
 		case 'B':				/* Bind */
 			pool_set_doing_extended_query_message();
+			pool_set_waiting_for_frontend_sync();
 			status = Bind(frontend, backend, len, contents);
 			break;
 
 		case 'C':				/* Close */
 			pool_set_doing_extended_query_message();
+			pool_set_waiting_for_frontend_sync();
 			if (!pool_is_query_in_progress() && !pool_is_ignore_till_sync())
 				pool_set_query_in_progress();
 			status = Close(frontend, backend, len, contents);
@@ -2987,13 +3126,19 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 
 		case 'D':				/* Describe */
 			pool_set_doing_extended_query_message();
+			pool_set_waiting_for_frontend_sync();
 			status = Describe(frontend, backend, len, contents);
 			break;
 
 		case 'S':				/* Sync */
+			bool		defer_primary_sync;
 			if (pool_config->log_client_messages)
 				ereport(LOG,
 						(errmsg("Sync message from frontend.")));
+			defer_primary_sync = SL_MODE &&
+								 pool_has_pipeline_state(POOL_PIPELINE_PRIMARY_EXECUTED |
+														 POOL_PIPELINE_STANDBY_EXECUTED);
+			pool_unset_waiting_for_frontend_sync();
 			pool_set_doing_extended_query_message();
 			if (pool_is_ignore_till_sync())
 				pool_unset_ignore_till_sync();
@@ -3008,7 +3153,21 @@ ProcessFrontendResponse(POOL_CONNECTION * frontend,
 			}
 			else if (!pool_is_query_in_progress())
 				pool_set_query_in_progress();
-			status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
+			if (defer_primary_sync)
+			{
+				ereport(DEBUG1,
+						(errmsg("deferring Sync to primary node %d",
+								PRIMARY_NODE_ID)));
+
+				pool_set_pipeline_state(POOL_PIPELINE_PRIMARY_SYNC_DEFERRED);
+
+				status = forward_sync_except_primary(backend);
+			}
+			else
+			{
+				status = SimpleForwardToBackend(fkind, frontend,
+												backend, len, contents);
+			}
 
 			if (SL_MODE)
 			{
@@ -3663,7 +3822,8 @@ raise_intentional_error_if_need(POOL_CONNECTION_POOL * backend)
 	query_context = session_context->query_context;
 
 	if (MAIN_REPLICA &&
-		TSTATE(backend, PRIMARY_NODE_ID) == 'T' &&
+		(TSTATE(backend, PRIMARY_NODE_ID) == 'T' ||
+		 pool_has_pipeline_state(POOL_PIPELINE_PRIMARY_EXECUTED)) &&
 		PRIMARY_NODE_ID != MAIN_NODE_ID &&
 		query_context &&
 		is_select_query(query_context->parse_tree, query_context->original_query))

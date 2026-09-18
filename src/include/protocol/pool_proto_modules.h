@@ -190,7 +190,7 @@ extern void read_kind_from_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_P
 extern void read_kind_from_one_backend(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend, char *kind, int node);
 extern void do_error_command(POOL_CONNECTION * backend, int major);
 extern void raise_intentional_error_if_need(POOL_CONNECTION_POOL * backend);
-
+extern void forward_deferred_sync_to_primary(POOL_CONNECTION_POOL *backend);
 extern void pool_at_command_success(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend);
 
 /*
