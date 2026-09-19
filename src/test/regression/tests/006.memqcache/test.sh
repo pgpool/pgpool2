@@ -51,6 +51,12 @@ do
 	    echo "set disable_load_balance_on_write = $opt"
 	fi
 
+	# set synchronous replication to avoid replication delay
+	if [ $mode = "s" ];then
+	    echo "synchronous_commit = remote_apply" >> data0/postgresql.conf
+	    echo "synchronous_standby_names = 'server1'" >> data0/postgresql.conf
+	fi
+
 	source ./bashrc.ports
 
 	export PGPORT=$PGPOOL_PORT
@@ -503,6 +509,10 @@ $PGPOOL_SETUP -m s -n 2 || exit 1
 echo "done."
 
 echo "memory_cache_enabled = on" >> etc/pgpool.conf
+# set synchronous replication to avoid replication delay
+echo "synchronous_commit = remote_apply" >> data0/postgresql.conf
+echo "synchronous_standby_names = 'server1'" >> data0/postgresql.conf
+
 cd ..
 
 for i in 1 2 3 4 4 5 6 7
