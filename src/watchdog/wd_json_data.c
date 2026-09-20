@@ -857,7 +857,7 @@ parse_wd_node_function_json(char *json_data, int data_len, char **func_name, int
 	*node_id_set = palloc(sizeof(int) * node_count);
 	for (i = 0; i < node_count; i++)
 	{
-		*node_id_set[i] = value->u.array.values[i]->u.integer;
+		(*node_id_set)[i] = value->u.array.values[i]->u.integer;
 	}
 	json_value_free(root);
 	return true;
