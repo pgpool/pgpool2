@@ -1133,6 +1133,8 @@ json_value_free(json_value *value)
 json_value *
 json_get_value_for_key(json_value *source, const char *key)
 {
+	if (source == NULL)
+		return NULL;
 	if (source->type == json_object)
 	{
 		int			x;
