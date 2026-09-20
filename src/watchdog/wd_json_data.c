@@ -853,6 +853,13 @@ parse_wd_node_function_json(char *json_data, int data_len, char **func_name, int
 		json_value_free(root);
 		return true;
 	}
+	if (node_count > MAX_NUM_BACKENDS)
+	{
+		json_value_free(root);
+		ereport(ERROR,
+				(errmsg("watchdog NodeIdList count %d exceeds MAX_NUM_BACKENDS (%d)",
+						node_count, MAX_NUM_BACKENDS)));
+	}
 	*count = node_count;
 
 	value = json_get_value_for_key(root, "NodeIdList");
