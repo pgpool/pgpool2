@@ -329,6 +329,10 @@ wd_hb_recv(int sock, WdHbPacket * pkt, char *from_addr)
 	else if (rtn == 0)
 		ereport(ERROR,
 				(errmsg("failed to receive heartbeat received zero length packet")));
+	else if (rtn < (int) sizeof(WdHbPacket))
+		ereport(ERROR,
+				(errmsg("wd_hb_recv: short heartbeat datagram (%d bytes, expected %zu)",
+						rtn, sizeof(WdHbPacket))));
 	else
 		ereport(DEBUG2,
 				(errmsg("watchdog heartbeat: received %d byte packet", rtn)));
