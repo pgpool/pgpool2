@@ -209,6 +209,12 @@ get_pool_config_from_json(char *json_data, int data_len)
 	if (value == NULL || value->type != json_array)
 		goto ERROR_EXIT;
 
+	if (value->u.array.length > MAX_WATCHDOG_NUM)
+		ereport(ERROR,
+				(errmsg("invalid watchdog configuration JSON"),
+				 errdetail("wd_nodes array length %u exceeds MAX_WATCHDOG_NUM (%d)",
+						   value->u.array.length, MAX_WATCHDOG_NUM)));
+
 	config->wd_nodes.num_wd = value->u.array.length;
 	for (i = 0; i < config->wd_nodes.num_wd; i++)
 	{
