@@ -108,16 +108,28 @@ wait_for_pgpool_startup
 $PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h localhost -p $PCP_PORT
 
 date
+ok=n
 for i in {1..30}
 do
     cnt=`$PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h localhost -p $PCP_PORT|egrep "MASTER|LEADER|STANDBY"|wc -l`
     if [ $cnt = 3 ];then
-	echo "watchdog is ready"
-	break
+# make sure that quorum exists
+	$PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h localhost -p $PCP_PORT|grep "Quorum state"|grep "QUORUM EXIST" >/dev/null
+	if [ $? = 0 ];then
+	    echo "watchdog is ready"
+	    ok=y
+	    break
+	fi
+	$PGPOOL_INSTALL_DIR/bin/pcp_watchdog_info -v -w -h localhost -p $PCP_PORT
     fi
     sleep 1
 done
 date
+if [ $ok != 'y' ];then
+    echo "quorum did not exist"
+    ./shutdownall
+    exit 1
+fi
 
 ok=n
 for i in {1..10}
