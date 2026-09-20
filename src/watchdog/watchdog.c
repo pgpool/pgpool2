@@ -7674,6 +7674,16 @@ verify_authhash_for_node(WatchdogNode * wdNode, char *authhash)
 		int			len = snprintf(nodeStr, WD_MAX_PACKET_STRING, "state=%d wd_port=%d",
 								   wdNode->state, wdNode->wd_port);
 
+		/*
+		 * Peer omitted the authkey field: treat as authentication failure
+		 * rather than dereferencing NULL inside strcmp.
+		 */
+		if (authhash == NULL)
+		{
+			ereport(WARNING,
+					(errmsg("watchdog peer authentication failed: missing authkey in packet")));
+			return false;
+		}
 
 		/* calculate hash from packet */
 		wd_calc_hash(nodeStr, len, calculated_authhash);
