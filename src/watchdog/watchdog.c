@@ -4284,6 +4284,23 @@ standard_packet_processor(WatchdogNode * wdNode, WDPacketData * pkt)
 					send_cluster_service_message(wdNode, pkt, CLUSTER_NODE_INVALID_VERSION);
 					break;
 				}
+
+				/*
+				 * Verify the peer-supplied authhash before copying any peer
+				 * state into the local WatchdogNode. Otherwise a peer can
+				 * deterministically influence quorum_status / standby_nodes_count
+				 * (used by the split-brain tiebreaker) without authentication.
+				 */
+				if (!verify_authhash_for_node(tempNode, authkey))
+				{
+					ereport(WARNING,
+							(errmsg("node \"%s\" sent an info message with an invalid authkey hash",
+									wdNode->nodeName)));
+					if (authkey)
+						pfree(authkey);
+					pfree(tempNode);
+					break;
+				}
 				oldQuorumStatus = wdNode->quorum_status;
 				oldNodeState = wdNode->state;
 				wdNode->state = tempNode->state;
