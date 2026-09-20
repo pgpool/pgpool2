@@ -1,3 +1,746 @@
+<sect1 id="release-4-7-3">
+ <title>リリース 4.7.3</title>
+ <note>
+  <title>リリース日</title>
+  <simpara>2026-09-29</simpara>
+ </note>
+
+ <sect2>
+  <title>概要</title>
+  <para>
+   このリリースには、以下の脆弱性に対するセキュリティ修正が含まれています。
+  </para>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-09-20 [38492eba8]
+    -->
+    <para>
+     フェイルオーバ時の<productname>Pgpool-II</productname>のwatchdogのメッセージ処理において、攻撃者が不正なメッセージを渡すことにより、任意のメモリアドレスに任意の32ビット値を書き込むことができる脆弱性があります。(CVE-2026-92867)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>のwatchdogには、攻撃者が不正なフェイルオーバ要求メッセージを送信することにより、意図しないメモリアドレスに値を書き込み、メモリ破壊を引き起こすことが可能な脆弱性があります。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の3.5系から4.2系までのすべてのバージョン、4.3.0から4.3.20、4.4.0から4.4.17、4.5.0から4.5.12、4.6.0から4.6.7、および4.7.0から4.7.2が影響を受けます。
+     <productname>Pgpool-II</productname> 4.7.3、4.6.8、4.5.13、4.4.18、4.3.21、または各系列のそれ以降のリリースへのアップグレードを強く推奨します。
+     サポートが終了している3.5系から4.2系には修正版は提供されません。
+     これらのバージョンを使用している場合は、修正を含むサポート対象のバージョンにアップグレードしてください。
+    </para>
+    <para>
+     その他の回避策として、watchdogを無効にする（<literal>use_watchdog = off</literal>）か、信頼できるネットワークからのみwatchdogに接続できるようにアクセスを制限してください。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>プロジェクトは、この問題を報告してくださったEmond Papegaaijに感謝します。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [754ed0968]
+    -->
+    <para>
+     クライアントが証明書認証を使って<productname>Pgpool-II</productname>に接続する際に、<productname>Pgpool-II</productname>がクライアントのX.509証明書のCommon Name (CN)フィールド内のドメイン名にある'\0'を適切に処理しないため、悪意のあるクライアントがパスワードなしに他のユーザ名で<productname>Pgpool-II</productname>サーバに接続できる脆弱性があります。(CVE-2026-92868)
+    </para>
+    <para>
+     クライアント証明書認証では、クライアント証明書から取得したCommon Name (CN)を接続ユーザ名と比較して認証を行います。
+     しかし、CNに埋め込みNUL文字(\0)を含む細工された証明書を適切に検証していなかったため、本来とは異なるCNが正当なユーザ名として扱われる可能性があります。
+     攻撃者が埋め込みNUL文字を含む細工されたクライアント証明書を提示することで、本来認証されるべきでない利用者が正当な利用者として認証される可能性があります。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の4.0系から4.2系までのすべてのバージョン、4.3.0から4.3.20、4.4.0から4.4.17、4.5.0から4.5.12、4.6.0から4.6.7、および4.7.0から4.7.2が影響を受けます。
+     <productname>Pgpool-II</productname> 4.7.3、4.6.8、4.5.13、4.4.18、4.3.21、または各系列のそれ以降のリリースへのアップグレードを強く推奨します。
+     サポートが終了している4.0系から4.2系には修正版は提供されません。
+     これらのバージョンを使用している場合は、修正を含むサポート対象のバージョンにアップグレードしてください。
+    </para>
+    <para>
+     その他の回避策として、クライアント証明書認証以外の認証方式を使用してください。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>プロジェクトは、この問題を報告してくださったEmond Papegaaijに感謝します。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [67b2f3c8c]
+    2026-09-20 [845ebb139]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>のwatchdogのメッセージ処理において、攻撃者が不正なメッセージを渡すことにより、固定長配列の境界を超えてメモリ領域が書き換えられる脆弱性があります。(CVE-2026-92869)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>のwatchdog機能において、Watchdog peerから受信した設定情報を処理するメッセージ解析処理に境界外書き込みの脆弱性があります。
+     Watchdog peerから受信したbackend_descおよびwd_nodesのJSON配列長に対する上限チェックが不十分であるため、細工されたメッセージを処理した場合、固定長配列の境界外へ書き込みが発生する可能性があります。
+     本脆弱性が悪用された場合、<productname>Pgpool-II</productname>プロセスの異常終了やメモリ破壊が発生する可能性があります。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の3.5系から4.2系までのすべてのバージョン、4.3.0から4.3.20、4.4.0から4.4.17、4.5.0から4.5.12、4.6.0から4.6.7、および4.7.0から4.7.2が影響を受けます。
+     <productname>Pgpool-II</productname> 4.7.3、4.6.8、4.5.13、4.4.18、4.3.21、または各系列のそれ以降のリリースへのアップグレードを強く推奨します。
+     サポートが終了している3.5系から4.2系には修正版は提供されません。
+     これらのバージョンを使用している場合は、修正を含むサポート対象のバージョンにアップグレードしてください。
+    </para>
+    <para>
+     その他の回避策として、watchdogを無効にする（<literal>use_watchdog = off</literal>）か、信頼できるネットワークからのみwatchdogに接続できるようにアクセスを制限してください。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>プロジェクトは、この問題を報告してくださったEmond Papegaaijに感謝します。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [94b8ebedf]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>のwatchdogにおいて、フェイルオーバ処理メッセージの扱いに脆弱性があり、任意の長さの値を書き込むことによりスタックを破壊し、<productname>Pgpool-II</productname>のプロセスをクラッシュさせることができます。(CVE-2026-92870)
+    </para>
+    <para>
+     wd_authkeyが設定されていない場合、<productname>Pgpool-II</productname>のwatchdogには、攻撃者が不正なフェイルオーバ処理メッセージを渡すことによって<productname>Pgpool-II</productname>メインプロセスのスタックに任意の長さの値を書き込むことが可能な脆弱性があり、それによって<productname>Pgpool-II</productname>のプロセスをクラッシュさせることができます。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の3.5系から4.2系までのすべてのバージョン、4.3.0から4.3.20、4.4.0から4.4.17、4.5.0から4.5.12、4.6.0から4.6.7、および4.7.0から4.7.2が影響を受けます。
+     <productname>Pgpool-II</productname> 4.7.3、4.6.8、4.5.13、4.4.18、4.3.21、または各系列のそれ以降のリリースへのアップグレードを強く推奨します。
+     サポートが終了している3.5系から4.2系には修正版は提供されません。
+     これらのバージョンを使用している場合は、修正を含むサポート対象のバージョンにアップグレードしてください。
+    </para>
+    <para>
+     その他の回避策として、watchdogを無効にする（<literal>use_watchdog = off</literal>）か、信頼できるネットワークからのみwatchdogに接続できるようにアクセスを制限してください。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>プロジェクトは、この問題を報告してくださったEmond Papegaaijに感謝します。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [707fcb649]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>のwatchdogノード間認証において、認証キーが設定されている環境で、認証情報を含まない細工されたwatchdogメッセージを適切に処理できないことに起因するNULLポインタ参照の脆弱性があります。(CVE-2026-92871)
+    </para>
+    <para>
+     watchdogポートへ接続可能な攻撃者が、認証情報を含まない細工されたwatchdogメッセージを送信することにより、対象ノードのwatchdogプロセスを異常終了させる可能性があります。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の3.5系から4.2系までのすべてのバージョン、4.3.0から4.3.20、4.4.0から4.4.17、4.5.0から4.5.12、4.6.0から4.6.7、および4.7.0から4.7.2が影響を受けます。
+     <productname>Pgpool-II</productname> 4.7.3、4.6.8、4.5.13、4.4.18、4.3.21、または各系列のそれ以降のリリースへのアップグレードを強く推奨します。
+     サポートが終了している3.5系から4.2系には修正版は提供されません。
+     これらのバージョンを使用している場合は、修正を含むサポート対象のバージョンにアップグレードしてください。
+    </para>
+    <para>
+     その他の回避策として、watchdogを無効にする（<literal>use_watchdog = off</literal>）か、信頼できるネットワークからのみwatchdogに接続できるようにアクセスを制限してください。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>プロジェクトは、この問題を報告してくださったEmond Papegaaijに感謝します。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [8f5d179f2]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>のハートビート受信プロセスには、情報を漏洩する可能性がある脆弱性があります。(CVE-2026-92872)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>のハートビート受信プロセスが不正なメッセージを受信した際に、スタックメモリ上の情報をログファイルを通じて漏洩する可能性がある脆弱性があります。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の3.5系から4.2系までのすべてのバージョン、4.3.0から4.3.20、4.4.0から4.4.17、4.5.0から4.5.12、4.6.0から4.6.7、および4.7.0から4.7.2が影響を受けます。
+     <productname>Pgpool-II</productname> 4.7.3、4.6.8、4.5.13、4.4.18、4.3.21、または各系列のそれ以降のリリースへのアップグレードを強く推奨します。
+     サポートが終了している3.5系から4.2系には修正版は提供されません。
+     これらのバージョンを使用している場合は、修正を含むサポート対象のバージョンにアップグレードしてください。
+    </para>
+    <para>
+     その他の回避策として、watchdogを無効にする（<literal>use_watchdog = off</literal>）か、ハートビートの代わりにクエリによる死活監視（<literal>wd_lifecheck_method = 'query'</literal>）を使用してください。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>プロジェクトは、この問題を報告してくださったEmond Papegaaijに感謝します。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [6c8e17f99]
+    -->
+    <para>
+     <productname>Pgpool-II</productname>のwatchdogの昇格処理において、攻撃者が認証キーチェックをバイパスして、任意のwatchdogノードをリーダーノードに昇格できる脆弱性があります。(CVE-2026-92873)
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>のクラスタ管理モジュールであるwatchdogの昇格処理において、攻撃者が認証キーチェックをバイパスして、任意のwatchdogノードをリーダーノードに昇格できる脆弱性があります。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>の3.5系から4.2系までのすべてのバージョン、4.3.0から4.3.20、4.4.0から4.4.17、4.5.0から4.5.12、4.6.0から4.6.7、および4.7.0から4.7.2が影響を受けます。
+     <productname>Pgpool-II</productname> 4.7.3、4.6.8、4.5.13、4.4.18、4.3.21、または各系列のそれ以降のリリースへのアップグレードを強く推奨します。
+     サポートが終了している3.5系から4.2系には修正版は提供されません。
+     これらのバージョンを使用している場合は、修正を含むサポート対象のバージョンにアップグレードしてください。
+    </para>
+    <para>
+     その他の回避策として、watchdogを無効にする（<literal>use_watchdog = off</literal>）か、信頼できるネットワークからのみwatchdogに接続できるようにアクセスを制限してください。
+    </para>
+    <para>
+     <productname>Pgpool-II</productname>プロジェクトは、この問題を報告してくださったEmond Papegaaijに感謝します。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>不具合修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-09-19 [a3170f3c7]
+    2026-09-18 [9ffb84bf5]
+    -->
+    <para>
+     拡張クエリのパイプライン処理中にSyncが早期に送信される問題を修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     拡張クエリのパイプライン処理が進行中であるにもかかわらず、内部の<literal>Sync</literal>メッセージによって暗黙のトランザクションが早期にコミットされることを防ぐようにしました。
+     また、バックエンドノード間でエラー処理とトランザクションの終了処理を調整し、パイプライン内の後続処理でエラーが発生した場合に、それ以前の変更がロールバックされるようにしました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/174">Pgpool injects Sync before a pipelined Parse and drops temporary tables #174</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-18 [ec2e6f115]
+    -->
+    <para>
+     パイプラインモードで遅延制約エラーが発生するとハングする問題を修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     バックエンドから<literal>ErrorResponse</literal>を受信した際に、保留中の<literal>Sync</literal>メッセージを保持し、<literal>ReadyForQuery</literal>まで処理を継続できるようにしました。
+     以前は、コミット時に遅延制約違反が発生すると、フロントエンドが既に送信済みのSyncをPgpool-IIが無期限に待つ可能性がありました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486B54CF8A848176B90539C94A42%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">[PATCH v1] Fix hang on deferred constraint errors in pipeline mode</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-18 [630e7da95]
+    -->
+    <para>
+     Parseでの内部トランザクション処理の不整合を修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     <function>Parse()</function>での内部トランザクションの開始をレプリケーションモードに限定し、<function>Bind()</function>と一致させました。
+     以前は、rawモードで拡張クエリプロトコルによるUPDATEを自動コミットで実行すると、接続がトランザクション内に残る可能性がありました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/172">Pgpool leaves an internal transaction open after autocommitted extended-protocol DML #172</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-18 [c56701d05]
+    -->
+    <para>
+     <function>do_error_execute_command()</function>での応答バッファのポインタ更新を修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     保存した応答のバッファポインタを、長さフィールドのサイズではなく、応答本体の実際の長さだけ進めるようにしました。
+     これにより、プロトコルv2とv3の両方で、長さが0の応答の後などに後続の保存済み応答が破損する問題を防ぎます。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486821B656397FBCD72BE5394BF2%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">Fix response buffer pointer advancement in do_error_execute_command</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [044e261d7]
+    -->
+    <para>
+     <function>handle_query_context()</function>で解析木の存在を確認するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>handle_query_context()</function>で解析木にアクセスする前に、その存在を確認するようにしました。
+     この問題はCoverityによって検出されました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [f4b9595ad]
+    -->
+    <para>
+     PCPワーカーの終了シグナルハンドラではフラグの設定のみを行うようにしました。(Taiki Koshino)
+    </para>
+    <para>
+     PCPワーカーの終了処理をシグナルハンドラからメインループに移しました。
+     ハンドラでは終了要求の記録のみを行い、他の処理が進行中に安全でないログ出力や後処理を行わないようにしました。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486805F1222F8F50767639094AE2%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">Convert pcp_worker die handler to flag-only.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [92003564b]
+    -->
+    <para>
+     PCP親プロセスのシグナルハンドラではフラグの設定のみを行うようにしました。(Taiki Koshino)
+    </para>
+    <para>
+     PCP親プロセスの終了処理と起床処理をメインループに移しました。
+     シグナルハンドラではワーカー一覧の走査や変更を行わず、フラグを設定するようにしました。
+     これにより、クラッシュや再利用されたプロセスIDへのシグナル送信につながる競合を防ぎます。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486FF7EC3D412F5D9B2E45F94AE2%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">Convert pcp_exit_handler and wakeup_handler_parent to flag-only.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [47c4735e8]
+    -->
+    <para>
+     アイドル接続の後処理をシグナルハンドラからメインループに移しました。(Taiki Koshino)
+    </para>
+    <para>
+     子プロセスのSIGUSR1ハンドラではアイドル接続の後処理要求を記録し、実際の後処理はメインループで行うようにしました。
+     これにより、シグナルで中断されたコードが使用中の接続やスタートアップパケットのメモリが解放されることを防ぎます。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/TY4PR01MB1737480CA247F6CCBD87C958694C22%40TY4PR01MB17374.jpnprd01.prod.outlook.com">Convert close_idle_connection (SIGUSR1) to flag-only handler with main-loop processing.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [f7373655c]
+    -->
+    <para>
+     ライフチェックの終了シグナルハンドラではフラグの設定のみを行うようにしました。(Taiki Koshino)
+    </para>
+    <para>
+     watchdogのライフチェックにおける子プロセスの終了、メモリの後処理、およびプロセスの終了処理をシグナルハンドラの外に移しました。
+     ハンドラでは<literal>errno</literal>を保持しながらシグナルを記録してフラグを設定し、シグナルハンドラ内で安全でない操作を行わないようにしました。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486FF7EC3D412F5D9B2E45F94AE2%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">Convert pcp_exit_handler and wakeup_handler_parent to flag-only.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [f070a1181]
+    -->
+    <para>
+     クエリキャッシュのキーに区切りを追加し、衝突を防ぐようにしました。(Taiki Koshino)
+    </para>
+    <para>
+     クエリキャッシュのキーを構築する際に、ユーザ、クエリ、およびデータベースの各フィールド間にNUL文字の区切りを挿入し、バッファ全体をハッシュ化するようにしました。
+     以前は、区切りなしでこれらのフィールドを連結していたため、異なる入力から同一のキーが生成され、別のユーザやデータベースのキャッシュ結果が返される可能性がありました。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/TY4PR01MB17374DD1C2B89248B8714F84394C22%40TY4PR01MB17374.jpnprd01.prod.outlook.com">Delimit query-cache key to prevent collisions</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [a1a45ec3f]
+    -->
+    <para>
+     <function>inject_cached_message()</function>での符号なし整数のアンダーフローを修正しました。(Taiki Koshino)
+    </para>
+    <para>
+     <function>inject_cached_message()</function>でヘッダサイズを減算する前に、キャッシュされたメッセージの長さを検証するようにしました。
+     以前は、長さがヘッダサイズより小さい場合にアンダーフローによって大きな符号なし整数値になり、メモリ割り当ての失敗によってセッションが終了する可能性がありました。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/TY4PR01MB17374089B6E89C4B9F44817B094C22%40TY4PR01MB17374.jpnprd01.prod.outlook.com">Fix unsigned underflow in inject_cached_message</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-15 [e16ea53f5]
+    -->
+    <para>
+     pgprotoでのバッファ境界外アクセスを修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>pgproto</literal>で継続行かどうかを判定する前に、入力バッファの長さを確認するようにしました。
+     これにより、AddressSanitizerによって検出された境界外アクセスを防ぎます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-08 [6b1e286bf]
+    -->
+    <para>
+     削除された設定パラメータをデフォルト値に戻すようにしました。(Taiki Koshino)
+    </para>
+    <para>
+     <filename>pgpool.conf</filename>から削除またはコメントアウトされた再読み込み可能なパラメータを、デフォルト値に戻すようにしました。
+     以前は、設定を再読み込みしても古い値が保持されていました。
+     設定ファイルから読み込まれたものではない値は変更しません。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/164">reload config issue #164</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-07 [9bf2066fd]
+    -->
+    <para>
+     「Fix do_query to send sync rather than flush.」の変更を取り消しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>do_query()</function>が<literal>Flush</literal>の代わりに<literal>Sync</literal>を送信する変更を取り消しました。
+     この変更により、パイプラインの暗黙のトランザクションが早期にコミットされ、後続の文が失敗しても、それ以前の変更がコミットされたままになる可能性がありました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260907.062521.1780975513572548706.ishii@postgresql.org">Re: low level protocol, implicit transactions , "idle in transaction" issue</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-31 [848517b30]
+    -->
+    <para>
+     <function>get_health_check_stats()</function>のデバッグメッセージのレベルをDEBUG5に下げました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>get_health_check_stats()</function>に誤って残されていたデバッグメッセージをLOGからDEBUG5に変更しました。
+    </para>
+    <para>
+     この問題はseoktai-chunによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/171">Leftover debug log "status_changed_time" floods the log in pool_process_reporting.c #171</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-29 [f9634a7fb]
+    -->
+    <para>
+     <function>pool_temp_tables_delete()</function>のデバッグメッセージのレベルをDEBUG5に下げました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>pool_temp_tables_delete()</function>に誤って残されていたデバッグメッセージをLOGからDEBUG5に変更しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-07 [08fbe906d]
+    -->
+    <para>
+     認証中の通知メッセージの転送を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     セッションコンテキストが確立される前の認証段階で、バックエンドからの通知メッセージを安全に転送するようにしました。
+     これにより、PostgreSQL 19以降が出力するMD5認証の通知メッセージによってFATALエラーが発生する問題を修正しました。
+    </para>
+    <para>
+     この問題はharudiniによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/168">Regression test failures against PostgreSQL 19 beta #168</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-07 [57fc62eea]
+    -->
+    <para>
+     <function>pgpool_admのpcp_proc_info()</function>がクラッシュする問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>pgpool_adm</literal>の<function>pcp_proc_info()</function>の実装で、タプル記述子の最終化と登録を行うようにしました。
+     これにより、PostgreSQL 19でクラッシュする問題を修正しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-02 [bc3689a2d]
+    -->
+    <para>
+     「make do_query send Sync rather than Flush」の変更を取り消しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     この変更では、<literal>Flush</literal>の代わりに<literal>Sync</literal>を送信することで、内部クエリによって開始された暗黙のトランザクションを終了させようとしていました。
+     しかし、パイプラインのトランザクションが本来の動作をしなくなるため、その後コミット<literal>9bf2066fd</literal>で取り消されました。
+     この動作は最終的なリリースには含まれません。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/25939319-d77c-4df9-9e65-dfb1637ccd33%40cloud.gatewaynet.com">low level protocol, implicit transactions , "idle in transaction" issue</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-07-21 [84a079e63]
+    -->
+    <para>
+     不足していたvolatile修飾子を追加しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <varname>my_backend_status</varname>を介した共有バックエンド状態へのアクセスに、不足していた<literal>volatile</literal>修飾子を追加しました。
+     これにより、コンパイラの最適化によって古い状態値が使用されることを防ぎます。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260701.101148.451717746326656928.ishii%40postgresql.org">Adding volatile qualifier</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-26 [f847e8430]
+    -->
+    <para>
+     <function>read_kind_from_backend()</function>で不正なErrorResponseの長さを拒否するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <function>read_kind_from_backend()</function>で、バックエンドから受信した<literal>ErrorResponse</literal>の長さが長さフィールドのサイズより小さい場合に拒否するようにしました。
+     これにより、不正な応答の処理時にヒープバッファの上書きや符号なし整数のアンダーフローが発生することを防ぎます。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260626.153227.1428186004607098961.ishii%40postgresql.org">Reject sub-minimum ErrorResponse length in read_kind_from_backend.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-07-03 [1f02bd312]
+    -->
+    <para>
+     <function>pool_do_auth()</function>でセグメンテーション違反が発生する問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     共有メモリ上のメインノードIDを個別にコピーするのではなく、コピーしたバックエンドの状態からローカルのメインノードIDを決定するようにしました。
+     これにより、フェイルオーバー中の状態の不整合によって<function>pool_do_auth()</function>でNULLの接続ポインタが参照されることを防ぎます。
+     また、共有メモリからの読み取りにvolatile修飾子を追加しました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BY7OKp93zSqt1WUCh7ABC7kyZqrxJPFA8AC1woB30S8EQ%40mail.gmail.com">[PATCH] Segfault in pool_do_auth() when failover races with a new connection</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-08 [3ff98c1e4]
+    -->
+    <para>
+     Pgpool-IIのメインプロセスのシグナルハンドラで安全でない操作を行わないようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     メインプロセスの終了処理をSIGTERM、SIGINT、およびSIGQUITのハンドラの外に移しました。
+     ハンドラでは要求を記録してメインループを起床させ、メインループが通常のプロセス実行コンテキストで終了処理を行うようにしました。
+     これにより、シグナルハンドラ内の安全でない操作によってクラッシュ、ハング、またはメモリ破壊が発生することを防ぎます。
+    </para>
+    <para>
+     この問題はEmond Papegaaijによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260608.103312.126925225500634683.ishii%40postgresql.org">Fix signal handler in pgpool main</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-18 [346e54778]
+    -->
+    <para>
+     バックエンドノードの停止後にクエリコンテキストの解放済みメモリを使用する問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     クエリコンテキストをセッションのメモリコンテキスト内に割り当て、セッション単位の送信済みメッセージ一覧と保留中メッセージ一覧からの参照が有効なまま保たれるようにしました。
+     以前は、バックエンドの停止によってクエリ処理ループがこれらの一覧から参照中のコンテキストを解放し、解放済みメモリの使用やクラッシュにつながる可能性がありました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BaFfv2_PUrEdCt8TousYP9dPmty3i%2B0mkJpWwVg%3DfVN%2BQ%40mail.gmail.com">Use-after-free crash</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-07 [7a47706a2]
+    -->
+    <para>
+     拡張クエリモードでCOPY INがハングする問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     バックエンドからのCopyInResponseを待ってからCOPYデータを転送し、CopyDoneの後にフロントエンドのSyncを処理できるようにしました。
+     これにより、ストリーミングレプリケーションモードで拡張クエリプロトコルを使って<command>COPY FROM STDIN</command>を実行するとハングする問題を修正しました。
+    </para>
+    <para>
+     この問題はliujinyang-highgoによって報告されました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://github.com/pgpool/pgpool2/issues/162">use QGis import data cause pgpool hang. #162</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-07 [4ad45f625]
+    -->
+    <para>
+     pcp_node_infoがハングする問題を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     PCPのノード情報応答の長さを計算して送信する前に、共有メモリ上のレプリケーション状態を表す文字列をローカルバッファにコピーするようにしました。
+     以前は、同時更新によって宣言されたパケット長と実際のデータ長が一致しなくなり、<command>pcp_node_info</command>がハングする可能性がありました。
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BZhGjwm%2BF42Xmt8Qn1qP_h7woipiV0WsY-e-P7W3ZG2OA%40mail.gmail.com">Race condition in pcp_node_info can cause it to hang</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-05 [ba75b4b62]
+    -->
+    <para>
+     <function>read_kind_from_backend()</function>のコメントの誤字を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     ディスカッション: <ulink url="https://www.postgresql.org/message-id/20260529.082051.533519450296185920.ishii%40postgresql.org">Fix comment for read_kind_from_backend</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-04 [30b401a33]
+    -->
+    <para>
+     disable_load_balance_on_write使用時のクエリキャッシュ処理を修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     実際の書き込みを、<varname>disable_load_balance_on_write</varname>が使用する状態とは別に追跡するようにしました。
+     これにより、このパラメータを<literal>trans_transaction</literal>、<literal>dml_adaptive</literal>、または<literal>always</literal>に設定した場合にクエリキャッシュが誤って使用される問題を修正しました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>ドキュメント修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-06-25 [4071aa2e8]
+    -->
+    <!--
+    2026-06-25 [a6a772422]
+    -->
+    <para>
+     ドキュメントの誤ったリンクを修正しました。(Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>回帰テスト修正</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-09-20 [7bdc01fea]
+    -->
+    <para>
+     018.detach_primary回帰テストを改善しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>018.detach_primary</literal>で、不正なストリーミングレプリケーションのプライマリノードの切り離しをテストする前に、watchdogのクォーラム成立を明示的に待つようにしました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-19 [5f258a055]
+    -->
+    <para>
+     006.memqcache回帰テストを安定化しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>006.memqcache</literal>のストリーミングレプリケーションのテストで同期レプリケーションを使用するようにしました。
+     これにより、新しく作成したロールがスタンバイでまだ利用できない場合など、レプリケーション遅延による断続的な失敗を防ぎます。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-07 [315c05be1]
+    -->
+    <para>
+     regress.shで数値のPostgreSQLバージョン番号を使用するように修正しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     回帰テストスクリプトで使用するPostgreSQLのバージョンから数値以外の接尾辞を除去し、<literal>20devel</literal>のような開発版のバージョン文字列を数値比較に使用できるようにしました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-07-17 [bdaccab93]
+    -->
+    <para>
+     テストのタイムアウトを300秒から360秒に延長しました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>006.memqcache</literal>の実行時間の増加に対応するため、回帰テストのタイムアウトを300秒から360秒に延長しました。
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-25 [c91e846c8]
+    -->
+    <para>
+     sleepの代わりにwait_for_pgpool_startupを使用するようにしました。(Tatsuo Ishii)
+    </para>
+    <para>
+     <literal>110.memory_leak</literal>と<literal>111.cancel_query</literal>で、固定の1秒間の待機の代わりに<function>wait_for_pgpool_startup()</function>を使用し、起動に関連する断続的なテスト失敗を防ぐようにしました。
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-7-2">
  <title>リリース 4.7.2</title>
  <note>
@@ -33,7 +776,7 @@
      この修正により、リーダーが初期値-2を報告した場合はローカルのprimary_node_idを維持するようになりました。
     </para>
     <para>
-     この問題はEmond PapegaaijとClaude Codeによって報告されました。
+     この問題はEmond Papegaaijによって報告されました。
     </para>
     <para>
      ディスカッション: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BZmBoLs3Mz%3DG-Bdm4JJG%2BfH1NpHfR3qVJVwW4eBKWwStQ%40mail.gmail.com">Primary node detection race at clean startup</ulink>

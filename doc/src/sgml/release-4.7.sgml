@@ -1,3 +1,925 @@
+<sect1 id="release-4-7-3">
+ <title>Release 4.7.3</title>
+ <note>
+  <title>Release Date</title>
+  <simpara>2026-09-29</simpara>
+ </note>
+
+ <sect2>
+  <title>Overview</title>
+  <para>
+   This release contains security fixes for the following
+   vulnerabilities.
+  </para>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-09-20 [38492eba8]
+    -->
+    <para>
+     A vulnerability in watchdog message processing during failover
+     in <productname>Pgpool-II</productname> allows an attacker to
+     write an arbitrary 32-bit value to an arbitrary memory address
+     by sending a malformed message. (CVE-2026-92867)
+    </para>
+    <para>
+     An attacker can send a malformed failover request message to
+     watchdog in <productname>Pgpool-II</productname>, causing a value
+     to be written to an unintended memory address and resulting in
+     memory corruption.
+    </para>
+    <para>
+     All versions of <productname>Pgpool-II</productname> in the 3.5
+     through 4.2 series, 4.3.0 to 4.3.20, 4.4.0 to 4.4.17,
+     4.5.0 to 4.5.12, 4.6.0 to 4.6.7, and 4.7.0 to 4.7.2 are
+     affected. We strongly recommend upgrading to
+     <productname>Pgpool-II</productname> 4.7.3, 4.6.8, 4.5.13,
+     4.4.18, or 4.3.21, or a later release in the corresponding
+     series. The unsupported 3.5 through 4.2 series will not receive
+     fixes. Users of these versions should upgrade to a supported
+     version containing the fix.
+    </para>
+    <para>
+     Alternatively, disable watchdog (<literal>use_watchdog = off</literal>)
+     or restrict access to watchdog to trusted networks only.
+    </para>
+    <para>
+     The <productname>Pgpool-II</productname> project thanks Emond
+     Papegaaij for reporting this problem.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [754ed0968]
+    -->
+    <para>
+     When a client connects to <productname>Pgpool-II</productname>
+     using certificate authentication,
+     <productname>Pgpool-II</productname> does not properly handle
+     NUL bytes (\0) in the domain name in the Common Name (CN) field
+     of the client's X.509 certificate. This vulnerability allows a
+     malicious client to connect to the
+     <productname>Pgpool-II</productname> server as another user
+     without a password. (CVE-2026-92868)
+    </para>
+    <para>
+     Client certificate authentication compares the Common Name (CN)
+     extracted from the client certificate with the connection
+     username. However, crafted certificates containing an embedded
+     NUL byte (\0) in the CN were not properly validated, allowing a
+     CN that does not actually match the username to be treated as a
+     valid match. By presenting such a certificate, an attacker may
+     be authenticated as a legitimate user when authentication
+     should have been rejected.
+    </para>
+    <para>
+     All versions of <productname>Pgpool-II</productname> in the 4.0
+     through 4.2 series, 4.3.0 to 4.3.20, 4.4.0 to 4.4.17,
+     4.5.0 to 4.5.12, 4.6.0 to 4.6.7, and 4.7.0 to 4.7.2 are
+     affected. We strongly recommend upgrading to
+     <productname>Pgpool-II</productname> 4.7.3, 4.6.8, 4.5.13,
+     4.4.18, or 4.3.21, or a later release in the corresponding
+     series. The unsupported 4.0 through 4.2 series will not receive
+     fixes. Users of these versions should upgrade to a supported
+     version containing the fix.
+    </para>
+    <para>
+     Alternatively, use an authentication
+     method other than client certificate authentication.
+    </para>
+    <para>
+     The <productname>Pgpool-II</productname> project thanks Emond
+     Papegaaij for reporting this problem.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [67b2f3c8c]
+    2026-09-20 [845ebb139]
+    -->
+    <para>
+     A vulnerability in watchdog message processing in
+     <productname>Pgpool-II</productname> allows an attacker to
+     overwrite memory beyond the boundaries of fixed-size arrays
+     by sending a malformed message. (CVE-2026-92869)
+    </para>
+    <para>
+     An out-of-bounds write vulnerability exists in the watchdog
+     message parsing code that processes configuration information
+     received from watchdog peers in
+     <productname>Pgpool-II</productname>. Upper-bound checks on the
+     lengths of the backend_desc and wd_nodes JSON arrays received
+     from watchdog peers are insufficient. Processing a crafted
+     message may therefore cause writes beyond fixed-size arrays.
+     Exploiting this vulnerability may cause a
+     <productname>Pgpool-II</productname> process to crash or corrupt
+     its memory.
+    </para>
+    <para>
+     All versions of <productname>Pgpool-II</productname> in the 3.5
+     through 4.2 series, 4.3.0 to 4.3.20, 4.4.0 to 4.4.17,
+     4.5.0 to 4.5.12, 4.6.0 to 4.6.7, and 4.7.0 to 4.7.2 are
+     affected. We strongly recommend upgrading to
+     <productname>Pgpool-II</productname> 4.7.3, 4.6.8, 4.5.13,
+     4.4.18, or 4.3.21, or a later release in the corresponding
+     series. The unsupported 3.5 through 4.2 series will not receive
+     fixes. Users of these versions should upgrade to a supported
+     version containing the fix.
+    </para>
+    <para>
+     Alternatively, disable watchdog
+     (<literal>use_watchdog = off</literal>) or restrict access to
+     watchdog to trusted networks only.
+    </para>
+    <para>
+     The <productname>Pgpool-II</productname> project thanks Emond
+     Papegaaij for reporting this problem.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [94b8ebedf]
+    -->
+    <para>
+     A vulnerability in the handling of failover messages by watchdog
+     in <productname>Pgpool-II</productname> allows writes of
+     arbitrary-length data to corrupt the stack and crash a
+     <productname>Pgpool-II</productname> process. (CVE-2026-92870)
+    </para>
+    <para>
+     When wd_authkey is not configured, an attacker can send a
+     malformed failover message to watchdog in
+     <productname>Pgpool-II</productname> and write arbitrary-length
+     data to the stack of the <productname>Pgpool-II</productname>
+     main process, causing the <productname>Pgpool-II</productname>
+     process to crash.
+    </para>
+    <para>
+     All versions of <productname>Pgpool-II</productname> in the 3.5
+     through 4.2 series, 4.3.0 to 4.3.20, 4.4.0 to 4.4.17,
+     4.5.0 to 4.5.12, 4.6.0 to 4.6.7, and 4.7.0 to 4.7.2 are
+     affected. We strongly recommend upgrading to
+     <productname>Pgpool-II</productname> 4.7.3, 4.6.8, 4.5.13,
+     4.4.18, or 4.3.21, or a later release in the corresponding
+     series. The unsupported 3.5 through 4.2 series will not receive
+     fixes. Users of these versions should upgrade to a supported
+     version containing the fix.
+    </para>
+    <para>
+     Alternatively, disable watchdog (<literal>use_watchdog = off</literal>) or
+     restrict access to watchdog to trusted networks only.
+    </para>
+    <para>
+     The <productname>Pgpool-II</productname> project thanks Emond
+     Papegaaij for reporting this problem.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [707fcb649]
+    -->
+    <para>
+     A NULL pointer dereference vulnerability exists in watchdog
+     inter-node authentication in
+     <productname>Pgpool-II</productname>. When an authentication key
+     is configured, crafted watchdog messages that omit
+     authentication information are not handled correctly. (CVE-2026-92871)
+    </para>
+    <para>
+     An attacker who can connect to the watchdog port may cause the
+     watchdog process on the target node to crash by sending a
+     crafted watchdog message that omits authentication information.
+    </para>
+    <para>
+     All versions of <productname>Pgpool-II</productname> in the 3.5
+     through 4.2 series, 4.3.0 to 4.3.20, 4.4.0 to 4.4.17,
+     4.5.0 to 4.5.12, 4.6.0 to 4.6.7, and 4.7.0 to 4.7.2 are
+     affected. We strongly recommend upgrading to
+     <productname>Pgpool-II</productname> 4.7.3, 4.6.8, 4.5.13,
+     4.4.18, or 4.3.21, or a later release in the corresponding
+     series. The unsupported 3.5 through 4.2 series will not receive
+     fixes. Users of these versions should upgrade to a supported
+     version containing the fix.
+    </para>
+    <para>
+     Alternatively, disable watchdog (<literal>use_watchdog = off</literal>) or
+     restrict access to watchdog to trusted networks only.
+    </para>
+    <para>
+     The <productname>Pgpool-II</productname> project thanks Emond
+     Papegaaij for reporting this problem.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [8f5d179f2]
+    -->
+    <para>
+     An information disclosure vulnerability exists in the heartbeat
+     receiver process of <productname>Pgpool-II</productname>.
+     (CVE-2026-92872)
+    </para>
+    <para>
+     When the heartbeat receiver process of
+     <productname>Pgpool-II</productname> receives a malformed
+     message, it may disclose information from stack memory through
+     log files.
+    </para>
+    <para>
+     All versions of <productname>Pgpool-II</productname> in the 3.5
+     through 4.2 series, 4.3.0 to 4.3.20, 4.4.0 to 4.4.17,
+     4.5.0 to 4.5.12, 4.6.0 to 4.6.7, and 4.7.0 to 4.7.2 are
+     affected. We strongly recommend upgrading to
+     <productname>Pgpool-II</productname> 4.7.3, 4.6.8, 4.5.13,
+     4.4.18, or 4.3.21, or a later release in the corresponding
+     series. The unsupported 3.5 through 4.2 series will not receive
+     fixes. Users of these versions should upgrade to a supported
+     version containing the fix.
+    </para>
+    <para>
+     Alternatively, disable watchdog (<literal>use_watchdog = off</literal>) or
+     use query-based life checking (<literal>wd_lifecheck_method = 'query'</literal>)
+     instead of heartbeat.
+    </para>
+    <para>
+     The <productname>Pgpool-II</productname> project thanks Emond
+     Papegaaij for reporting this problem.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-20 [6c8e17f99]
+    -->
+    <para>
+     A vulnerability in watchdog promotion processing in
+     <productname>Pgpool-II</productname> allows an attacker to bypass
+     authentication key checks and promote a watchdog node of their
+     choice to leader. (CVE-2026-92873)
+    </para>
+    <para>
+     In the promotion processing of watchdog, the cluster management
+     module of <productname>Pgpool-II</productname>, an attacker can
+     bypass authentication key checks and promote a watchdog node of
+     their choice to leader.
+    </para>
+    <para>
+     All versions of <productname>Pgpool-II</productname> in the 3.5
+     through 4.2 series, 4.3.0 to 4.3.20, 4.4.0 to 4.4.17,
+     4.5.0 to 4.5.12, 4.6.0 to 4.6.7, and 4.7.0 to 4.7.2 are
+     affected. We strongly recommend upgrading to
+     <productname>Pgpool-II</productname> 4.7.3, 4.6.8, 4.5.13,
+     4.4.18, or 4.3.21, or a later release in the corresponding
+     series. The unsupported 3.5 through 4.2 series will not receive
+     fixes. Users of these versions should upgrade to a supported
+     version containing the fix.
+    </para>
+    <para>
+     Alternatively, disable watchdog (<literal>use_watchdog = off</literal>) or
+     restrict access to watchdog to trusted networks only.
+    </para>
+    <para>
+     The <productname>Pgpool-II</productname> project thanks Emond
+     Papegaaij for reporting this problem.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Bug fixes</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-09-19 [a3170f3c7]
+    2026-09-18 [9ffb84bf5]
+    -->
+    <para>
+     Fix premature Sync during extended-query pipelines. (Taiki Koshino)
+    </para>
+    <para>
+     Prevent internal <literal>Sync</literal> messages from
+     prematurely committing an implicit transaction while an
+     extended-query pipeline is still in progress. Also coordinate
+     errors and transaction completion across backend nodes so that an
+     error later in a pipeline rolls back earlier changes.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/174">Pgpool injects Sync before a pipelined Parse and drops temporary tables #174</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-18 [ec2e6f115]
+    -->
+    <para>
+     Fix a hang on deferred constraint errors in pipeline mode. (Taiki Koshino)
+    </para>
+    <para>
+     Keep the pending <literal>Sync</literal> message when a backend
+     returns an <literal>ErrorResponse</literal>, allowing processing
+     to continue through <literal>ReadyForQuery</literal>. Previously,
+     a deferred constraint violation at commit time could make
+     Pgpool-II wait indefinitely for a Sync that the frontend had
+     already sent.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486B54CF8A848176B90539C94A42%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">[PATCH v1] Fix hang on deferred constraint errors in pipeline mode</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-18 [630e7da95]
+    -->
+    <para>
+     Fix inconsistent internal transaction handling in Parse. (Taiki Koshino)
+    </para>
+    <para>
+     Restrict internal transaction creation in
+     <function>Parse()</function> to replication mode, matching
+     <function>Bind()</function>. Previously, an autocommitted
+     extended-protocol UPDATE in raw mode could leave the connection
+     in a transaction.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/172">Pgpool leaves an internal transaction open after autocommitted extended-protocol DML #172</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-18 [c56701d05]
+    -->
+    <para>
+     Fix response buffer pointer advancement in <function>do_error_execute_command()</function>. (Taiki Koshino)
+    </para>
+    <para>
+     Advance the saved-response buffer pointer by the actual response
+     body length rather than the size of the length field. This
+     prevents corruption of subsequent saved responses, including
+     after a zero-length response, in both protocol v2 and v3.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486821B656397FBCD72BE5394BF2%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">Fix response buffer pointer advancement in do_error_execute_command</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [044e261d7]
+    -->
+    <para>
+     Check that a parse tree exists in <function>handle_query_context()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Check that a parse tree exists before accessing it in
+     <function>handle_query_context()</function>. This issue was
+     identified by Coverity.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [f4b9595ad]
+    -->
+    <para>
+     Make the PCP worker shutdown signal handler only set flags. (Taiki Koshino)
+    </para>
+    <para>
+     Move PCP worker shutdown processing out of the signal handler and
+     into the main loop. The handler now records the shutdown request
+     only, avoiding unsafe logging and cleanup while other operations
+     are in progress.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486805F1222F8F50767639094AE2%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">Convert pcp_worker die handler to flag-only.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [92003564b]
+    -->
+    <para>
+     Make PCP parent signal handlers only set flags. (Taiki Koshino)
+    </para>
+    <para>
+     Move PCP parent shutdown and wakeup processing into the main
+     loop. Signal handlers now set flags rather than traversing or
+     modifying the worker list, preventing races that could cause
+     crashes or signals to be sent to reused process IDs.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486FF7EC3D412F5D9B2E45F94AE2%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">Convert pcp_exit_handler and wakeup_handler_parent to flag-only.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [47c4735e8]
+    -->
+    <para>
+     Move idle-connection cleanup from the signal handler to the main loop. (Taiki Koshino)
+    </para>
+    <para>
+     Make the child process SIGUSR1 handler record an idle-connection
+     cleanup request and perform the cleanup in the main loop. This
+     prevents connection and startup-packet memory from being freed
+     while the interrupted code is using it.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/TY4PR01MB1737480CA247F6CCBD87C958694C22%40TY4PR01MB17374.jpnprd01.prod.outlook.com">Convert close_idle_connection (SIGUSR1) to flag-only handler with main-loop processing.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [f7373655c]
+    -->
+    <para>
+     Make the lifecheck exit signal handler only set flags. (Taiki Koshino)
+    </para>
+    <para>
+     Move watchdog lifecheck child termination, memory cleanup, and
+     process exit out of the signal handler. The handler now records
+     the signal and sets flags while preserving
+     <literal>errno</literal>, avoiding unsafe operations in signal
+     context.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/OS9P286MB6486FF7EC3D412F5D9B2E45F94AE2%40OS9P286MB6486.JPNP286.PROD.OUTLOOK.COM">Convert pcp_exit_handler and wakeup_handler_parent to flag-only.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [f070a1181]
+    -->
+    <para>
+     Add separators to query-cache keys to prevent collisions. (Taiki Koshino)
+    </para>
+    <para>
+     Insert NUL separators between the user, query, and database
+     fields when constructing query-cache keys, and hash the complete
+     buffer. Previously, concatenating these fields without separators
+     could produce identical keys for different inputs and return
+     cached results across users or databases.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/TY4PR01MB17374DD1C2B89248B8714F84394C22%40TY4PR01MB17374.jpnprd01.prod.outlook.com">Delimit query-cache key to prevent collisions</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-16 [a1a45ec3f]
+    -->
+    <para>
+     Fix unsigned integer underflow in <function>inject_cached_message()</function>. (Taiki Koshino)
+    </para>
+    <para>
+     Validate cached message lengths before subtracting the header
+     size in <function>inject_cached_message()</function>. A length
+     smaller than the header could otherwise underflow to a large
+     unsigned value and terminate the session through a failed memory
+     allocation.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/TY4PR01MB17374089B6E89C4B9F44817B094C22%40TY4PR01MB17374.jpnprd01.prod.outlook.com">Fix unsigned underflow in inject_cached_message</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-15 [e16ea53f5]
+    -->
+    <para>
+     Fix an out-of-bounds buffer access in pgproto. (Tatsuo Ishii)
+    </para>
+    <para>
+     Check the input buffer length before testing for a continuation
+     line in <literal>pgproto</literal>. This prevents an
+     out-of-bounds access detected by AddressSanitizer.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-08 [6b1e286bf]
+    -->
+    <para>
+     Reset removed configuration parameters to their defaults. (Taiki Koshino)
+    </para>
+    <para>
+     Reset reloadable parameters to their defaults when they are
+     removed or commented out in <filename>pgpool.conf</filename>.
+     Previously, configuration reload retained their old values.
+     Values not loaded from the configuration file are left unchanged.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/164">reload config issue #164</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-07 [9bf2066fd]
+    -->
+    <para>
+     Revert "Fix do_query to send sync rather than flush." (Tatsuo Ishii)
+    </para>
+    <para>
+     Revert the change that made <function>do_query()</function> send
+     <literal>Sync</literal> instead of <literal>Flush</literal>. That
+     change could prematurely commit an implicit pipeline transaction,
+     leaving earlier changes committed even when a later statement
+     failed.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260907.062521.1780975513572548706.ishii@postgresql.org">Re: low level protocol, implicit transactions , "idle in transaction" issue</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-31 [848517b30]
+    -->
+    <para>
+     Lower the debug message level to DEBUG5 in <function>get_health_check_stats()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Change an accidentally retained debug message in
+     <function>get_health_check_stats()</function> from LOG to DEBUG5.
+    </para>
+    <para>
+     Problem reported by seoktai-chun.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/171">Leftover debug log "status_changed_time" floods the log in pool_process_reporting.c #171</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-29 [f9634a7fb]
+    -->
+    <para>
+     Lower the debug message level to DEBUG5 in <function>pool_temp_tables_delete()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Change an accidentally retained debug message in
+     <function>pool_temp_tables_delete()</function> from LOG to
+     DEBUG5.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-07 [08fbe906d]
+    -->
+    <para>
+     Fix notice forwarding during authentication. (Tatsuo Ishii)
+    </para>
+    <para>
+     Forward backend notices safely during authentication, before the
+     session context is established. This fixes a FATAL error
+     triggered by the MD5 authentication notice emitted by PostgreSQL
+     19 and later.
+    </para>
+    <para>
+     Problem reported by harudini.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/168">Regression test failures against PostgreSQL 19 beta #168</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-07 [57fc62eea]
+    -->
+    <para>
+     Fix a crash in <function>pgpool_adm pcp_proc_info()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Finalize and bless the tuple descriptor in the
+     <literal>pgpool_adm</literal> implementation of
+     <function>pcp_proc_info()</function>. This fixes a crash with
+     PostgreSQL 19.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-02 [bc3689a2d]
+    -->
+    <para>
+     Reverted change: make do_query send Sync rather than Flush. (Tatsuo Ishii)
+    </para>
+    <para>
+     This change attempted to close implicit transactions created by
+     internal queries by sending <literal>Sync</literal> instead of
+     <literal>Flush</literal>. It was subsequently reverted by commit
+     <literal>9bf2066fd</literal> because it broke pipeline
+     transaction semantics; this behavior is not part of the final
+     release.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/25939319-d77c-4df9-9e65-dfb1637ccd33%40cloud.gatewaynet.com">low level protocol, implicit transactions , "idle in transaction" issue</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-07-21 [84a079e63]
+    -->
+    <para>
+     Add missing volatile qualifiers. (Tatsuo Ishii)
+    </para>
+    <para>
+     Add the missing <literal>volatile</literal> qualifiers to shared
+     backend-status accesses through
+     <varname>my_backend_status</varname>. This prevents compiler
+     optimizations from causing stale status values to be used.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260701.101148.451717746326656928.ishii%40postgresql.org">Adding volatile qualifier</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-26 [f847e8430]
+    -->
+    <para>
+     Reject invalid ErrorResponse lengths in <function>read_kind_from_backend()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Reject backend <literal>ErrorResponse</literal> lengths smaller
+     than the length field in
+     <function>read_kind_from_backend()</function>. This prevents a
+     heap buffer overwrite and unsigned underflow when handling
+     malformed responses.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260626.153227.1428186004607098961.ishii%40postgresql.org">Reject sub-minimum ErrorResponse length in read_kind_from_backend.</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-07-03 [1f02bd312]
+    -->
+    <para>
+     Fix a segmentation fault in <function>pool_do_auth()</function>. (Tatsuo Ishii)
+    </para>
+    <para>
+     Derive the local main node ID from the copied backend statuses
+     rather than independently copying the shared main node ID. This
+     prevents inconsistent state during failover from causing a NULL
+     connection dereference in <function>pool_do_auth()</function>.
+     Also add volatile qualifiers for shared-memory reads.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BY7OKp93zSqt1WUCh7ABC7kyZqrxJPFA8AC1woB30S8EQ%40mail.gmail.com">[PATCH] Segfault in pool_do_auth() when failover races with a new connection</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-08 [3ff98c1e4]
+    -->
+    <para>
+     Avoid unsafe operations in the Pgpool-II main process signal
+     handler. (Tatsuo Ishii)
+    </para>
+    <para>
+     Move main-process shutdown work out of the SIGTERM, SIGINT, and
+     SIGQUIT handler. The handler now records the request and wakes
+     the main loop, which performs shutdown in normal process context.
+     This avoids crashes, hangs, or memory corruption caused by unsafe
+     operations in the signal handler.
+    </para>
+    <para>
+     Problem reported by Emond Papegaaij.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260608.103312.126925225500634683.ishii%40postgresql.org">Fix signal handler in pgpool main</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-18 [346e54778]
+    -->
+    <para>
+     Fix a query context use-after-free after a backend node shutdown. (Tatsuo Ishii)
+    </para>
+    <para>
+     Allocate query contexts in the session memory context so they
+     remain valid for the session-scoped sent and pending message
+     lists. Previously, a backend shutdown could cause the
+     query-processing loop to free contexts still referenced by these
+     lists, leading to a use-after-free and crash.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BaFfv2_PUrEdCt8TousYP9dPmty3i%2B0mkJpWwVg%3DfVN%2BQ%40mail.gmail.com">Use-after-free crash</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-07 [7a47706a2]
+    -->
+    <para>
+     Fix a COPY IN hang in extended query mode. (Tatsuo Ishii)
+    </para>
+    <para>
+     Wait for the backend CopyInResponse before forwarding COPY data,
+     and allow the frontend Sync to be processed after CopyDone. This
+     fixes a hang when <command>COPY FROM STDIN</command> is executed
+     using the extended query protocol in streaming replication mode.
+    </para>
+    <para>
+     Problem reported by liujinyang-highgo.
+    </para>
+    <para>
+     Discussion: <ulink url="https://github.com/pgpool/pgpool2/issues/162">use QGis import data cause pgpool hang. #162</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-07 [4ad45f625]
+    -->
+    <para>
+     Prevent pcp_node_info from hanging. (Tatsuo Ishii)
+    </para>
+    <para>
+     Copy the shared replication-state strings into local buffers
+     before calculating and sending a PCP node-info response.
+     Concurrent updates could otherwise make the declared packet
+     length differ from its payload and cause
+     <command>pcp_node_info</command> to hang.
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/CAGXsc%2BZhGjwm%2BF42Xmt8Qn1qP_h7woipiV0WsY-e-P7W3ZG2OA%40mail.gmail.com">Race condition in pcp_node_info can cause it to hang</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-05 [ba75b4b62]
+    -->
+    <para>
+     Fix a typo in a <function>read_kind_from_backend()</function> comment. (Tatsuo Ishii)
+    </para>
+    <para>
+     Discussion: <ulink url="https://www.postgresql.org/message-id/20260529.082051.533519450296185920.ishii%40postgresql.org">Fix comment for read_kind_from_backend</ulink>
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-04 [30b401a33]
+    -->
+    <para>
+     Fix query-cache handling with disable_load_balance_on_write.
+     (Tatsuo Ishii)
+    </para>
+    <para>
+     Track actual writes separately from the state used by
+     <varname>disable_load_balance_on_write</varname>. This fixes
+     incorrect query-cache use when the parameter is set to
+     <literal>trans_transaction</literal>,
+     <literal>dml_adaptive</literal>, or <literal>always</literal>.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Documents</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-06-25 [4071aa2e8]
+    -->
+    <!--
+    2026-06-25 [a6a772422]
+    -->
+    <para>
+     Doc: Fix incorrect links. (Bo Peng)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2>
+  <title>Regression Tests</title>
+  <itemizedlist>
+   <listitem>
+    <!--
+    2026-09-20 [7bdc01fea]
+    -->
+    <para>
+     Test: enhance the 018.detach_primary regression test. (Tatsuo Ishii)
+    </para>
+    <para>
+     Wait explicitly for watchdog quorum in
+     <literal>018.detach_primary</literal> before testing the
+     detachment of an invalid streaming replication primary node.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-09-19 [5f258a055]
+    -->
+    <para>
+     Test: stabilize the 006.memqcache regression test. (Tatsuo Ishii)
+    </para>
+    <para>
+     Use synchronous replication in the streaming replication tests in
+     <literal>006.memqcache</literal>. This avoids intermittent
+     failures caused by replication delay, such as a newly created
+     role not yet being available on a standby.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-08-07 [315c05be1]
+    -->
+    <para>
+     Test: fix regress.sh to use a numeric PostgreSQL version number. (Tatsuo Ishii)
+    </para>
+    <para>
+     Remove nonnumeric suffixes from the PostgreSQL version used by
+     regression scripts, so development version strings such as
+     <literal>20devel</literal> can be used in numeric comparisons.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-07-17 [bdaccab93]
+    -->
+    <para>
+     Test: increase the test timeout from 300 to 360 seconds. (Tatsuo Ishii)
+    </para>
+    <para>
+     Increase the regression test timeout from 300 to 360 seconds to
+     accommodate longer runs of <literal>006.memqcache</literal>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <!--
+    2026-06-25 [c91e846c8]
+    -->
+    <para>
+     Test: use wait_for_pgpool_startup instead of sleep. (Tatsuo Ishii)
+    </para>
+    <para>
+     Use <function>wait_for_pgpool_startup()</function> instead of a
+     fixed one-second sleep in <literal>110.memory_leak</literal> and
+     <literal>111.cancel_query</literal>, avoiding intermittent
+     startup-related test failures.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
 <sect1 id="release-4-7-2">
  <title>Release 4.7.2</title>
  <note>
