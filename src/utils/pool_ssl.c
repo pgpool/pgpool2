@@ -516,6 +516,12 @@ fetch_pool_ssl_cert(POOL_CONNECTION * cp)
 				pfree(peer_cn);
 				return;
 			}
+			if ((size_t) len != strlen(peer_cn))
+			{
+				pfree(peer_cn);
+				ereport(ERROR,
+						(errmsg("client certificate Common Name contains embedded NUL")));
+			}
 			cp->client_cert_loaded = true;
 			cp->cert_cn = MemoryContextStrdup(TopMemoryContext, peer_cn);
 			pfree(peer_cn);
