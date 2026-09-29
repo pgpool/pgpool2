@@ -458,8 +458,8 @@
        <productname>Pgpool-II</productname>はParameterStatusの値を複数の<productname>PostgreSQL</productname>サーバから収集するため、その値がサーバによって異なる可能性があります。典型的な例は、<productname>PostgreSQL</productname> 14で導入された<literal>in_hot_standby</literal>です。
        この値はプライマリサーバでは<literal>off</literal>で、スタンバイサーバでは<literal>on</literal>になります。
        問題は、<productname>Pgpool-II</productname>はその値のひとつだけをクライアントに返さなければならないことです。
-       この場合は、プライマリサーバの値が選択されます。
-       ですから、<function>PQParameterStatus</function>は<literal>off</literal>を返すでしょう。
+       この場合は、メインサーバ(ダウンしていない一番ノード番号が小さいノード)の値が選択されます。
+       ですから、もしノード0がプライマリでかつダウンしていなければ<function>PQParameterStatus</function>は<literal>off</literal>を返すでしょう。
        一方で、クライアントが<literal>show in_hot_standby</literal>を発行すると、その時のセッションのロードバランスノードによって、<literal>on</literal>あるいは<literal>off</literal>が返ります。
      </para>
      <para>
@@ -470,8 +470,9 @@
        prevent the log file from being flooded
        since <literal>in_hot_standby</literal> always differs.
 -->
-       その値が<literal>in_hot_standby</literal>以外で異なる時には、<productname>Pgpool-II</productname>はログメッセージを出力することに注意してください。
-       これは、<literal>in_hot_standby</literal>の値は常に異なるからです。
+       ParameterStatus値がサーバ間で異なるとき、<productname>Pgpool-II</productname>はログメッセージを出力することに注意してください。
+       ただし、ParameterStatusが<literal>in_hot_standby</literal>のときはログは出力されません。
+       これは、<literal>in_hot_standby</literal>の値はサーバ間で常に異なり、もしログを出力してしまうとログファイルが溢れるからです。
      </para>
     </listitem>
    </varlistentry>
