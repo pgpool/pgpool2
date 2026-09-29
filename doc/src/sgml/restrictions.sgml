@@ -306,9 +306,9 @@
        primary server and <literal>on</literal> on standby
        servers. Problem is, <productname>Pgpool-II</productname> has
        to return client only one of them. In this case it chooses the
-       value reported by the primary
-       server. So <function>PQParameterStatus</function> will
-       return <literal>off</literal>. On the other hand, when the
+       value reported by the main
+       server (the smallest node id which is not down). So <function>PQParameterStatus</function> will
+       return <literal>off</literal> if node 0 is primary and is not down. On the other hand, when the
        client issues <literal>show in_hot_standby</literal>, the
        returned value can either <literal>on</literal>
        or <literal>off</literal> depending on which is the load
