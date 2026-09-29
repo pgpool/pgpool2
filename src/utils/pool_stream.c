@@ -308,9 +308,9 @@ pool_read(POOL_CONNECTION * cp, void *buf, int len)
 }
 
 /*
-* read exactly len bytes from cp
-* returns buffer address on success otherwise NULL.
-*/
+ * read exactly len bytes from cp returns buffer address on success otherwise
+ * NULL. Returns NULL too when len < 0.
+ */
 char *
 pool_read2(POOL_CONNECTION * cp, int len)
 {
@@ -319,7 +319,16 @@ pool_read2(POOL_CONNECTION * cp, int len)
 	int			alloc_size;
 	int			consume_size;
 	int			readlen;
-	MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
+	MemoryContext oldContext;
+
+	if (len < 0)
+	{
+		ereport(LOG,
+				(errmsg("pool_read2: negative len %d, returning NULL", len)));
+		return NULL;
+	}
+
+	oldContext = SwitchToConnectionContext(cp->isbackend);
 
 	req_size = cp->len + len;
 
