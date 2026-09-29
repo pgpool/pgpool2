@@ -1437,7 +1437,15 @@ get_nodes(int *nrows, int node_id)
 			{
 				snprintf(nodes[i].role, POOLCONFIG_MAXWEIGHTLEN, "%s", "standby");
 
-				if (bi->standby_delay_by_time)
+				/*
+				 * Report "-1" if the replication delay cannot be measured;
+				 * otherwise, report the last measured value.
+				 */
+				if (!VALID_BACKEND_RAW(i))
+				{
+					snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "-1");
+				}
+				else if (bi->standby_delay_by_time)
 				{
 					snprintf(nodes[i].delay, POOLCONFIG_MAXWEIGHTLEN, "%.6f", ((float) bi->standby_delay) / 1000000);
 					if (bi->standby_delay >= 2 * 1000 * 1000)

@@ -16,7 +16,7 @@ CREATE TEMP TABLE tmp (
   mode text);
 
 INSERT INTO tmp VALUES
-('0','localhost','11002','down','down','0.500000','standby','unknown','0','false','0','','','XXXX-XX-XX XX:XX:XX','s'),
+('0','localhost','11002','down','down','0.500000','standby','unknown','0','false','-1','','','XXXX-XX-XX XX:XX:XX','s'),
 ('1','localhost','11003','up','up','0.500000','primary','unknown','0','false','0','','','XXXX-XX-XX XX:XX:XX','s'),
 ('0','localhost','11002','down','down','0.500000','replica','replica','0','false','0','','','XXXX-XX-XX XX:XX:XX','r'),
 ('1','localhost','11003','up','up','0.500000','main','main','0','false','0','','','XXXX-XX-XX XX:XX:XX','r');

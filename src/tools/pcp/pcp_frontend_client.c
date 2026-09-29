@@ -564,7 +564,12 @@ output_nodeinfo_result(PCPResultInfo * pcpResInfo, bool all, bool verbose)
 		localtime_r(&backend_info->status_changed_time, &tm);
 		strftime(last_status_change, sizeof(last_status_change), "%F %T", &tm);
 
-		if (backend_info->standby_delay_by_time)
+		if (backend_info->role == ROLE_STANDBY &&
+			backend_info->backend_status == CON_DOWN)
+		{
+			snprintf(standby_delay_str, sizeof(standby_delay_str), "-1");
+		}
+		else if (backend_info->standby_delay_by_time)
 		{
 			snprintf(standby_delay_str, sizeof(standby_delay_str), "%.6f", ((float) backend_info->standby_delay) / 1000000);
 			if (verbose)
