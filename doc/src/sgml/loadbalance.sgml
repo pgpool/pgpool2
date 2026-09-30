@@ -1250,10 +1250,12 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
   <warning>
    <para>
     Enabling <literal>dml_adaptive_global</literal> increases shared memory
-    consumption. With default settings, the feature requires approximately 80
+    consumption. With default settings, the feature requires approximately 116
     KB of shared memory for table tracking:
-    <literal>track_table_mutation_table_size * 40 bytes</literal>
-    (default: 2048 * 40 = ~80 KB).
+    <literal>track_table_mutation_table_size * 56 bytes</literal>
+    (default: 2048 * 56 = ~112 KB) for the entries, plus
+    <literal>track_table_mutation_table_buckets * 4 bytes</literal>
+    (default: 1024 * 4 = ~4 KB) for the hash bucket array.
    </para>
   </warning>
 
@@ -1362,12 +1364,17 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
     <listitem>
      <para>
       Maximum number of tables that can be tracked simultaneously in the track
-      table mutation.  When full, oldest entries are evicted using a simple
-      eviction strategy.
+      table mutation.  When full, an entry is evicted from the first non-empty
+      hash bucket to make room for the new one.  Note that this is not the
+      least recently written entry: the eviction order follows the hash bucket
+      layout, not the write time.  Expired entries are also reclaimed
+      opportunistically as the map fills, so eviction of a live entry only
+      happens when more than <varname>track_table_mutation_table_size</varname>
+      tables are written within one TTL window.
      </para>
      <para>
       Valid range: 128-131072. Default is <literal>2048</literal>.  Memory
-      usage: approximately 40 bytes per entry.  This parameter can only be set
+      usage: approximately 56 bytes per entry.  This parameter can only be set
       at server start.
      </para>
     </listitem>
@@ -1398,9 +1405,9 @@ replication_delay_source_timeout = 10
 track_table_mutation_table_size = 4096
    </programlisting>
    <para>
-    Shared memory required for above configuration: approximately 160 KB for
+    Shared memory required for above configuration: approximately 228 KB for
     the table map.  Default configuration (2048 tables) requires approximately
-    80 KB.
+    116 KB.
    </para>
   </sect3>
 

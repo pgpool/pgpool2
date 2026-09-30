@@ -1686,9 +1686,11 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
   <warning>
    <para>
     <literal>dml_adaptive_global</literal>を有効にすると、共有メモリがより多く使用されます。
-    デフォルトの設定では、この機能によっておおよそ80 KBの共有メモリが使用されます。
-    <literal>track_table_mutation_table_size * 40 bytes</literal>
-    (default: 2048 * 40 = ~80 KB).
+    デフォルトの設定では、この機能によっておおよそ116KBの共有メモリがテーブルの追跡に使用されます。
+    <literal>track_table_mutation_table_size * 56 bytes</literal>
+    (default: 2048 * 56 = ~112 KB)が各エントリで費やされ、更に
+    <literal>track_table_mutation_table_buckets * 4 bytes</literal>
+    (default: 1024 * 4 = ~4 KB) がハッシュバケット配列に費やされます。
    </para>
   </warning>
 
@@ -1791,12 +1793,13 @@ dml_adaptive_object_relationship_list = 'table_1:table_2'
     <listitem>
      <para>
       テーブル変更追跡機能で同時に追跡できるテーブル数の最大値です。
-      いっぱいになると、単純な立ち退き戦略により、最も古いエントリが立ち退きます。
+      いっぱいになると、最初の空ではないハッシュバケットが削除されて、新しいハッシュバケットが追加される余地を作ります。
+      これは最旧エントリではないことに注意してください。立ち退きの順番は、バケットのレイアウトに従います。期限切れのエントリはマップファイルにしたがい、臨機応変に再利用されます。これにより、<varname>track_table_mutation_table_size</varname>の以上のテーブルが一つのTTLウィンドウの間に書かれたときにだけ、生きているエントリの立ち退きが起こります。
      </para>
      <para>
       有効な範囲は128-131072です。
       デフォルトは<literal>2048</literal>です。
-      エントリごとに約40バイトを消費します。
+      エントリごとに約56バイトを消費します。
       このパラメータはサーバの起動時にのみ設定可能です。
      </para>
     </listitem>
@@ -1827,8 +1830,8 @@ track_table_mutation_table_size = 4096
    </programlisting>
    </para>
    <para>
-    上記の設定で必要とする共有メモリはテーブルマップのために約160 KBです。
-    デフォルトの設定(テーブル数2048)では約80 KBとなります。
+    上記の設定で必要とする共有メモリはテーブルマップのために約228 KBです。
+    デフォルトの設定(テーブル数2048)では約116 KBとなります。
    </para>
   </sect3>
 
