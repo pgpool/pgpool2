@@ -560,9 +560,6 @@ pool_track_table_mutation_init(void)
 	gettimeofday(&st->last_cleanup_time, NULL);
 	st->global_cold_start_until.tv_sec = 0;
 	st->global_cold_start_until.tv_usec = 0;
-	st->stats_queries_checked = 0;
-	st->stats_forced_primary = 0;
-	st->stats_allowed_replica = 0;
 
 	ereport(LOG,
 			(errmsg("track_table_mutation: initialized with %zu bytes shmem",
@@ -698,10 +695,7 @@ pool_track_table_mutation_table_is_stale(
 		return false;
 
 	if (table_oid <= 0 || dboid <= 0)
-	{
-		is_stale = true;
-		goto update_stats;
-	}
+		return true;
 
 	map = track_table_mutation_shmem->table_map;
 	hash = fnv1a_hash_table_key(table_oid, dboid);
@@ -753,22 +747,6 @@ pool_track_table_mutation_table_is_stale(
 	}
 
 	table_map_unlock();
-
-update_stats:
-	/* Update statistics using semaphore */
-	if (track_table_mutation_shmem != NULL)
-	{
-		TrackTableMutationState *st;
-
-		table_map_lock();
-		st = &track_table_mutation_shmem->state;
-		st->stats_queries_checked++;
-		if (is_stale)
-			st->stats_forced_primary++;
-		else
-			st->stats_allowed_replica++;
-		table_map_unlock();
-	}
 
 	return is_stale;
 }

@@ -76,9 +76,6 @@ typedef struct TrackTableMutationState
 	struct timeval ttl_last_updated;	/* When TTL was last updated */
 	struct timeval last_cleanup_time;	/* When last expired cleanup ran */
 	struct timeval global_cold_start_until; /* Global cold start end time */
-	uint32		stats_queries_checked;	/* Queries checked */
-	uint32		stats_forced_primary;	/* Forced to primary */
-	uint32		stats_allowed_replica;	/* Allowed to replica */
 } TrackTableMutationState;
 
 /*
