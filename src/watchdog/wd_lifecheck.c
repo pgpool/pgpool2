@@ -680,11 +680,14 @@ load_watchdog_nodes_from_json(char *json_data, int len)
 		WDNodeInfo *nodeInfo = parse_watchdog_node_info_from_wd_node_json(value->u.array.values[i]);
 		
 		gslifeCheckCluster->lifeCheckNodes[i].wdState = nodeInfo->state;
-		strcpy(gslifeCheckCluster->lifeCheckNodes[i].stateName, nodeInfo->stateName);
+		strlcpy(gslifeCheckCluster->lifeCheckNodes[i].stateName,
+				nodeInfo->stateName, WD_MAX_HOST_NAMELEN);
 		gslifeCheckCluster->lifeCheckNodes[i].nodeState = NODE_EMPTY; /* This is local health check state*/
 		gslifeCheckCluster->lifeCheckNodes[i].ID = nodeInfo->id;
-		strcpy(gslifeCheckCluster->lifeCheckNodes[i].hostName, nodeInfo->hostName);
-		strcpy(gslifeCheckCluster->lifeCheckNodes[i].nodeName, nodeInfo->nodeName);
+		strlcpy(gslifeCheckCluster->lifeCheckNodes[i].hostName,
+				nodeInfo->hostName, WD_MAX_HOST_NAMELEN);
+		strlcpy(gslifeCheckCluster->lifeCheckNodes[i].nodeName,
+				nodeInfo->nodeName, WD_MAX_NODE_NAMELEN);
 		gslifeCheckCluster->lifeCheckNodes[i].wdPort = nodeInfo->wd_port;
 		gslifeCheckCluster->lifeCheckNodes[i].pgpoolPort = nodeInfo->pgpool_port;
 		gslifeCheckCluster->lifeCheckNodes[i].retry_lives = pool_config->wd_life_point;
