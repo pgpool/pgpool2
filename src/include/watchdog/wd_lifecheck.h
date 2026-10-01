@@ -41,7 +41,7 @@ typedef struct LifeCheckNode
 	NodeStates	nodeState;
 	int 		ID;
 	WD_STATES	wdState;
-	char		stateName[128];
+	char		stateName[WD_MAX_HOST_NAMELEN];
 	char		hostName[WD_MAX_HOST_NAMELEN];
 	char		nodeName[WD_MAX_NODE_NAMELEN];
 	int			wdPort;
