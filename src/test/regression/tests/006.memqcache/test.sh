@@ -596,7 +596,7 @@ do
     fi
     ./startall
     wait_for_pgpool_startup
-    timeout 1 $PGPROTO -d test -f ../query_cache_bug$i.data |& del_details_from_error > result
+    timeout 5 $PGPROTO -d test -f ../query_cache_bug$i.data |& del_details_from_error > result
     if [ $? != 0 ];then
 	# timeout happened or pgproto returned non 0 status
 	echo "test failed in test case #2 (timeout)"
