@@ -139,6 +139,17 @@ Pgpool-II documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-t </option></term>
+     <term><option>--test-v2</option></term>
+     <listitem>
+      <para>
+       v2プロトコルのスタートアップパケットを送信し、返信を読み込んだ後終了します。
+       これはPgpool-II 4.8以後のバージョン (そしてPostgreSQL 14以後のバージョン)が、v2プロトコルの接続要求を拒否するかどうかのテストに使用します。
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-D</option></term>
      <term><option>--debug</option></term>
      <listitem>

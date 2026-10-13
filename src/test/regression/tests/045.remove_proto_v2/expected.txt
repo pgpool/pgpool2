@@ -1,0 +1,2 @@
+<= BE ErrorResponse(FATAL:  unsupported frontend protocol 2.0
+)

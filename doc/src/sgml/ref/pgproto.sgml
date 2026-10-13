@@ -102,6 +102,18 @@ Pgpool-II documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-t </option></term>
+     <term><option>--test-v2</option></term>
+     <listitem>
+      <para>
+       Send a v2 protocol startup packet and read reply, then exit.  This is
+       used to test Pgpool-II 4.8 or later (and PostgreSQL 14 or later) to see
+       if they reject a v2 protocol connection request.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-D</option></term>
      <term><option>--debug</option></term>
      <listitem>

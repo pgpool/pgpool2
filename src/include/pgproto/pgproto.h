@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017-2018	Tatsuo Ishii
+ * Portions Copyright (c) 2018-2026	PgPool Global Development Group
+ * Portions Copyright (c) 2017-2018	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2017-2018	Tatsuo Ishii
- * Copyright (c) 2018-2023	PgPool Global Development Group
+ * Portions Copyright (c) 2018-2023	PgPool Global Development Group
+ * Portions Copyright (c) 2017-2018	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -373,6 +373,15 @@ read_it(PGconn *conn, char *buf, int len)
 static char *
 read_string(PGconn *conn)
 {
+	return read_string_internal(PQsocket(conn));
+}
+
+/*
+ * Read a string from fd and returns malloced buffer pointer.
+ */
+char *
+read_string_internal(int fd)
+{
 #define	PROTO_ALLOC_SIZE	512
 
 	int			sts;
@@ -387,19 +396,22 @@ read_string(PGconn *conn)
 
 	for (;;)
 	{
-		sts = read(PQsocket(conn), p, 1);
+retry:
+		sts = read(fd, p, 1);
 
 		if (sts == 0)
 		{
-			fprintf(stderr, "read_string: EOF detected");
+			fprintf(stderr, "read_string_internal: EOF detected");
 			exit(1);
 		}
 		else if (sts < 0)
 		{
-			fprintf(stderr, "read_string: read(2) returns error %s\n", strerror(errno));
+			if (errno == EINTR || errno == EAGAIN)
+				goto retry;
+			fprintf(stderr, "read_string_internal: read(2) returns error \"%s\"\n",
+					strerror(errno));
 			exit(1);
 		}
-
 
 		if (*p == '\0')
 		{
@@ -413,8 +425,8 @@ read_string(PGconn *conn)
 		{
 			alloc_factor++;
 			buf = pg_realloc(buf, PROTO_ALLOC_SIZE * alloc_factor);
+			p = buf + (PROTO_ALLOC_SIZE * (alloc_factor - 1));
 			len = PROTO_ALLOC_SIZE;
 		}
 	}
-
 }

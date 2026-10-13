@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017	Tatsuo Ishii
+ * Portions Copyright (c) 2018-2026	PgPool Global Development Group
+ * Portions Copyright (c) 2017-2018	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -16,5 +17,9 @@
 #ifndef READ_H
 #define READ_H
 
+#include <stdbool.h>
+
 extern void read_until_ready_for_query(PGconn *conn, int check_input, int wait_for_ready_for_query);
+extern char *read_string_internal(int fd);
+
 #endif

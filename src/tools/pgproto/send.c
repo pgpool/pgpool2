@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2017-2018	Tatsuo Ishii
- * Copyright (c) 2018-2021	PgPool Global Development Group
+ * Portions Copyright (c) 2018-2026	PgPool Global Development Group
+ * Portions Copyright (c) 2017-2018	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -28,8 +28,6 @@
 #include <libpq-fe.h>
 #include "pgproto/read.h"
 #include "pgproto/send.h"
-
-static void write_it(int fd, void *buf, int len);
 
 /*
  * Send a character to the connection.
@@ -81,18 +79,18 @@ send_byte(char *buf, int len, PGconn *conn)
 }
 
 /*
- * Wrapper for write(2).
+ * Wrapper for write(2)
+ *
  */
-static
 void
 write_it(int fd, void *buf, int len)
 {
-	int			errsave = errno;
-
+	int errsave = errno;
 	errno = 0;
 	if (write(fd, buf, len) < 0)
 	{
-		fprintf(stderr, "write_it: warning write(2) failed: %s\n", strerror(errno));
+		fprintf(stderr, "write_it: warning: write(2) failed: \"%s\"\n",
+				strerror(errno));
 	}
 	errno = errsave;
 }

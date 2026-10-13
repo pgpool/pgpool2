@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017	Tatsuo Ishii
+ * Portions Copyright (c) 2018-2026	PgPool Global Development Group
+ * Portions Copyright (c) 2017-2018	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -21,5 +22,6 @@ extern void send_int(int intval, PGconn *conn);
 extern void send_int16(short shortval, PGconn *conn);
 extern void send_string(char *buf, PGconn *conn);
 extern void send_byte(char *buf, int len, PGconn *conn);
+extern void write_it(int fd, void *buf, int len);
 
 #endif
