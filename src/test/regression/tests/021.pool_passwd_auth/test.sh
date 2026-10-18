@@ -43,6 +43,9 @@ export PGPOOLKEYFILE=$PWD/etc/pgpool_key
 #echo "md5_user:md5_password" >> etc/pool_passwd
 $PG_ENC -m -f etc/pgpool.conf -u scram_user scram_password
 $PG_ENC -m -f etc/pgpool.conf -u md5_user md5_password
+# set synchronous replication to avoid replication delay
+echo "synchronous_commit = remote_apply" >> data0/postgresql.conf
+echo "synchronous_standby_names = 'server1'" >> data0/postgresql.conf
 
 #copy the pool_hba to etc dir
 cp ../pool_hba.conf etc/
