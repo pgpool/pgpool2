@@ -353,7 +353,13 @@
      </para>
      <note>
       <para>
-       <literal>allow_clear_text_frontend_auth</literal> only works when <xref linkend="guc-enable-pool-hba"> is not enabled
+       If <xref linkend="guc-enable-pool-hba"> is <literal>true</literal>, it
+       is not allowed for <productname>Pgpool-II</productname> to use
+       clear-text-password authentication with frontend clients to get the
+       password in plain text form from the client and use it for backend
+       authentication even
+       if <varname>allow_clear_text_frontend_auth</varname>
+       is <literal>true</literal>.
       </para>
      </note>
     </listitem>

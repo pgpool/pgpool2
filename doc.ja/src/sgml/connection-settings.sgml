@@ -531,14 +531,11 @@
       -->
       <productname>PostgreSQL</productname>バックエンドサーバはあるユーザの認証に対して<literal>md5</literal>または<literal>SCRAM</literal>認証を必要としており、そのユーザのパスワードが<filename>"pool_passwd"</filename>ファイルに存在しない場合、<literal>allow_clear_text_frontend_auth</literal>は<productname>Pgpool-II</productname>がフロントエンドクライアントとクリアテキストパスワード認証を行い、クライアントから平文形式のパスワードを取得しバックエンド認証のために使用することを許可します。
      </para>
-     <para>
-
       <!--
       Default is <literal>false</literal>
       -->
-      デフォルトは<literal>false</literal>です。
-     </para>
      <para>
+      デフォルトは<literal>false</literal>です。
       <!--
       This parameter can be changed by reloading
       the <productname>Pgpool-II</productname> configurations.
@@ -547,10 +544,7 @@
      </para>
      <note>
       <para>
-       <!--
-       <literal>allow_clear_text_frontend_auth</literal> only works when <xref linkend="guc-enable-pool-hba"> is not enabled
-       -->
-       <literal>allow_clear_text_frontend_auth</literal>は<xref linkend="guc-enable-pool-hba">が有効でない場合のみ機能します。
+       <xref linkend="guc-enable-pool-hba">が<literal>true</literal>の場合は、<varname>allow_clear_text_frontend_auth</varname>が<literal>true</literal>でも、<productname>Pgpool-II</productname>がフロントエンドクライアントとクリアテキストパスワード認証を行い、クライアントから平文形式のパスワードを取得しバックエンド認証のために使用することを許可しません。
       </para>
      </note>
     </listitem>
