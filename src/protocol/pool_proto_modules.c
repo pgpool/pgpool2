@@ -1786,7 +1786,7 @@ Bind(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		/* send error message to frontend */
 		errmessage = psprintf("prepared statement \"%s\" does not exist",
 							  pstmt_name);
-		pool_send_error_message(frontend, MAJOR(cp), "XX000", errmessage,
+		pool_send_error_message(frontend, MAJOR(cp), "26000", errmessage,
 								"", "", __FILE__, __LINE__);
 		pfree(errmessage);
 
