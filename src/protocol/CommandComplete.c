@@ -57,12 +57,20 @@ CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool c
 	int			i;
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION *con;
+	bool		discard_all = false;
 
 	p1 = NULL;
 	len1 = 0;
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
+
+	/* Check if the current query contains DISCARD ALL. */
+	if (session_context->query_context &&
+		session_context->query_context->parse_tree &&
+		IsA(session_context->query_context->parse_tree, DiscardStmt) &&
+		((DiscardStmt *) session_context->query_context->parse_tree)->target == DISCARD_ALL)
+		discard_all = true;
 
 	/*
 	 * Handle misc process which is necessary when query context exists.
@@ -287,6 +295,13 @@ CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool c
 		}
 	}
 
+	/*
+	 * DISCARD ALL removes every saved statement and portal.  Do this only
+	 * after CommandComplete has finished using the current query context.
+	 */
+	if (discard_all)
+		pool_clear_sent_message_list();
+
 	return POOL_CONTINUE;
 }
 
@@ -331,20 +346,6 @@ handle_query_context(POOL_CONNECTION_POOL *backend)
 		{
 			pool_remove_sent_message('Q', name);
 			pool_remove_sent_message('P', name);
-		}
-	}
-	else if (IsA(node, DiscardStmt))
-	{
-		DiscardStmt *stmt = (DiscardStmt *) node;
-
-		if (stmt->target == DISCARD_PLANS)
-		{
-			pool_remove_sent_messages('Q');
-			pool_remove_sent_messages('P');
-		}
-		else if (stmt->target == DISCARD_ALL)
-		{
-			pool_clear_sent_message_list();
 		}
 	}
 
