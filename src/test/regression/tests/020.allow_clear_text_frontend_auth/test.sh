@@ -31,6 +31,9 @@ echo "allow_clear_text_frontend_auth = on" >> etc/pgpool.conf
 #set max_init_children to 1 to make sure we reuse the
 #connection to test wrong password rejection
 echo "num_init_children = 1" >> etc/pgpool.conf
+# set synchronous replication to avoid replication delay
+echo "synchronous_commit = remote_apply" >> data0/postgresql.conf
+echo "synchronous_standby_names = 'server1'" >> data0/postgresql.conf
 
 ./startall
 

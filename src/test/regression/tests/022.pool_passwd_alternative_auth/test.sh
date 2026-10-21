@@ -33,6 +33,9 @@ echo "allow_clear_text_frontend_auth = off" >> etc/pgpool.conf
 #connection to test wrong password rejection
 echo "num_init_children = 1" >> etc/pgpool.conf
 echo "enable_pool_hba = on" >> etc/pgpool.conf
+# set synchronous replication to avoid replication delay
+echo "synchronous_commit = remote_apply" >> data0/postgresql.conf
+echo "synchronous_standby_names = 'server1'" >> data0/postgresql.conf
 
 #create pool_passwd file
 echo "scram_user:scram_password" >> etc/pool_passwd
