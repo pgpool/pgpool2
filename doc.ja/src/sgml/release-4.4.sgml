@@ -1867,7 +1867,7 @@ AC_DEFINE(OPENSSL_API_COMPAT, [0x10002000L],
      006.memqcacheに回帰テストを追加しました。
     </para>
     <para>
-     この問題はEmond Achilleas Mantzios によって報告され、テストプログラムが提供されました。
+     この問題はAchilleas Mantziosによって報告され、テストプログラムが提供されました。
     </para>
     <para>
      ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-April/009430.html">[pgpool-general: 9427] Clarification on query results cache visibility</ulink>
@@ -1887,7 +1887,7 @@ AC_DEFINE(OPENSSL_API_COMPAT, [0x10002000L],
      フラグを設定する前にクエリが読み取り専用の SELECT であるかどうかを確認するように Execute() を修正しました。
     </para>
     <para>
-     この問題はEmond Achilleas Mantziosによって報告され、テストプログラムが提供されました。
+     この問題はAchilleas Mantziosによって報告され、テストプログラムが提供されました。
     </para>
     <para>
      ディスカッション: <ulink url="https://www.pgpool.net/pipermail/pgpool-general/2025-April/009430.html">[pgpool-general: 9427] Clarification on query results cache visibility</ulink>
