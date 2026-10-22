@@ -366,11 +366,22 @@
    </varlistentry>
 
    <varlistentry>
-    <term>PREPARE/EXECUTE/DEALLOCATE</term>
+    <term>target_session_attrs</term>
     <listitem>
      <para>
-      PREPARE/EXECUTE/DEALLOCATE are always sent to primary server
-      even if the query PREPARE is processing is read only SELECT.
+      Do not set libpq's connection parameter <literal>target_session_attrs2</literal> to other than <literal>any</literal> to connect to <productname>Pgpool-II</productname>.
+      <literal>target_session_attrs</literal> is a libpq's feature to select <productname>PostgreSQL</productname> to connect to by specifying its kind.
+      For example, if <literal>target_session_attrs</literal> is set to <literal>primary</literal>, libpq will check in_hot_standby ParameterStatus value while connecting to <productname>Pgpool-II</productname> to make sure that it is off.
+      <productname>Pgpool-II</productname> always returns the value of the main server (the smallest node id server which is not in down status).
+      If the node 0 is the main server and it's a standby by chance, libpq will receive in_hot_standby = on, which is not the expected value (in_hot_standby = off). Therefore it's treated as an error in libpq side.
+     </para>
+     <para>
+      What happens if <literal>target_session_attrs</literal> = read-only and
+      the node 0 is the main server and it's a standby? In this case libpq can
+      connect to <productname>Pgpool-II</productname> normally. However, even
+      if a write query is sent, it does not raise an error
+      as <productname>Pgpool-II</productname> redirects the query to
+      primary. This may be an unexpected behavior for libpq applications.
      </para>
     </listitem>
    </varlistentry>
