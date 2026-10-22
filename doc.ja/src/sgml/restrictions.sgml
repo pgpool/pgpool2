@@ -531,6 +531,25 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term>target_session_attrs</term>
+    <listitem>
+     <para>
+      libpqの接続パラメータ<literal>target_session_attrs</literal>を<literal>any</literal>以外に設定して<productname>Pgpool-II</productname>に接続しないでください。
+      <literal>target_session_attrs</literal>は、接続したい<productname>PostgreSQL</productname>の種別を指定して接続するホストを選択できるlibpqの機能です。
+      たとえば<literal>target_session_attrs</literal> = primaryがlibpqで接続パラメータに指定されていると、libpqは接続時に<productname>Pgpool-II</productname>が返却するParameterStatusのin_hot_standbyの値がoffであるかどうかをチェックします。
+      <productname>Pgpool-II</productname>は常にメインサーバ(ダウンしていない一番ノード番号が小さいノード)の値を返します。
+      たまたまノード0がメインノードでスタンバイであったとすると、libpq側にはin_hot_standby = onが返却され、期待していたin_hot_standby = offが返らないため、libpq側ではエラーになるでしょう。
+     </para>
+     <para>
+      ノード0がメインノードかつスタンバイで、<literal>target_session_attrs</literal> = read-onlyならどうなるでしょう？
+      この場合、libpqは正常に<productname>Pgpool-II</productname>に接続できます。
+      しかし、更新クエリを投げても<productname>Pgpool-II</productname>がそのクエリをプライマリに振り分けてくれるため、エラーになりません。
+      これはlibpqを使用するアプリケーションにとって、予期しない動作になるかもしれません。
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </para>
 </sect1>
