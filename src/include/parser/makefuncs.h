@@ -4,8 +4,8 @@
  *	  prototypes for the creator functions of various nodes
  *
  *
- * Portions Copyright (c) 2003-2025, PgPool Global Development Group
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2026, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/makefuncs.h
@@ -99,7 +99,7 @@ extern JsonValueExpr *makeJsonValueExpr(Expr *raw_expr, Expr *formatted_expr,
 extern Node *makeJsonKeyValue(Node *key, Node *value);
 extern Node *makeJsonIsPredicate(Node *expr, JsonFormat *format,
 								 JsonValueType item_type, bool unique_keys,
-								 int location);
+								 Oid exprBaseType, int location);
 extern JsonBehavior *makeJsonBehavior(JsonBehaviorType btype, Node *expr,
 									  int location);
 extern JsonTablePath *makeJsonTablePath(Const *pathvalue, char *pathname);

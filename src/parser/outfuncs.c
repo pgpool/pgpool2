@@ -127,7 +127,7 @@ static void _outTransactionStmt(StringInfo str, TransactionStmt *node);
 static void _outTruncateStmt(StringInfo str, TruncateStmt *node);
 static void _outVacuumStmt(StringInfo str, VacuumStmt *node);
 static void _outExplainStmt(StringInfo str, ExplainStmt *node);
-static void _outClusterStmt(StringInfo str, ClusterStmt *node);
+static void _outRepackStmt(StringInfo str, RepackStmt *node);
 static void _outCheckPointStmt(StringInfo str, CheckPointStmt *node);
 static void _outClosePortalStmt(StringInfo str, ClosePortalStmt *node);
 static void _outListenStmt(StringInfo str, ListenStmt *node);
@@ -259,11 +259,6 @@ escape_string(char *str)
 		if (str[i] == '\'')
 		{
 			es[j++] = '\'';
-		}
-		else if (str[i] == '\\')
-		{
-			if (!standard_conforming_strings)
-				es[j++] = '\\';
 		}
 		es[j] = str[i];
 	}
@@ -3030,7 +3025,7 @@ _outExplainStmt(StringInfo str, ExplainStmt *node)
 }
 
 static void
-_outClusterStmt(StringInfo str, ClusterStmt *node)
+_outRepackStmt(StringInfo str, RepackStmt *node)
 {
 	appendStringInfoString(str, "CLUSTER ");
 
@@ -4809,6 +4804,7 @@ _outGrantStmt(StringInfo str, GrantStmt *node)
 		case OBJECT_POLICY:
 		case OBJECT_PROCEDURE:
 		case OBJECT_PUBLICATION:
+		case OBJECT_PUBLICATION_EXCLUDED_REL:
 		case OBJECT_PUBLICATION_NAMESPACE:
 		case OBJECT_PUBLICATION_REL:
 		case OBJECT_ROLE:
@@ -5470,6 +5466,11 @@ _outAlterDomainStmt(StringInfo str, AlterDomainStmt *node)
 			appendStringInfoString(str, "\"");
 			if (node->behavior == DROP_CASCADE)
 				appendStringInfoString(str, " CASCADE");
+			break;
+		case 'V':
+			appendStringInfoString(str, " VALIDATE CONSTRAINT \"");
+			appendStringInfoString(str, node->name);
+			appendStringInfoString(str, "\"");
 			break;
 	}
 }
@@ -6143,6 +6144,10 @@ _outOnConflictClause(StringInfo str, OnConflictClause *node)
 			appendStringInfoString(str, " DO NOTHING ");
 			break;
 
+		case ONCONFLICT_SELECT:
+			appendStringInfoString(str, " DO SELECT ");
+			break;
+
 		default:
 			break;
 	}
@@ -6686,8 +6691,8 @@ _outNode(StringInfo str, void *obj)
 				_outExplainStmt(str, obj);
 				break;
 
-			case T_ClusterStmt:
-				_outClusterStmt(str, obj);
+			case T_RepackStmt:
+				_outRepackStmt(str, obj);
 				break;
 
 			case T_CheckPointStmt:

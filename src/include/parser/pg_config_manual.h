@@ -6,8 +6,8 @@
  * for developers.  If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * Portions Copyright (c) 2003-2025, PgPool Global Development Group
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2026, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/pg_config_manual.h
@@ -36,6 +36,16 @@
  * without the --wal-segsize option.  It must be a valid segment size.
  */
 #define DEFAULT_XLOG_SEG_SIZE	(16*1024*1024)
+
+/*
+ * SLRU segment size.  A page is the same BLCKSZ as is used everywhere else in
+ * Postgres.  The segment size can be chosen somewhat arbitrarily; we make it
+ * 32 pages by default, or 256Kb, i.e. 1M transactions for CLOG or 64K
+ * transactions for SUBTRANS.
+ *
+ * Changing this requires an initdb.
+ */
+#define SLRU_PAGES_PER_SEGMENT	32
 
 /*
  * Maximum length for identifiers (e.g. table names, column names,
@@ -92,17 +102,12 @@
 #define PARTITION_MAX_KEYS     32
 
 /*
- * Decide whether built-in 8-byte types, including float8, int8, and
- * timestamp, are passed by value.  This is on by default if sizeof(Datum) >=
- * 8 (that is, on 64-bit platforms).  If sizeof(Datum) < 8 (32-bit platforms),
- * this must be off.  We keep this here as an option so that it is easy to
- * test the pass-by-reference code paths on 64-bit platforms.
- *
- * Changing this requires an initdb.
+ * This symbol is now vestigial: built-in 8-byte types, including float8,
+ * int8, and timestamp, are always passed by value since we require Datum
+ * to be wide enough to permit that.  We continue to define the symbol here
+ * so as not to unnecessarily break extension code.
  */
-#if SIZEOF_VOID_P >= 8
 #define USE_FLOAT8_BYVAL 1
-#endif
 
 
 /*

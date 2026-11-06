@@ -4,8 +4,8 @@
  *	  definition of the "relation" system catalog (pg_class)
  *
  *
- * Portions Copyright (c) 2003-2025, PgPool Global Development Group
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2026, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_class.h
@@ -23,6 +23,8 @@
 
 #include "catalog/genbki.h"
 #include "catalog/pg_class_d.h" /* IWYU pragma: export */
+
+BEGIN_CATALOG_STRUCT
 
 CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,RelationRelation_Rowtype_Id) BKI_SCHEMA_MACRO
 {
@@ -138,6 +140,8 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	pg_node_tree relpartbound BKI_DEFAULT(_null_);
 #endif
 } FormData_pg_class;
+
+END_CATALOG_STRUCT
 
 /* Size of fixed part of pg_class tuples, not counting var-length fields */
 #define CLASS_TUPLE_SIZE \

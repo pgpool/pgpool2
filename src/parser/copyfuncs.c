@@ -11,8 +11,8 @@
  * be handled easily in a simple depth-first traversal.
  *
  *
- * Portions Copyright (c) 2003-2025, PgPool Global Development Group
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2026, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -4038,10 +4038,10 @@ _copyCallStmt(const CallStmt *from)
 	return newnode;
 }
 
-static ClusterStmt *
-_copyClusterStmt(const ClusterStmt *from)
+static RepackStmt *
+_copyRepackStmt(const RepackStmt *from)
 {
-	ClusterStmt *newnode = makeNode(ClusterStmt);
+	RepackStmt *newnode = makeNode(RepackStmt);
 
 	COPY_NODE_FIELD(relation);
 	COPY_STRING_FIELD(indexname);
@@ -6093,8 +6093,8 @@ copyObjectImpl(const void *from)
 		case T_CallStmt:
 			retval = _copyCallStmt(from);
 			break;
-		case T_ClusterStmt:
-			retval = _copyClusterStmt(from);
+		case T_RepackStmt:
+			retval = _copyRepackStmt(from);
 			break;
 		case T_CopyStmt:
 			retval = _copyCopyStmt(from);
@@ -6628,7 +6628,7 @@ copyObjectImpl(const void *from)
 
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(from));
-			retval = 0;			/* keep compiler quiet */
+			retval = NULL;		/* keep compiler quiet */
 			break;
 	}
 

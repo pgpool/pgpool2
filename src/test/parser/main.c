@@ -28,11 +28,6 @@ command(const char *cmd)
 
 	if (sscanf(cmd, "pset %s %s", name, value) == 2)
 	{
-		if (strcmp(name, "standard_conforming_strings") == 0)
-		{
-			parser_set_param(name, value);
-			fprintf(stdout, "pset %d\n", standard_conforming_strings);
-		}
 		else if (strcmp(name, "server_version") == 0)
 		{
 			parser_set_param(name, value);

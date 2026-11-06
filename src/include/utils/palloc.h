@@ -84,6 +84,11 @@ extern void *palloc_extended(Size size, int flags);
 extern void *repalloc(void *pointer, Size size);
 extern void pfree(void *pointer);
 
+/*
+ * Allocate space for an object of the specified type.
+ */
+#define palloc_object(type) ((type *) palloc(sizeof(type)))
+
 /* Higher-limit allocators. */
 extern void *MemoryContextAllocHuge(MemoryContext context, Size size);
 extern void *repalloc_huge(void *pointer, Size size);

@@ -4064,7 +4064,7 @@ is_internal_transaction_needed(Node *node)
 		 * T_AlterDefaultPrivilegesStmt,	Our parser does not support yet
 		 */
 		T_ClosePortalStmt,
-		T_ClusterStmt,
+		T_RepackStmt,
 		T_CopyStmt,
 		T_CreateStmt,			/* CREATE TABLE */
 		T_DefineStmt,			/* CREATE AGGREGATE, OPERATOR, TYPE */
@@ -4155,9 +4155,9 @@ is_internal_transaction_needed(Node *node)
 		/*
 		 * Check CLUSTER with no option. If so, do not start transaction
 		 */
-		else if (IsA(node, ClusterStmt))
+		else if (IsA(node, RepackStmt))
 		{
-			if (((ClusterStmt *) node)->relation == NULL)
+			if (((RepackStmt *) node)->relation == NULL)
 				return false;
 		}
 

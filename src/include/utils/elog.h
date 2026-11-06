@@ -184,26 +184,33 @@ typedef enum
  *----------
  */
 #ifdef HAVE__BUILTIN_CONSTANT_P
-#define ereport_domain(elevel, domain, rest)	\
+
+#define ereport_domain(elevel, domain, ...) \
 	do { \
 		if (errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
-			errfinish rest; \
-		if (__builtin_constant_p(elevel) && (elevel) >= ERROR && (elevel) != FRONTEND_ONLY_ERROR) \
+			(void) (__VA_ARGS__), errfinish(0); \
+		if (__builtin_constant_p(elevel) && \
+			(elevel) >= ERROR && \
+			(elevel) != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
-	} while(0)
+	} while (0)
+
 #else							/* !HAVE__BUILTIN_CONSTANT_P */
-#define ereport_domain(elevel, domain, rest)	\
+
+#define ereport_domain(elevel, domain, ...) \
 	do { \
 		const int elevel_ = (elevel); \
 		if (errstart(elevel_, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
-			errfinish rest; \
-		if (elevel_ >= ERROR  && elevel_ != FRONTEND_ONLY_ERROR) \
+			(void) (__VA_ARGS__), errfinish(0); \
+		if (elevel_ >= ERROR && \
+			elevel_ != FRONTEND_ONLY_ERROR) \
 			pg_unreachable(); \
-	} while(0)
+	} while (0)
+
 #endif							/* HAVE__BUILTIN_CONSTANT_P */
 
-#define ereport(elevel, rest)	\
-	ereport_domain(elevel, TEXTDOMAIN, rest)
+#define ereport(elevel, ...) \
+	ereport_domain(elevel, TEXTDOMAIN, __VA_ARGS__)
 
 #define TEXTDOMAIN NULL
 

@@ -8,8 +8,8 @@
  * higher-level API provided by parser.h.
  *
  *
- * Portions Copyright (c) 2003-2025, PgPool Global Development Group
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2026, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/scanner.h
@@ -87,8 +87,6 @@ typedef struct core_yy_extra_type
 	 * prevailing GUC settings.
 	 */
 	int			backslash_quote;
-	bool		escape_string_warning;
-	bool		standard_conforming_strings;
 
 	/*
 	 * literalbuf is used to accumulate literal values when multiple rules are
@@ -112,8 +110,7 @@ typedef struct core_yy_extra_type
 	/* first part of UTF16 surrogate pair for Unicode escapes */
 	int32		utf16_first_part;
 
-	/* state variables for literal-lexing warnings */
-	bool		warn_on_first_escape;
+	/* true if we need to verify valid encoding of current literal string */
 	bool		saw_non_ascii;
 } core_yy_extra_type;
 

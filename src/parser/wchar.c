@@ -12,6 +12,10 @@
 #include <limits.h>
 #include "pg_wchar.h"
 
+#ifndef pg_fallthrough
+#define pg_fallthrough __attribute__((fallthrough))
+#endif
+
 #ifndef WIN32
 #define DEF_ENC2NAME(name, codepage) { #name, PG_##name }
 #else
@@ -27,7 +31,6 @@ const pg_enc2name pg_enc2name_tbl[] =
 	[PG_EUC_TW] = DEF_ENC2NAME(EUC_TW, 0),
 	[PG_EUC_JIS_2004] = DEF_ENC2NAME(EUC_JIS_2004, 20932),
 	[PG_UTF8] = DEF_ENC2NAME(UTF8, 65001),
-	[PG_MULE_INTERNAL] = DEF_ENC2NAME(MULE_INTERNAL, 0),
 	[PG_LATIN1] = DEF_ENC2NAME(LATIN1, 28591),
 	[PG_LATIN2] = DEF_ENC2NAME(LATIN2, 28592),
 	[PG_LATIN3] = DEF_ENC2NAME(LATIN3, 28593),
@@ -74,7 +77,6 @@ const char *pg_enc2gettext_tbl[] =
 {
 	[PG_SQL_ASCII] = "US-ASCII",
 	[PG_UTF8] = "UTF-8",
-	[PG_MULE_INTERNAL] = NULL,
 	[PG_LATIN1] = "LATIN1",
 	[PG_LATIN2] = "LATIN2",
 	[PG_LATIN3] = "LATIN3",
@@ -124,9 +126,9 @@ const char *pg_enc2gettext_tbl[] =
  * this pair specifically.  Byte pair range constraints, in encoding
  * originator documentation, always excluded this pair.  No core conversion
  * could translate it.  However, longstanding verifychar implementations
- * accepted any non-NUL byte.  big5_to_euc_tw and big5_to_mic even translate
- * pairs not valid per encoding originator documentation.  To avoid tightening
- * core or non-core conversions in a security patch, we sought this one pair.
+ * accepted any non-NUL byte.  big5_to_euc_tw even translates pairs not
+ * valid per encoding originator documentation.  To avoid tightening core
+ * or non-core conversions in a security patch, we sought this one pair.
  *
  * PQescapeString() historically used spaces for BYTE1; many other values
  * could suffice for BYTE1.
@@ -160,6 +162,9 @@ const char *pg_enc2gettext_tbl[] =
  * width -1. It is recommended that non-ASCII encodings refer their ASCII
  * subset to the ASCII routines to ensure consistency.
  */
+
+/* No error-reporting facility.  Ignore incomplete trailing byte sequence. */
+#define MB2CHAR_NEED_AT_LEAST(len, need) if ((len) < (need)) break
 
 /*
  * SQL/ASCII
@@ -206,22 +211,24 @@ pg_euc2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 2)	/* JIS X 0201 (so called "1 byte
-										 * KANA") */
+		if (*from == SS2)		/* JIS X 0201 (so called "1 byte KANA") */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			from++;
 			*to = (SS2 << 8) | *from++;
 			len -= 2;
 		}
-		else if (*from == SS3 && len >= 3)	/* JIS X 0212 KANJI */
+		else if (*from == SS3)	/* JIS X 0212 KANJI */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = (SS3 << 16) | (*from++ << 8);
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_HIGHBIT_SET(*from) && len >= 2) /* JIS X 0208 KANJI */
+		else if (IS_HIGHBIT_SET(*from)) /* JIS X 0208 KANJI */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			*to = *from++ << 8;
 			*to |= *from++;
 			len -= 2;
@@ -333,22 +340,25 @@ pg_euccn2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 3)	/* code set 2 (unused?) */
+		if (*from == SS2)		/* code set 2 (unused?) */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = (SS2 << 16) | (*from++ << 8);
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (*from == SS3 && len >= 3)	/* code set 3 (unused ?) */
+		else if (*from == SS3)	/* code set 3 (unused ?) */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = (SS3 << 16) | (*from++ << 8);
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_HIGHBIT_SET(*from) && len >= 2) /* code set 1 */
+		else if (IS_HIGHBIT_SET(*from)) /* code set 1 */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			*to = *from++ << 8;
 			*to |= *from++;
 			len -= 2;
@@ -365,12 +375,22 @@ pg_euccn2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 	return cnt;
 }
 
+/*
+ * mbverifychar does not accept SS2 or SS3 (CS2 and CS3 are not defined for
+ * EUC_CN), but mb2wchar_with_len does.  Tell a coherent story for code that
+ * relies on agreement between mb2wchar_with_len and mblen.  Invalid text
+ * datums (e.g. from shared catalogs) reach this.
+ */
 static int
 pg_euccn_mblen(const unsigned char *s)
 {
 	int			len;
 
-	if (IS_HIGHBIT_SET(*s))
+	if (*s == SS2)
+		len = 3;
+	else if (*s == SS3)
+		len = 3;
+	else if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
 		len = 1;
@@ -400,23 +420,26 @@ pg_euctw2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 	while (len > 0 && *from)
 	{
-		if (*from == SS2 && len >= 4)	/* code set 2 */
+		if (*from == SS2)		/* code set 2 */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 4);
 			from++;
 			*to = (((uint32) SS2) << 24) | (*from++ << 16);
 			*to |= *from++ << 8;
 			*to |= *from++;
 			len -= 4;
 		}
-		else if (*from == SS3 && len >= 3)	/* code set 3 (unused?) */
+		else if (*from == SS3)	/* code set 3 (unused?) */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			from++;
 			*to = (SS3 << 16) | (*from++ << 8);
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_HIGHBIT_SET(*from) && len >= 2) /* code set 2 */
+		else if (IS_HIGHBIT_SET(*from)) /* code set 2 */
 		{
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			*to = *from++ << 8;
 			*to |= *from++;
 			len -= 2;
@@ -553,8 +576,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		}
 		else if ((*from & 0xe0) == 0xc0)
 		{
-			if (len < 2)
-				break;			/* drop trailing incomplete char */
+			MB2CHAR_NEED_AT_LEAST(len, 2);
 			c1 = *from++ & 0x1f;
 			c2 = *from++ & 0x3f;
 			*to = (c1 << 6) | c2;
@@ -562,8 +584,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		}
 		else if ((*from & 0xf0) == 0xe0)
 		{
-			if (len < 3)
-				break;			/* drop trailing incomplete char */
+			MB2CHAR_NEED_AT_LEAST(len, 3);
 			c1 = *from++ & 0x0f;
 			c2 = *from++ & 0x3f;
 			c3 = *from++ & 0x3f;
@@ -572,8 +593,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 		}
 		else if ((*from & 0xf8) == 0xf0)
 		{
-			if (len < 4)
-				break;			/* drop trailing incomplete char */
+			MB2CHAR_NEED_AT_LEAST(len, 4);
 			c1 = *from++ & 0x07;
 			c2 = *from++ & 0x3f;
 			c3 = *from++ & 0x3f;
@@ -698,7 +718,8 @@ mbbisearch(pg_wchar ucs, const struct mbinterval *table, int max)
 }
 
 
-/* The following functions define the column width of an ISO 10646
+/*
+ * The following functions define the column width of an ISO 10646
  * character as follows:
  *
  *	  - The null character (U+0000) has a column width of 0.
@@ -761,174 +782,6 @@ pg_utf_dsplen(const unsigned char *s)
 {
 	return ucs_wcwidth(utf8_to_unicode(s));
 }
-
-/*
- * convert mule internal code to pg_wchar
- * caller should allocate enough space for "to"
- * len: length of from.
- * "from" not necessarily null terminated.
- */
-static int
-pg_mule2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
-{
-	int			cnt = 0;
-
-	while (len > 0 && *from)
-	{
-		if (IS_LC1(*from) && len >= 2)
-		{
-			*to = *from++ << 16;
-			*to |= *from++;
-			len -= 2;
-		}
-		else if (IS_LCPRV1(*from) && len >= 3)
-		{
-			from++;
-			*to = *from++ << 16;
-			*to |= *from++;
-			len -= 3;
-		}
-		else if (IS_LC2(*from) && len >= 3)
-		{
-			*to = *from++ << 16;
-			*to |= *from++ << 8;
-			*to |= *from++;
-			len -= 3;
-		}
-		else if (IS_LCPRV2(*from) && len >= 4)
-		{
-			from++;
-			*to = *from++ << 16;
-			*to |= *from++ << 8;
-			*to |= *from++;
-			len -= 4;
-		}
-		else
-		{						/* assume ASCII */
-			*to = (unsigned char) *from++;
-			len--;
-		}
-		to++;
-		cnt++;
-	}
-	*to = 0;
-	return cnt;
-}
-
-/*
- * convert pg_wchar to mule internal code
- * caller should allocate enough space for "to"
- * len: length of from.
- * "from" not necessarily null terminated.
- */
-static int
-pg_wchar2mule_with_len(const pg_wchar *from, unsigned char *to, int len)
-{
-	int			cnt = 0;
-
-	while (len > 0 && *from)
-	{
-		unsigned char lb;
-
-		lb = (*from >> 16) & 0xff;
-		if (IS_LC1(lb))
-		{
-			*to++ = lb;
-			*to++ = *from & 0xff;
-			cnt += 2;
-		}
-		else if (IS_LC2(lb))
-		{
-			*to++ = lb;
-			*to++ = (*from >> 8) & 0xff;
-			*to++ = *from & 0xff;
-			cnt += 3;
-		}
-		else if (IS_LCPRV1_A_RANGE(lb))
-		{
-			*to++ = LCPRV1_A;
-			*to++ = lb;
-			*to++ = *from & 0xff;
-			cnt += 3;
-		}
-		else if (IS_LCPRV1_B_RANGE(lb))
-		{
-			*to++ = LCPRV1_B;
-			*to++ = lb;
-			*to++ = *from & 0xff;
-			cnt += 3;
-		}
-		else if (IS_LCPRV2_A_RANGE(lb))
-		{
-			*to++ = LCPRV2_A;
-			*to++ = lb;
-			*to++ = (*from >> 8) & 0xff;
-			*to++ = *from & 0xff;
-			cnt += 4;
-		}
-		else if (IS_LCPRV2_B_RANGE(lb))
-		{
-			*to++ = LCPRV2_B;
-			*to++ = lb;
-			*to++ = (*from >> 8) & 0xff;
-			*to++ = *from & 0xff;
-			cnt += 4;
-		}
-		else
-		{
-			*to++ = *from & 0xff;
-			cnt += 1;
-		}
-		from++;
-		len--;
-	}
-	*to = 0;
-	return cnt;
-}
-
-int
-pg_mule_mblen(const unsigned char *s)
-{
-	int			len;
-
-	if (IS_LC1(*s))
-		len = 2;
-	else if (IS_LCPRV1(*s))
-		len = 3;
-	else if (IS_LC2(*s))
-		len = 3;
-	else if (IS_LCPRV2(*s))
-		len = 4;
-	else
-		len = 1;				/* assume ASCII */
-	return len;
-}
-
-static int
-pg_mule_dsplen(const unsigned char *s)
-{
-	int			len;
-
-	/*
-	 * Note: it's not really appropriate to assume that all multibyte charsets
-	 * are double-wide on screen.  But this seems an okay approximation for
-	 * the MULE charsets we currently support.
-	 */
-
-	if (IS_LC1(*s))
-		len = 1;
-	else if (IS_LCPRV1(*s))
-		len = 1;
-	else if (IS_LC2(*s))
-		len = 2;
-	else if (IS_LCPRV2(*s))
-		len = 2;
-	else
-		len = 1;				/* assume ASCII */
-
-	return len;
-}
-
 /*
  * ISO8859-1
  */
@@ -1454,56 +1307,6 @@ pg_johab_verifystr(const unsigned char *s, int len)
 }
 
 static int
-pg_mule_verifychar(const unsigned char *s, int len)
-{
-	int			l,
-				mbl;
-	unsigned char c;
-
-	l = mbl = pg_mule_mblen(s);
-
-	if (len < l)
-		return -1;
-
-	while (--l > 0)
-	{
-		c = *++s;
-		if (!IS_HIGHBIT_SET(c))
-			return -1;
-	}
-	return mbl;
-}
-
-static int
-pg_mule_verifystr(const unsigned char *s, int len)
-{
-	const unsigned char *start = s;
-
-	while (len > 0)
-	{
-		int			l;
-
-		/* fast path for ASCII-subset characters */
-		if (!IS_HIGHBIT_SET(*s))
-		{
-			if (*s == '\0')
-				break;
-			l = 1;
-		}
-		else
-		{
-			l = pg_mule_verifychar(s, len);
-			if (l == -1)
-				break;
-		}
-		s += l;
-		len -= l;
-	}
-
-	return s - start;
-}
-
-static int
 pg_latin1_verifychar(const unsigned char *s, int len)
 {
 	return 1;
@@ -1966,12 +1769,12 @@ pg_utf8_islegal(const unsigned char *source, int length)
 			a = source[3];
 			if (a < 0x80 || a > 0xBF)
 				return false;
-			/* FALL THRU */
+			pg_fallthrough;
 		case 3:
 			a = source[2];
 			if (a < 0x80 || a > 0xBF)
 				return false;
-			/* FALL THRU */
+			pg_fallthrough;
 		case 2:
 			a = source[1];
 			switch (*source)
@@ -1997,7 +1800,7 @@ pg_utf8_islegal(const unsigned char *source, int length)
 						return false;
 					break;
 			}
-			/* FALL THRU */
+			pg_fallthrough;
 		case 1:
 			a = *source;
 			if (a >= 0x80 && a < 0xC2)
@@ -2239,12 +2042,11 @@ pg_encoding_set_invalid(int encoding, char *dst)
 const pg_wchar_tbl pg_wchar_table[] = {
 	[PG_SQL_ASCII] = {pg_ascii2wchar_with_len, pg_wchar2single_with_len, pg_ascii_mblen, pg_ascii_dsplen, pg_ascii_verifychar, pg_ascii_verifystr, 1},
 	[PG_EUC_JP] = {pg_eucjp2wchar_with_len, pg_wchar2euc_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifychar, pg_eucjp_verifystr, 3},
-	[PG_EUC_CN] = {pg_euccn2wchar_with_len, pg_wchar2euc_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifychar, pg_euccn_verifystr, 2},
+	[PG_EUC_CN] = {pg_euccn2wchar_with_len, pg_wchar2euc_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifychar, pg_euccn_verifystr, 3},
 	[PG_EUC_KR] = {pg_euckr2wchar_with_len, pg_wchar2euc_with_len, pg_euckr_mblen, pg_euckr_dsplen, pg_euckr_verifychar, pg_euckr_verifystr, 3},
 	[PG_EUC_TW] = {pg_euctw2wchar_with_len, pg_wchar2euc_with_len, pg_euctw_mblen, pg_euctw_dsplen, pg_euctw_verifychar, pg_euctw_verifystr, 4},
 	[PG_EUC_JIS_2004] = {pg_eucjp2wchar_with_len, pg_wchar2euc_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifychar, pg_eucjp_verifystr, 3},
 	[PG_UTF8] = {pg_utf2wchar_with_len, pg_wchar2utf_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifychar, pg_utf8_verifystr, 4},
-	[PG_MULE_INTERNAL] = {pg_mule2wchar_with_len, pg_wchar2mule_with_len, pg_mule_mblen, pg_mule_dsplen, pg_mule_verifychar, pg_mule_verifystr, 4},
 	[PG_LATIN1] = {pg_latin12wchar_with_len, pg_wchar2single_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifychar, pg_latin1_verifystr, 1},
 	[PG_LATIN2] = {pg_latin12wchar_with_len, pg_wchar2single_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifychar, pg_latin1_verifystr, 1},
 	[PG_LATIN3] = {pg_latin12wchar_with_len, pg_wchar2single_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifychar, pg_latin1_verifystr, 1},

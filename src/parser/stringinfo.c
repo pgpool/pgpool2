@@ -6,8 +6,8 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
- * Portions Copyright (c) 2003-2025, PgPool Global Development Group
- * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2026, PgPool Global Development Group
+ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  src/common/stringinfo.c
@@ -49,7 +49,7 @@ initStringInfoInternal(StringInfo str, int initsize)
 static inline StringInfo
 makeStringInfoInternal(int initsize)
 {
-	StringInfo	res = (StringInfo) palloc(sizeof(StringInfoData));
+	StringInfo	res = palloc_object(StringInfoData);
 
 	initStringInfoInternal(res, initsize);
 	return res;
@@ -134,7 +134,7 @@ resetStringInfo(StringInfo str)
  * strcat.
  */
 void
-appendStringInfo(StringInfo str, const char *fmt,...)
+appendStringInfo(StringInfo str, const char *fmt, ...)
 {
 	int			save_errno = errno;
 
