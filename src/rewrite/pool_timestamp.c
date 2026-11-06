@@ -489,7 +489,7 @@ get_current_timestamp(POOL_CONNECTION_POOL *backend)
 	POOL_SELECT_RESULT *res;
 	static char timestamp[64];
 
-	do_query(MAIN(backend), "SELECT pg_catalog.now()", &res, MAJOR(backend));
+	do_query(MAIN(backend), "SELECT pg_catalog.now()", &res);
 
 	if (res->numrows != 1)
 	{
@@ -1270,7 +1270,7 @@ makeStringConstFromQuery(POOL_CONNECTION_POOL *backend, char *expression)
 	char	   *str;
 
 	snprintf(query, sizeof(query), "SELECT %s", expression);
-	do_query(MAIN(backend), query, &res, MAJOR(backend));
+	do_query(MAIN(backend), query, &res);
 
 	if (res->numrows != 1)
 	{

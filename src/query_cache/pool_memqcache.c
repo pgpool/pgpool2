@@ -829,7 +829,7 @@ pool_fetch_from_memory_cache(POOL_CONNECTION *frontend,
 	/*
 	 * Send a "READY FOR QUERY" if not in extended query.
 	 */
-	if (!pool_is_doing_extended_query_message() && MAJOR(backend) == PROTO_MAJOR_V3)
+	if (!pool_is_doing_extended_query_message())
 	{
 		signed char state;
 
@@ -1633,7 +1633,7 @@ pool_get_database_oid_from_dbname(char *dbname)
 	backend = pool_get_session_context(false)->backend;
 
 	query = psprintf(DATABASE_TO_OID_QUERY, dbname);
-	do_query(MAIN(backend), query, &res, MAJOR(backend));
+	do_query(MAIN(backend), query, &res);
 	pfree(query);
 
 	if (res->numrows != 1)

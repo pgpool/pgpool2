@@ -1217,7 +1217,7 @@ get_query_result(POOL_CONNECTION_POOL_SLOT **slots, int backend_id, char *query,
 
 	PG_TRY();
 	{
-		do_query(slots[backend_id]->con, query, res, PROTO_MAJOR_V3);
+		do_query(slots[backend_id]->con, query, res);
 	}
 	PG_CATCH();
 	{

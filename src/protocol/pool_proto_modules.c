@@ -747,17 +747,6 @@ SimpleQuery(POOL_CONNECTION *frontend,
 		}
 	}
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2 && is_start_transaction_query(node))
-	{
-		int			i;
-
-		for (i = 0; i < NUM_BACKENDS; i++)
-		{
-			if (VALID_BACKEND(i))
-				TSTATE(backend, i) = 'T';
-		}
-	}
-
 	if (node)
 	{
 		POOL_SENT_MESSAGE *msg = NULL;
@@ -1701,7 +1690,7 @@ Parse(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		 * detecting deadlock isn't same on all nodes. If a transaction is
 		 * aborted on main node, pgpool send a error query to another nodes.
 		 */
-		deadlock_detected = detect_deadlock_error(MAIN(backend), MAJOR(backend));
+		deadlock_detected = detect_deadlock_error(MAIN(backend));
 
 		/*
 		 * Check if other than deadlock error detected.  If so, emit log. This
@@ -1803,7 +1792,7 @@ Bind(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		/* send error message to frontend */
 		errmessage = psprintf("prepared statement \"%s\" does not exist",
 							  pstmt_name);
-		pool_send_error_message(frontend, MAJOR(cp), "26000", errmessage,
+		pool_send_error_message(frontend, "26000", errmessage,
 								"", "", __FILE__, __LINE__);
 		pfree(errmessage);
 
@@ -2323,9 +2312,9 @@ ReadyForQuery(POOL_CONNECTION *frontend,
 	 * If the numbers of update tuples are differ and
 	 * failover_if_affected_tuples_mismatch is false, we abort transactions by
 	 * using do_error_command.  If failover_if_affected_tuples_mismatch is
-	 * true, trigger failover. This only works with PROTO_MAJOR_V3.
+	 * true, trigger failover.
 	 */
-	if (session_context->mismatch_ntuples && MAJOR(backend) == PROTO_MAJOR_V3)
+	if (session_context->mismatch_ntuples)
 	{
 		int			i;
 		char		kind;
@@ -2397,7 +2386,7 @@ ReadyForQuery(POOL_CONNECTION *frontend,
 			if (VALID_BACKEND(i))
 			{
 				/* abort transaction on all nodes. */
-				do_error_command(CONNECTION(backend, i), PROTO_MAJOR_V3);
+				do_error_command(CONNECTION(backend, i));
 			}
 		}
 
@@ -2468,47 +2457,44 @@ ReadyForQuery(POOL_CONNECTION *frontend,
 		}
 	}
 
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	if ((len = pool_read_message_length(backend)) < 0)
+		return POOL_END;
+
+	/*
+	 * Set transaction state for each node
+	 */
+	state = TSTATE(backend,
+				   MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID);
+
+	for (i = 0; i < NUM_BACKENDS; i++)
 	{
-		if ((len = pool_read_message_length(backend)) < 0)
+		if (!VALID_BACKEND(i))
+			continue;
+
+		if (pool_read(CONNECTION(backend, i), &kind, sizeof(kind)))
 			return POOL_END;
 
+		TSTATE(backend, i) = kind;
+		ereport(DEBUG5,
+				(errmsg("processing ReadyForQuery"),
+				 errdetail("transaction state of node %d '%c'(%02x)", i, kind, kind)));
+
 		/*
-		 * Set transaction state for each node
+		 * The transaction state to be returned to frontend is main
+		 * node's.
 		 */
-		state = TSTATE(backend,
-					   MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID);
-
-		for (i = 0; i < NUM_BACKENDS; i++)
+		if (i == (MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))
 		{
-			if (!VALID_BACKEND(i))
-				continue;
-
-			if (pool_read(CONNECTION(backend, i), &kind, sizeof(kind)))
-				return POOL_END;
-
-			TSTATE(backend, i) = kind;
-			ereport(DEBUG5,
-					(errmsg("processing ReadyForQuery"),
-					 errdetail("transaction state of node %d '%c'(%02x)", i, kind, kind)));
-
-			/*
-			 * The transaction state to be returned to frontend is main
-			 * node's.
-			 */
-			if (i == (MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID))
-			{
-				state = kind;
-			}
-
-			/*
-			 * However, if the state is 'E', then frontend should had been
-			 * already reported an ERROR. So, to match with that, let be the
-			 * state to be returned to frontend.
-			 */
-			if (kind == 'E')
-				got_estate = true;
+			state = kind;
 		}
+
+		/*
+		 * However, if the state is 'E', then frontend should had been
+		 * already reported an ERROR. So, to match with that, let be the
+		 * state to be returned to frontend.
+		 */
+		if (kind == 'E')
+			got_estate = true;
 	}
 
 	/*
@@ -2536,14 +2522,11 @@ ReadyForQuery(POOL_CONNECTION *frontend,
 	{
 		pool_write(frontend, "Z", 1);
 
-		if (MAJOR(backend) == PROTO_MAJOR_V3)
-		{
-			len = htonl(len);
-			pool_write(frontend, &len, sizeof(len));
-			if (got_estate)
-				state = 'E';
-			pool_write(frontend, &state, 1);
-		}
+		len = htonl(len);
+		pool_write(frontend, &len, sizeof(len));
+		if (got_estate)
+			state = 'E';
+		pool_write(frontend, &state, 1);
 		pool_flush(frontend);
 
 		/*
@@ -2597,11 +2580,6 @@ ReadyForQuery(POOL_CONNECTION *frontend,
 				}
 				else
 				{
-					if (MAJOR(backend) != PROTO_MAJOR_V3)
-					{
-						state = 'I';	/* XXX I don't think query cache works
-										 * with PROTO2 protocol */
-					}
 					pool_handle_query_cache(backend, query, node, state, false);
 				}
 			}
@@ -2676,7 +2654,7 @@ close_standby_transactions(POOL_CONNECTION *frontend,
 			(MAIN_REPLICA ? PRIMARY_NODE_ID : REAL_MAIN_NODE_ID) != i)
 		{
 			per_node_statement_log(backend, i, "COMMIT");
-			if (do_command(frontend, CONNECTION(backend, i), "COMMIT", MAJOR(backend),
+			if (do_command(frontend, CONNECTION(backend, i), "COMMIT",
 						   MAIN_CONNECTION(backend)->pid,
 						   MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0) != POOL_CONTINUE)
 				ereport(ERROR,
@@ -2918,102 +2896,6 @@ ErrorResponse3(POOL_CONNECTION *frontend,
 }
 
 POOL_STATUS
-FunctionCall(POOL_CONNECTION *frontend,
-			 POOL_CONNECTION_POOL *backend)
-{
-	char		dummy[2];
-	int			oid;
-	int			argn;
-	int			i;
-
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			pool_write(CONNECTION(backend, i), "F", 1);
-		}
-	}
-
-	/* dummy */
-	pool_read(frontend, dummy, sizeof(dummy));
-
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			pool_write(CONNECTION(backend, i), dummy, sizeof(dummy));
-		}
-	}
-
-	/* function object id */
-	pool_read(frontend, &oid, sizeof(oid));
-
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			pool_write(CONNECTION(backend, i), &oid, sizeof(oid));
-		}
-	}
-
-	/* number of arguments */
-	pool_read(frontend, &argn, sizeof(argn));
-
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			pool_write(CONNECTION(backend, i), &argn, sizeof(argn));
-		}
-	}
-
-	argn = ntohl(argn);
-
-	for (i = 0; i < argn; i++)
-	{
-		int			len;
-		char	   *arg;
-
-		/* length of each argument in bytes */
-		pool_read(frontend, &len, sizeof(len));
-
-		for (i = 0; i < NUM_BACKENDS; i++)
-		{
-			if (VALID_BACKEND(i))
-			{
-				pool_write(CONNECTION(backend, i), &len, sizeof(len));
-			}
-		}
-
-		len = ntohl(len);
-
-		/* argument value itself */
-		if ((arg = pool_read2(frontend, len)) == NULL)
-			ereport(FATAL,
-					(return_code(2),
-					 errmsg("failed to process function call"),
-					 errdetail("read from frontend failed")));
-
-		for (i = 0; i < NUM_BACKENDS; i++)
-		{
-			if (VALID_BACKEND(i))
-			{
-				pool_write(CONNECTION(backend, i), arg, len);
-			}
-		}
-	}
-
-	for (i = 0; i < NUM_BACKENDS; i++)
-	{
-		if (VALID_BACKEND(i))
-		{
-			pool_flush(CONNECTION(backend, i));
-		}
-	}
-	return POOL_CONTINUE;
-}
-
-POOL_STATUS
 ProcessFrontendResponse(POOL_CONNECTION *frontend,
 						POOL_CONNECTION_POOL *backend)
 {
@@ -3040,26 +2922,17 @@ ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			(errmsg("processing frontend response"),
 			 errdetail("received kind '%c'(%02x) from frontend", fkind, fkind)));
 
+	if (pool_read(frontend, &len, sizeof(len)) < 0)
+		ereport(ERROR,
+				(errmsg("unable to process frontend response"),
+				 errdetail("failed to read message length from frontend. frontend abnormally exited")));
 
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
-	{
-		if (pool_read(frontend, &len, sizeof(len)) < 0)
-			ereport(ERROR,
-					(errmsg("unable to process frontend response"),
-					 errdetail("failed to read message length from frontend. frontend abnormally exited")));
-
-		len = ntohl(len) - 4;
-		if (len > 0)
-			bufp = pool_read2(frontend, len);
-		else if (len < 0)
-			ereport(ERROR,
-					(errmsg("frontend message length is less than 4 (kind: %c)", fkind)));
-	}
-	else
-	{
-		if (fkind != 'F')
-			bufp = pool_read_string(frontend, &len, 0);
-	}
+	len = ntohl(len) - 4;
+	if (len > 0)
+		bufp = pool_read2(frontend, len);
+	else if (len < 0)
+		ereport(ERROR,
+				(errmsg("frontend message length is less than 4 (kind: %c)", fkind)));
 
 	if (len > 0 && bufp == NULL)
 		ereport(ERROR,
@@ -3239,11 +3112,7 @@ ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			pool_where_to_send(query_context, query_context->original_query,
 							   query_context->parse_tree);
 
-			if (MAJOR(backend) == PROTO_MAJOR_V3)
-				status = FunctionCall3(frontend, backend, len, contents);
-			else
-				status = FunctionCall(frontend, backend);
-
+			status = FunctionCall3(frontend, backend, len, contents);
 			break;
 
 		case 'c':				/* CopyDone */
@@ -3253,33 +3122,29 @@ ProcessFrontendResponse(POOL_CONNECTION *frontend,
 			if (fkind == 'H' && pool_config->log_client_messages)
 				ereport(LOG,
 						(errmsg("Flush message from frontend.")));
-			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			if (fkind == 'H')
 			{
-				if (fkind == 'H')
-				{
-					/*
-					 * If data remains in the frontend write buffer, flush it
-					 * now.
-					 */
-					pool_flush(frontend);
-					elog(DEBUG5,
-						 "pending data flushed to frontend due to a flush message");
-					pool_set_doing_extended_query_message();
-					pool_pending_message_set_flush_request();
-				}
-				status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
-
 				/*
-				 * After flush message received, extended query mode should be
-				 * continued.
+				 * If data remains in the frontend write buffer, flush it
+				 * now.
 				 */
-				if (fkind != 'H' && pool_is_doing_extended_query_message())
-				{
-					pool_unset_doing_extended_query_message();
-				}
-
-				break;
+				pool_flush(frontend);
+				elog(DEBUG5,
+					 "pending data flushed to frontend due to a flush message");
+				pool_set_doing_extended_query_message();
+				pool_pending_message_set_flush_request();
 			}
+			status = SimpleForwardToBackend(fkind, frontend, backend, len, contents);
+
+			/*
+			 * After flush message received, extended query mode should be
+			 * continued.
+			 */
+			if (fkind != 'H' && pool_is_doing_extended_query_message())
+			{
+				pool_unset_doing_extended_query_message();
+			}
+			break;
 
 		default:
 			ereport(FATAL,
@@ -3302,7 +3167,7 @@ ProcessFrontendResponse(POOL_CONNECTION *frontend,
 POOL_STATUS
 ProcessBackendResponse(POOL_CONNECTION *frontend,
 					   POOL_CONNECTION_POOL *backend,
-					   int *state, short *num_fields)
+					   int *state)
 {
 	int			status = POOL_CONTINUE;
 	char		kind;
@@ -3349,261 +3214,190 @@ ProcessBackendResponse(POOL_CONNECTION *frontend,
 			 errdetail("received kind '%c'(%02x) from backend", kind, kind)));
 
 
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	switch (kind)
 	{
-		switch (kind)
-		{
-			case 'G':			/* CopyInResponse */
-				status = CopyInResponse(frontend, backend);
-				break;
+		case 'G':			/* CopyInResponse */
+			status = CopyInResponse(frontend, backend);
+			break;
 
-			case 'S':			/* ParameterStatus */
-				status = ParameterStatus(frontend, backend);
-				break;
+		case 'S':			/* ParameterStatus */
+			status = ParameterStatus(frontend, backend);
+			break;
 
-			case 'Z':			/* ReadyForQuery */
-				ereport(DEBUG5,
-						(errmsg("processing backend response"),
-						 errdetail("Ready For Query received")));
-				pool_unset_suspend_reading_from_frontend();
-				pool_unset_suspend_reading_from_frontend_copy_in();
-				status = ReadyForQuery(frontend, backend, true, true);
+		case 'Z':			/* ReadyForQuery */
+			ereport(DEBUG5,
+					(errmsg("processing backend response"),
+					 errdetail("Ready For Query received")));
+			pool_unset_suspend_reading_from_frontend();
+			pool_unset_suspend_reading_from_frontend_copy_in();
+			status = ReadyForQuery(frontend, backend, true, true);
 #ifdef DEBUG
-				extern bool stop_now;
+			extern bool stop_now;
 
-				if (stop_now)
-					exit(0);
+			if (stop_now)
+				exit(0);
 #endif
-				break;
+			break;
 
-			case '1':			/* ParseComplete */
-				if (SL_MODE)
+		case '1':			/* ParseComplete */
+			if (SL_MODE)
+			{
+				POOL_PENDING_MESSAGE *pmsg;
+
+				pmsg = pool_pending_message_get_previous_message();
+				if (pmsg && pmsg->not_forward_to_frontend)
 				{
-					POOL_PENDING_MESSAGE *pmsg;
-
-					pmsg = pool_pending_message_get_previous_message();
-					if (pmsg && pmsg->not_forward_to_frontend)
-					{
-						/*
-						 * parse_before_bind() was called. Do not forward the
-						 * parse complete message to frontend.
-						 */
-						ereport(DEBUG5,
-								(errmsg("processing backend response"),
-								 errdetail("do not forward parse complete message to frontend")));
-						pool_discard_packet_contents(backend);
-						pool_unset_query_in_progress();
-						pool_set_command_success();
-						status = POOL_CONTINUE;
-						break;
-					}
-				}
-				status = ParseComplete(frontend, backend);
-				pool_set_command_success();
-				pool_unset_query_in_progress();
-				break;
-
-			case '2':			/* BindComplete */
-				status = BindComplete(frontend, backend);
-				pool_set_command_success();
-				pool_unset_query_in_progress();
-				break;
-
-			case '3':			/* CloseComplete */
-				if (SL_MODE)
-				{
-					POOL_PENDING_MESSAGE *pmsg;
-
-					pmsg = pool_pending_message_get_previous_message();
-					if (pmsg && pmsg->not_forward_to_frontend)
-					{
-						/*
-						 * parse_before_bind() was called. Do not forward the
-						 * close complete message to frontend.
-						 */
-						ereport(DEBUG5,
-								(errmsg("processing backend response"),
-								 errdetail("do not forward close complete message to frontend")));
-						pool_discard_packet_contents(backend);
-
-						/*
-						 * Remove pending message here because
-						 * read_kind_from_backend() did not do it.
-						 */
-						pmsg = pool_pending_message_pull_out();
-						pool_pending_message_free_pending_message(pmsg);
-
-						if (pool_is_doing_extended_query_message())
-							pool_unset_query_in_progress();
-						pool_set_command_success();
-						status = POOL_CONTINUE;
-						break;
-					}
-				}
-
-				status = CloseComplete(frontend, backend);
-				pool_set_command_success();
-				if (pool_is_doing_extended_query_message())
+					/*
+					 * parse_before_bind() was called. Do not forward the
+					 * parse complete message to frontend.
+					 */
+					ereport(DEBUG5,
+							(errmsg("processing backend response"),
+							 errdetail("do not forward parse complete message to frontend")));
+					pool_discard_packet_contents(backend);
 					pool_unset_query_in_progress();
-				break;
+					pool_set_command_success();
+					status = POOL_CONTINUE;
+					break;
+				}
+			}
+			status = ParseComplete(frontend, backend);
+			pool_set_command_success();
+			pool_unset_query_in_progress();
+			break;
 
-			case 'E':			/* ErrorResponse */
-				if (pool_is_doing_extended_query_message())
+		case '2':			/* BindComplete */
+			status = BindComplete(frontend, backend);
+			pool_set_command_success();
+			pool_unset_query_in_progress();
+			break;
+
+		case '3':			/* CloseComplete */
+			if (SL_MODE)
+			{
+				POOL_PENDING_MESSAGE *pmsg;
+
+				pmsg = pool_pending_message_get_previous_message();
+				if (pmsg && pmsg->not_forward_to_frontend)
 				{
-					char	   *message;
+					/*
+					 * parse_before_bind() was called. Do not forward the
+					 * close complete message to frontend.
+					 */
+					ereport(DEBUG5,
+							(errmsg("processing backend response"),
+							 errdetail("do not forward close complete message to frontend")));
+					pool_discard_packet_contents(backend);
 
 					/*
-					 * Log the error message which was possibly missed till a
-					 * sync message was sent
+					 * Remove pending message here because
+					 * read_kind_from_backend() did not do it.
 					 */
-					if (pool_extract_error_message(false, MAIN(backend), PROTO_MAJOR_V3,
-												   true, &message) == 1)
-					{
-						ereport(LOG,
-								(errmsg("Error message from backend: DB node id: %d message: \"%s\"",
-										MAIN_NODE_ID, message)));
-						pfree(message);
-					}
+					pmsg = pool_pending_message_pull_out();
+					pool_pending_message_free_pending_message(pmsg);
+
+					if (pool_is_doing_extended_query_message())
+						pool_unset_query_in_progress();
+					pool_set_command_success();
+					status = POOL_CONTINUE;
+					break;
 				}
+			}
 
-				/* Forward the error message to frontend */
-				status = ErrorResponse3(frontend, backend);
-				pool_unset_command_success();
-				if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID :
-						   REAL_MAIN_NODE_ID) != 'I')
-				{
-					pool_set_failed_transaction();
+			status = CloseComplete(frontend, backend);
+			pool_set_command_success();
+			if (pool_is_doing_extended_query_message())
+				pool_unset_query_in_progress();
+			break;
 
-					/* Remove ongoing CREATE/DROP temp tables */
-					pool_temp_tables_remove_pending();
-				}
-				if (pool_is_doing_extended_query_message())
-				{
-					pool_set_ignore_till_sync();
-					pool_unset_query_in_progress();
-					pool_unset_suspend_reading_from_frontend();
-					if (SL_MODE)
-						pool_discard_except_sync_and_ready_for_query(frontend, backend);
-				}
-				break;
-
-			case 'C':			/* CommandComplete */
-				status = CommandComplete(frontend, backend, true);
-				pool_set_command_success();
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
-				break;
-
-			case 't':			/* ParameterDescription */
-				status = ParameterDescription(frontend, backend);
-				break;
-
-			case 'I':			/* EmptyQueryResponse */
-				status = CommandComplete(frontend, backend, false);
+		case 'E':			/* ErrorResponse */
+			if (pool_is_doing_extended_query_message())
+			{
+				char	   *message;
 
 				/*
-				 * Empty query response message should be treated same as
-				 * Command complete message. When we receive the Command
-				 * complete message, we unset the query in progress flag if
-				 * operated in streaming replication mode. So we unset the
-				 * flag as well. See bug 190 for more details.
+				 * Log the error message which was possibly missed till a
+				 * sync message was sent
 				 */
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
-				break;
+				if (pool_extract_error_message(false, MAIN(backend),
+											   true, &message) == 1)
+				{
+					ereport(LOG,
+							(errmsg("Error message from backend: DB node id: %d message: \"%s\"",
+									MAIN_NODE_ID, message)));
+					pfree(message);
+				}
+			}
 
-			case 'T':			/* RowDescription */
-				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
-				break;
+			/* Forward the error message to frontend */
+			status = ErrorResponse3(frontend, backend);
+			pool_unset_command_success();
+			if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID :
+					   REAL_MAIN_NODE_ID) != 'I')
+			{
+				pool_set_failed_transaction();
 
-			case 'n':			/* NoData */
-				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
-				break;
+				/* Remove ongoing CREATE/DROP temp tables */
+				pool_temp_tables_remove_pending();
+			}
+			if (pool_is_doing_extended_query_message())
+			{
+				pool_set_ignore_till_sync();
+				pool_unset_query_in_progress();
+				pool_unset_suspend_reading_from_frontend();
+				if (SL_MODE)
+					pool_discard_except_sync_and_ready_for_query(frontend, backend);
+			}
+			break;
 
-			case 's':			/* PortalSuspended */
-				status = SimpleForwardToFrontend(kind, frontend, backend);
-				if (pool_is_doing_extended_query_message())
-					pool_unset_query_in_progress();
-				break;
+		case 'C':			/* CommandComplete */
+			status = CommandComplete(frontend, backend, true);
+			pool_set_command_success();
+			if (pool_is_doing_extended_query_message())
+				pool_unset_query_in_progress();
+			break;
 
-			default:
-				status = SimpleForwardToFrontend(kind, frontend, backend);
-				break;
-		}
+		case 't':			/* ParameterDescription */
+			status = ParameterDescription(frontend, backend);
+			break;
 
-		pool_get_session_context(false)->flush_pending = false;
+		case 'I':			/* EmptyQueryResponse */
+			status = CommandComplete(frontend, backend, false);
 
+			/*
+			 * Empty query response message should be treated same as
+			 * Command complete message. When we receive the Command
+			 * complete message, we unset the query in progress flag if
+			 * operated in streaming replication mode. So we unset the
+			 * flag as well. See bug 190 for more details.
+			 */
+			if (pool_is_doing_extended_query_message())
+				pool_unset_query_in_progress();
+			break;
+
+		case 'T':			/* RowDescription */
+			status = SimpleForwardToFrontend(kind, frontend, backend);
+			if (pool_is_doing_extended_query_message())
+				pool_unset_query_in_progress();
+			break;
+
+		case 'n':			/* NoData */
+			status = SimpleForwardToFrontend(kind, frontend, backend);
+			if (pool_is_doing_extended_query_message())
+				pool_unset_query_in_progress();
+			break;
+
+		case 's':			/* PortalSuspended */
+			status = SimpleForwardToFrontend(kind, frontend, backend);
+			if (pool_is_doing_extended_query_message())
+				pool_unset_query_in_progress();
+			break;
+
+		default:
+			status = SimpleForwardToFrontend(kind, frontend, backend);
+			break;
 	}
-	else
-	{
-		switch (kind)
-		{
-			case 'A':			/* NotificationResponse */
-				status = NotificationResponse(frontend, backend);
-				break;
-
-			case 'B':			/* BinaryRow */
-				status = BinaryRow(frontend, backend, *num_fields);
-				break;
-
-			case 'C':			/* CompletedResponse */
-				status = CompletedResponse(frontend, backend);
-				break;
-
-			case 'D':			/* AsciiRow */
-				status = AsciiRow(frontend, backend, *num_fields);
-				break;
-
-			case 'E':			/* ErrorResponse */
-				status = ErrorResponse(frontend, backend);
-				if (TSTATE(backend, MAIN_REPLICA ? PRIMARY_NODE_ID :
-						   REAL_MAIN_NODE_ID) != 'I')
-					pool_set_failed_transaction();
-				break;
-
-			case 'G':			/* CopyInResponse */
-				status = CopyInResponse(frontend, backend);
-				break;
-
-			case 'H':			/* CopyOutResponse */
-				status = CopyOutResponse(frontend, backend);
-				break;
-
-			case 'I':			/* EmptyQueryResponse */
-				EmptyQueryResponse(frontend, backend);
-				break;
-
-			case 'N':			/* NoticeResponse */
-				NoticeResponse(frontend, backend);
-				break;
-
-			case 'P':			/* CursorResponse */
-				status = CursorResponse(frontend, backend);
-				break;
-
-			case 'T':			/* RowDescription */
-				status = RowDescription(frontend, backend, num_fields);
-				break;
-
-			case 'V':			/* FunctionResultResponse and
-								 * FunctionVoidResponse */
-				status = FunctionResultResponse(frontend, backend);
-				break;
-
-			case 'Z':			/* ReadyForQuery */
-				status = ReadyForQuery(frontend, backend, true, true);
-				break;
-
-			default:
-				ereport(FATAL,
-						(return_code(1),
-						 errmsg("Unknown message type %c(%02x)", kind, kind)));
-		}
-	}
+	pool_get_session_context(false)->flush_pending = false;
 
 	/*
 	 * Do we receive ready for query while processing reset request?
@@ -3628,14 +3422,8 @@ CopyInResponse(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 
 	/* forward to the frontend */
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
-	{
-		SimpleForwardToFrontend('G', frontend, backend);
-		pool_flush(frontend);
-	}
-	else
-		pool_write_and_flush(frontend, "G", 1);
-
+	SimpleForwardToFrontend('G', frontend, backend);
+	pool_flush(frontend);
 	status = CopyDataRows(frontend, backend, 1);
 	return status;
 }
@@ -3647,14 +3435,8 @@ CopyOutResponse(POOL_CONNECTION *frontend,
 	POOL_STATUS status;
 
 	/* forward to the frontend */
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
-	{
-		SimpleForwardToFrontend('H', frontend, backend);
-		pool_flush(frontend);
-	}
-	else
-		pool_write_and_flush(frontend, "H", 1);
-
+	SimpleForwardToFrontend('H', frontend, backend);
+	pool_flush(frontend);
 	status = CopyDataRows(frontend, backend, 0);
 	return status;
 }
@@ -3663,7 +3445,6 @@ POOL_STATUS
 CopyDataRows(POOL_CONNECTION *frontend,
 			 POOL_CONNECTION_POOL *backend, int copyin)
 {
-	char	   *string = NULL;
 	int			len;
 	int			i;
 	int			copy_count;
@@ -3678,123 +3459,69 @@ CopyDataRows(POOL_CONNECTION *frontend,
 	{
 		if (copyin)
 		{
-			if (MAJOR(backend) == PROTO_MAJOR_V3)
+			char		kind;
+			char	   *contents = NULL;
+
+			pool_unset_suspend_reading_from_frontend_copy_in();
+
+			pool_read(frontend, &kind, 1);
+
+			ereport(DEBUG5,
+					(errmsg("copy data rows"),
+					 errdetail("read kind from frontend %c(%02x)", kind, kind)));
+
+			pool_read(frontend, &len, sizeof(len));
+			len = ntohl(len) - 4;
+			if (len > 0)
+				contents = pool_read2(frontend, len);
+
+			SimpleForwardToBackend(kind, frontend, backend, len, contents);
+
+			/* CopyData? */
+			if (kind == 'd')
 			{
-				char		kind;
-				char	   *contents = NULL;
-
-				pool_unset_suspend_reading_from_frontend_copy_in();
-
-				pool_read(frontend, &kind, 1);
-
-				ereport(DEBUG5,
-						(errmsg("copy data rows"),
-						 errdetail("read kind from frontend %c(%02x)", kind, kind)));
-
-				pool_read(frontend, &len, sizeof(len));
-				len = ntohl(len) - 4;
-				if (len > 0)
-					contents = pool_read2(frontend, len);
-
-				SimpleForwardToBackend(kind, frontend, backend, len, contents);
-
-				/* CopyData? */
-				if (kind == 'd')
-				{
-					copy_count++;
-					continue;
-				}
-
-				/*
-				 * Flush (H) or Sync (S) messages should be ignored while in
-				 * the COPY IN mode.
-				 */
-				else if (kind == 'H' || kind == 'S')
-					continue;
-				else
-				{
-					if (pool_config->log_client_messages && copy_count != 0)
-						ereport(LOG,
-								(errmsg("CopyData message from frontend."),
-								 errdetail("count: %d", copy_count)));
-					if (kind == 'c' && pool_config->log_client_messages)
-						ereport(LOG,
-								(errmsg("CopyDone message from frontend.")));
-					if (kind == 'f' && pool_config->log_client_messages)
-						ereport(LOG,
-								(errmsg("CopyFail message from frontend.")));
-					ereport(DEBUG1,
-							(errmsg("copy data rows"),
-							 errdetail("invalid copyin kind. expected 'd' got '%c'", kind)));
-					break;
-				}
+				copy_count++;
+				continue;
 			}
+
+			/*
+			 * Flush (H) or Sync (S) messages should be ignored while in
+			 * the COPY IN mode.
+			 */
+			else if (kind == 'H' || kind == 'S')
+				continue;
 			else
-				string = pool_read_string(frontend, &len, 1);
+			{
+				if (pool_config->log_client_messages && copy_count != 0)
+					ereport(LOG,
+							(errmsg("CopyData message from frontend."),
+							 errdetail("count: %d", copy_count)));
+				if (kind == 'c' && pool_config->log_client_messages)
+					ereport(LOG,
+							(errmsg("CopyDone message from frontend.")));
+				if (kind == 'f' && pool_config->log_client_messages)
+					ereport(LOG,
+							(errmsg("CopyFail message from frontend.")));
+				ereport(DEBUG1,
+						(errmsg("copy data rows"),
+						 errdetail("invalid copyin kind. expected 'd' got '%c'", kind)));
+				break;
+			}
 		}
 		else
 		{
 			/* CopyOut */
-			if (MAJOR(backend) == PROTO_MAJOR_V3)
-			{
-				signed char kind;
+			signed char kind;
 
-				kind = pool_read_kind(backend);
+			kind = pool_read_kind(backend);
 
-				SimpleForwardToFrontend(kind, frontend, backend);
+			SimpleForwardToFrontend(kind, frontend, backend);
 
-				/* CopyData? */
-				if (kind == 'd')
-					continue;
-				else
-					break;
-			}
+			/* CopyData? */
+			if (kind == 'd')
+				continue;
 			else
-			{
-				for (i = 0; i < NUM_BACKENDS; i++)
-				{
-					if (VALID_BACKEND(i))
-					{
-						string = pool_read_string(CONNECTION(backend, i), &len, 1);
-					}
-				}
-			}
-		}
-
-		if (string == NULL)
-			ereport(FATAL,
-					(errmsg("unable to copy data rows"),
-					 errdetail("cannot read string message from backend")));
-
-#ifdef DEBUG
-		strlcpy(buf, string, sizeof(buf));
-		ereport(DEBUG1,
-				(errmsg("copy data rows"),
-				 errdetail("copy line %d %d bytes :%s:", j++, len, buf)));
-#endif
-
-		if (copyin)
-		{
-			for (i = 0; i < NUM_BACKENDS; i++)
-			{
-				if (VALID_BACKEND(i))
-				{
-					pool_write(CONNECTION(backend, i), string, len);
-				}
-			}
-		}
-		else
-			pool_write(frontend, string, len);
-
-		if (len == PROTO_MAJOR_V3)
-		{
-			/* end of copy? */
-			if (string[0] == '\\' &&
-				string[1] == '.' &&
-				string[2] == '\n')
-			{
 				break;
-			}
 		}
 	}
 
@@ -3868,11 +3595,11 @@ raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 		pool_set_node_to_be_sent(query_context, PRIMARY_NODE_ID);
 		if (pool_is_doing_extended_query_message())
 		{
-			do_error_execute_command(backend, PRIMARY_NODE_ID, PROTO_MAJOR_V3);
+			do_error_execute_command(backend, PRIMARY_NODE_ID);
 		}
 		else
 		{
-			do_error_command(CONNECTION(backend, PRIMARY_NODE_ID), MAJOR(backend));
+			do_error_command(CONNECTION(backend, PRIMARY_NODE_ID));
 		}
 		ereport(DEBUG1,
 				(errmsg("raising intentional error"),
@@ -3908,11 +3635,11 @@ raise_intentional_error_if_need(POOL_CONNECTION_POOL *backend)
 				 */
 				if (pool_is_doing_extended_query_message())
 				{
-					do_error_execute_command(backend, i, PROTO_MAJOR_V3);
+					do_error_execute_command(backend, i);
 				}
 				else
 				{
-					do_error_command(CONNECTION(backend, i), MAJOR(backend));
+					do_error_command(CONNECTION(backend, i));
 				}
 			}
 		}
@@ -3936,7 +3663,7 @@ check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 	 * Check dead lock error on the main node and abort transactions on all
 	 * nodes if so.
 	 */
-	if (detect_deadlock_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
+	if (detect_deadlock_error(CONNECTION(backend, backend_id)) == SPECIFIED_ERROR)
 		return 1;
 
 	/*-----------------------------------------------------------------------------------
@@ -3962,7 +3689,7 @@ check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 	 * S:S2:UPDATE t1 SET i = i + 1; <-- success in UPDATE and data becomes inconsistent!
 	 *-----------------------------------------------------------------------------------
 	 */
-	if (detect_serialization_error(CONNECTION(backend, backend_id), MAJOR(backend), true) == SPECIFIED_ERROR)
+	if (detect_serialization_error(CONNECTION(backend, backend_id), true) == SPECIFIED_ERROR)
 		return 2;
 
 	/*-------------------------------------------------------------------------------
@@ -3979,11 +3706,11 @@ check_errors(POOL_CONNECTION_POOL *backend, int backend_id)
 	 *-------------------------------------------------------------------------------
 	 */
 
-	if (detect_active_sql_transaction_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
+	if (detect_active_sql_transaction_error(CONNECTION(backend, backend_id)) == SPECIFIED_ERROR)
 		return 3;
 
 	/* check query cancel error */
-	if (detect_query_cancel_error(CONNECTION(backend, backend_id), MAJOR(backend)) == SPECIFIED_ERROR)
+	if (detect_query_cancel_error(CONNECTION(backend, backend_id)) == SPECIFIED_ERROR)
 		return 4;
 
 	return 0;
@@ -4247,7 +3974,7 @@ per_node_error_log(POOL_CONNECTION_POOL *backend, int node_id, char *query, char
 		return kind;
 	}
 
-	if (pool_extract_error_message(true, CONNECTION(backend, node_id), MAJOR(backend), unread, &message) == 1)
+	if (pool_extract_error_message(true, CONNECTION(backend, node_id), unread, &message) == 1)
 	{
 		ereport(LOG,
 				(errmsg("%s: DB node id: %d backend pid: %d statement: \"%s\" message: \"%s\"",
@@ -4498,7 +4225,7 @@ send_prepare(POOL_CONNECTION *frontend,
 				 message->name);
 
 		elog(DEBUG1, "send_prepare: %s to backend: %d", qbuf, node_id);
-		do_query(CONNECTION(backend, node_id), qbuf, &res, MAJOR(backend));
+		do_query(CONNECTION(backend, node_id), qbuf, &res);
 
 		if (res && res->data[0] && strcmp(res->data[0], "0"))
 		{
@@ -4512,7 +4239,7 @@ send_prepare(POOL_CONNECTION *frontend,
 
 			/* send DEALLOCATE message to primary node */
 			elog(DEBUG1, "send_prepare: %s to backend: %d", qbuf, node_id);
-			do_query(CONNECTION(backend, node_id), qbuf, &res, MAJOR(backend));
+			do_query(CONNECTION(backend, node_id), qbuf, &res);
 		}
 		free_select_result(res);
 	}
@@ -4520,7 +4247,7 @@ send_prepare(POOL_CONNECTION *frontend,
 	/* send PREPARE message to primary node */
 	elog(DEBUG1, "send_prepare: sending PREPARE to primary node");
 	do_query(CONNECTION(backend, node_id), message->query_context->original_query,
-			 &res, MAJOR(backend));
+			 &res);
 	free_select_result(res);
 
 	/* replace the query context of PREPARE message with new query context */
@@ -5197,7 +4924,7 @@ pool_read_kind(POOL_CONNECTION_POOL *cp)
 
 				if (kind0 == 'E')
 				{
-					if (pool_extract_error_message(false, MAIN(cp), MAJOR(cp), true, &message) == 1)
+					if (pool_extract_error_message(false, MAIN(cp), true, &message) == 1)
 					{
 						ereport(LOG,
 								(errmsg("pool_read_kind: error message from main backend:%s", message)));
@@ -5206,7 +4933,7 @@ pool_read_kind(POOL_CONNECTION_POOL *cp)
 				}
 				else if (kind == 'E')
 				{
-					if (pool_extract_error_message(false, CONNECTION(cp, i), MAJOR(cp), true, &message) == 1)
+					if (pool_extract_error_message(false, CONNECTION(cp, i), true, &message) == 1)
 					{
 						ereport(LOG,
 								(errmsg("pool_read_kind: error message from %d th backend:%s", i, message)));
@@ -5302,7 +5029,7 @@ si_get_snapshot(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, Node *
 			if (!VALID_BACKEND_RAW(i))
 				continue;
 
-			do_query(CONNECTION(backend, i), si_query, &res, MAJOR(backend));
+			do_query(CONNECTION(backend, i), si_query, &res);
 			if (res)
 			{
 				if (res->data[0] && !strcmp(res->data[0], "on"))
@@ -5348,7 +5075,6 @@ check_transaction_state_and_abort(char *query, Node *node, POOL_CONNECTION *fron
 		/* send an error message to frontend */
 		pool_send_error_message(
 								frontend,
-								MAJOR(backend),
 								"25P02",
 								"current transaction is aborted, commands ignored until end of transaction block",
 								buf.data,

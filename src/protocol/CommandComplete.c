@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -685,7 +685,7 @@ handle_mismatch_tuples(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		appendStringInfoString(&msg, "pgpool detected difference of the number of inserted, updated or deleted tuples. Possible last query was: \"");
 		appendStringInfoString(&msg, query_string_buffer);
 		appendStringInfoString(&msg, "\"");
-		pool_send_error_message(frontend, MAJOR(backend),
+		pool_send_error_message(frontend,
 								"XX001", msg.data, "",
 								"check data consistency between main and other db node", __FILE__, __LINE__);
 		ereport(LOG,

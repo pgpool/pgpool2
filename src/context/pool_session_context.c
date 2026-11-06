@@ -980,7 +980,7 @@ pool_get_transaction_isolation(void)
 	/* No cached data is available. Ask backend. */
 
 	do_query(MAIN(session_context->backend),
-			 "SELECT current_setting('transaction_isolation')", &res, MAJOR(session_context->backend));
+			 "SELECT current_setting('transaction_isolation')", &res);
 
 	error_context_stack = callback.previous;
 
@@ -1821,56 +1821,6 @@ dump_pending_message(void)
 
 	ereport(DEBUG5,
 			(errmsg("end dumping pending message list")));
-}
-
-/*
- * Set protocol major version number
- */
-void
-pool_set_major_version(int major)
-{
-	if (session_context)
-	{
-		session_context->major = major;
-	}
-}
-
-/*
- * Get protocol major version number
- */
-int
-pool_get_major_version(void)
-{
-	if (session_context)
-	{
-		return session_context->major;
-	}
-	return PROTO_MAJOR_V3;
-}
-
-/*
- * Set protocol minor version number
- */
-void
-pool_set_minor_version(int minor)
-{
-	if (session_context)
-	{
-		session_context->minor = minor;
-	}
-}
-
-/*
- * Get protocol minor version number
- */
-int
-pool_get_minor_version(void)
-{
-	if (session_context)
-	{
-		return session_context->minor;
-	}
-	return 0;
 }
 
 /*

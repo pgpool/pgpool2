@@ -658,7 +658,7 @@ pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 		per_node_statement_log(backend, i, string);
 		per_node_statement_notice(backend, i, string);
 		stat_count_up(i, query_context->parse_tree);
-		send_simplequery_message(CONNECTION(backend, i), len, string, MAJOR(backend));
+		send_simplequery_message(CONNECTION(backend, i), len, string);
 	}
 
 	/* Wait for response */
@@ -693,7 +693,6 @@ pool_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 		wait_for_query_response_with_trans_cleanup(frontend,
 												   CONNECTION(backend, i),
-												   MAJOR(backend),
 												   MAIN_CONNECTION(backend)->pid,
 												   MAIN_CONNECTION(backend)->key,
 												   MAIN_CONNECTION(backend)->keylen);
@@ -912,7 +911,6 @@ pool_extended_send_and_wait(POOL_QUERY_CONTEXT *query_context,
 
 			wait_for_query_response_with_trans_cleanup(frontend,
 													   CONNECTION(backend, i),
-													   MAJOR(backend),
 													   MAIN_CONNECTION(backend)->pid,
 													   MAIN_CONNECTION(backend)->key,
 													   MAIN_CONNECTION(backend)->keylen);
@@ -2282,8 +2280,7 @@ where_to_send_main_replica(POOL_QUERY_CONTEXT *query_context, char *query, Node 
 	else
 	{
 		if (pool_config->load_balance_mode &&
-			is_select_query(node, query) &&
-			MAJOR(backend) == PROTO_MAJOR_V3)
+			is_select_query(node, query))
 		{
 			/*
 			 * If (we are outside of an explicit transaction) OR (the
@@ -2475,8 +2472,7 @@ where_to_send_native_replication(POOL_QUERY_CONTEXT *query_context, char *query,
 		 pool_config->load_balance_mode, is_select_query(node, query));
 
 	if (pool_config->load_balance_mode &&
-		is_select_query(node, query) &&
-		MAJOR(backend) == PROTO_MAJOR_V3)
+		is_select_query(node, query))
 	{
 		/*
 		 * In snapshot isolation mode, we always load balance if current
@@ -2509,7 +2505,7 @@ where_to_send_native_replication(POOL_QUERY_CONTEXT *query_context, char *query,
 				POOL_SELECT_RESULT *res;
 				bool		load_balance = false;
 
-				do_query(CONNECTION(backend, MAIN_NODE_ID), si_query, &res, MAJOR(backend));
+				do_query(CONNECTION(backend, MAIN_NODE_ID), si_query, &res);
 				if (res)
 				{
 					if (res->data[0] && !strcmp(res->data[0], "on"))

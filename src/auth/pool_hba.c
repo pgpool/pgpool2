@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Portions Copyright (c) 2003-2018	PgPool Global Development Group
+ * Portions Copyright (c) 2003-2026	PgPool Global Development Group
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  * Permission to use, copy, modify, and distribute this software and
@@ -1321,7 +1321,13 @@ ClientAuthentication(POOL_CONNECTION *frontend)
 		auth_failed(frontend);
 }
 
-
+/*
+ * Send AuthenticationCleartextPassword to frontend
+ *
+ * areq: either AUTH_REQ_OK or AUTH_REQ_PASSWORD
+ *
+ * If areq is AUTH_REQ_OK, do nothing and return.
+ */
 static void
 sendAuthRequest(POOL_CONNECTION *frontend, AuthRequest areq)
 {
@@ -1338,27 +1344,10 @@ sendAuthRequest(POOL_CONNECTION *frontend, AuthRequest areq)
 
 	/* request a password */
 	pool_write(frontend, "R", 1);
-
-	if (frontend->protoVersion == PROTO_MAJOR_V3)
-	{
-/* 		if (areq == AUTH_REQ_MD5) */
-/* 			wsize = htonl(sizeof(int)*2+4); */
-/* 		else if (areq == AUTH_REQ_CRYPT) */
-/* 			wsize = htonl(sizeof(int)*2+2); */
-/* 		else */
-		wsize = htonl(sizeof(int) * 2);
-		pool_write(frontend, &wsize, sizeof(int));
-	}
-
+	wsize = htonl(sizeof(int) * 2);
+	pool_write(frontend, &wsize, sizeof(int));
 	areq_nbo = htonl(areq);
 	pool_write(frontend, &areq_nbo, sizeof(int));
-
-	/* Add the salt for encrypted passwords. */
-/* 	if (areq == AUTH_REQ_MD5) */
-/* 		pq_sendbytes(&buf, port->md5Salt, 4); */
-/* 	else if (areq == AUTH_REQ_CRYPT) */
-/* 		pq_sendbytes(&buf, port->cryptSalt, 2); */
-
 	pool_flush(frontend);
 }
 
@@ -1376,23 +1365,18 @@ recv_password_packet(POOL_CONNECTION *frontend)
 	int			rsize;
 	char	   *passwd;
 	char	   *returnVal;
+	char		kind;
 
-	if (frontend->protoVersion == PROTO_MAJOR_V3)
+	/* Expect 'p' message type */
+	if (pool_read(frontend, &kind, 1) < 0)
+		return NULL;
+
+	if (kind != 'p')
 	{
-		/* Expect 'p' message type */
-		char		kind;
-
-		if (pool_read(frontend, &kind, 1) < 0)
-			return NULL;
-
-		if (kind != 'p')
-		{
-			ereport(LOG,
-					(errmsg("unexpected password response received. expected 'p' received '%c'", kind)));
-			return NULL;		/* bad message type */
-		}
+		ereport(LOG,
+				(errmsg("unexpected password response received. expected 'p' received '%c'", kind)));
+		return NULL;		/* bad message type */
 	}
-	/* pre-3.0 protocol does not send a message type */
 
 	if (pool_read(frontend, &rsize, sizeof(int)) < 0)
 		return NULL;

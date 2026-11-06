@@ -319,11 +319,6 @@ typedef struct
 	bool		previous_message_exists;
 	POOL_PENDING_MESSAGE previous_message;
 
-	/* Protocol major version number */
-	int			major;
-	/* Protocol minor version number */
-	int			minor;
-
 	/*
 	 * Do not read messages from frontend. Used in extended protocol +
 	 * streaming replication.  If sync message is received from frontend, this
@@ -489,9 +484,6 @@ extern int	pool_pending_message_get_target_backend_id(POOL_PENDING_MESSAGE *msg)
 extern int	pool_pending_message_get_message_num_by_backend_id(int backend_id);
 extern void pool_pending_message_set_flush_request(void);
 extern void dump_pending_message(void);
-extern void pool_set_major_version(int major);
-extern void pool_set_minor_version(int minor);
-extern int	pool_get_minor_version(void);
 extern bool pool_is_suspend_reading_from_frontend(void);
 extern void pool_set_suspend_reading_from_frontend(void);
 extern void pool_unset_suspend_reading_from_frontend(void);

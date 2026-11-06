@@ -155,17 +155,6 @@ typedef ProtocolVersion MsgType;
  */
 #define MAX_STARTUP_PACKET_LENGTH 10000
 
-
-typedef struct StartupPacket_v2
-{
-	int			protoVersion;	/* Protocol version */
-	char		database[SM_DATABASE];	/* Database name */
-	char		user[SM_USER];	/* User name */
-	char		options[SM_OPTIONS];	/* Optional additional args */
-	char		unused[SM_UNUSED];	/* Unused */
-	char		tty[SM_TTY];	/* Tty for debug output */
-} StartupPacket_v2;
-
 /* startup packet info */
 typedef struct
 {
@@ -225,9 +214,6 @@ typedef struct
 	int			po;				/* pending data offset */
 	int			bufsz;			/* pending data buffer size */
 	int			len;			/* pending data length */
-
-	char	   *sbuf;			/* buffer for pool_read_string */
-	int			sbufsz;			/* its size in bytes */
 
 	char	   *buf2;			/* buffer for pool_read2 */
 	int			bufsz2;			/* its size in bytes */
@@ -328,10 +314,6 @@ typedef struct
 	POOL_CONNECTION_POOL_SLOT *slots[MAX_NUM_BACKENDS];
 } POOL_CONNECTION_POOL;
 
-
-/* Defined in pool_session_context.h */
-extern int	pool_get_major_version(void);
-
 /* NUM_BACKENDS now always returns actual number of backends */
 #define NUM_BACKENDS (pool_config->backend_desc->num_backends)
 #define BACKEND_INFO(backend_id) (pool_config->backend_desc->backend_info[(backend_id)])
@@ -416,7 +398,6 @@ typedef enum
 #define RAW_MODE (pool_config->backend_clustering_mode == CM_RAW)
 #define SL_MODE (STREAM || LOGICAL) /* streaming or logical replication mode */
 
-#define MAJOR(p) (pool_get_major_version())
 #define TSTATE(p, i) (CONNECTION(p, i)->tstate)
 #define INTERNAL_TRANSACTION_STARTED(p, i) (CONNECTION(p, i)->is_internal_transaction_started)
 

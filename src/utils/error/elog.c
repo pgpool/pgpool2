@@ -1916,11 +1916,28 @@ send_message_to_frontend(ErrorData *edata)
 
 	if (protoVersion == PROTO_MAJOR_V2)
 	{
-		char	   *message = edata->message ? edata->message : "missing error text";
+		/*
+		 * We no longer support v2 FE/BE protocol, except here. This is
+		 * necessary for sending reject message to frontend which requested v2
+		 * protocol.
+		 */
+		StringInfoData buf;
+
+		initStringInfo(&buf);
+
+		appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel, true));
+
+		if (edata->message)
+			appendStringInfoString(&buf, edata->message);
+		else
+			appendStringInfoString(&buf, _("missing error text"));
+
+		appendStringInfoChar(&buf, '\n');
 
 		pool_send_to_frontend((edata->elevel < ERROR) ? "N" : "E", 1, false);
-		pool_send_to_frontend(message, strlen(message), false);
-		pool_send_to_frontend("\n", 1, true);
+		pool_send_to_frontend(buf.data, buf.len + 1, true);
+
+		pfree(buf.data);
 	}
 
 	else if (protoVersion == PROTO_MAJOR_V3)

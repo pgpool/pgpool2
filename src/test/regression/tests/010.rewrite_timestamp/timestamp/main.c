@@ -70,13 +70,6 @@ remove_quotes_and_schema_from_relname(char *table)
 	return table;
 }
 
-int
-pool_get_major_version(void)
-{
-	return PROTO_MAJOR_V3;
-}
-
-
 PGVersion *
 Pgversion(POOL_CONNECTION_POOL *backend)
 {
@@ -109,7 +102,7 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 
 /* dummy result of "SELECT now()" */
 void
-do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result, int major)
+do_query(POOL_CONNECTION *backend, char *query, POOL_SELECT_RESULT **result)
 {
 	static POOL_SELECT_RESULT res;
 	static char *data[1] = {

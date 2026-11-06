@@ -41,7 +41,6 @@ static void send_row_description_and_data_rows(POOL_CONNECTION *frontend, POOL_C
 											   short num_fields, char **field_names, int *offsettbl,
 											   char *data, int row_size, int nrows);
 static void write_one_field(POOL_CONNECTION *frontend, char *field);
-static void write_one_field_v2(POOL_CONNECTION *frontend, char *field);
 static char *db_node_status(int node);
 static char *db_node_role(int node);
 
@@ -49,7 +48,6 @@ void
 send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 					 short num_fields, char **field_names)
 {
-	static char *cursorname = "blank";
 	static int	oid = 0;
 	static short fsize = -1;
 	static int	mod = 0;
@@ -59,35 +57,23 @@ send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	int			len;
 	short		colnum;
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2)
-	{
-		/* cursor response */
-		pool_write(frontend, "P", 1);
-		pool_write(frontend, cursorname, strlen(cursorname) + 1);
-	}
-
 	/* row description */
 	pool_write(frontend, "T", 1);
 
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
+	/*
+	 * information about computed byte in section "RowDescription (B)" here:
+	 * http://www.postgresql.org/docs/current/static/protocol-message-formats.html
+	 */
+	len = 6;					/* int32 + int16 */
+
+	for (i = 0; i < num_fields; i++)
 	{
-		/*
-		 * information about computed byte in section "RowDescription (B)"
-		 * here:
-		 * http://www.postgresql.org/docs/current/static/protocol-message-formats.html
-		 */
-
-		len = 6;				/* int32 + int16 */
-
-		for (i = 0; i < num_fields; i++)
-		{
-			/* String + '\0' + 3* int32 + 3* int16 */
-			len += strlen(field_names[i]) + 1 + 18;
-		}
-
-		len = htonl(len);
-		pool_write(frontend, &len, sizeof(len));
+		/* String + '\0' + 3* int32 + 3* int16 */
+		len += strlen(field_names[i]) + 1 + 18;
 	}
+
+	len = htonl(len);
+	pool_write(frontend, &len, sizeof(len));
 
 	n = htons(num_fields);
 	pool_write(frontend, &n, sizeof(short));
@@ -96,23 +82,15 @@ send_row_description(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 	{
 		pool_write(frontend, field_names[i], strlen(field_names[i]) + 1);	/* field name */
 
-		if (MAJOR(backend) == PROTO_MAJOR_V3)
-		{
-			pool_write(frontend, &oid, sizeof(oid));	/* table oid */
-			colnum = htons(i);
-			pool_write(frontend, &colnum, sizeof(colnum));	/* column number */
-		}
-
+		pool_write(frontend, &oid, sizeof(oid));	/* table oid */
+		colnum = htons(i);
+		pool_write(frontend, &colnum, sizeof(colnum));	/* column number */
 		pool_write(frontend, &oid, sizeof(oid));	/* data type oid */
 		s = htons(fsize);
 		pool_write(frontend, &s, sizeof(fsize));	/* field size */
 		pool_write(frontend, &mod, sizeof(mod));	/* modifier */
-
-		if (MAJOR(backend) == PROTO_MAJOR_V3)
-		{
-			s = htons(0);
-			pool_write(frontend, &s, sizeof(fsize));	/* field format (text) */
-		}
+		s = htons(0);
+		pool_write(frontend, &s, sizeof(fsize));	/* field format (text) */
 	}
 	pool_flush(frontend);
 }
@@ -137,21 +115,15 @@ send_complete_and_ready(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend
 
 	/* complete command response */
 	pool_write(frontend, "C", 1);
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
-	{
-		len = htonl(4 + msg_len + 1);
-		pool_write(frontend, &len, sizeof(len));
-	}
+	len = htonl(4 + msg_len + 1);
+	pool_write(frontend, &len, sizeof(len));
 	pool_write(frontend, msg, msg_len + 1);
 
 	/* ready for query */
 	pool_write(frontend, "Z", 1);
-	if (MAJOR(backend) == PROTO_MAJOR_V3)
-	{
-		len = htonl(5);
-		pool_write(frontend, &len, sizeof(len));
-		pool_write(frontend, "I", 1);
-	}
+	len = htonl(5);
+	pool_write(frontend, &len, sizeof(len));
+	pool_write(frontend, "I", 1);
 
 	pool_flush(frontend);
 }
@@ -1216,61 +1188,32 @@ send_config_var_detail_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *back
 	int			size;
 	int			hsize;
 	static short num_fields = 3;
+	short		s;
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2)
-	{
+	pool_write(frontend, "D", 1);
+	size = 6;					/* int32 + int16; */
+	size += 4 + strlen(name);	/* int32 + data; */
+	size += 4 + strlen(value);	/* int32 + data; */
+	size += 4 + strlen(description);	/* int32 + data; */
+	hsize = htonl(size);
+	pool_write(frontend, &hsize, sizeof(hsize));
+	s = htons(num_fields);
+	pool_write(frontend, &s, sizeof(s));
 
-		int			nbytes = (num_fields + 7) / 8;
-		static unsigned char nullmap[2] = {0xff, 0xff};
+	size = strlen(name);
+	hsize = htonl(size);
+	pool_write(frontend, &hsize, sizeof(hsize));
+	pool_write(frontend, (void *) name, size);
 
-		/* ascii row */
-		pool_write(frontend, "D", 1);
-		pool_write_and_flush(frontend, nullmap, nbytes);
+	size = strlen(value);
+	hsize = htonl(size);
+	pool_write(frontend, &hsize, sizeof(hsize));
+	pool_write(frontend, (void *) value, size);
 
-		size = strlen(name);
-		hsize = htonl(size + 4);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void *) name, size);
-
-		size = strlen(value);
-		hsize = htonl(size + 4);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void *) value, size);
-
-		size = strlen(description);
-		hsize = htonl(size + 4);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void *) description, size);
-	}
-	else
-	{
-		short		s;
-
-		pool_write(frontend, "D", 1);
-		size = 6;				/* int32 + int16; */
-		size += 4 + strlen(name);	/* int32 + data; */
-		size += 4 + strlen(value);	/* int32 + data; */
-		size += 4 + strlen(description);	/* int32 + data; */
-		hsize = htonl(size);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		s = htons(num_fields);
-		pool_write(frontend, &s, sizeof(s));
-
-		size = strlen(name);
-		hsize = htonl(size);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void *) name, size);
-
-		size = strlen(value);
-		hsize = htonl(size);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void *) value, size);
-
-		size = strlen(description);
-		hsize = htonl(size);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void *) description, size);
-	}
+	size = strlen(description);
+	hsize = htonl(size);
+	pool_write(frontend, &hsize, sizeof(hsize));
+	pool_write(frontend, (void *) description, size);
 }
 
 void
@@ -1279,111 +1222,60 @@ send_config_var_value_only_row(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *
 	int			size;
 	int			hsize;
 	static short num_fields = 1;
+	short		s;
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2)
-	{
+	pool_write(frontend, "D", 1);
+	size = 6;					/* int32 + int16; */
+	size += 4 + strlen(value);	/* int32 + data; */
+	hsize = htonl(size);
+	pool_write(frontend, &hsize, sizeof(hsize));
+	s = htons(num_fields);
+	pool_write(frontend, &s, sizeof(s));
 
-		int			nbytes = (num_fields + 7) / 8;
-		static unsigned char nullmap[2] = {0xff, 0xff};
-
-		/* ascii row */
-		pool_write(frontend, "D", 1);
-		pool_write_and_flush(frontend, nullmap, nbytes);
-
-		size = strlen(value);
-		hsize = htonl(size + 4);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void *) value, size);
-
-	}
-	else
-	{
-		short		s;
-
-		pool_write(frontend, "D", 1);
-		size = 6;				/* int32 + int16; */
-		size += 4 + strlen(value);	/* int32 + data; */
-		hsize = htonl(size);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		s = htons(num_fields);
-		pool_write(frontend, &s, sizeof(s));
-
-		size = strlen(value);
-		hsize = htonl(size);
-		pool_write(frontend, &hsize, sizeof(hsize));
-		pool_write(frontend, (void *) value, size);
-	}
+	size = strlen(value);
+	hsize = htonl(size);
+	pool_write(frontend, &hsize, sizeof(hsize));
+	pool_write(frontend, (void *) value, size);
 }
 
 void
 config_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 {
 	static char *field_names[] = {"item", "value", "description"};
-	static unsigned char nullmap[2] = {0xff, 0xff};
 	static short num_fields = 3;
 	short		s;
-	int			nbytes = (num_fields + 7) / 8;
 	int			len;
 	int			nrows;
-	int			size;
-	int			hsize;
 	int			i;
 
 	POOL_REPORT_CONFIG *status = get_config(&nrows);
 
 	send_row_description(frontend, backend, num_fields, field_names);
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2)
+	/* data row */
+	for (i = 0; i < nrows; i++)
 	{
-		/* ascii row */
-		for (i = 0; i < nrows; i++)
-		{
-			pool_write(frontend, "D", 1);
-			pool_write_and_flush(frontend, nullmap, nbytes);
+		pool_write(frontend, "D", 1);
+		len = 6;				/* int32 + int16; */
+		len += 4 + strlen(status[i].name);	/* int32 + data; */
+		len += 4 + strlen(status[i].value); /* int32 + data; */
+		len += 4 + strlen(status[i].desc);	/* int32 + data; */
+		len = htonl(len);
+		pool_write(frontend, &len, sizeof(len));
+		s = htons(num_fields);
+		pool_write(frontend, &s, sizeof(s));
 
-			size = strlen(status[i].name);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, status[i].name, size);
+		len = htonl(strlen(status[i].name));
+		pool_write(frontend, &len, sizeof(len));
+		pool_write(frontend, status[i].name, strlen(status[i].name));
 
-			size = strlen(status[i].value);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, status[i].value, size);
+		len = htonl(strlen(status[i].value));
+		pool_write(frontend, &len, sizeof(len));
+		pool_write(frontend, status[i].value, strlen(status[i].value));
 
-			size = strlen(status[i].desc);
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, status[i].desc, size);
-		}
-	}
-	else
-	{
-		/* data row */
-		for (i = 0; i < nrows; i++)
-		{
-			pool_write(frontend, "D", 1);
-			len = 6;			/* int32 + int16; */
-			len += 4 + strlen(status[i].name);	/* int32 + data; */
-			len += 4 + strlen(status[i].value); /* int32 + data; */
-			len += 4 + strlen(status[i].desc);	/* int32 + data; */
-			len = htonl(len);
-			pool_write(frontend, &len, sizeof(len));
-			s = htons(num_fields);
-			pool_write(frontend, &s, sizeof(s));
-
-			len = htonl(strlen(status[i].name));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, status[i].name, strlen(status[i].name));
-
-			len = htonl(strlen(status[i].value));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, status[i].value, strlen(status[i].value));
-
-			len = htonl(strlen(status[i].desc));
-			pool_write(frontend, &len, sizeof(len));
-			pool_write(frontend, status[i].desc, strlen(status[i].desc));
-		}
+		len = htonl(strlen(status[i].desc));
+		pool_write(frontend, &len, sizeof(len));
+		pool_write(frontend, status[i].desc, strlen(status[i].desc));
 	}
 
 	send_complete_and_ready(frontend, backend, "SELECT", nrows);
@@ -1926,10 +1818,7 @@ cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	int			i;
 	short		s;
 	int			len;
-	int			size;
 	int			hsize;
-	static unsigned char nullmap[2] = {0xff, 0xff};
-	int			nbytes = (num_fields + 7) / 8;
 	volatile POOL_SHMEM_STATS *mystats;
 	pool_sigset_t oldmask;
 	double		ratio;
@@ -2002,36 +1891,20 @@ cache_reporting(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend)
 	send_row_description(frontend, backend, num_fields, field_names);
 
 	/* Send each field */
-	if (MAJOR(backend) == PROTO_MAJOR_V2)
-	{
-		pool_write(frontend, "D", 1);
-		pool_write(frontend, nullmap, nbytes);
+	/* Kind */
+	pool_write(frontend, "D", 1);
+	/* Packet length */
+	len = htonl(len + sizeof(int32));
+	pool_write(frontend, &len, sizeof(len));
+	/* Number of fields */
+	s = htons(num_fields);
+	pool_write(frontend, &s, sizeof(s));
 
-		for (i = 0; i < num_fields; i++)
-		{
-			size = strp[i].len + 1;
-			hsize = htonl(size + 4);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, strp[i].string, size);
-		}
-	}
-	else
+	for (i = 0; i < num_fields; i++)
 	{
-		/* Kind */
-		pool_write(frontend, "D", 1);
-		/* Packet length */
-		len = htonl(len + sizeof(int32));
-		pool_write(frontend, &len, sizeof(len));
-		/* Number of fields */
-		s = htons(num_fields);
-		pool_write(frontend, &s, sizeof(s));
-
-		for (i = 0; i < num_fields; i++)
-		{
-			hsize = htonl(strp[i].len);
-			pool_write(frontend, &hsize, sizeof(hsize));
-			pool_write(frontend, strp[i].string, strp[i].len);
-		}
+		hsize = htonl(strp[i].len);
+		pool_write(frontend, &hsize, sizeof(hsize));
+		pool_write(frontend, strp[i].string, strp[i].len);
 	}
 
 	send_complete_and_ready(frontend, backend, "SELECT", 1);
@@ -2302,52 +2175,27 @@ send_row_description_and_data_rows(POOL_CONNECTION *frontend, POOL_CONNECTION_PO
 				j;
 	short		s;
 	int			len;
-	unsigned char *nullmap;
-	int			nbytes;
-
-	nbytes = (num_fields + 7) / 8;
 
 	send_row_description(frontend, backend, num_fields, field_names);
 
-	if (MAJOR(backend) == PROTO_MAJOR_V2)
+	/* data row */
+	for (i = 0; i < nrows; i++)
 	{
-		nullmap = palloc(nbytes);
-		memset(nullmap, 0xff, nbytes);
+		pool_write(frontend, "D", 1);
+		len = 6;				/* int32 + int16; */
 
-		/* ascii row */
-		for (i = 0; i < nrows; i++)
+		for (j = 0; j < num_fields; j++)
 		{
-			pool_write(frontend, "D", 1);
-			pool_write_and_flush(frontend, nullmap, nbytes);
-
-			for (j = 0; j < num_fields; j++)
-			{
-				write_one_field_v2(frontend, data + i * row_size + offsettbl[j]);
-			}
+			len += 4 + strlen(data + i * row_size + offsettbl[j]);
 		}
-		pfree(nullmap);
-	}
-	else
-	{
-		/* data row */
-		for (i = 0; i < nrows; i++)
+		len = htonl(len);
+		pool_write(frontend, &len, sizeof(len));
+		s = htons(num_fields);
+		pool_write(frontend, &s, sizeof(s));
+
+		for (j = 0; j < num_fields; j++)
 		{
-			pool_write(frontend, "D", 1);
-			len = 6;			/* int32 + int16; */
-
-			for (j = 0; j < num_fields; j++)
-			{
-				len += 4 + strlen(data + i * row_size + offsettbl[j]);
-			}
-			len = htonl(len);
-			pool_write(frontend, &len, sizeof(len));
-			s = htons(num_fields);
-			pool_write(frontend, &s, sizeof(s));
-
-			for (j = 0; j < num_fields; j++)
-			{
-				write_one_field(frontend, data + i * row_size + offsettbl[j]);
-			}
+			write_one_field(frontend, data + i * row_size + offsettbl[j]);
 		}
 	}
 
@@ -2363,19 +2211,6 @@ write_one_field(POOL_CONNECTION *frontend, char *field)
 
 	size = strlen(field);
 	hsize = htonl(size);
-	pool_write(frontend, &hsize, sizeof(hsize));
-	pool_write(frontend, field, size);
-}
-
-/* Write one field to frontend (v2) */
-static void
-write_one_field_v2(POOL_CONNECTION *frontend, char *field)
-{
-	int			size,
-				hsize;
-
-	size = strlen(field);
-	hsize = htonl(size + 4);
 	pool_write(frontend, &hsize, sizeof(hsize));
 	pool_write(frontend, field, size);
 }

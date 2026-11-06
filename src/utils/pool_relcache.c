@@ -259,7 +259,7 @@ pool_search_relcache(POOL_RELCACHE *relcache, POOL_CONNECTION_POOL *backend, cha
 				(errmsg("not hit local relation cache and query cache"),
 				 errdetail("query:%s", query)));
 
-		do_query(CONNECTION(backend, node_id), query, &res, MAJOR(backend));
+		do_query(CONNECTION(backend, node_id), query, &res);
 		per_node_statement_log(backend, node_id, query);
 
 		/* Register cache */

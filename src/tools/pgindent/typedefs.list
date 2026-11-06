@@ -499,7 +499,6 @@ SortByNulls
 SortGroupClause
 StackElem
 StartupPacket
-StartupPacket_v2
 StartupPacket_v3
 StatsElem
 String

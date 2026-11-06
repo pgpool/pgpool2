@@ -20,7 +20,6 @@ pgpool_SOURCES = main/main.c \
 	auth/pool_passwd.c \
 	auth/pool_hba.c \
 	auth/auth-scram.c \
-	protocol/pool_proto2.c \
 	protocol/child.c \
 	protocol/pool_pg_utils.c \
 	protocol/pool_process_query.c \

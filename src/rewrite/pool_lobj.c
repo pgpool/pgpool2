@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -173,7 +173,7 @@ pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 	/* issue lock table command to lob_lock_table */
 	snprintf(qbuf, sizeof(qbuf), "LOCK TABLE %s IN SHARE ROW EXCLUSIVE MODE", pool_config->lobj_lock_table);
 	per_node_statement_log(backend, MAIN_NODE_ID, qbuf);
-	status = do_command(frontend, MAIN(backend), qbuf, MAJOR(backend), MAIN_CONNECTION(backend)->pid,
+	status = do_command(frontend, MAIN(backend), qbuf, MAIN_CONNECTION(backend)->pid,
 						MAIN_CONNECTION(backend)->key, MAIN_CONNECTION(backend)->keylen, 0);
 	if (status == POOL_END)
 	{
@@ -195,7 +195,7 @@ pool_rewrite_lo_creat(char kind, char *packet, int packet_len,
 
 	/* get max lobj id */
 	per_node_statement_log(backend, MAIN_NODE_ID, GET_MAX_LOBJ_KEY);
-	do_query(MAIN(backend), GET_MAX_LOBJ_KEY, &result, MAJOR(backend));
+	do_query(MAIN(backend), GET_MAX_LOBJ_KEY, &result);
 
 	if (!result)
 	{

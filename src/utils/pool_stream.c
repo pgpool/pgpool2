@@ -3,7 +3,7 @@
 * pgpool: a language independent connection pool server for PostgreSQL
 * written by Tatsuo Ishii
 *
-* Copyright (c) 2003-2025	PgPool Global Development Group
+* Copyright (c) 2003-2026	PgPool Global Development Group
 *
 * Permission to use, copy, modify, and distribute this software and
 * its documentation for any purpose and without fee is hereby
@@ -43,8 +43,6 @@
 #include "utils/pool_ssl.h"
 #include "main/pool_internal_comms.h"
 
-static int	mystrlen(char *str, int upper, int *flag);
-static int	mystrlinelen(char *str, int upper, int *flag);
 static int	save_pending_data(POOL_CONNECTION *cp, void *data, int len);
 static int	consume_pending_data(POOL_CONNECTION *cp, void *data, int len);
 static MemoryContext SwitchToConnectionContext(bool backend_connection);
@@ -93,8 +91,6 @@ pool_open(int fd, bool backend_connection)
 	cp->bufsz = READBUFSZ;
 	cp->po = 0;
 	cp->len = 0;
-	cp->sbuf = NULL;
-	cp->sbufsz = 0;
 	cp->buf2 = NULL;
 	cp->bufsz2 = 0;
 	cp->buf3 = NULL;
@@ -123,8 +119,6 @@ pool_close(POOL_CONNECTION *cp)
 	cp->socket_state = POOL_SOCKET_CLOSED;
 	pfree(cp->wbuf);
 	pfree(cp->hp);
-	if (cp->sbuf)
-		pfree(cp->sbuf);
 	if (cp->buf2)
 		pfree(cp->buf2);
 	if (cp->buf3)
@@ -865,196 +859,6 @@ pool_write_and_flush_noerror(POOL_CONNECTION *cp, void *buf, int len)
 }
 
 /*
- * read a string until EOF or NULL is encountered.
- * if line is not 0, read until new line is encountered.
-*/
-char *
-pool_read_string(POOL_CONNECTION *cp, int *len, int line)
-{
-	int			readp;
-	int			readsize;
-	int			readlen;
-	int			strlength;
-	int			flag;
-	int			consume_size;
-
-#ifdef DEBUG
-	static char pbuf[READBUFSZ];
-#endif
-
-	*len = 0;
-	readp = 0;
-
-	/* initialize read buffer */
-	if (cp->sbufsz == 0)
-	{
-		MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
-
-		cp->sbuf = palloc(READBUFSZ);
-		MemoryContextSwitchTo(oldContext);
-
-		cp->sbufsz = READBUFSZ;
-		*cp->sbuf = '\0';
-	}
-
-	/* any pending data? */
-	if (cp->len)
-	{
-		if (line)
-			strlength = mystrlinelen(cp->hp + cp->po, cp->len, &flag);
-		else
-			strlength = mystrlen(cp->hp + cp->po, cp->len, &flag);
-
-		/* buffer is too small? */
-		if ((strlength + 1) > cp->sbufsz)
-		{
-			MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
-
-			cp->sbufsz = ((strlength + 1) / READBUFSZ + 1) * READBUFSZ;
-			cp->sbuf = repalloc(cp->sbuf, cp->sbufsz);
-			MemoryContextSwitchTo(oldContext);
-		}
-
-		/* consume pending and save to read string buffer */
-		consume_size = consume_pending_data(cp, cp->sbuf, strlength);
-
-		*len = strlength;
-
-		/* is the string null terminated? */
-		if (consume_size == strlength && !flag)
-		{
-			/*
-			 * not null or line terminated. we need to read more since we have
-			 * not encountered NULL or new line yet
-			 */
-			readsize = cp->sbufsz - strlength;
-			readp = strlength;
-		}
-		else
-		{
-			ereport(DEBUG5,
-					(errmsg("reading string data"),
-					 errdetail("read all from pending data. po:%d len:%d",
-							   cp->po, cp->len)));
-			return cp->sbuf;
-		}
-	}
-	else
-	{
-		readsize = cp->sbufsz;
-	}
-
-	for (;;)
-	{
-		if (pool_check_fd(cp))
-		{
-			if (!IS_MAIN_NODE_ID(cp->db_node_id))
-			{
-				ereport(FATAL,
-						(errmsg("unable to read data from DB node %d", cp->db_node_id),
-						 errdetail("data is not ready in DB node")));
-
-			}
-			else
-			{
-				ereport(ERROR,
-						(errmsg("unable to read data from DB node %d", cp->db_node_id),
-						 errdetail("pool_check_fd call failed with error \"%m\"")));
-			}
-		}
-
-		if (cp->ssl_active > 0)
-		{
-			readlen = pool_ssl_read(cp, cp->sbuf + readp, readsize);
-		}
-		else
-		{
-			readlen = read(cp->fd, cp->sbuf + readp, readsize);
-		}
-
-		if (readlen == -1)
-		{
-			cp->socket_state = POOL_SOCKET_ERROR;
-			if (cp->isbackend)
-			{
-				if (cp->con_info && cp->con_info->swallow_termination == 1)
-				{
-					cp->con_info->swallow_termination = 0;
-					ereport(FATAL,
-							(errmsg("unable to read data from DB node %d", cp->db_node_id),
-							 errdetail("pg_terminate_backend was called on the backend")));
-				}
-
-				notice_backend_error(cp->db_node_id, REQ_DETAIL_SWITCHOVER);
-				child_exit(POOL_EXIT_AND_RESTART);
-				ereport(ERROR,
-						(errmsg("unable to read data from frontend"),
-						 errdetail("socket read function returned -1")));
-			}
-			else
-			{
-				ereport(ERROR,
-						(errmsg("unable to read data from frontend"),
-						 errdetail("socket read function returned -1")));
-
-			}
-		}
-		else if (readlen == 0)	/* EOF detected */
-		{
-			/*
-			 * just returns an error, not trigger failover or degeneration
-			 */
-			cp->socket_state = POOL_SOCKET_EOF;
-			ereport(ERROR,
-					(errmsg("unable to read data from %s", cp->isbackend ? "backend" : "frontend"),
-					 errdetail("EOF read on socket")));
-
-		}
-
-		/* check overrun */
-		if (line)
-			strlength = mystrlinelen(cp->sbuf + readp, readlen, &flag);
-		else
-			strlength = mystrlen(cp->sbuf + readp, readlen, &flag);
-
-		if (strlength < readlen)
-		{
-			save_pending_data(cp, cp->sbuf + readp + strlength, readlen - strlength);
-			*len += strlength;
-			ereport(DEBUG5,
-					(errmsg("reading string data"),
-					 errdetail("total read %d with pending data po:%d len:%d", *len, cp->po, cp->len)));
-			return cp->sbuf;
-		}
-
-		*len += readlen;
-
-		/* encountered null or newline? */
-		if (flag)
-		{
-			/* ok we have read all data */
-			ereport(DEBUG5,
-					(errmsg("reading string data"),
-					 errdetail("all data read: total read %d", *len)));
-			break;
-		}
-
-		readp += readlen;
-		readsize = READBUFSZ;
-
-		if ((*len + readsize) > cp->sbufsz)
-		{
-			cp->sbufsz += READBUFSZ;
-			MemoryContext oldContext = SwitchToConnectionContext(cp->isbackend);
-
-			cp->sbuf = repalloc(cp->sbuf, cp->sbufsz);
-			MemoryContextSwitchTo(oldContext);
-		}
-	}
-	return cp->sbuf;
-}
-
-/*
  * Set db node id to connection.
  */
 void
@@ -1063,65 +867,6 @@ pool_set_db_node_id(POOL_CONNECTION *con, int db_node_id)
 	if (!con)
 		return;
 	con->db_node_id = db_node_id;
-}
-
-/*
- * returns the byte length of str, including \0, no more than upper.
- * if encountered \0, flag is set to non 0.
- * example:
- *	mystrlen("abc", 2) returns 2
- *	mystrlen("abc", 3) returns 3
- *	mystrlen("abc", 4) returns 4
- *	mystrlen("abc", 5) returns 4
- */
-static int
-mystrlen(char *str, int upper, int *flag)
-{
-	int			len;
-
-	*flag = 0;
-
-	for (len = 0; len < upper; len++, str++)
-	{
-		if (!*str)
-		{
-			len++;
-			*flag = 1;
-			break;
-		}
-	}
-	return len;
-}
-
-/*
- * returns the byte length of str terminated by \n or \0 (including \n or \0), no more than upper.
- * if encountered \0 or \n, flag is set to non 0.
- * example:
- *	mystrlinelen("abc", 2) returns 2
- *	mystrlinelen("abc", 3) returns 3
- *	mystrlinelen("abc", 4) returns 4
- *	mystrlinelen("abc", 5) returns 4
- *	mystrlinelen("abcd\nefg", 4) returns 4
- *	mystrlinelen("abcd\nefg", 5) returns 5
- *	mystrlinelen("abcd\nefg", 6) returns 5
- */
-static int
-mystrlinelen(char *str, int upper, int *flag)
-{
-	int			len;
-
-	*flag = 0;
-
-	for (len = 0; len < upper; len++, str++)
-	{
-		if (!*str || *str == '\n')
-		{
-			len++;
-			*flag = 1;
-			break;
-		}
-	}
-	return len;
 }
 
 /*

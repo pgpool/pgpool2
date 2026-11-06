@@ -5,7 +5,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -158,8 +158,8 @@ bool		stop_now = false;
 static bool connection_pool_initialized = false;
 
 /*
-* child main loop
-*/
+ * child main loop
+ */
 void
 do_child(int *fds)
 {
@@ -385,7 +385,7 @@ do_child(int *fds)
 					continue;
 				}
 				connection_count_down();
-				pool_send_fatal_message(cp, 3, "53300",
+				pool_send_fatal_message(cp, "53300",
 										"Sorry, too many clients already",
 										"",
 										"",
@@ -454,12 +454,6 @@ do_child(int *fds)
 		 * Initialize per session context
 		 */
 		pool_init_session_context(child_frontend, backend);
-
-		/*
-		 * Set protocol versions
-		 */
-		pool_set_major_version(sp->major);
-		pool_set_minor_version(sp->minor);
 
 		/*
 		 * Mark this connection pool is connected from frontend
@@ -620,12 +614,11 @@ backend_cleanup(POOL_CONNECTION *volatile *frontend, POOL_CONNECTION_POOL *volat
  * Read startup packet
  *
  * Read the startup packet and parse the contents.
-*/
+ */
 static StartupPacket *
 read_startup_packet(POOL_CONNECTION *cp)
 {
 	StartupPacket *sp;
-	StartupPacket_v2 *sp2;
 	int			protov;
 	int			len;
 	char	   *p;
@@ -667,15 +660,10 @@ read_startup_packet(POOL_CONNECTION *cp)
 
 	switch (sp->major)
 	{
-		case PROTO_MAJOR_V2:	/* V2 */
-			sp2 = (StartupPacket_v2 *) (sp->startup_packet);
-
-			sp->database = palloc0(SM_DATABASE + 1);
-			strncpy(sp->database, sp2->database, SM_DATABASE);
-
-			sp->user = palloc0(SM_USER + 1);
-			strncpy(sp->user, sp2->user, SM_USER);
-
+		case PROTO_MAJOR_V2:	/* V2 protocol is not supported */
+			ereport(FATAL,
+					(errmsg("unsupported frontend protocol %u.%u",
+							sp->major, sp->minor)));
 			break;
 
 		case PROTO_MAJOR_V3:	/* V3 */
@@ -781,7 +769,7 @@ read_startup_packet(POOL_CONNECTION *cp)
 	if (sp->major != 1234 &&
 		(sp->user == NULL || sp->user[0] == '\0'))
 	{
-		pool_send_fatal_message(cp, sp->major, "28000",
+		pool_send_fatal_message(cp, "28000",
 								"no PostgreSQL user name specified in startup packet",
 								"",
 								"",
@@ -821,6 +809,8 @@ connect_using_existing_connection(POOL_CONNECTION *frontend,
 {
 	int			i,
 				freed = 0;
+	int			len;
+	char		tstate;
 	StartupPacket *topmem_sp = NULL;
 	MemoryContext oldContext;
 	MemoryContext frontend_auth_cxt;
@@ -859,25 +849,16 @@ connect_using_existing_connection(POOL_CONNECTION *frontend,
 	MemoryContextSwitchTo(oldContext);
 	MemoryContextDelete(frontend_auth_cxt);
 
-	if (MAJOR(backend) == 3)
-	{
-		/* Send parameter status message to frontend. */
-		send_params(frontend, backend);
-	}
+	/* Send parameter status message to frontend. */
+	send_params(frontend, backend);
 
 	/* Send ReadyForQuery to frontend */
 	pool_write(frontend, "Z", 1);
 
-	if (MAJOR(backend) == 3)
-	{
-		int			len;
-		char		tstate;
-
-		len = htonl(5);
-		pool_write(frontend, &len, sizeof(len));
-		tstate = TSTATE(backend, MAIN_NODE_ID);
-		pool_write(frontend, &tstate, 1);
-	}
+	len = htonl(5);
+	pool_write(frontend, &len, sizeof(len));
+	tstate = TSTATE(backend, MAIN_NODE_ID);
+	pool_write(frontend, &tstate, 1);
 
 	pool_flush(frontend);
 
@@ -1041,10 +1022,11 @@ StartupPacketCopy(StartupPacket *sp)
 	new_sp->database = pstrdup(sp->database);
 	new_sp->user = pstrdup(sp->user);
 
-	if (new_sp->major == PROTO_MAJOR_V3 && sp->application_name)
+	if (sp->application_name)
 	{
 		/* adjust the application name pointer in new packet */
-		new_sp->application_name = new_sp->startup_packet + (sp->application_name - sp->startup_packet);
+		new_sp->application_name = new_sp->startup_packet +
+			(sp->application_name - sp->startup_packet);
 	}
 	return new_sp;
 }
@@ -1065,7 +1047,7 @@ connect_backend(StartupPacket *sp, POOL_CONNECTION *frontend)
 	backend = pool_create_cp();
 	if (backend == NULL)
 	{
-		pool_send_error_message(frontend, sp->major, "XX000", "all backend nodes are down, pgpool requires at least one valid node", "",
+		pool_send_error_message(frontend, "XX000", "all backend nodes are down, pgpool requires at least one valid node", "",
 								"repair the backend nodes and restart pgpool", __FILE__, __LINE__);
 		ereport(ERROR,
 				(errmsg("unable to connect to backend"),
@@ -1933,8 +1915,8 @@ validate_backend_connectivity(int front_end_fd)
 				ereport(DEBUG1,
 						(errmsg("forwarding error message to frontend")));
 
-				pool_send_error_message(cp, sp->major,
-										(sp->major == PROTO_MAJOR_V3) ? "08S01" : NULL,
+				pool_send_error_message(cp,
+										"08S01",
 										error_msg,
 										error_detail,
 										error_hint,
