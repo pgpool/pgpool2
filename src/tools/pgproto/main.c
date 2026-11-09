@@ -715,11 +715,11 @@ connect_v2(char *host, char *port, char *user, char *database)
 	write_it(fd, &nlen, sizeof(int));	/* protocol version */
 
 	memset(buf1, 0, sizeof(buf1));
-	strlcpy(buf1, database, sizeof(buf1));
+	snprintf(buf1, sizeof(buf1), "%s", database);
 	write_it(fd, buf1, sizeof(buf1));	/* database */
 
 	memset(buf2, 0, sizeof(buf2));
-	strlcpy(buf2, user, sizeof(buf2));
+	snprintf(buf2, sizeof(buf2), "%s", user);
 	write_it(fd, buf2, sizeof(buf2));	/* user */
 
 	memset(buf1, 0, sizeof(buf1));
