@@ -186,6 +186,7 @@ static void terminate_all_childrens(int sig);
 static void system_will_go_down(int code, Datum arg);
 static char *process_name_from_pid(pid_t pid);
 static void sync_backend_from_watchdog(void);
+static void finish_sync_backend_from_watchdog(void);
 static void update_backend_quarantine_status(void);
 static int	get_server_version(POOL_CONNECTION_POOL_SLOT **slots, int node_id);
 static void get_info_from_conninfo(char *conninfo, char *host, int hostlen, char *port, int portlen);
@@ -3671,6 +3672,33 @@ update_backend_quarantine_status(void)
 }
 
 /*
+ * Let children use the backend status again after sync_backend_from_watchdog()
+ * has changed it.
+ */
+static void
+finish_sync_backend_from_watchdog(void)
+{
+	volatile POOL_REQUEST_INFO *req_info = Req_info;
+	bool		requests_pending;
+
+	pool_semaphore_lock(REQUEST_INFO_SEM);
+	req_info->switching = false;
+	requests_pending = req_info->request_queue_tail != req_info->request_queue_head;
+	pool_semaphore_unlock(REQUEST_INFO_SEM);
+
+	/*
+	 * register_node_operation_request() does not wake us up for a request
+	 * queued while switching was set, because it expects failover() to be
+	 * processing the queue.  Process such requests now.
+	 */
+	if (requests_pending)
+	{
+		user1SignalSlot->signalFlags[SIG_FAILOVER_INTERRUPT] = true;
+		sigusr1_request = 1;
+	}
+}
+
+/*
  * The function fetch the current status of all configured backend
  * nodes from the LEADER/COORDINATOR watchdog Pgpool-II and synchronize the
  * local backend states with the cluster wide status of each node.
@@ -3728,6 +3756,17 @@ sync_backend_from_watchdog(void)
 	ereport(DEBUG1,
 			(errmsg("primary node on leader watchdog node \"%s\" is %d", backendStatus->nodeName, backendStatus->primary_node_id)));
 
+	/*
+	 * Changing the backend status and the primary node id below is a
+	 * failover performed on behalf of the leader watchdog node, so tell the
+	 * children it is in progress, as failover() does.  A child that looks up
+	 * the main or primary node in the meantime waits in
+	 * pool_virtual_main_db_node_id() until we are done or until it is killed
+	 * below.  Otherwise a child may pick a new primary node that its session
+	 * has no connection to, for example because that node was down when the
+	 * session started, and dereference a NULL connection slot.
+	 */
+	Req_info->switching = true;
 
 	/*
 	 * update the local backend status Also remove quarantine flags
@@ -3842,7 +3881,10 @@ sync_backend_from_watchdog(void)
 
 	/* We don't need to do anything else if the Pgpool-II is starting up */
 	if (processState == INITIALIZING)
+	{
+		finish_sync_backend_from_watchdog();
 		return;
+	}
 
 	/*
 	 * Decide if All or subset of the Pgpool-II children needs immediate
@@ -3856,6 +3898,7 @@ sync_backend_from_watchdog(void)
 	{
 		ereport(LOG,
 				(errmsg("backend nodes status remains same after the sync from \"%s\"", backendStatus->nodeName)));
+		finish_sync_backend_from_watchdog();
 		return;
 	}
 	if (!STREAM)
@@ -3980,6 +4023,8 @@ sync_backend_from_watchdog(void)
 				process_info[i].need_to_restart = 1;
 		}
 	}
+
+	finish_sync_backend_from_watchdog();
 
 	/*
 	 * Send restart request to worker child.
