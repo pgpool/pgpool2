@@ -506,12 +506,15 @@ GRANT pg_monitor TO sr_check_user;
      same order as the arguments. The line can be terminated with or without a
      new line character. The primary node's delay is implicitly zero and
      should not be included in the output. Delay values can be integers or
-     floating-point numbers.
+     floating-point numbers. If a delay value cannot be parsed in full as a
+     number, <productname>Pgpool-II</productname> logs a warning and treats the
+     value as zero milliseconds.
 -->
      コマンドは、引数と同じ順に、一つの空白文字で区切られたレプリカごとの値を含む1行を標準出力に書き出さなければなりません。
      行の終端は改行文字を伴っても、伴わなくても構いません。
      プライマリノードの遅延は暗黙的に0とみなされ、出力に含まれるべきではありません。
      遅延の値は、整数値でも浮動小数点値でも構いません。
+     遅延の値全体を数値として解釈できない場合、<productname>Pgpool-II</productname>は警告をログに出力し、その値を0ミリ秒として扱います。
     </para>
     <para>
 <!--

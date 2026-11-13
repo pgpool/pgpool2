@@ -387,7 +387,9 @@ GRANT pg_monitor TO sr_check_user;
      same order as the arguments. The line can be terminated with or without a
      new line character. The primary node's delay is implicitly zero and
      should not be included in the output. Delay values can be integers or
-     floating-point numbers.
+     floating-point numbers. If a delay value cannot be parsed in full as a
+     number, <productname>Pgpool-II</productname> logs a warning and treats the
+     value as zero milliseconds.
     </para>
     <para>
      Special value: <literal>-1</literal> indicates a replica that is down but
