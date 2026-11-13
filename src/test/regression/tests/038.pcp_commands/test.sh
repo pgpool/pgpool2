@@ -14,6 +14,9 @@ cd $TESTDIR
 echo -n "creating test environment..."
 $PGPOOL_SETUP -m s -n 2 || exit 1
 echo "done."
+# set synchronous replication to avoid replication delay
+echo "synchronous_commit = remote_apply" >> data0/postgresql.conf
+echo "synchronous_standby_names = 'server1'" >> data0/postgresql.conf
 
 source ./bashrc.ports
 export PGPORT=$PGPOOL_PORT
