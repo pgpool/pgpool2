@@ -427,6 +427,8 @@ typedef enum
 #define SERIALIZE_ACCEPT (pool_config->serialize_accept == true && \
 						  pool_config->child_life_time == 0)
 
+#define MAX_PCP_PROMOTE_CMD_LEN 1024
+
 /*
  * number specified when semaphore is locked/unlocked
  */
@@ -510,6 +512,9 @@ typedef struct
 													 * by watchdog coordinator */
 	bool		follow_primary_ongoing; /* true if follow primary command is
 										 * ongoing */
+	bool		pcp_promote_node_wait;	 		/* true if pcp_promote_node command
+												 * should wait for follow primary completion */
+	char		pcp_promote_failed_command[MAX_PCP_PROMOTE_CMD_LEN];	/* command that pcp_promote_node failed */
 	bool		query_cache_invalidate_request; /* true if
 												 * pcp_invalidate_query_cache
 												 * requested */

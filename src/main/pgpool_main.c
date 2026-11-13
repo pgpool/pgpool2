@@ -1864,6 +1864,13 @@ failover(void)
 	 * kick wakeup_handler in pcp_child to notice that failover/failback done.
 	 */
 	exec_notice_pcp_child(&failover_context);
+
+	/*
+	* If no follow child was started, failover processing is complete.
+	* Release a waiting pcp_promote_node or pcp_detach_node command.
+	*/
+	if (Req_info->pcp_promote_node_wait && follow_pid <= 0)
+		Req_info->pcp_promote_node_wait = false;
 }
 
 /*
@@ -2546,7 +2553,16 @@ trigger_failover_command(int node, const char *command_line,
 	{
 		ereport(LOG,
 				(errmsg("execute command: %s", exec_cmd->data)));
+
+		Req_info->pcp_promote_failed_command[0] = '\0';
+
 		r = system(exec_cmd->data);
+
+		if (r != 0)
+		{
+			strlcpy(Req_info->pcp_promote_failed_command, exec_cmd->data, sizeof(Req_info->pcp_promote_failed_command));
+			Req_info->pcp_promote_node_wait = false;
+		}
 	}
 
 	pfree(exec_cmd->data);
@@ -3101,6 +3117,7 @@ fork_follow_child(int old_main_node, int new_primary, int old_primary)
 			}
 		}
 		Req_info->follow_primary_ongoing = false;
+		Req_info->pcp_promote_node_wait = false;
 		pool_release_follow_primary_lock(false);
 		/* inform standby watchdog nodes to release the lock as well */
 		wd_unlock_standby(WD_FOLLOW_PRIMARY_LOCK);

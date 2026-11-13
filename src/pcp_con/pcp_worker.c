@@ -579,7 +579,37 @@ pool_detach_node(int node_id, bool gracefully, bool switchover)
 
 	if (!gracefully)
 	{
+		Req_info->pcp_promote_node_wait = true;
 		degenerate_backend_set_ex(&node_id, 1, flag | REQ_DETAIL_SWITCHOVER | REQ_DETAIL_CONFIRMED, true, false);
+
+		/*
+		 * Wait for pcp_promote_node or pcp_detach_node completed.
+		 */
+		while (Req_info->pcp_promote_node_wait)
+		{
+			struct timeval t = {1, 0};
+
+			select(0, NULL, NULL, NULL, &t);
+		}
+
+		/*
+		 * If pcp_promote_node or pcp_detach_node failed,
+		 * output failed error and failed command.
+		 */
+		if (Req_info->pcp_promote_node_wait == false &&
+			Req_info->pcp_promote_failed_command[0] != '\0')
+		{
+			const char *cmd_name;
+
+			if (flag & REQ_DETAIL_PROMOTE)
+				cmd_name = "pcp_promote_node";
+			else
+				cmd_name = "pcp_detach_node";
+
+			ereport(ERROR,
+					(errmsg("executing %s, execution of command failed", cmd_name),
+					 errdetail("command: %s", Req_info->pcp_promote_failed_command)));
+		}
 		return 0;
 	}
 

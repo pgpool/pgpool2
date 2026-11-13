@@ -51,7 +51,7 @@ ok=ng
 u=3
 for i in {1..30}
 do
-    $PCP_NODE_INFO -w -p $PCP_PORT 1|grep waiting
+    $PCP_NODE_INFO -w -p $PCP_PORT 1|grep -E '(waiting|up) up'
     if [ $? -eq 0 ];then
 	ok=ok
 	break;
