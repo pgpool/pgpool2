@@ -1,0 +1,7 @@
+# test for non existing prepared statement case
+'D'	'S'	"missing_prepared"
+'S'
+'Y'
+'Q'	"SELECT 1"
+'Y'
+'X'

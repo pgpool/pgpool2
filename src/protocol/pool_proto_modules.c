@@ -1936,7 +1936,7 @@ Describe(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 {
 	POOL_SENT_MESSAGE *msg;
 	POOL_SESSION_CONTEXT *session_context;
-	POOL_QUERY_CONTEXT *query_context;
+	POOL_QUERY_CONTEXT *query_context = NULL;
 
 	bool		nowait;
 
@@ -1954,10 +1954,16 @@ Describe(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 		if (!msg)
 			msg = pool_get_sent_message('P', contents + 1, POOL_SENT_MESSAGE_CREATED);
 		if (!msg)
-			ereport(FATAL,
-					(return_code(2),
-					 errmsg("unable to execute Describe"),
-					 errdetail("unable to get the parse message")));
+		{
+			/*
+			 * The prepared statement does not exist. Create a dummy query
+			 * context so that the Describe message is sent to the primary
+			 * node and an error response is returned. Note that
+			 * create_dummy_query_context() creates a query context for a
+			 * write query.
+			 */
+			query_context = create_dummy_query_context();
+		}
 	}
 	/* Portal */
 	else
@@ -1968,8 +1974,6 @@ Describe(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 					 errdetail("portal: \"%s\"", contents + 1)));
 		msg = pool_get_sent_message('B', contents + 1, POOL_SENT_MESSAGE_CREATED);
 	}
-
-	query_context = NULL;
 
 	if (msg)
 		query_context = msg->query_context;
