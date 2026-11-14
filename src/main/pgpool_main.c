@@ -1266,7 +1266,7 @@ terminate_all_childrens(int sig)
 	{
 		int			ret_pid;
 
-		wpid = waitpid(-1, &ret_pid, 0);
+		wpid = waitpid(-1, &ret_pid, WNOHANG);
 		if (wpid > 0)
 			terminated_count++;
 	} while (terminated_count < killed_count &&
