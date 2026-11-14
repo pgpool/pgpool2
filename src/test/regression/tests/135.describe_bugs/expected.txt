@@ -1,0 +1,10 @@
+FE=> Describe(stmt="missing_prepared")
+FE=> Sync
+<= BE ErrorResponse(S ERROR V ERROR C 26000 M prepared statement "missing_prepared" does not exist F prepare.c L 451 R FetchPreparedStatement )
+<= BE ReadyForQuery(I)
+FE=> Query (query="SELECT 1")
+<= BE RowDescription
+<= BE DataRow
+<= BE CommandComplete(SELECT 1)
+<= BE ReadyForQuery(I)
+FE=> Terminate
