@@ -689,7 +689,7 @@ connect_v2(char *host, char *port, char *user, char *database)
 
 	if (host == NULL || *host == '\0' || *host == '/')
 	{
-		if (*host == '/')
+		if (host != NULL && *host == '/')
 			socket_dir = host;
 		fd = connect_unix_domain_socket_by_port(port_val, socket_dir);
 		if (fd < 0)
@@ -878,7 +878,8 @@ retry:
 		return fd;
 	}
 	fprintf(stderr, "failed to connect to PostgreSQL server\n");
-	close(fd);
+	if (fd != -1)
+		close(fd);
 	freeaddrinfo(res);
 
 	exit(1);
