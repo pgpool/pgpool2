@@ -720,11 +720,18 @@ read_kind:
 	{
 		length = pool_read_message_length(cp);
 		keylen = length - sizeof(int32) - sizeof(int32);
-		if (keylen > MAX_CANCELKEY_LENGTH)
+		if (keylen <= 0)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("cancel key length exceeds 256 bytes")));
+					 errmsg("invalid cancel key length %d", keylen)));
+		}
+		else if (keylen > MAX_CANCELKEY_LENGTH)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("cancel key length exceeds %d bytes",
+							MAX_CANCELKEY_LENGTH)));
 		}
 	}
 	else
