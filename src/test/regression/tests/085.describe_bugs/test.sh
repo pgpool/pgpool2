@@ -11,6 +11,8 @@ PSQL=$PGBIN/psql
 PG_CTL=$PGBIN/pg_ctl
 PGPROTO=$PGPOOL_INSTALL_DIR/bin/pgproto
 export PGDATABASE=test
+expected=../expected.txt
+results=results.txt
 
 for mode in s i r n
 do
@@ -27,8 +29,10 @@ do
 
     # test1: non existing prepared statement case
     $PGPROTO -d $PGDATABASE -p $PGPOOL_PORT -f ../pgproto.data > results.txt 2>&1
-    cmp ../expected.txt results.txt
 
+    sed -e 's/L [0-9]*/L xxx/g' $expected > expected_tmp
+    sed -e 's/L [0-9]*/L xxx/g' $results > results_tmp
+    diff expected_tmp results_tmp
     if [ $? != 0 ];then
 	echo "test1 failed in mode: $mode".
 	./shutdownall
