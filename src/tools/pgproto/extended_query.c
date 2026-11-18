@@ -331,7 +331,7 @@ process_describe(char *buf, PGconn *conn)
 	}
 	else
 	{
-		fprintf(stderr, "Close: unknown kind:%c\n", kind);
+		fprintf(stderr, "Describe: unknown kind:%c\n", kind);
 		exit(1);
 	}
 
