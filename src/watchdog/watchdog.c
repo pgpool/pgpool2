@@ -652,6 +652,12 @@ wd_check_config(void)
 		ereport(ERROR,
 				(errmsg("invalid watchdog configuration. no watchdog nodes configured")));
 
+	if (strlen(pool_config->wd_authkey) == 0)
+		ereport(WARNING,
+				(errmsg("watchdog authentication is disabled because wd_authkey is empty"),
+				 errdetail("Support for an empty wd_authkey may be removed in Pgpool-II 4.9 or later."),
+				 errhint("Set wd_authkey to a non-empty value on all Pgpool-II nodes.")));
+
 	if (strlen(pool_config->wd_authkey) > MAX_PASSWORD_SIZE)
 		ereport(ERROR,
 				(errmsg("invalid watchdog configuration. wd_authkey length can't be larger than %d",
