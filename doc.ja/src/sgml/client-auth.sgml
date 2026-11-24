@@ -70,6 +70,14 @@
    デフォルトではpool_hbaによる認証は無効になっており、<varname>enable_pool_hba</varname>を<literal>on</literal>に設定することで有効になります。
    <xref linkend="guc-enable-pool-hba">設定パラメータをご覧ください。
   </para>
+  <para>
+   <!--
+   Changes to the <filename>pool_hba.conf</filename> file
+   can be applied by reloading the
+   <productname>Pgpool-II</productname> configuration.
+   -->
+   <filename>pool_hba.conf</filename>ファイルへの変更は、<productname>Pgpool-II</productname>の設定を再読み込みすることで反映できます。
+  </para>
 
   <note>
    <para>
