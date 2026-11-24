@@ -1958,6 +1958,13 @@ Describe(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
+	if (len < 2)
+		ereport(FATAL,
+				(errmsg("Describe message body too short (%d bytes, need >= 2)", len)));
+	if (memchr(contents + 1, 0, len - 1) == NULL)
+		ereport(FATAL,
+				(errmsg("Describe name missing NUL terminator within body")));
+
 	/* Prepared Statement */
 	if (*contents == 'S')
 	{
@@ -2053,6 +2060,13 @@ Close(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 
 	/* Get session context */
 	session_context = pool_get_session_context(false);
+
+	if (len < 2)
+		ereport(FATAL,
+				(errmsg("Close message body too short (%d bytes, need >= 2)", len)));
+	if (memchr(contents + 1, 0, len - 1) == NULL)
+		ereport(FATAL,
+				(errmsg("Close name missing NUL terminator within body")));
 
 	/* Prepared Statement */
 	if (*contents == 'S')
