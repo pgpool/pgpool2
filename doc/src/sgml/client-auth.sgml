@@ -74,6 +74,11 @@
    the <xref linkend="guc-enable-pool-hba"> configuration
     parameter.
   </para>
+  <para>
+   Changes to the <filename>pool_hba.conf</filename> file
+   can be applied by reloading the
+   <productname>Pgpool-II</productname> configuration.
+  </para>
 
   <note>
    <para>
