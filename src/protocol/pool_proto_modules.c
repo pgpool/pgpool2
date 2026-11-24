@@ -908,6 +908,21 @@ Execute(POOL_CONNECTION * frontend, POOL_CONNECTION_POOL * backend,
 	/* Get session context */
 	session_context = pool_get_session_context(false);
 
+	/*
+	 * Validate Execute message body: protocol spec requires a NUL-terminated
+	 * portal name followed by an int32 num_rows, so the body must be at
+	 * least 5 bytes and must contain a NUL strictly before the trailing
+	 * int32.  Without these checks strlen() below would walk past the
+	 * palloc chunk and memcpy() would read adjacent heap.
+	 */
+	if (len < (int) (sizeof(int32) + 1))
+		ereport(FATAL,
+				(errmsg("Execute message body too short (%d bytes, need >= %d)",
+						len, (int) (sizeof(int32) + 1))));
+	if (memchr(contents, 0, len - sizeof(int32)) == NULL)
+		ereport(FATAL,
+				(errmsg("Execute portal name missing NUL terminator within message body")));
+
 	if (pool_config->log_client_messages)
 		ereport(LOG,
 				(errmsg("Execute message from frontend."),
