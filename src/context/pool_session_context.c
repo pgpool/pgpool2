@@ -643,6 +643,7 @@ dml_adaptive_init(void)
 		session_context->transaction_temp_write_list = NIL;
 		session_context->transaction_temp_write_oid_list = NIL;
 		session_context->transaction_temp_write_dboid = 0;
+		session_context->transaction_savepoint_list = NIL;
 	}
 }
 
@@ -657,6 +658,7 @@ dml_adaptive_destroy(void)
 			list_free_deep(session_context->transaction_temp_write_list);
 		if (session_context->transaction_temp_write_oid_list != NIL)
 			list_free(session_context->transaction_temp_write_oid_list);
+		dml_adaptive_free_savepoints(session_context);
 	}
 }
 

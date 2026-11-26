@@ -174,6 +174,18 @@ typedef struct
 	POOL_TEMP_TABLE_STATE state;	/* see above */
 } POOL_TEMP_TABLE;
 
+/*
+ * A savepoint tracked by dml_adaptive/dml_adaptive_global (see
+ * transaction_savepoint_list).
+ */
+typedef struct
+{
+	char	   *name;			/* savepoint name */
+	int			write_list_length;	/* length of transaction_temp_write_list */
+	int			write_oid_list_length;	/* length of
+										 * transaction_temp_write_oid_list */
+} DmlAdaptiveSavepoint;
+
 
 typedef enum
 {
@@ -359,6 +371,15 @@ typedef struct
 	List	   *transaction_temp_write_oid_list;
 	int			transaction_temp_write_dboid;
 
+	/*
+	 * For dml_adaptive and dml_adaptive_global: the savepoints established in
+	 * the current explicit transaction, innermost last.  Each element is a
+	 * DmlAdaptiveSavepoint.  Both write lists above are append-only, so
+	 * remembering their lengths at SAVEPOINT time is enough for ROLLBACK TO
+	 * to forget exactly the writes made after the savepoint.
+	 */
+	List	   *transaction_savepoint_list;
+
 #ifdef NOT_USED
 	/* Preferred "main" node id. Only used for SimpleForwardToFrontend. */
 	int			preferred_main_node_id;
@@ -452,6 +473,7 @@ extern bool pool_is_really_writing_transaction(void);
 extern void pool_unset_failed_transaction(void);
 extern void pool_set_failed_transaction(void);
 extern bool pool_is_failed_transaction(void);
+extern void dml_adaptive_free_savepoints(POOL_SESSION_CONTEXT *session_context);
 extern void pool_unset_transaction_isolation(void);
 extern void pool_set_transaction_isolation(POOL_TRANSACTION_ISOLATION isolation_level);
 extern POOL_TRANSACTION_ISOLATION pool_get_transaction_isolation(void);

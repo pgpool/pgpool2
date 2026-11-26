@@ -60,6 +60,7 @@ CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool c
 	POOL_SESSION_CONTEXT *session_context;
 	POOL_CONNECTION *con;
 	bool		discard_all = false;
+	bool		query_context_handled = false;
 
 	p1 = NULL;
 	len1 = 0;
@@ -78,7 +79,10 @@ CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool c
 	 * Handle misc process which is necessary when query context exists.
 	 */
 	if (session_context->query_context != NULL && (!SL_MODE || (SL_MODE && !pool_is_doing_extended_query_message())))
+	{
 		handle_query_context(backend);
+		query_context_handled = true;
+	}
 
 	/*
 	 * If operated in streaming replication mode and doing an extended query,
@@ -150,6 +154,18 @@ CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool c
 			return POOL_END;
 		p1 = palloc(len);
 		memcpy(p1, p, len);
+
+		/*
+		 * Now that the command tag is known, record the tables written by
+		 * dml_adaptive_global.  The tag is the primary's only if the main
+		 * node is the primary; otherwise pass NULL so that the tables are
+		 * marked unconditionally.  In streaming/logical replication mode with
+		 * the extended query protocol this is done when Execute is forwarded
+		 * instead (see Execute() in pool_proto_modules.c).
+		 */
+		if (query_context_handled)
+			pool_track_table_mutation_flush_writes(MAIN_NODE_ID == PRIMARY_NODE_ID ?
+												   p1 : NULL);
 	}
 
 	/*
@@ -308,6 +324,83 @@ CommandComplete(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend, bool c
 }
 
 /*
+ * Track table writes for the dml_adaptive_global feature.  Only meaningful
+ * in streaming replication mode (MAIN_REPLICA).
+ *
+ * The OIDs of the tables written (and their database OID) were resolved by
+ * dml_adaptive() at DML routing time, while the backend connection was idle,
+ * and stashed in transaction_temp_write_oid_list.  We mark them in shared
+ * memory only now, once the backend has confirmed the statement or
+ * transaction succeeded -- a failed autocommit statement, or a failed
+ * COMMIT, produces an ErrorResponse and never reaches CommandComplete, and a
+ * ROLLBACK clears the list while routing, so in all those cases the writes
+ * are correctly not recorded.
+ *
+ * We get here with is_in_transaction == false both for an autocommit
+ * statement and for a COMMIT (dml_adaptive() clears the flag while routing
+ * the COMMIT, and keeps the OID list intact for the COMMIT only).  An
+ * in-transaction DML still has the flag set here and is correctly skipped,
+ * its writes deferred to the COMMIT.
+ *
+ * command_tag is the command tag the primary returned, or NULL if it is not
+ * known.  It matters for COMMIT: COMMIT of a transaction that has already
+ * failed (e.g. a statement raised an error and was not rolled back to a
+ * savepoint) does not raise an error.  PostgreSQL rolls the transaction back
+ * and answers with a CommandComplete carrying the "ROLLBACK" tag, so nothing
+ * was committed and nothing must be marked.  When the tag is unknown we mark
+ * the tables, which is the safe direction.
+ *
+ * Crucially this path does NO backend I/O: resolving OIDs here via do_query
+ * would inject a query while the statement/COMMIT response is still being
+ * read from the backend, desyncing the protocol and hanging the session.
+ * That is why resolution happens at routing time instead.
+ */
+void
+pool_track_table_mutation_flush_writes(const char *command_tag)
+{
+	POOL_SESSION_CONTEXT *session_context;
+	Node	   *node;
+	int			dboid;
+
+	if (pool_config->disable_load_balance_on_write !=
+		DLBOW_DML_ADAPTIVE_GLOBAL || !MAIN_REPLICA)
+		return;
+
+	session_context = pool_get_session_context(false);
+
+	if (session_context->query_context == NULL ||
+		session_context->query_context->parse_tree == NULL)
+		return;
+
+	if (session_context->is_in_transaction ||
+		session_context->transaction_temp_write_oid_list == NIL)
+		return;
+
+	node = session_context->query_context->parse_tree;
+	dboid = session_context->transaction_temp_write_dboid;
+
+	if (command_tag != NULL && is_commit_query(node) &&
+		strcmp(command_tag, "COMMIT") != 0)
+	{
+		ereport(DEBUG1,
+				(errmsg("track_table_mutation: COMMIT completed with command tag \"%s\", not marking tables as written",
+						command_tag)));
+	}
+	else if (dboid > 0)
+	{
+		foreach_oid(toid, session_context->transaction_temp_write_oid_list)
+		{
+			if (toid > 0)
+				pool_track_table_mutation_mark_table_written(toid, dboid);
+		}
+	}
+
+	list_free(session_context->transaction_temp_write_oid_list);
+	session_context->transaction_temp_write_oid_list = NIL;
+	session_context->transaction_temp_write_dboid = 0;
+}
+
+/*
  * Handle misc process which is necessary when query context exists.
  */
 void
@@ -325,52 +418,6 @@ handle_query_context(POOL_CONNECTION_POOL *backend)
 		return;
 
 	node = session_context->query_context->parse_tree;
-
-	/*
-	 * Track table writes for the dml_adaptive_global feature.  Only
-	 * meaningful in streaming replication mode (MAIN_REPLICA).
-	 *
-	 * The OIDs of the tables written (and their database OID) were resolved
-	 * by dml_adaptive() at DML routing time, while the backend connection was
-	 * idle, and stashed in transaction_temp_write_oid_list.  We mark them in
-	 * shared memory only now, once the backend has confirmed the statement or
-	 * transaction succeeded -- a failed autocommit statement, or a failed /
-	 * rolled-back COMMIT, produces an ErrorResponse and never reaches
-	 * CommandComplete, and a ROLLBACK clears the list while routing, so in
-	 * all those cases the writes are correctly not recorded.
-	 *
-	 * We reach this point with is_in_transaction == false both for an
-	 * autocommit statement and for a COMMIT (dml_adaptive() clears the flag
-	 * while routing the COMMIT, and keeps the OID list intact for the COMMIT
-	 * only).  An in-transaction DML still has the flag set here and is
-	 * correctly skipped, its writes deferred to the COMMIT.
-	 *
-	 * Crucially this path does NO backend I/O: resolving OIDs here via
-	 * do_query would inject a query while the statement/COMMIT response is
-	 * still being read from the backend, desyncing the protocol and hanging
-	 * the session.  That is why resolution happens at routing time instead.
-	 */
-	if (pool_config->disable_load_balance_on_write ==
-		DLBOW_DML_ADAPTIVE_GLOBAL &&
-		MAIN_REPLICA &&
-		!session_context->is_in_transaction &&
-		session_context->transaction_temp_write_oid_list != NIL)
-	{
-		int			dboid = session_context->transaction_temp_write_dboid;
-
-		if (dboid > 0)
-		{
-			foreach_oid(toid, session_context->transaction_temp_write_oid_list)
-			{
-				if (toid > 0)
-					pool_track_table_mutation_mark_table_written(toid, dboid);
-			}
-		}
-
-		list_free(session_context->transaction_temp_write_oid_list);
-		session_context->transaction_temp_write_oid_list = NIL;
-		session_context->transaction_temp_write_dboid = 0;
-	}
 
 	if (IsA(node, PrepareStmt))
 	{

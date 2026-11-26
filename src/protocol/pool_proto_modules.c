@@ -1278,6 +1278,12 @@ Execute(POOL_CONNECTION *frontend, POOL_CONNECTION_POOL *backend,
 		handle_query_context(backend);
 
 		/*
+		 * Record the tables written by dml_adaptive_global.  The command tag
+		 * is not known yet at this point.
+		 */
+		pool_track_table_mutation_flush_writes(NULL);
+
+		/*
 		 * Take care of "writing transaction" flag.
 		 */
 		if ((!is_select_query(node, query) || pool_has_function_call(node)) &&

@@ -1972,6 +1972,174 @@ add_object_into_temp_write_list(Node *node, void *context)
 }
 
 /*
+ * Free the savepoints in transaction_savepoint_list from position
+ * new_length onwards and truncate the list to new_length entries.
+ */
+static void
+dml_adaptive_truncate_savepoints(POOL_SESSION_CONTEXT *session_context,
+								 int new_length)
+{
+	List	   *savepoints = session_context->transaction_savepoint_list;
+	int			i;
+
+	for (i = new_length; i < list_length(savepoints); i++)
+	{
+		DmlAdaptiveSavepoint *sp = (DmlAdaptiveSavepoint *) list_nth(savepoints, i);
+
+		pfree(sp->name);
+		pfree(sp);
+	}
+
+	if (new_length <= 0)
+	{
+		list_free(savepoints);
+		session_context->transaction_savepoint_list = NIL;
+	}
+	else
+		session_context->transaction_savepoint_list =
+			list_truncate(savepoints, new_length);
+}
+
+/*
+ * Forget all savepoints of the current transaction.
+ */
+void
+dml_adaptive_free_savepoints(POOL_SESSION_CONTEXT *session_context)
+{
+	if (session_context->transaction_savepoint_list != NIL)
+		dml_adaptive_truncate_savepoints(session_context, 0);
+}
+
+/*
+ * Return the position of the innermost savepoint called "name", or -1 if
+ * there is none.  Savepoint names may be reused; like PostgreSQL we pick
+ * the most recently established one.
+ */
+static int
+dml_adaptive_find_savepoint(POOL_SESSION_CONTEXT *session_context,
+							const char *name)
+{
+	List	   *savepoints = session_context->transaction_savepoint_list;
+	int			i;
+
+	if (name == NULL)
+		return -1;
+
+	for (i = list_length(savepoints) - 1; i >= 0; i--)
+	{
+		DmlAdaptiveSavepoint *sp = (DmlAdaptiveSavepoint *) list_nth(savepoints, i);
+
+		if (strcmp(sp->name, name) == 0)
+			return i;
+	}
+	return -1;
+}
+
+/*
+ * Handle SAVEPOINT, ROLLBACK TO SAVEPOINT and RELEASE SAVEPOINT for
+ * dml_adaptive and dml_adaptive_global.  Called with the session memory
+ * context current.
+ *
+ * SAVEPOINT records how long the two write lists are.  Both lists are
+ * append-only, so on ROLLBACK TO truncating them back to the recorded
+ * lengths forgets exactly the writes that the subtransaction undid, while
+ * writes made before the savepoint are kept.  ROLLBACK TO keeps the
+ * savepoint itself (it can be rolled back to again) but destroys every
+ * savepoint established after it.  RELEASE destroys the savepoint and every
+ * savepoint established after it, but its writes become part of the
+ * enclosing (sub)transaction, so the write lists are left alone.
+ *
+ * If the savepoint is not known (e.g. it was established before Pgpool-II
+ * started tracking, or the name is misspelled and the backend will raise an
+ * error) nothing is changed.  Keeping writes is always the safe direction:
+ * at worst a read is sent to the primary unnecessarily.
+ */
+static void
+dml_adaptive_savepoint_command(POOL_SESSION_CONTEXT *session_context,
+							   TransactionStmt *stmt)
+{
+	DmlAdaptiveSavepoint *sp;
+	int			pos;
+
+	if (!session_context->is_in_transaction)
+		return;
+
+	switch (stmt->kind)
+	{
+		case TRANS_STMT_SAVEPOINT:
+			if (stmt->savepoint_name == NULL)
+				break;
+			sp = palloc(sizeof(DmlAdaptiveSavepoint));
+			sp->name = pstrdup(stmt->savepoint_name);
+			sp->write_list_length =
+				list_length(session_context->transaction_temp_write_list);
+			sp->write_oid_list_length =
+				list_length(session_context->transaction_temp_write_oid_list);
+			session_context->transaction_savepoint_list =
+				lappend(session_context->transaction_savepoint_list, sp);
+			break;
+
+		case TRANS_STMT_ROLLBACK_TO:
+			pos = dml_adaptive_find_savepoint(session_context, stmt->savepoint_name);
+			if (pos < 0)
+				break;
+			sp = (DmlAdaptiveSavepoint *)
+				list_nth(session_context->transaction_savepoint_list, pos);
+
+			/* Forget table names written after the savepoint */
+			if (list_length(session_context->transaction_temp_write_list) > sp->write_list_length)
+			{
+				List	   *names = session_context->transaction_temp_write_list;
+				int			i;
+
+				for (i = sp->write_list_length; i < list_length(names); i++)
+					pfree(list_nth(names, i));
+				if (sp->write_list_length == 0)
+				{
+					list_free(names);
+					names = NIL;
+				}
+				else
+					names = list_truncate(names, sp->write_list_length);
+				session_context->transaction_temp_write_list = names;
+			}
+
+			/* Forget table OIDs written after the savepoint */
+			if (list_length(session_context->transaction_temp_write_oid_list) > sp->write_oid_list_length)
+			{
+				if (sp->write_oid_list_length == 0)
+				{
+					list_free(session_context->transaction_temp_write_oid_list);
+					session_context->transaction_temp_write_oid_list = NIL;
+				}
+				else
+					session_context->transaction_temp_write_oid_list =
+						list_truncate(session_context->transaction_temp_write_oid_list,
+									  sp->write_oid_list_length);
+			}
+
+			ereport(DEBUG1,
+					(errmsg("dml_adaptive: rolled back to savepoint \"%s\", %d table name(s) and %d table oid(s) remain",
+							sp->name,
+							list_length(session_context->transaction_temp_write_list),
+							list_length(session_context->transaction_temp_write_oid_list))));
+
+			/* The savepoint survives ROLLBACK TO; later ones do not */
+			dml_adaptive_truncate_savepoints(session_context, pos + 1);
+			break;
+
+		case TRANS_STMT_RELEASE:
+			pos = dml_adaptive_find_savepoint(session_context, stmt->savepoint_name);
+			if (pos >= 0)
+				dml_adaptive_truncate_savepoints(session_context, pos);
+			break;
+
+		default:
+			break;
+	}
+}
+
+/*
  * dml adaptive.
  *
  * Collect/discard information for disable_load_balance_on_write =
@@ -2000,10 +2168,25 @@ dml_adaptive(Node *node, char *query)
 					list_free(session_context->transaction_temp_write_oid_list);
 				session_context->transaction_temp_write_oid_list = NIL;
 				session_context->transaction_temp_write_dboid = 0;
+
+				dml_adaptive_free_savepoints(session_context);
 			}
-			else if (is_commit_or_rollback_query(node))
+
+			/*
+			 * SAVEPOINT, ROLLBACK TO and RELEASE do not end the transaction.
+			 * In particular ROLLBACK TO must not be treated like ROLLBACK:
+			 * writes made before the savepoint are still part of the
+			 * transaction and will be committed by a later COMMIT.
+			 */
+			else if (is_savepoint_query(node))
+			{
+				dml_adaptive_savepoint_command(session_context,
+											   (TransactionStmt *) node);
+			}
+			else if (is_commit_query(node) || is_rollback_query(node))
 			{
 				session_context->is_in_transaction = false;
+				dml_adaptive_free_savepoints(session_context);
 
 				/* The name list is only used during the transaction. */
 				if (session_context->transaction_temp_write_list != NIL)
@@ -2018,9 +2201,11 @@ dml_adaptive(Node *node, char *query)
 				 * still fail (e.g. a deferred constraint violation), rolling
 				 * back the writes -- which must then not be recorded.  We
 				 * therefore keep transaction_temp_write_oid_list intact on
-				 * COMMIT and let handle_query_context() flush it on success
-				 * (a failed COMMIT leaves it to be discarded by the next
-				 * BEGIN).
+				 * COMMIT and let pool_track_table_mutation_flush_writes()
+				 * flush it on success (a failed COMMIT leaves it to be
+				 * discarded by the next BEGIN).  A COMMIT of an already
+				 * failed transaction "succeeds" with a ROLLBACK command tag;
+				 * that function checks the tag too.
 				 *
 				 * In every other case (plain dml_adaptive, or ROLLBACK)
 				 * discard it now.
@@ -2053,9 +2238,9 @@ dml_adaptive(Node *node, char *query)
 			 * and the backend connection is idle so do_query (used by the
 			 * relcache lookups) is safe.  The OIDs are marked in shared
 			 * memory only after the backend confirms success, in
-			 * handle_query_context(); resolving them there would issue
-			 * do_query into the in-flight statement/COMMIT response and hang
-			 * the session.
+			 * pool_track_table_mutation_flush_writes(); resolving them there
+			 * would issue do_query into the in-flight statement/COMMIT
+			 * response and hang the session.
 			 */
 			if (pool_config->disable_load_balance_on_write == DLBOW_DML_ADAPTIVE_GLOBAL)
 			{

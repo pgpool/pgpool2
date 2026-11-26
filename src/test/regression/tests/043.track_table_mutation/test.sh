@@ -343,6 +343,209 @@ EOF
         exit 1
     fi
 
+    # ---------------------------------------------------------------
+    # Savepoint handling.  ROLLBACK TO SAVEPOINT must forget only the
+    # writes made after the savepoint, and must not end the transaction.
+    # ---------------------------------------------------------------
+
+    # check_stale TEST_NAME TABLE yes|no
+    # Check whether the marker SELECT on TABLE was routed to the primary
+    # because TABLE was recently written.
+    check_stale()
+    {
+        # The table name is logged quoted, e.g. ""t_sp1"".
+        if grep -a -q "could not load balance because table \"*$2\"* was recently written" log/pgpool.log; then
+            found=yes
+        else
+            found=no
+        fi
+        if [ "$found" = "$3" ]; then
+            echo "$1 PASSED"
+        else
+            echo "$1 FAILED: expected stale=$3 for $2"
+            grep -a -i "track_table_mutation\|dml_adaptive" log/pgpool.log | tail -20
+            ./shutdownall
+            exit 1
+        fi
+    }
+
+    $PSQL test <<EOF > /dev/null 2>&1
+CREATE TABLE t_sp1(i INTEGER);
+CREATE TABLE t_sp2(i INTEGER);
+CREATE TABLE t_sp3a(i INTEGER);
+CREATE TABLE t_sp3b(i INTEGER);
+CREATE TABLE t_sp3c(i INTEGER);
+CREATE TABLE t_sp4(i INTEGER);
+CREATE TABLE t_sp5(i INTEGER);
+CREATE TABLE t_sp6(i INTEGER);
+CREATE TABLE t_sp7(i INTEGER);
+CREATE TABLE t_sp8(i INTEGER);
+CREATE TABLE t_sp9(i INTEGER);
+CREATE TABLE t_sp10(i INTEGER);
+EOF
+
+    # Wait for any TTL to expire
+    sleep 3
+
+    echo "=== Test 12: Write before SAVEPOINT survives ROLLBACK TO ==="
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+INSERT INTO t_sp1 VALUES (1);
+SAVEPOINT s;
+ROLLBACK TO SAVEPOINT s;
+COMMIT;
+SELECT 'sp_test12' as marker, * FROM t_sp1;
+EOF
+    sleep 0.5
+    check_stale "Test 12" t_sp1 yes
+
+    echo "=== Test 13: Write after SAVEPOINT is forgotten by ROLLBACK TO ==="
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+SAVEPOINT s;
+INSERT INTO t_sp2 VALUES (1);
+ROLLBACK TO SAVEPOINT s;
+COMMIT;
+SELECT 'sp_test13' as marker, * FROM t_sp2;
+EOF
+    sleep 0.5
+    check_stale "Test 13" t_sp2 no
+
+    echo "=== Test 14: Nested savepoints, ROLLBACK TO the outer one ==="
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+INSERT INTO t_sp3a VALUES (1);
+SAVEPOINT s1;
+INSERT INTO t_sp3b VALUES (1);
+SAVEPOINT s2;
+INSERT INTO t_sp3c VALUES (1);
+ROLLBACK TO SAVEPOINT s1;
+COMMIT;
+SELECT 'sp_test14' as marker, * FROM t_sp3a;
+SELECT 'sp_test14' as marker, * FROM t_sp3b;
+SELECT 'sp_test14' as marker, * FROM t_sp3c;
+EOF
+    sleep 0.5
+    check_stale "Test 14 (t_sp3a)" t_sp3a yes
+    check_stale "Test 14 (t_sp3b)" t_sp3b no
+    check_stale "Test 14 (t_sp3c)" t_sp3c no
+
+    echo "=== Test 15: Write inside a RELEASEd savepoint is committed ==="
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+SAVEPOINT s;
+INSERT INTO t_sp4 VALUES (1);
+RELEASE SAVEPOINT s;
+COMMIT;
+SELECT 'sp_test15' as marker, * FROM t_sp4;
+EOF
+    sleep 0.5
+    check_stale "Test 15" t_sp4 yes
+
+    echo "=== Test 16: ROLLBACK TO followed by ROLLBACK marks nothing ==="
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+INSERT INTO t_sp5 VALUES (1);
+SAVEPOINT s;
+ROLLBACK TO SAVEPOINT s;
+ROLLBACK;
+SELECT 'sp_test16' as marker, * FROM t_sp5;
+EOF
+    sleep 0.5
+    check_stale "Test 16" t_sp5 no
+
+    # The next two tests keep the transaction open for longer than the
+    # staleness TTL (100ms by default) after ROLLBACK TO.  The tables must
+    # be marked when COMMIT completes, not earlier, or the mark would have
+    # already expired by the time the transaction becomes visible.
+    echo "=== Test 17: Write before SAVEPOINT is marked at COMMIT, not at ROLLBACK TO ==="
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+INSERT INTO t_sp6 VALUES (1);
+SAVEPOINT s;
+ROLLBACK TO SAVEPOINT s;
+SELECT pg_sleep(1.5);
+COMMIT;
+SELECT 'sp_test17' as marker, * FROM t_sp6;
+EOF
+    sleep 0.5
+    check_stale "Test 17" t_sp6 yes
+
+    echo "=== Test 18: Write after ROLLBACK TO is marked at COMMIT ==="
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+SAVEPOINT s;
+ROLLBACK TO SAVEPOINT s;
+INSERT INTO t_sp7 VALUES (1);
+SELECT pg_sleep(1.5);
+COMMIT;
+SELECT 'sp_test18' as marker, * FROM t_sp7;
+EOF
+    sleep 0.5
+    check_stale "Test 18" t_sp7 yes
+
+    echo "=== Test 19: COMMIT of a failed transaction marks nothing ==="
+    # COMMIT in an aborted transaction rolls it back and returns the
+    # ROLLBACK command tag instead of an error.
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+INSERT INTO t_sp8 VALUES (1);
+INSERT INTO t_sp8 VALUES (1/0);
+COMMIT;
+SELECT 'sp_test19' as marker, * FROM t_sp8;
+EOF
+    sleep 0.5
+    if ! grep -a -q 'COMMIT completed with command tag "ROLLBACK"' log/pgpool.log; then
+        echo "Test 19 FAILED: COMMIT of the failed transaction was not recognized"
+        ./shutdownall
+        exit 1
+    fi
+    check_stale "Test 19" t_sp8 no
+
+    echo "=== Test 20: ROLLBACK TO recovers a failed transaction, COMMIT marks ==="
+    > log/pgpool.log
+    $PSQL test <<EOF
+BEGIN;
+INSERT INTO t_sp9 VALUES (1);
+SAVEPOINT s;
+INSERT INTO t_sp9 VALUES (1/0);
+ROLLBACK TO SAVEPOINT s;
+COMMIT;
+SELECT 'sp_test20' as marker, * FROM t_sp9;
+EOF
+    sleep 0.5
+    check_stale "Test 20" t_sp9 yes
+
+    echo "=== Test 21: Read in the same transaction after ROLLBACK TO sees the write ==="
+    # The write before the savepoint is still uncommitted, so only the
+    # primary can see it.  Before the fix ROLLBACK TO made Pgpool-II think
+    # the transaction had ended, and the SELECT went to the standby.
+    > log/pgpool.log
+    result=$($PSQL -X -q -t -A test <<EOF
+BEGIN;
+INSERT INTO t_sp10 VALUES (42);
+SAVEPOINT s;
+ROLLBACK TO SAVEPOINT s;
+SELECT count(*) FROM t_sp10 WHERE i = 42;
+COMMIT;
+EOF
+)
+    if [ "$result" = "1" ]; then
+        echo "Test 21 PASSED"
+    else
+        echo "Test 21 FAILED: expected 1 row, got \"$result\""
+        ./shutdownall
+        exit 1
+    fi
+
     echo ""
     echo "=== All Track Table Mutation Tests PASSED ==="
 

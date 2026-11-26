@@ -111,6 +111,7 @@ extern POOL_STATUS ProcessBackendResponse(POOL_CONNECTION *frontend,
 										  int *state);
 
 extern void handle_query_context(POOL_CONNECTION_POOL *backend);;
+extern void pool_track_table_mutation_flush_writes(const char *command_tag);
 
 extern void pool_emit_log_for_message_length_diff(int *length_array, char *name);
 

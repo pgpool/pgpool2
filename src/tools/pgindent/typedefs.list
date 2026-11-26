@@ -173,6 +173,7 @@ DeleteStmt
 DiscardMode
 DiscardStmt
 DistinctExpr
+DmlAdaptiveSavepoint
 DoStmt
 DropBehavior
 DropOwnedStmt

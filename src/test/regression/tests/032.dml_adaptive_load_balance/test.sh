@@ -142,6 +142,77 @@ EOF
 	fi
 	echo ok: T2 final read was load balanced.
 
+# check_node QUERY_ID TABLE NODE: check that the marker SELECT went to NODE
+check_node()
+{
+	fgrep "SELECT i, '$1' FROM $2;" log/pgpool.log |grep "DB node id: $3">/dev/null 2>&1
+	if [ $? != 0 ];then
+		echo fail: "SELECT i, '$1' FROM $2;" was not sent to node $3.
+		./shutdownall
+		exit 1
+	fi
+	echo ok: "$1" was sent to node $3.
+}
+
+# Savepoints: ROLLBACK TO must not end the transaction, and must forget
+# only the writes made after the savepoint.
+$PSQL test <<EOF
+BEGIN;
+INSERT INTO t1 values(1);			-- t1, and t2 via the relationship list
+SAVEPOINT s1;
+INSERT INTO t3 values(1);
+ROLLBACK TO SAVEPOINT s1;
+SELECT i, 'QUERY ID T3-1' FROM t1;		-- NO LOAD balance
+SELECT i, 'QUERY ID T3-2' FROM t2;		-- NO LOAD balance
+SELECT i, 'QUERY ID T3-3' FROM t3;		-- LOAD balance
+COMMIT;
+EOF
+	check_node 'QUERY ID T3-1' t1 0
+	check_node 'QUERY ID T3-2' t2 0
+	check_node 'QUERY ID T3-3' t3 1
+
+# Nested savepoints, RELEASE, and a write after ROLLBACK TO
+$PSQL test <<EOF
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO t3 values(1);
+SAVEPOINT s2;
+INSERT INTO tF values(1);
+RELEASE SAVEPOINT s2;
+SELECT i, 'QUERY ID T4-1' FROM tF;		-- NO LOAD balance
+ROLLBACK TO SAVEPOINT s1;
+SELECT i, 'QUERY ID T4-2' FROM t3;		-- LOAD balance
+SELECT i, 'QUERY ID T4-3' FROM tF;		-- LOAD balance
+INSERT INTO t3 values(2);
+SELECT i, 'QUERY ID T4-4' FROM t3;		-- NO LOAD balance
+COMMIT;
+EOF
+	check_node 'QUERY ID T4-1' tF 0
+	check_node 'QUERY ID T4-2' t3 1
+	check_node 'QUERY ID T4-3' tF 1
+	check_node 'QUERY ID T4-4' t3 0
+
+# Reused savepoint names: ROLLBACK TO/RELEASE pick the innermost one
+$PSQL test <<EOF
+BEGIN;
+SAVEPOINT a;
+INSERT INTO t1 values(1);
+SAVEPOINT a;
+INSERT INTO t3 values(1);
+ROLLBACK TO SAVEPOINT a;
+SELECT i, 'QUERY ID T5-1' FROM t1;		-- NO LOAD balance
+SELECT i, 'QUERY ID T5-2' FROM t3;		-- LOAD balance
+RELEASE SAVEPOINT a;
+ROLLBACK TO SAVEPOINT a;
+SELECT i, 'QUERY ID T5-3' FROM t1;		-- LOAD balance
+SELECT i, 'QUERY ID T5-4' FROM t2;		-- LOAD balance
+COMMIT;
+EOF
+	check_node 'QUERY ID T5-1' t1 0
+	check_node 'QUERY ID T5-2' t3 1
+	check_node 'QUERY ID T5-3' t1 1
+	check_node 'QUERY ID T5-4' t2 1
+
         ./shutdownall
         cd ..
 done
