@@ -352,7 +352,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			ereport(FATAL,
 					(errmsg("failed to allocate memory in startup process")));
 
-		snprintf(un_addrs[i].sun_path, sizeof(un_addrs[i].sun_path), "%s", unix_domain_socket_path);
+		snprintf(un_addrs[num_unix_fds].sun_path, sizeof(un_addrs[num_unix_fds].sun_path), "%s", unix_domain_socket_path);
 		num_unix_fds++;
 	}
 
@@ -383,7 +383,7 @@ PgpoolMain(bool discard_status, bool clear_memcache_oidmaps)
 			ereport(FATAL,
 					(errmsg("failed to allocate memory in startup process")));
 
-		snprintf(pcp_un_addrs[i].sun_path, sizeof(pcp_un_addrs[i].sun_path), "%s", unix_domain_socket_path);
+		snprintf(pcp_un_addrs[num_pcp_fds].sun_path, sizeof(pcp_un_addrs[num_pcp_fds].sun_path), "%s", unix_domain_socket_path);
 		num_pcp_fds++;
 	}
 
