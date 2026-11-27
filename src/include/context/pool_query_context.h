@@ -6,7 +6,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2023	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -101,7 +101,7 @@ typedef struct
 
 extern POOL_QUERY_CONTEXT * pool_init_query_context(void);
 extern void pool_query_context_destroy(POOL_QUERY_CONTEXT * query_context);
-extern POOL_QUERY_CONTEXT * pool_query_context_shallow_copy(POOL_QUERY_CONTEXT * query_context);
+extern POOL_QUERY_CONTEXT *pool_query_context_copy(POOL_QUERY_CONTEXT *query_context);
 extern void pool_start_query(POOL_QUERY_CONTEXT * query_context, char *query, int len, Node *node);
 extern void pool_set_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);
 extern bool pool_is_node_to_be_sent(POOL_QUERY_CONTEXT * query_context, int node_id);

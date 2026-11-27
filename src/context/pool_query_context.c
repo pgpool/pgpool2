@@ -4,7 +4,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2024	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -147,18 +147,37 @@ pool_query_context_destroy(POOL_QUERY_CONTEXT * query_context)
 }
 
 /*
- * Perform shallow copy of given query context. Used in parse_before_bind.
+ * Copy given query context. Used in parse_before_bind.  The query strings and
+ * parse trees are copied into the new query context's memory context: the
+ * caller repoints the Parse and Bind sent messages at the copy and leaves the
+ * source unreferenced, so the source may be destroyed while the copy is still
+ * in use.
  */
 POOL_QUERY_CONTEXT *
-pool_query_context_shallow_copy(POOL_QUERY_CONTEXT * query_context)
+pool_query_context_copy(POOL_QUERY_CONTEXT *query_context)
 {
 	POOL_QUERY_CONTEXT *qc;
 	MemoryContext memory_context;
+	MemoryContext oldcontext;
 
 	qc = pool_init_query_context();
 	memory_context = qc->memory_context;
 	memcpy(qc, query_context, sizeof(POOL_QUERY_CONTEXT));
 	qc->memory_context = memory_context;
+
+	oldcontext = MemoryContextSwitchTo(memory_context);
+	if (query_context->original_query)
+		qc->original_query = pstrdup(query_context->original_query);
+	if (query_context->rewritten_query)
+		qc->rewritten_query = pstrdup(query_context->rewritten_query);
+	if (query_context->parse_tree)
+		qc->parse_tree = copyObject(query_context->parse_tree);
+	if (query_context->rewritten_parse_tree)
+		qc->rewritten_parse_tree = copyObject(query_context->rewritten_parse_tree);
+	if (query_context->query_w_hex)
+		qc->query_w_hex = pstrdup(query_context->query_w_hex);
+	MemoryContextSwitchTo(oldcontext);
+
 	return qc;
 }
 
