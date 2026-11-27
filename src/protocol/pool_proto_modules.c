@@ -3,7 +3,7 @@
  * pgpool: a language independent connection pool server for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2003-2025	PgPool Global Development Group
+ * Copyright (c) 2003-2026	PgPool Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -4110,7 +4110,7 @@ static POOL_STATUS parse_before_bind(POOL_CONNECTION * frontend,
 			 */
 
 			/* Prepare modified query context */
-			new_qc = pool_query_context_shallow_copy(qc);
+			new_qc = pool_query_context_copy(qc);
 			memset(new_qc->where_to_send, 0, sizeof(new_qc->where_to_send));
 			new_qc->where_to_send[PRIMARY_NODE_ID] = 1;
 			new_qc->virtual_main_node_id = PRIMARY_NODE_ID;
@@ -4292,7 +4292,7 @@ static POOL_STATUS send_prepare(POOL_CONNECTION * frontend,
 	 * query context except the query sending destination is changed to
 	 * primary node.
 	 */
-	new_qc = pool_query_context_shallow_copy(qc);
+	new_qc = pool_query_context_copy(qc);
 	memset(new_qc->where_to_send, 0, sizeof(new_qc->where_to_send));
 	new_qc->where_to_send[node_id] = 1;
 	new_qc->virtual_main_node_id = node_id;
