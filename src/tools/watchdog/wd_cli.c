@@ -236,7 +236,7 @@ main(int argc, char **argv)
 					usage();
 					exit(EXIT_FAILURE);
 				}
-				socket_dir = pstrdup(socket_dir);
+				socket_dir = pstrdup(optarg);
 				break;
 
 			case 'm':			/* message */
